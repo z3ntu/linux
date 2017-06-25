@@ -37,10 +37,10 @@
 						regulator-max-microvolt = <1050000>;
 					};
 
-					s4 {
+					/*s4 {
 						regulator-min-microvolt = <815000>;
 						regulator-max-microvolt = <900000>;
-					};
+					};*/
 				};
 
 				pm8941-regulators {
