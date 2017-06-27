@@ -150,4 +150,13 @@ config DRM_PANEL_SITRONIX_ST7789V
 	  Say Y here if you want to enable support for the Sitronix
 	  ST7789V controller for 240x320 LCD panels
 
+config DRM_PANEL_OTM1902B_1080P
+	tristate "OTM1902B 1080p video mode panel"
+	depends on BACKLIGHT_CLASS_DEVICE
+	depends on DRM_MIPI_DSI
+	depends on OF
+	help
+	  Say Y here if you want to enable support for the OTM1902B 1080p
+	  DSI panel as found in Fairphone 2 devices
+
 endmenu
