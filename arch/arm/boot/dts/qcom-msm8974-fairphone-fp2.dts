@@ -279,6 +279,38 @@
 		pinctrl-0 = <&sdhc2_pin_a>;
 	};
 
+	mdss_mdp@fd900000 {
+		status = "ok";
+	};
+
+	mdss_dsi@fd922800 {
+		status = "ok";
+
+		panel@0 {
+			reg = <0>;
+			compatible = "otm,otm1902b-1080p-cmd";
+			power-supply = <&vreg_vsp>;
+			//backlight = <&lp8566_wled>;
+
+			port {
+				panel_in: endpoint {
+					remote-endpoint = <&dsi0_out>;
+				};
+			};
+		};
+
+		port {
+			dsi0_out: endpoint {
+				remote-endpoint = <&panel_in>;
+			};
+		};
+	};
+
+	// FIXME: THIS NODE PROBABLY DOESN'T EXIST ON FP2
+	mdss_dsi_phy@fd922a00 {
+		status = "ok";
+	};
+
 	gpio-keys {
 		compatible = "gpio-keys";
 		input-name = "gpio-keys";
