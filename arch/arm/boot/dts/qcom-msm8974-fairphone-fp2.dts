@@ -260,10 +260,14 @@
 	mdss_dsi@fd922800 {
 		status = "ok";
 
+		vdda-supply = <&pm8941_l2>;
+		vdd-supply = <&pm8941_l22>;
+		vddio-supply = <&pm8941_l12>;
+
 		panel@0 {
 			reg = <0>;
 			compatible = "otm,otm1902b-1080p-cmd";
-			power-supply = <&vreg_vsp>;
+			//power-supply = <&vreg_vsp>;
 			//backlight = <&lp8566_wled>;
 
 			port {
@@ -281,9 +285,9 @@
 	};
 
 	// FIXME: THIS NODE PROBABLY DOESN'T EXIST ON FP2
-	mdss_dsi_phy@fd922a00 {
-		status = "ok";
-	};
+	//mdss_dsi_phy@fd922a00 {
+	//	status = "ok";
+	//};
 
 	gpio-keys {
 		compatible = "gpio-keys";
