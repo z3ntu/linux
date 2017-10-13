@@ -47,7 +47,66 @@ static inline struct otm_panel *to_otm_panel(struct drm_panel *panel)
 	return container_of(panel, struct otm_panel, base);
 }
 
-static int otm_panel_init(struct otm_panel *otm)
+/*static int otm_panel_init(struct otm_panel *otm)
+{
+    printk(KERN_ERR "OTM_PANEL_INIT() CALLED\n");
+	struct mipi_dsi_device *dsi = otm->dsi;
+	int ret;
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0x00 }, 1);
+	if (ret < 0)
+		return ret;
+
+	ret = mipi_dsi_dcs_write(dsi, 0xff, (u8[]){ 0x19, 0x02, 0x01, 0x00 }, 4);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0x80 }, 1);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, 0xff, (u8[]){ 0x19, 0x02 }, 2);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0xB0 }, 1);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, 0xca, (u8[]){ 0xff, 0x02, 0x5f, 0x40 }, 4);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY, (u8[]){ 0x2c }, 1);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_EXIT_SLEEP_MODE, (u8[]){ 0x00 }, 1);
+	//ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
+	if (ret < 0)
+		return ret;
+	msleep(50);
+
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_ON, (u8[]){ 0x00 }, 1);
+	//ret = mipi_dsi_dcs_set_display_on(dsi);
+	if (ret < 0)
+		return ret;
+	msleep(96);
+
+	printk(KERN_ERR "OTM_PANEL_INIT() SUCCESS\n");
+
+	return 0;
+}*/
+
+static int otm_panel_on(struct otm_panel *otm)
 {
 	struct mipi_dsi_device *dsi = otm->dsi;
 	int ret;
@@ -88,32 +147,19 @@ static int otm_panel_init(struct otm_panel *otm)
 		return ret;
 	msleep(1);
 
-	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_EXIT_SLEEP_MODE, (u8[]){ 0x00 }, 1);
+	//ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
 	if (ret < 0)
 		return ret;
 	msleep(50);
 
-	//ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_ON, (u8[]){ 0x00 }, 1);
-	ret = mipi_dsi_dcs_set_display_on(dsi);
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_ON, (u8[]){ 0x00 }, 1);
+	//ret = mipi_dsi_dcs_set_display_on(dsi);
 	if (ret < 0)
 		return ret;
 	msleep(96);
 
-	return 0;
-}
-
-static int otm_panel_on(struct otm_panel *otm)
-{
-	struct mipi_dsi_device *dsi = otm->dsi;
-	int ret;
-
-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
-
-	ret = mipi_dsi_dcs_set_display_on(dsi);
-	if (ret < 0)
-		return ret;
-
-	msleep(40);
+	printk(KERN_ERR "OTM_PANEL_ON() SUCCESS\n");
 
 	return 0;
 }
@@ -210,11 +256,11 @@ static int otm_panel_prepare(struct drm_panel *panel)
 
 	msleep(150);
 
-	ret = otm_panel_init(otm);
+	/*ret = otm_panel_init(otm);
 	if (ret) {
 		dev_err(panel->dev, "failed to init panel: %d\n", ret);
 		goto poweroff;
-	}
+	}*/
 
 	ret = otm_panel_on(otm);
 	if (ret) {
@@ -287,6 +333,59 @@ static int otm_panel_get_modes(struct drm_panel *panel)
 	return 1;
 }
 
+static int dsi_dcs_bl_get_brightness(struct backlight_device *bl)
+{
+	struct mipi_dsi_device *dsi = bl_get_data(bl);
+	int ret;
+	u16 brightness = bl->props.brightness;
+
+	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+
+	ret = mipi_dsi_dcs_get_display_brightness(dsi, &brightness);
+	if (ret < 0)
+		return ret;
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	return brightness & 0xff;
+}
+
+static int dsi_dcs_bl_update_status(struct backlight_device *bl)
+{
+	struct mipi_dsi_device *dsi = bl_get_data(bl);
+	int ret;
+
+	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+
+	ret = mipi_dsi_dcs_set_display_brightness(dsi, bl->props.brightness);
+	if (ret < 0)
+		return ret;
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	return 0;
+}
+
+static const struct backlight_ops dsi_bl_ops = {
+	.update_status = dsi_dcs_bl_update_status,
+	.get_brightness = dsi_dcs_bl_get_brightness,
+};
+
+static struct backlight_device *
+drm_panel_create_dsi_backlight(struct mipi_dsi_device *dsi)
+{
+	struct device *dev = &dsi->dev;
+	struct backlight_properties props;
+
+	memset(&props, 0, sizeof(props));
+	props.type = BACKLIGHT_RAW;
+	props.brightness = 255;
+	props.max_brightness = 255;
+
+	return devm_backlight_device_register(dev, dev_name(dev), dev, dsi,
+					      &dsi_bl_ops, &props);
+}
+
 static const struct drm_panel_funcs otm_panel_funcs = {
 		.disable = otm_panel_disable,
 		.unprepare = otm_panel_unprepare,
@@ -304,7 +403,6 @@ MODULE_DEVICE_TABLE(of, otm_of_match);
 static int otm_panel_add(struct otm_panel *otm)
 {
 	struct device *dev= &otm->dsi->dev;
-	struct device_node *np;
 	int ret;
 
 	otm->mode = &default_mode;
@@ -322,13 +420,11 @@ static int otm_panel_add(struct otm_panel *otm)
 		gpiod_direction_output(otm->reset_gpio, 0);
 	}
 
-	np = of_parse_phandle(dev->of_node, "backlight", 0);
-	if (np) {
-		otm->backlight = of_find_backlight_by_node(np);
-		of_node_put(np);
-
-		if (!otm->backlight)
-			return -EPROBE_DEFER;
+	otm->backlight = drm_panel_create_dsi_backlight(otm->dsi);
+	if (IS_ERR(otm->backlight)) {
+		ret = PTR_ERR(otm->backlight);
+		dev_err(dev, "failed to register backlight %d\n", ret);
+		return ret;
 	}
 
 	drm_panel_init(&otm->base);

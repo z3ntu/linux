@@ -244,6 +244,22 @@
 			};
 		};
 	};
+
+	vreg_vsp: lcd-dcdc-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_vsp";
+		//TODO: and you should put the voltage to match what the regulator is outputing, but it's only there for kernel-internal purposes...
+		//TODO: or just leave them at 5.6V as that's a reasonable value
+		//regulator-min-microvolt = <5600000>;
+		//regulator-max-microvolt = <5600000>;
+
+		gpio = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_en_pin_a>;
+		pinctrl-1 = <&lcd_en_pin_s>;
+	};
 };
 
 &soc {
@@ -264,6 +280,22 @@
 				drive-strength = <10>;
 				bias-pull-up;
 			};
+		};
+
+		lcd_en_pin_a: lcd-en-active {
+			pins = "gpio25";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
+
+		lcd_en_pin_s: lcd-en-suspend {
+			pins = "gpio25";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-down;
+			input-enable;
 		};
 	};
 
@@ -304,6 +336,35 @@
 			};
 		};
 	};
+
+	mdss@fd900000 {
+		status = "ok";
+		dsi@fd922800 {
+			ports {
+				port@1 {
+					dsi0_out: endpoint {
+						remote-endpoint = <&panel_in>;
+						data-lanes = <0 1 2 3>;
+					};
+				};
+			};
+
+			panel@0 {
+				compatible = "otm,otm1902b-1080p-cmd";
+
+				reg = <0>;
+				reset-gpios = <&pm8941_gpios 19 GPIO_ACTIVE_HIGH>;
+				power-supply = <&vreg_vsp>;
+				//backlight = <&pm8941_wled>;
+
+				port {
+					panel_in: endpoint {
+						remote-endpoint = <&dsi0_out>;
+					};
+				};
+			};
+		};
+	};
 };
 
 &spmi_bus {
@@ -318,4 +379,9 @@
 			};
 		};
 	};
+	/*pm8941@1 {
+		pm8941_wled: wled@d800 {
+			status = "ok";
+		};
+	};*/
 };
