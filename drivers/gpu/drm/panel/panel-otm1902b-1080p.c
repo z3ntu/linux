@@ -47,65 +47,6 @@ static inline struct otm_panel *to_otm_panel(struct drm_panel *panel)
 	return container_of(panel, struct otm_panel, base);
 }
 
-/*static int otm_panel_init(struct otm_panel *otm)
-{
-    printk(KERN_ERR "OTM_PANEL_INIT() CALLED\n");
-	struct mipi_dsi_device *dsi = otm->dsi;
-	int ret;
-
-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
-
-	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0x00 }, 1);
-	if (ret < 0)
-		return ret;
-
-	ret = mipi_dsi_dcs_write(dsi, 0xff, (u8[]){ 0x19, 0x02, 0x01, 0x00 }, 4);
-	if (ret < 0)
-		return ret;
-	msleep(1);
-
-	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0x80 }, 1);
-	if (ret < 0)
-		return ret;
-	msleep(1);
-
-	ret = mipi_dsi_dcs_write(dsi, 0xff, (u8[]){ 0x19, 0x02 }, 2);
-	if (ret < 0)
-		return ret;
-	msleep(1);
-
-	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0xB0 }, 1);
-	if (ret < 0)
-		return ret;
-	msleep(1);
-
-	ret = mipi_dsi_dcs_write(dsi, 0xca, (u8[]){ 0xff, 0x02, 0x5f, 0x40 }, 4);
-	if (ret < 0)
-		return ret;
-	msleep(1);
-
-	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY, (u8[]){ 0x2c }, 1);
-	if (ret < 0)
-		return ret;
-	msleep(1);
-
-	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_EXIT_SLEEP_MODE, (u8[]){ 0x00 }, 1);
-	//ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
-	if (ret < 0)
-		return ret;
-	msleep(50);
-
-	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_ON, (u8[]){ 0x00 }, 1);
-	//ret = mipi_dsi_dcs_set_display_on(dsi);
-	if (ret < 0)
-		return ret;
-	msleep(96);
-
-	printk(KERN_ERR "OTM_PANEL_INIT() SUCCESS\n");
-
-	return 0;
-}*/
-
 static int otm_panel_on(struct otm_panel *otm)
 {
 	struct mipi_dsi_device *dsi = otm->dsi;
@@ -255,12 +196,6 @@ static int otm_panel_prepare(struct drm_panel *panel)
 	}
 
 	msleep(150);
-
-	/*ret = otm_panel_init(otm);
-	if (ret) {
-		dev_err(panel->dev, "failed to init panel: %d\n", ret);
-		goto poweroff;
-	}*/
 
 	ret = otm_panel_on(otm);
 	if (ret) {
@@ -569,4 +504,9 @@ clock = (1080 + 144 + 12 + 32) * (1920 + 9 + 4 + 3) * 60 / 1000;
  15 01 00 00 01   00 02   53 2C
  05 01 00 00 32   00 02   11 00
  05 01 00 00 60   00 02   29 00
+
+
+ OFF:
+ 05 01 00 00 32   00 02   28 00
+ 05 01 00 00 64   00 02   10 00
  */
