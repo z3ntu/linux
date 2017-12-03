@@ -679,6 +679,19 @@
 			status = "disabled";
 		};
 
+		i2s2: i2s@1c22800 {
+			#sound-dai-cells = <0>;
+			compatible = "allwinner,sun8i-h3-i2s";
+			reg = <0x01c22800 0x400>;
+			interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_I2S2>, <&ccu CLK_I2S2>;
+			clock-names = "apb", "mod";
+			dmas = <&dma 27>;
+			resets = <&ccu RST_BUS_I2S2>;
+			dma-names = "tx";
+			status = "disabled";
+		};
+
 		uart0: serial@1c28000 {
 			compatible = "snps,dw-apb-uart";
 			reg = <0x01c28000 0x400>;
@@ -912,6 +925,22 @@
 			resets = <&ccu RST_BUS_HDMI0>;
 			reset-names = "phy";
 			#phy-cells = <0>;
+		};
+
+		sound_hdmi: sound_hdmi {
+			compatible = "simple-audio-card";
+			simple-audio-card,format = "i2s";
+			simple-audio-card,name = "allwinner,hdmi";
+			simple-audio-card,mclk-fs = <256>;
+			status = "disabled";
+
+			simple-audio-card,codec {
+				sound-dai = <&hdmi>;
+			};
+
+			simple-audio-card,cpu {
+				sound-dai = <&i2s2>;
+			};
 		};
 
 		rtc: rtc@1f00000 {
