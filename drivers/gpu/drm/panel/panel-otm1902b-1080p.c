@@ -54,27 +54,51 @@ static int otm_panel_on(struct otm_panel *otm)
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	ret = mipi_dsi_dcs_write(dsi, 0x55, (u8[]){ 0x00 }, 1);
+	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0x00 }, 1);
 	if (ret < 0)
 		return ret;
 
-	ret = mipi_dsi_dcs_write(dsi, 0x53, (u8[]){ 0x2c }, 1);
+	ret = mipi_dsi_dcs_write(dsi, 0xff, (u8[]){ 0x19, 0x02, 0x01, 0x00 }, 4);
 	if (ret < 0)
 		return ret;
+	msleep(1);
 
-	ret = mipi_dsi_dcs_write(dsi, 0x35, (u8[]){ 0x00 }, 1);
+	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0x80 }, 1);
 	if (ret < 0)
 		return ret;
+	msleep(1);
 
-	ret = mipi_dsi_dcs_write(dsi, 0x29, (u8[]){ 0x00 }, 1);
+	ret = mipi_dsi_dcs_write(dsi, 0xff, (u8[]){ 0x19, 0x02 }, 2);
 	if (ret < 0)
 		return ret;
-	msleep(120);
+	msleep(1);
 
-	ret = mipi_dsi_dcs_write(dsi, 0x11, (u8[]){ 0x00 }, 1);
+	ret = mipi_dsi_dcs_write(dsi, 0x00, (u8[]){ 0xB0 }, 1);
 	if (ret < 0)
 		return ret;
-	msleep(120);
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, 0xca, (u8[]){ 0xff, 0x02, 0x5f, 0x40 }, 4);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY, (u8[]){ 0x2c }, 1);
+	if (ret < 0)
+		return ret;
+	msleep(1);
+
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_EXIT_SLEEP_MODE, (u8[]){ 0x00 }, 1);
+	//ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
+	if (ret < 0)
+		return ret;
+	msleep(50);
+
+	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_ON, (u8[]){ 0x00 }, 1);
+	//ret = mipi_dsi_dcs_set_display_on(dsi);
+	if (ret < 0)
+		return ret;
+	msleep(96);
 
 	printk(KERN_ERR "OTM_PANEL_ON() SUCCESS\n");
 
@@ -91,12 +115,12 @@ static int otm_panel_off(struct otm_panel *otm)
 	ret = mipi_dsi_dcs_set_display_off(dsi);
 	if (ret < 0)
 		return ret;
-	msleep(2);
+	msleep(50);
 
 	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
 	if (ret < 0)
 		return ret;
-	msleep(121);
+	msleep(100);
 
 	return 0;
 }
@@ -210,16 +234,16 @@ static int otm_panel_enable(struct drm_panel *panel)
 }
 
 static const struct drm_display_mode default_mode = {
-		.clock = 24379, // or 146274 - actually 146273.76
+		.clock = 147290, // or 147291 - actually 147290.88
 		.hdisplay = 1080,
-		.hsync_start = 1080 + 96,
-		.hsync_end = 1080 + 96 + 16,
-		.htotal = 1080 + 96 + 16 + 64,
+		.hsync_start = 1080 + 144,
+		.hsync_end = 1080 + 144 + 12,
+		.htotal = 1080 + 144 + 12 + 32,
 		.vdisplay = 1920,
-		.vsync_start = 1920 + 4,
-		.vsync_end = 1920 + 4 + 1,
-		.vtotal = 1920 + 4 + 1 + 16,
-		.vrefresh = 10,
+		.vsync_start = 1920 + 9,
+		.vsync_end = 1920 + 9 + 4,
+		.vtotal = 1920 + 9 + 4 + 3,
+		.vrefresh = 60,
 };
 
 static int otm_panel_get_modes(struct drm_panel *panel)
@@ -371,7 +395,7 @@ static int otm_panel_probe(struct mipi_dsi_device *dsi)
 
 	dsi->lanes = 4;
 	dsi->format = MIPI_DSI_FMT_RGB888;
-	dsi->mode_flags = MIPI_DSI_MODE_VIDEO |
+	dsi->mode_flags = /*MIPI_DSI_MODE_VIDEO |*/ MIPI_DSI_MODE_VIDEO_HSE |
 			MIPI_DSI_CLOCK_NON_CONTINUOUS |
 			MIPI_DSI_MODE_EOT_PACKET;
 
@@ -452,17 +476,17 @@ dsi->format = MIPI_DSI_FMT_RGB888;
 
 
 hdisplay = 1080;
-hsync_start = 1080 + 96;
-hsync_end = 1080 + 96 + 16;
-htotal = 1080 + 96 + 16 + 64;
+hsync_start = 1080 + 144;
+hsync_end = 1080 + 144 + 12;
+htotal = 1080 + 144 + 12 + 32;
 
 vdisplay = 1920;
-vsync_start = 1920 + 4;
-vsync_end = 1920 + 4 + 1;
-vtotal = 1920 + 4 + 1 + 16;
+vsync_start = 1920 + 9;
+vsync_end = 1920 + 9 + 4;
+vtotal = 1920 + 9 + 4 + 3;
 
-clock = (1080 + 96 + 16 + 64) * (1920 + 4 + 1 + 16) * 60 / 1000;
-clock = 146273.76
+clock = (1080 + 144 + 12 + 32) * (1920 + 9 + 4 + 3) * 60 / 1000;
+
 
                             P
                             A
@@ -471,14 +495,18 @@ clock = 146273.76
  Y  A     A  A      L       O
  P  S  V  C  I      E       A
  E  T  C  K  T      N       D
- 15 01 00 00 00   00 02   55 00
- 15 01 00 00 00   00 02   53 2C
- 15 01 00 00 00   00 02   35 00
- 05 01 00 00 78   00 02   29 00
- 05 01 00 00 78   00 02   11 00
+ 29 01 00 00 00   00 02   00 00
+ 29 01 00 00 01   00 05   FF 19 02 01 00
+ 29 01 00 00 01   00 02   00 80
+ 29 01 00 00 01   00 03   FF 19 02
+ 15 01 00 00 01   00 02   00 B0
+ 29 01 00 00 01   00 05   CA FF 02 5F 40
+ 15 01 00 00 01   00 02   53 2C
+ 05 01 00 00 32   00 02   11 00
+ 05 01 00 00 60   00 02   29 00
 
 
  OFF:
- 05 01 00 00 02   00 02   28 00
- 05 01 00 00 79   00 02   10 00
+ 05 01 00 00 32   00 02   28 00
+ 05 01 00 00 64   00 02   10 00
  */
