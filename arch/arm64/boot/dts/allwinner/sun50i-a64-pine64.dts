@@ -123,6 +123,10 @@
 	bias-pull-up;
 };
 
+&i2s2 {
+	status = "okay";
+};
+
 &mdio {
 	ext_rmii_phy1: ethernet-phy@1 {
 		compatible = "ethernet-phy-ieee802.3-c22";
@@ -278,6 +282,10 @@
 /* On Euler connector */
 &spdif {
 	status = "disabled";
+};
+
+&sound_hdmi {
+	status = "okay";
 };
 
 /* On Exp and Euler connectors */
