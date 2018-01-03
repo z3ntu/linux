@@ -812,6 +812,14 @@ config INPUT_SOC_BUTTON_ARRAY
 	  To compile this driver as a module, choose M here: the
 	  module will be called soc_button_array.
 
+config INPUT_DRV2603_VIBRATOR
+	tristate "DRV2603 Vibrator"
+	select HAVE_PWM
+	help
+	  DRV2603 is vibrator haptic driver with auto-resonance detection
+	  for LRA & ERM haptic elements.
+	  Say Y here to enable the DRV2603 vibrator haptic driver.
+
 config INPUT_DRV260X_HAPTICS
 	tristate "TI DRV260X haptics support"
 	depends on INPUT && I2C
