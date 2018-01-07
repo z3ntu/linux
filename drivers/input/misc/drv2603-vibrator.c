@@ -35,35 +35,36 @@ enum drv2603_state {
 };
 
 struct drv2603_chip {
-	u32 pwm_id;
-	struct pwm_device *pwm_device;
+// 	u32 pwm_id;
+// 	u32 pwm_gpio;
 	struct device *dev;
 	struct input_dev *input_dev;
 	struct regulator *regulator;
 	struct work_struct work;
-	u32 gpio;
+	u32 en_gpio;
 	u32 duty_cycle;
 	//u32 vibrator_mode;
 	enum drv2603_state state;
 };
 
-static int drv2603_set_duty_cycle(struct drv2603_chip *chip, int val)
-{
-	return pwm_config(chip->pwm_device, val * 100, 10000);
-}
+// static int drv2603_set_duty_cycle(struct drv2603_chip *chip, int val)
+// {
+// 	return pwm_config(chip->pwm_device, val * 100, 10000);
+// }
 
 static int drv2603_vibrator_initialize(struct drv2603_chip *chip)
 {
 	int ret;
 
 	chip->duty_cycle = DEFAULT_DUTY_CYCLE;
-	ret = drv2603_set_duty_cycle(chip, chip->duty_cycle);
-	if (ret) {
-		dev_err(chip->dev, "Failed to initialize pwm config\n");
-		return ret;
-	}
+// 	ret = drv2603_set_duty_cycle(chip, chip->duty_cycle);
+// 	ret = gpio_request_one(chip->pwm_gpio, GPIOF_OUT_INIT_LOW, NULL);
+// 	if (ret) {
+// 		dev_err(chip->dev, "Failed to initialize pwm config\n");
+// 		return ret;
+// 	}
 
-	ret = gpio_request_one(chip->gpio, GPIOF_OUT_INIT_LOW, NULL);
+	ret = gpio_request_one(chip->en_gpio, GPIOF_OUT_INIT_LOW, NULL);
 	if (ret) {
 		dev_err(chip->dev, "Failed to request gpio\n");
 		return ret;
@@ -78,18 +79,18 @@ static int drv2603_vibrate(struct drv2603_chip *chip)
 
 	switch (chip->state) {
 	case VIBRATOR_OFF:
-		gpio_set_value_cansleep(chip->gpio, 0);
-		drv2603_set_duty_cycle(chip, 0);
-		pwm_disable(chip->pwm_device);
+		gpio_set_value_cansleep(chip->en_gpio, 0);
+// 		drv2603_set_duty_cycle(chip, 0);
+// 		pwm_disable(chip->pwm_device);
 		regulator_disable(chip->regulator);
 	break;
 	case VIBRATOR_ON:
 		ret = regulator_enable(chip->regulator);
 		if (ret < 0)
 			return ret;
-		drv2603_set_duty_cycle(chip, chip->duty_cycle);
-		gpio_set_value_cansleep(chip->gpio, 1);
-		pwm_enable(chip->pwm_device);
+// 		drv2603_set_duty_cycle(chip, chip->duty_cycle);
+		gpio_set_value_cansleep(chip->en_gpio, 1);
+// 		pwm_enable(chip->pwm_device);
 	break;
 	}
 	return 0;
@@ -212,19 +213,19 @@ static int drv2603_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}*/
 
-	error = device_property_read_u32(dev, "gpio-id", &chip->gpio);
+	error = device_property_read_u32(dev, "gpio-id", &chip->en_gpio);
 	if (error) {
 		dev_err(dev, "IGNOREDCan't fetch 'gpio' property: %d\n", error);
-		chip->gpio = 86;
+		chip->en_gpio = 86;
 // 		return error;
 	}
 
-	error = device_property_read_u32(dev, "pwm-id", &chip->pwm_id);
-	if (error) {
-		dev_err(dev, "IGNOREDCan't fetch 'pwm-id' property: %d\n", error);
-		chip->gpio = 85;
-// 		return error;
-	}
+// 	error = device_property_read_u32(dev, "pwm-id", &chip->pwm_id);
+// 	if (error) {
+// 		dev_err(dev, "IGNOREDCan't fetch 'pwm-id' property: %d\n", error);
+// 		chip->en_gpio = 85;
+// // 		return error;
+// 	}
 
 	error = device_property_read_u32(dev, "duty-cycle", &chip->duty_cycle);
 	if (error) {
@@ -249,13 +250,13 @@ static int drv2603_probe(struct platform_device *pdev)
 		goto err_regulator;
 	}
 
-	chip->pwm_device = pwm_request(chip->pwm_id, "drv2603-vibrator");
-
-	if (IS_ERR_OR_NULL(chip->pwm_device)) {
-		dev_err(&pdev->dev, "Failed to get pwm device\n");
-		ret = PTR_ERR(chip->pwm_device);
-		goto err_pwm;
-	}
+// 	chip->pwm_device = pwm_request(chip->pwm_id, "drv2603-vibrator");
+// 
+// 	if (IS_ERR_OR_NULL(chip->pwm_device)) {
+// 		dev_err(&pdev->dev, "Failed to get pwm device\n");
+// 		ret = PTR_ERR(chip->pwm_device);
+// 		goto err_pwm;
+// 	}
 
 // register_input: // TODO: Not used
 	input_dev->name = "drv2603-haptic";
@@ -297,14 +298,14 @@ static int drv2603_probe(struct platform_device *pdev)
 	return 0;
 
 err_sysfs_create:
-	gpio_free(chip->gpio);
+	gpio_free(chip->en_gpio);
 err_vibrator_init:
 	input_unregister_device(input_dev);
 err_input_register:
 	destroy_work_on_stack(&chip->work);
 err_input_create:
-	pwm_free(chip->pwm_device);
-err_pwm:
+// 	pwm_free(chip->pwm_device);
+// err_pwm:
 	regulator_put(chip->regulator);
 err_regulator:
 	input_free_device(input_dev);
@@ -316,8 +317,8 @@ static int drv2603_remove(struct platform_device *pdev)
 {
 	struct drv2603_chip *chip = dev_get_drvdata(&pdev->dev);
 
-	pwm_free(chip->pwm_device);
-	gpio_free(chip->gpio);
+// 	pwm_free(chip->pwm_device);
+	gpio_free(chip->en_gpio);
 	destroy_work_on_stack(&chip->work);
 	input_unregister_device(chip->input_dev);
 	input_free_device(chip->input_dev);
