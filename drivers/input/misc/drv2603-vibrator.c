@@ -25,7 +25,7 @@
 #include <linux/pm.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
-#include <linux/input/drv2603-vibrator.h>
+#include <dt-bindings/input/ti-drv2603.h>
 
 #define DEFAULT_DUTY_CYCLE 80
 
@@ -35,15 +35,15 @@ enum drv2603_state {
 };
 
 struct drv2603_chip {
-	int pwm_id;
+	u32 pwm_id;
 	struct pwm_device *pwm_device;
 	struct device *dev;
 	struct input_dev *input_dev;
 	struct regulator *regulator;
 	struct work_struct work;
-	int gpio;
-	int duty_cycle;
-	enum drv2603_mode vibrator_mode;
+	u32 gpio;
+	u32 duty_cycle;
+	//u32 vibrator_mode;
 	enum drv2603_state state;
 };
 
@@ -84,7 +84,9 @@ static int drv2603_vibrate(struct drv2603_chip *chip)
 		regulator_disable(chip->regulator);
 	break;
 	case VIBRATOR_ON:
-		regulator_enable(chip->regulator);
+		ret = regulator_enable(chip->regulator);
+		if (ret < 0)
+			return ret;
 		drv2603_set_duty_cycle(chip, chip->duty_cycle);
 		gpio_set_value_cansleep(chip->gpio, 1);
 		pwm_enable(chip->pwm_device);
@@ -188,38 +190,61 @@ static const struct attribute_group drv2603_vibrator_attr_group = {
 
 static int drv2603_probe(struct platform_device *pdev)
 {
-	int ret;
+	int ret, error;
 
-	struct drv2603_chip *chip;
+	struct drv2603_chip *chip; // aka pdata
 	struct input_dev *input_dev;
-	struct drv2603_platform_data *drv2603_pdata =
-				dev_get_platdata(&pdev->dev);
+	struct device *dev = &pdev->dev;
 
-	chip = devm_kzalloc(&pdev->dev, sizeof(*chip),
-					GFP_KERNEL);
-	if (!chip) {
-		dev_err(&pdev->dev, "Memory allocation failed for chip\n");
+	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
+	if (!chip)
 		return -ENOMEM;
+
+	/*error = device_property_read_u32(dev, "mode", &chip->vibrator_mode);
+	if (error) {
+		dev_err(dev, "Can't fetch 'mode' property: %d\n", error);
+		return error;
+	}
+
+	if (chip->vibrator_mode < DRV2603_LRA_MODE ||
+	    chip->vibrator_mode > DRV2603_ERM_MODE) {
+		dev_err(dev, "Vibrator mode is invalid: %i\n", chip->vibrator_mode);
+		return -EINVAL;
+	}*/
+
+	error = device_property_read_u32(dev, "gpio-id", &chip->gpio);
+	if (error) {
+		dev_err(dev, "IGNOREDCan't fetch 'gpio' property: %d\n", error);
+		chip->gpio = 86;
+// 		return error;
+	}
+
+	error = device_property_read_u32(dev, "pwm-id", &chip->pwm_id);
+	if (error) {
+		dev_err(dev, "IGNOREDCan't fetch 'pwm-id' property: %d\n", error);
+		chip->gpio = 85;
+// 		return error;
+	}
+
+	error = device_property_read_u32(dev, "duty-cycle", &chip->duty_cycle);
+	if (error) {
+		dev_err(dev, "Can't fetch 'duty-cycle' property: %d\n", error);
+		return error;
 	}
 
 	input_dev = input_allocate_device();
 	if (!input_dev) {
-		dev_err(&pdev->dev,
-			"unable to allocate memory for input dev\n");
+		dev_err(dev, "unable to allocate memory for input dev\n");
 		return PTR_ERR(input_dev);
 	}
 
-	chip->pwm_id = drv2603_pdata->pwm_id;
-	chip->gpio = drv2603_pdata->gpio;
-	chip->duty_cycle = drv2603_pdata->duty_cycle;
-	chip->vibrator_mode = drv2603_pdata->vibrator_mode;
 	chip->dev = &pdev->dev;
 	chip->input_dev = input_dev;
 	dev_set_drvdata(&pdev->dev, chip);
 
-	chip->regulator = regulator_get(&pdev->dev, "vdd_vbrtr");
-	if (IS_ERR_OR_NULL(chip->regulator)) {
-		dev_err(&pdev->dev, "Failed to get regulator\n");
+	chip->regulator = devm_regulator_get(dev, "power");
+	if (IS_ERR(chip->regulator)) {
+		dev_err(dev, "cannot get regulator 'power-supply': %ld\n", PTR_ERR(chip->regulator));
 		ret = PTR_ERR(chip->regulator);
 		goto err_regulator;
 	}
@@ -232,7 +257,7 @@ static int drv2603_probe(struct platform_device *pdev)
 		goto err_pwm;
 	}
 
-register_input:
+// register_input: // TODO: Not used
 	input_dev->name = "drv2603-haptic";
 	input_dev->id.version = 1;
 	input_dev->dev.parent = &pdev->dev;
@@ -301,7 +326,7 @@ static int drv2603_remove(struct platform_device *pdev)
 	return 0;
 }
 
-#ifdef CONFIG_PM_SLEEP
+//#ifdef CONFIG_PM_SLEEP
 static int drv2603_suspend(struct device *dev)
 {
 	struct drv2603_chip *chip = dev_get_drvdata(dev);
@@ -318,9 +343,15 @@ static int drv2603_resume(struct device *dev)
 {
 	return 0;
 }
-#endif
+//#endif
 
 static SIMPLE_DEV_PM_OPS(drv2603_pm_ops, drv2603_suspend, drv2603_resume);
+
+static const struct of_device_id drv2603_of_match[] = {
+	{ .compatible = "ti,drv2603" },
+	{ },
+}
+MODULE_DEVICE_TABLE(of, drv2603_of_match);
 
 static struct platform_driver drv2603_driver = {
 	.probe = drv2603_probe,
@@ -329,6 +360,7 @@ static struct platform_driver drv2603_driver = {
 		.name = "drv2603-vibrator",
 		.owner = THIS_MODULE,
 		.pm = &drv2603_pm_ops,
+		.of_match_table = drv2603_of_match
 	},
 };
 
@@ -344,6 +376,7 @@ static void __exit drv2603_vibrator_exit(void)
 }
 module_exit(drv2603_vibrator_exit);
 
-MODULE_DESCRIPTION("Drv2603 vibrator driver");
+MODULE_DESCRIPTION("TI DRV2603 haptics driver");
 MODULE_AUTHOR("Sumit Sharma <sumsharma@nvidia.com>");
+MODULE_AUTHOR("Luca Weiss <luca@z3ntu.xyz>");
 MODULE_LICENSE("GPL v2");
