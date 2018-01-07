@@ -17,11 +17,9 @@
  */
 
 #include <linux/module.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/pwm.h>
 #include <linux/input.h>
-#include <linux/gpio.h>
+#include <linux/property.h>
+#include <linux/gpio/consumer.h>
 #include <linux/pm.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
@@ -41,7 +39,7 @@ struct drv2603_chip {
 	struct input_dev *input_dev;
 	struct regulator *regulator;
 	struct work_struct work;
-	u32 en_gpio;
+	struct gpio_desc *en_gpio;
 	u32 duty_cycle;
 	//u32 vibrator_mode;
 	enum drv2603_state state;
@@ -54,7 +52,7 @@ struct drv2603_chip {
 
 static int drv2603_vibrator_initialize(struct drv2603_chip *chip)
 {
-	int ret;
+// 	int ret;
 
 	chip->duty_cycle = DEFAULT_DUTY_CYCLE;
 // 	ret = drv2603_set_duty_cycle(chip, chip->duty_cycle);
@@ -64,11 +62,11 @@ static int drv2603_vibrator_initialize(struct drv2603_chip *chip)
 // 		return ret;
 // 	}
 
-	ret = gpio_request_one(chip->en_gpio, GPIOF_OUT_INIT_LOW, NULL);
-	if (ret) {
-		dev_err(chip->dev, "Failed to request gpio\n");
-		return ret;
-	}
+// 	ret = gpio_request_one(chip->en_gpio, GPIOF_OUT_INIT_LOW, NULL);
+// 	if (ret) {
+// 		dev_err(chip->dev, "Failed to request gpio\n");
+// 		return ret;
+// 	}
 
 	return 0;
 }
@@ -79,7 +77,7 @@ static int drv2603_vibrate(struct drv2603_chip *chip)
 
 	switch (chip->state) {
 	case VIBRATOR_OFF:
-		gpio_set_value_cansleep(chip->en_gpio, 0);
+		gpiod_set_value(chip->en_gpio, 0);
 // 		drv2603_set_duty_cycle(chip, 0);
 // 		pwm_disable(chip->pwm_device);
 		regulator_disable(chip->regulator);
@@ -89,7 +87,7 @@ static int drv2603_vibrate(struct drv2603_chip *chip)
 		if (ret < 0)
 			return ret;
 // 		drv2603_set_duty_cycle(chip, chip->duty_cycle);
-		gpio_set_value_cansleep(chip->en_gpio, 1);
+		gpiod_set_value(chip->en_gpio, 1);
 // 		pwm_enable(chip->pwm_device);
 	break;
 	}
@@ -213,11 +211,10 @@ static int drv2603_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}*/
 
-	error = device_property_read_u32(dev, "gpio-id", &chip->en_gpio);
-	if (error) {
-		dev_err(dev, "IGNOREDCan't fetch 'gpio' property: %d\n", error);
-		chip->en_gpio = 86;
-// 		return error;
+	chip->en_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
+	if (IS_ERR(chip->en_gpio)) {
+		dev_err(dev, "cannot get 'enable-gpios' property: %ld\n", PTR_ERR(chip->en_gpio));
+		return PTR_ERR(chip->en_gpio);
 	}
 
 // 	error = device_property_read_u32(dev, "pwm-id", &chip->pwm_id);
@@ -298,7 +295,7 @@ static int drv2603_probe(struct platform_device *pdev)
 	return 0;
 
 err_sysfs_create:
-	gpio_free(chip->en_gpio);
+// 	gpio_free(chip->en_gpio);
 err_vibrator_init:
 	input_unregister_device(input_dev);
 err_input_register:
@@ -318,7 +315,7 @@ static int drv2603_remove(struct platform_device *pdev)
 	struct drv2603_chip *chip = dev_get_drvdata(&pdev->dev);
 
 // 	pwm_free(chip->pwm_device);
-	gpio_free(chip->en_gpio);
+// 	gpio_free(chip->en_gpio);
 	destroy_work_on_stack(&chip->work);
 	input_unregister_device(chip->input_dev);
 	input_free_device(chip->input_dev);
