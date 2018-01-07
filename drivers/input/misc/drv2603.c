@@ -23,6 +23,7 @@
 #include <linux/pm.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
+
 #include <dt-bindings/input/ti-drv2603.h>
 
 #define DEFAULT_DUTY_CYCLE 80
