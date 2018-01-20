@@ -17,7 +17,6 @@
 #define SUN4I_GPADC_CTRL0_ADC_CLK_SELECT		BIT(22)
 #define SUN4I_GPADC_CTRL0_ADC_CLK_DIVIDER(x)		((GENMASK(1, 0) & (x)) << 20)
 #define SUN4I_GPADC_CTRL0_FS_DIV(x)			((GENMASK(3, 0) & (x)) << 16)
-#define SUN4I_GPADC_CTRL0_T_ACQ(x)			(GENMASK(15, 0) & (x))
 
 #define SUN4I_GPADC_CTRL1				0x04
 
@@ -50,9 +49,6 @@
 #define SUN4I_GPADC_CTRL2_PRE_MEA_THRE_CNT(x)		(GENMASK(23, 0) & (x))
 
 #define SUN4I_GPADC_CTRL3				0x0c
-
-#define SUN4I_GPADC_CTRL3_FILTER_EN			BIT(2)
-#define SUN4I_GPADC_CTRL3_FILTER_TYPE(x)		(GENMASK(1, 0) & (x))
 
 #define SUN4I_GPADC_TPR					0x18
 
@@ -89,6 +85,21 @@
 
 /* 10s delay before suspending the IP */
 #define SUN4I_GPADC_AUTOSUSPEND_DELAY			10000
+
+/* SUNXI_THS COMMON REGISTERS + DEFINES */
+#define SUNXI_THS_CTRL0					0x00
+#define SUNXI_THS_CTRL2					0x40
+#define SUNXI_THS_FILTER				0x70
+
+#define SUNXI_THS_FILTER_EN				BIT(2)
+#define SUNXI_THS_FILTER_TYPE(x)			(GENMASK(1, 0) & (x))
+#define SUNXI_THS_ACQ0(x)				(GENMASK(15, 0) & (x))
+#define SUNXI_THS_ACQ1(x)				(GENMASK(31, 16) & ((x) << 16))
+
+#define SUNXI_THS_TEMP_SENSE_EN0			BIT(0)
+#define SUNXI_THS_TEMP_SENSE_EN1			BIT(1)
+#define SUNXI_THS_TEMP_SENSE_EN2			BIT(2)
+#define SUNXI_THS_TEMP_SENSE_EN3			BIT(3)
 
 struct sun4i_gpadc_dev {
 	struct device			*dev;

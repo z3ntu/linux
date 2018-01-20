@@ -49,6 +49,18 @@ static unsigned int sun6i_gpadc_chan_select(unsigned int chan)
 	return SUN6I_GPADC_CTRL1_ADC_CHAN_SELECT(chan);
 }
 
+struct sun4i_gpadc_iio;
+
+/*
+ * Prototypes for these functions, which enable these functions to be
+ * referenced in gpadc_data structures.
+ */
+static int sun4i_gpadc_sample_start(struct sun4i_gpadc_iio *info);
+static int sun4i_gpadc_sample_end(struct sun4i_gpadc_iio *info);
+
+static int sunxi_ths_sample_start(struct sun4i_gpadc_iio *info);
+static int sunxi_ths_sample_end(struct sun4i_gpadc_iio *info);
+
 struct gpadc_data {
 	int		temp_offset;
 	int		temp_scale;
@@ -56,6 +68,13 @@ struct gpadc_data {
 	unsigned int	tp_adc_select;
 	unsigned int	(*adc_chan_select)(unsigned int chan);
 	unsigned int	adc_chan_mask;
+	unsigned int	temp_data;
+	int		(*sample_start)(struct sun4i_gpadc_iio *info);
+	int		(*sample_end)(struct sun4i_gpadc_iio *info);
+	u32		ctrl0_map;
+	u32		ctrl2_map;
+	u32		sensor_en_map;
+	u32		filter_map;
 };
 
 static const struct gpadc_data sun4i_gpadc_data = {
@@ -65,6 +84,9 @@ static const struct gpadc_data sun4i_gpadc_data = {
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
+	.temp_data = SUN4I_GPADC_TEMP_DATA,
+	.sample_start = sun4i_gpadc_sample_start,
+	.sample_end = sun4i_gpadc_sample_end,
 };
 
 static const struct gpadc_data sun5i_gpadc_data = {
@@ -74,6 +96,9 @@ static const struct gpadc_data sun5i_gpadc_data = {
 	.tp_adc_select = SUN4I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun4i_gpadc_chan_select,
 	.adc_chan_mask = SUN4I_GPADC_CTRL1_ADC_CHAN_MASK,
+	.temp_data = SUN4I_GPADC_TEMP_DATA,
+	.sample_start = sun4i_gpadc_sample_start,
+	.sample_end = sun4i_gpadc_sample_end,
 };
 
 static const struct gpadc_data sun6i_gpadc_data = {
@@ -83,12 +108,18 @@ static const struct gpadc_data sun6i_gpadc_data = {
 	.tp_adc_select = SUN6I_GPADC_CTRL1_TP_ADC_SELECT,
 	.adc_chan_select = &sun6i_gpadc_chan_select,
 	.adc_chan_mask = SUN6I_GPADC_CTRL1_ADC_CHAN_MASK,
+	.temp_data = SUN4I_GPADC_TEMP_DATA,
+	.sample_start = sun4i_gpadc_sample_start,
+	.sample_end = sun4i_gpadc_sample_end,
 };
 
 static const struct gpadc_data sun8i_a33_gpadc_data = {
 	.temp_offset = -1662,
 	.temp_scale = 162,
 	.tp_mode_en = SUN8I_A33_GPADC_CTRL1_CHOP_TEMP_EN,
+	.temp_data = SUN4I_GPADC_TEMP_DATA,
+	.sample_start = sun4i_gpadc_sample_start,
+	.sample_end = sun4i_gpadc_sample_end,
 };
 
 struct sun4i_gpadc_iio {
@@ -277,7 +308,7 @@ static int sun4i_gpadc_temp_read(struct iio_dev *indio_dev, int *val)
 	if (info->no_irq) {
 		pm_runtime_get_sync(indio_dev->dev.parent);
 
-		regmap_read(info->regmap, SUN4I_GPADC_TEMP_DATA, val);
+		regmap_read(info->regmap, info->data->temp_data, val);
 
 		pm_runtime_mark_last_busy(indio_dev->dev.parent);
 		pm_runtime_put_autosuspend(indio_dev->dev.parent);
@@ -382,10 +413,8 @@ out:
 	return IRQ_HANDLED;
 }
 
-static int sun4i_gpadc_runtime_suspend(struct device *dev)
+static int sun4i_gpadc_sample_end(struct sun4i_gpadc_iio *info)
 {
-	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
-
 	/* Disable the ADC on IP */
 	regmap_write(info->regmap, SUN4I_GPADC_CTRL1, 0);
 	/* Disable temperature sensor on IP */
@@ -394,25 +423,67 @@ static int sun4i_gpadc_runtime_suspend(struct device *dev)
 	return 0;
 }
 
-static int sun4i_gpadc_runtime_resume(struct device *dev)
+static int sunxi_ths_sample_end(struct sun4i_gpadc_iio *info)
+{
+	/* Disable temperature sensor */
+	regmap_write(info->regmap, SUNXI_THS_CTRL2, 0x0);
+
+	return 0;
+}
+
+static int sun4i_gpadc_runtime_suspend(struct device *dev)
 {
 	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
 
+	return info->data->sample_end(info);
+}
+
+static int sun4i_gpadc_sample_start(struct sun4i_gpadc_iio *info)
+{
 	/* clkin = 6MHz */
 	regmap_write(info->regmap, SUN4I_GPADC_CTRL0,
 		     SUN4I_GPADC_CTRL0_ADC_CLK_DIVIDER(2) |
 		     SUN4I_GPADC_CTRL0_FS_DIV(7) |
-		     SUN4I_GPADC_CTRL0_T_ACQ(63));
+		     SUNXI_THS_ACQ0(63));
 	regmap_write(info->regmap, SUN4I_GPADC_CTRL1, info->data->tp_mode_en);
 	regmap_write(info->regmap, SUN4I_GPADC_CTRL3,
-		     SUN4I_GPADC_CTRL3_FILTER_EN |
-		     SUN4I_GPADC_CTRL3_FILTER_TYPE(1));
+		     SUNXI_THS_FILTER_EN |
+		     SUNXI_THS_FILTER_TYPE(1));
 	/* period = SUN4I_GPADC_TPR_TEMP_PERIOD * 256 * 16 / clkin; ~0.6s */
 	regmap_write(info->regmap, SUN4I_GPADC_TPR,
 		     SUN4I_GPADC_TPR_TEMP_ENABLE |
 		     SUN4I_GPADC_TPR_TEMP_PERIOD(800));
 
 	return 0;
+}
+
+static int sunxi_ths_sample_start(struct sun4i_gpadc_iio *info)
+{
+	u32 value;
+
+	if (info->data->ctrl0_map)
+		regmap_write(info->regmap, SUNXI_THS_CTRL0,
+			info->data->ctrl0_map);
+
+	regmap_write(info->regmap, SUNXI_THS_CTRL2,
+		info->data->ctrl2_map);
+
+	regmap_write(info->regmap, SUNXI_THS_FILTER,
+		info->data->filter_map);
+
+	regmap_read(info->regmap, SUNXI_THS_CTRL2, &value);
+
+	regmap_write(info->regmap, SUNXI_THS_CTRL2,
+		info->data->sensor_en_map | value);
+
+	return 0;
+}
+
+static int sun4i_gpadc_runtime_resume(struct device *dev)
+{
+	struct sun4i_gpadc_iio *info = iio_priv(dev_get_drvdata(dev));
+
+	return info->data->sample_start(info);
 }
 
 static int sun4i_gpadc_get_temp(void *data, int *temp)
