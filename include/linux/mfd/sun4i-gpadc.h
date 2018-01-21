@@ -90,6 +90,10 @@
 #define SUNXI_THS_CTRL0					0x00
 #define SUNXI_THS_CTRL2					0x40
 #define SUNXI_THS_FILTER				0x70
+#define SUNXI_THS_TDATA0				0x80
+#define SUNXI_THS_TDATA1				0x84
+#define SUNXI_THS_TDATA2				0x88
+#define SUNXI_THS_TDATA3				0x8c
 
 #define SUNXI_THS_FILTER_EN				BIT(2)
 #define SUNXI_THS_FILTER_TYPE(x)			(GENMASK(1, 0) & (x))
@@ -100,6 +104,8 @@
 #define SUNXI_THS_TEMP_SENSE_EN1			BIT(1)
 #define SUNXI_THS_TEMP_SENSE_EN2			BIT(2)
 #define SUNXI_THS_TEMP_SENSE_EN3			BIT(3)
+
+#define MAX_SENSOR_COUNT				4
 
 struct sun4i_gpadc_dev {
 	struct device			*dev;
