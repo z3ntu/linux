@@ -90,6 +90,8 @@
 #define SUNXI_THS_CTRL0					0x00
 #define SUNXI_THS_CTRL2					0x40
 #define SUNXI_THS_FILTER				0x70
+#define SUNXI_THS_CDATA_0_1				0x74
+#define SUNXI_THS_CDATA_2_3				0x78
 #define SUNXI_THS_TDATA0				0x80
 #define SUNXI_THS_TDATA1				0x84
 #define SUNXI_THS_TDATA2				0x88
