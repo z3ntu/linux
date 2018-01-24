@@ -278,6 +278,52 @@ static const struct gpadc_data sun9i_a80_ths_data = {
 		SUNXI_THS_TEMP_PERIOD(0x3a),
 };
 
+static const struct gpadc_data sun50i_a64_ths_data = {
+	.temp_offset = -2170,
+	.temp_scale = -117,
+	.temp_data = {SUNXI_THS_TDATA0,
+		SUNXI_THS_TDATA1,
+		SUNXI_THS_TDATA2,
+		0},
+	.sample_start = sunxi_ths_sample_start,
+	.sample_end = sunxi_ths_sample_end,
+	.has_bus_clk = true,
+	.has_bus_rst = true,
+	.has_mod_clk = true,
+	.sensor_count = 3,
+	.supports_nvmem = false,
+	.support_irq = true,
+
+	/* The final sample period is calculated as follows:
+	 * (THERMAL_PER + 1) * 4096 / 24MHz * 2^(FILTER_TYPE + 1)
+	 *
+	 * This results to about 1Hz with these settings.
+	 */
+	.ctrl0_map = SUNXI_THS_ACQ0(0xff),
+	.ctrl2_map = SUNXI_THS_TEMP_SENSE_EN0 |
+		SUNXI_THS_TEMP_SENSE_EN1 |
+		SUNXI_THS_TEMP_SENSE_EN2 |
+		SUNXI_THS_ACQ1(0x3f),
+	.filter_map = SUNXI_THS_FILTER_EN |
+		SUNXI_THS_FILTER_TYPE(0x1),
+	.irq_clear_map = SUNXI_THS_INTS_ALARM_INT_0 |
+		SUNXI_THS_INTS_ALARM_INT_1 |
+		SUNXI_THS_INTS_ALARM_INT_2 |
+		SUNXI_THS_INTS_SHUT_INT_0  |
+		SUNXI_THS_INTS_SHUT_INT_1  |
+		SUNXI_THS_INTS_SHUT_INT_2  |
+		SUNXI_THS_INTS_TDATA_IRQ_0 |
+		SUNXI_THS_INTS_TDATA_IRQ_1 |
+		SUNXI_THS_INTS_TDATA_IRQ_2 |
+		SUNXI_THS_INTS_ALARM_OFF_0 |
+		SUNXI_THS_INTS_ALARM_OFF_1 |
+		SUNXI_THS_INTS_ALARM_OFF_2,
+	.irq_control_map = SUNXI_THS_INTC_TDATA_IRQ_EN0 |
+		SUNXI_THS_INTC_TDATA_IRQ_EN1 |
+		SUNXI_THS_INTC_TDATA_IRQ_EN2 |
+		SUNXI_THS_TEMP_PERIOD(0x7),
+};
+
 struct sun4i_gpadc_iio {
 	struct iio_dev			*indio_dev;
 	struct completion		completion;
@@ -791,6 +837,10 @@ static const struct of_device_id sun4i_gpadc_of_id[] = {
 	{
 		.compatible = "allwinner,sun9i-a80-ths",
 		.data = &sun9i_a80_ths_data,
+	},
+	{
+		.compatible = "allwinner,sun50i-a64-ths",
+		.data = &sun50i_a64_ths_data,
 	},
 	{ /* sentinel */ }
 };
