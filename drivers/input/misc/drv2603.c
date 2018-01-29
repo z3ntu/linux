@@ -349,15 +349,14 @@ static SIMPLE_DEV_PM_OPS(drv2603_pm_ops, drv2603_suspend, drv2603_resume);
 static const struct of_device_id drv2603_of_match[] = {
 	{ .compatible = "ti,drv2603" },
 	{ },
-}
+};
 MODULE_DEVICE_TABLE(of, drv2603_of_match);
 
 static struct platform_driver drv2603_driver = {
 	.probe = drv2603_probe,
 	.remove = drv2603_remove,
 	.driver = {
-		.name = "drv2603-vibrator",
-		.owner = THIS_MODULE,
+		.name = "drv2603-haptics",
 		.pm = &drv2603_pm_ops,
 		.of_match_table = drv2603_of_match
 	},
