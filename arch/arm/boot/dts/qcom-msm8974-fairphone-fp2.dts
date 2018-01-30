@@ -358,4 +358,16 @@
 			};
 		};
 	};
+
+	pm8941@1 {
+		lpg {
+			status = "okay";
+
+			qcom,power-source = <1>;
+
+			rgb {
+				led-sources = <7 6 5>;
+			};
+		};
+	};
 };
