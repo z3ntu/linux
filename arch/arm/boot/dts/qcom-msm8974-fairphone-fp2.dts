@@ -53,7 +53,7 @@
 	drv2603 {
 		compatible = "ti,drv2603";
 
-		enable-gpios = <&pm8941_gpios 86 GPIO_ACTIVE_LOW>;
+		enable-gpios = <&msmgpio 86 GPIO_ACTIVE_LOW>;
 // 		pwm-gpios = <&pm8941_gpios 85 GPIO_ACTIVE_LOW>;
 		power-supply = <&pm8941_l18>;
 		duty-cycle = <80>;
