@@ -466,9 +466,18 @@
 			};
 		};
 	};
-	/*pm8941@1 {
-		pm8941_wled: wled@d800 {
+	pm8941@1 {
+		/*pm8941_wled: wled@d800 {
 			status = "ok";
+		};*/
+		lpg {
+			status = "okay";
+
+			qcom,power-source = <1>;
+
+			rgb {
+				led-sources = <7 6 5>;
+			};
 		};
-	};*/
+	};
 };
