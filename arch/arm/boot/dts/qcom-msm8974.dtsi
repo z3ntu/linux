@@ -1115,7 +1115,7 @@
 
 			mdp: mdp@fd900100 {
 				compatible = "qcom,mdp5";
-				reg = <0xfd900000 0x22000>;
+				reg = <0xfd900100 0x22000>;
 				reg-names = "mdp_phys";
 
 				interrupt-parent = <&mdss>;
