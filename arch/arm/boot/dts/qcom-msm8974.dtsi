@@ -1220,6 +1220,8 @@
 				clock-names = "iface_clk";
 
 				vddio-supply = <&pm8941_l12>;
+
+				#phy-cells = <0>;
 			};
 		};
 
