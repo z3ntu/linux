@@ -751,6 +751,12 @@ static int sun4i_gpadc_get_temp(void *data, int *temp)
 	if (sun4i_gpadc_temp_read(info->indio_dev, &val, info->sensor_id))
 		return -ETIMEDOUT;
 
+	/* Ignore first sample which is always zero. 0 is either too
+	 * cold or too hot, so we can safely ignore it
+	 */
+	if (val == 0)
+		return -ETIMEDOUT;
+
 	sun4i_gpadc_temp_scale(info->indio_dev, &scale);
 	sun4i_gpadc_temp_offset(info->indio_dev, &offset);
 
