@@ -136,6 +136,16 @@
 			reg = <0x2800>;
 			status = "disabled";
 		};
+
+		pm8941_bms: fuel-gauge@4000 {
+			compatible = "qcom,pm8941-bms";
+			reg = <0x4000>;
+			interrupts = <0x0 0x40 0x4 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "ocv_thr";
+			io-channels = <&pm8941_vadc VADC_LR_MUX1_BAT_THERM>;
+			io-channel-names = "temp";
+			status = "disabled";
+		};
 	};
 
 	pm8941_1: pm8941@1 {
