@@ -63,6 +63,9 @@
 
 #define SUN4I_TCON0_DCLK_REG			0x44
 #define SUN4I_TCON0_DCLK_GATE_BIT			(31)
+#define SUN4I_TCON0_DCLK_GATE2_BIT			(30)
+#define SUN4I_TCON0_DCLK_GATE3_BIT			(29)
+#define SUN4I_TCON0_DCLK_GATE4_BIT			(28)
 #define SUN4I_TCON0_DCLK_DIV_SHIFT			(0)
 #define SUN4I_TCON0_DCLK_DIV_WIDTH			(7)
 
@@ -279,6 +282,7 @@ void sun4i_tcon_mode_set(struct sun4i_tcon *tcon,
 			 const struct drm_display_mode *mode);
 void sun4i_tcon_set_status(struct sun4i_tcon *crtc,
 			   const struct drm_encoder *encoder, bool enable);
+void sun4i_tcon_handle_vblank(struct sun4i_tcon *crtc);
 
 extern const struct of_device_id sun4i_tcon_of_table[];
 

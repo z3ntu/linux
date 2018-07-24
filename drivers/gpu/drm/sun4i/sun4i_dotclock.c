@@ -32,7 +32,10 @@ static void sun4i_dclk_disable(struct clk_hw *hw)
 	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 
 	regmap_update_bits(dclk->regmap, SUN4I_TCON0_DCLK_REG,
-			   BIT(SUN4I_TCON0_DCLK_GATE_BIT), 0);
+			   BIT(SUN4I_TCON0_DCLK_GATE_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE2_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE3_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE4_BIT), 0);
 }
 
 static int sun4i_dclk_enable(struct clk_hw *hw)
@@ -40,8 +43,14 @@ static int sun4i_dclk_enable(struct clk_hw *hw)
 	struct sun4i_dclk *dclk = hw_to_dclk(hw);
 
 	return regmap_update_bits(dclk->regmap, SUN4I_TCON0_DCLK_REG,
-				  BIT(SUN4I_TCON0_DCLK_GATE_BIT),
-				  BIT(SUN4I_TCON0_DCLK_GATE_BIT));
+			   BIT(SUN4I_TCON0_DCLK_GATE_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE2_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE3_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE4_BIT),
+			   BIT(SUN4I_TCON0_DCLK_GATE_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE2_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE3_BIT) |
+			   BIT(SUN4I_TCON0_DCLK_GATE4_BIT));
 }
 
 static int sun4i_dclk_is_enabled(struct clk_hw *hw)

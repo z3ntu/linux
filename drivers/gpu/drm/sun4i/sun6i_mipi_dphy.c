@@ -84,8 +84,10 @@
 int sun6i_dphy_init(struct sun6i_dphy *dphy, unsigned int lanes)
 {
 	reset_control_deassert(dphy->reset);
-	clk_prepare_enable(dphy->mod_clk);
-	clk_set_rate_exclusive(dphy->mod_clk, 150000000);
+	if (dphy->quirks->has_mod_clk) {
+		clk_prepare_enable(dphy->mod_clk);
+		clk_set_rate_exclusive(dphy->mod_clk, 150000000);
+	}
 
 	regmap_write(dphy->regs, SUN6I_DPHY_TX_CTL_REG,
 		     SUN6I_DPHY_TX_CTL_HS_TX_CLK_CONT);
@@ -191,8 +193,10 @@ int sun6i_dphy_power_off(struct sun6i_dphy *dphy)
 
 int sun6i_dphy_exit(struct sun6i_dphy *dphy)
 {
-	clk_rate_exclusive_put(dphy->mod_clk);
-	clk_disable_unprepare(dphy->mod_clk);
+	if (dphy->quirks->has_mod_clk) {
+		clk_rate_exclusive_put(dphy->mod_clk);
+		clk_disable_unprepare(dphy->mod_clk);
+	}
 	reset_control_assert(dphy->reset);
 
 	return 0;
@@ -206,8 +210,17 @@ static struct regmap_config sun6i_dphy_regmap_config = {
 	.name		= "mipi-dphy",
 };
 
+static const struct sun6i_dphy_quirks sun6i_a31_quirks = {
+	.has_mod_clk = true,
+};
+
+static const struct sun6i_dphy_quirks sun50i_a64_quirks = {
+	.has_mod_clk = false,
+};
+
 static const struct of_device_id sun6i_dphy_of_table[] = {
-	{ .compatible = "allwinner,sun6i-a31-mipi-dphy" },
+	{ .compatible = "allwinner,sun6i-a31-mipi-dphy", .data = &sun6i_a31_quirks },
+	{ .compatible = "allwinner,sun50i-a64-mipi-dphy", .data = &sun50i_a64_quirks },
 	{ }
 };
 
@@ -216,9 +229,10 @@ int sun6i_dphy_probe(struct sun6i_dsi *dsi, struct device_node *node)
 	struct sun6i_dphy *dphy;
 	struct resource res;
 	void __iomem *regs;
+	const struct of_device_id *id;
 	int ret;
 
-	if (!of_match_node(sun6i_dphy_of_table, node)) {
+	if (!(id = of_match_node(sun6i_dphy_of_table, node))) {
 		dev_err(dsi->dev, "Incompatible D-PHY\n");
 		return -EINVAL;
 	}
@@ -226,6 +240,8 @@ int sun6i_dphy_probe(struct sun6i_dsi *dsi, struct device_node *node)
 	dphy = devm_kzalloc(dsi->dev, sizeof(*dphy), GFP_KERNEL);
 	if (!dphy)
 		return -ENOMEM;
+
+	dphy->quirks = id->data;
 
 	ret = of_address_to_resource(node, 0, &res);
 	if (ret) {
@@ -260,11 +276,13 @@ int sun6i_dphy_probe(struct sun6i_dsi *dsi, struct device_node *node)
 	}
 	regmap_mmio_attach_clk(dphy->regs, dphy->bus_clk);
 
-	dphy->mod_clk = of_clk_get_by_name(node, "mod");
-	if (IS_ERR(dphy->mod_clk)) {
-		dev_err(dsi->dev, "Couldn't get the DPHY mod clock\n");
-		ret = PTR_ERR(dphy->mod_clk);
-		goto err_free_bus;
+	if (dphy->quirks->has_mod_clk) {
+		dphy->mod_clk = of_clk_get_by_name(node, "mod");
+		if (IS_ERR(dphy->mod_clk)) {
+			dev_err(dsi->dev, "Couldn't get the DPHY mod clock\n");
+			ret = PTR_ERR(dphy->mod_clk);
+			goto err_free_bus;
+		}
 	}
 
 	dsi->dphy = dphy;
@@ -284,7 +302,8 @@ int sun6i_dphy_remove(struct sun6i_dsi *dsi)
 	struct sun6i_dphy *dphy = dsi->dphy;
 
 	regmap_mmio_detach_clk(dphy->regs);
-	clk_put(dphy->mod_clk);
+	if (dphy->quirks->has_mod_clk)
+		clk_put(dphy->mod_clk);
 	clk_put(dphy->bus_clk);
 	reset_control_put(dphy->reset);
 

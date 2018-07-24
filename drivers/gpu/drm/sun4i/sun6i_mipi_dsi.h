@@ -14,27 +14,40 @@
 #include <drm/drm_mipi_dsi.h>
 
 struct sun6i_dphy {
-	struct clk		*bus_clk;
-	struct clk		*mod_clk;
-	struct regmap		*regs;
-	struct reset_control	*reset;
+	struct clk			*bus_clk;
+	struct clk			*mod_clk;
+	struct regmap			*regs;
+	struct reset_control		*reset;
+	const struct sun6i_dphy_quirks	*quirks;
+};
+
+struct sun6i_dphy_quirks {
+	bool	has_mod_clk;
 };
 
 struct sun6i_dsi {
-	struct drm_connector	connector;
-	struct drm_encoder	encoder;
-	struct mipi_dsi_host	host;
+	struct drm_connector		connector;
+	struct drm_encoder		encoder;
+	struct mipi_dsi_host		host;
 
-	struct clk		*bus_clk;
-	struct clk		*mod_clk;
-	struct regmap		*regs;
-	struct reset_control	*reset;
-	struct sun6i_dphy	*dphy;
+	struct clk			*bus_clk;
+	struct clk			*mod_clk;
+	struct regmap			*regs;
+	struct reset_control		*reset;
+	struct sun6i_dphy		*dphy;
 
-	struct device		*dev;
-	struct sun4i_drv	*drv;
-	struct mipi_dsi_device	*device;
-	struct drm_panel	*panel;
+	struct device			*dev;
+	struct sun4i_drv		*drv;
+	struct sun4i_tcon		*tcon;
+	struct mipi_dsi_device		*device;
+	struct drm_panel		*panel;
+
+	const struct sun6i_dsi_quirks	*quirks;
+};
+
+struct sun6i_dsi_quirks {
+	long	mod_clk_freq;
+	bool	use_dsi_irq;
 };
 
 static inline struct sun6i_dsi *host_to_sun6i_dsi(struct mipi_dsi_host *host)

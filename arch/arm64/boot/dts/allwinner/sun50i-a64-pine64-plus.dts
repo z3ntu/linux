@@ -41,12 +41,51 @@
  */
 
 #include "sun50i-a64-pine64.dts"
+#include <dt-bindings/pwm/pwm.h>
 
 / {
 	model = "Pine64+";
 	compatible = "pine64,pine64-plus", "allwinner,sun50i-a64";
 
+	pwm_bl: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&r_pwm 0 50000 PWM_POLARITY_INVERTED>;
+		brightness-levels = <1 2 4 8 16 32 64 128 255>;
+		default-brightness-level = <8>;
+		enable-gpios = <&pio 7 10 GPIO_ACTIVE_HIGH>; /* PH10 */
+	};
+
+
 	/* TODO: Camera, touchscreen, etc. */
+};
+
+&de {
+	status = "okay";
+};
+
+&mixer0 {
+	status = "okay";
+};
+
+&tcon0 {
+	status = "okay";
+};
+
+&dphy {
+	status = "okay";
+};
+
+&dsi {
+	status = "okay";
+
+	panel@0 {
+		compatible = "feiyang,fy07024di26a30d", "simple-panel";
+		reg = <0>;
+		reset-gpios = <&pio 3 24 GPIO_ACTIVE_HIGH>; /* PD24 */
+		backlight = <&pwm_bl>;
+		avdd-supply = <&reg_dc1sw>;
+		dvdd-supply = <&reg_dldo2>;
+	};
 };
 
 &emac {
@@ -62,4 +101,10 @@
 		compatible = "ethernet-phy-ieee802.3-c22";
 		reg = <1>;
 	};
+};
+
+&r_pwm {
+	pinctrl-names = "default";
+	pinctrl-0 = <&r_pwm_pin>;
+	status = "okay";
 };

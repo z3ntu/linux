@@ -271,6 +271,7 @@ static void sun4i_tcon0_mode_set_common(struct sun4i_tcon *tcon,
 {
 	/* Configure the dot clock */
 	clk_set_rate(tcon->dclk, mode->crtc_clock * 1000);
+	pr_info("%s, rate: %d\n", __func__, mode->crtc_clock);
 
 	/* Set the resolution */
 	regmap_write(tcon->regs, SUN4I_TCON0_BASIC0_REG,
@@ -340,14 +341,27 @@ static void sun4i_tcon0_mode_set_cpu(struct sun4i_tcon *tcon,
 	u8 lanes = device->lanes;
 	u32 block_space, start_delay;
 	u32 tcon_div;
+	u32 dsi_clk;
 
-	tcon->dclk_min_div = 4;
+	tcon->dclk_min_div = 6;
 	tcon->dclk_max_div = 127;
 
 	sun4i_tcon0_mode_set_common(tcon, mode);
 
 	/* Set dithering if needed */
 	sun4i_tcon0_mode_set_dithering(tcon, sun4i_tcon_get_connector(encoder));
+
+#if 0
+	dsi_clk = mode->crtc_clock * 1000 * 6;
+	dsi_clk /= 4;
+	/* Configure the dot clock */
+	clk_set_rate(tcon->dclk, dsi_clk);
+
+	/* Set the resolution */
+	regmap_write(tcon->regs, SUN4I_TCON0_BASIC0_REG,
+		     SUN4I_TCON0_BASIC0_X(mode->crtc_hdisplay) |
+		     SUN4I_TCON0_BASIC0_Y(mode->crtc_vdisplay));
+#endif
 
 	regmap_update_bits(tcon->regs, SUN4I_TCON0_CTL_REG,
 			   SUN4I_TCON0_CTL_IF_MASK,
@@ -372,6 +386,7 @@ static void sun4i_tcon0_mode_set_cpu(struct sun4i_tcon *tcon,
 	tcon_div &= GENMASK(6, 0);
 	block_space = mode->htotal * bpp / (tcon_div * lanes);
 	block_space -= mode->hdisplay + 40;
+	block_space += 1;
 
 	regmap_write(tcon->regs, SUN4I_TCON0_CPU_TRI0_REG,
 		     SUN4I_TCON0_CPU_TRI0_BLOCK_SPACE(block_space) |
@@ -392,8 +407,9 @@ static void sun4i_tcon0_mode_set_cpu(struct sun4i_tcon *tcon,
 	 * the display clock * 15, but uses an hardcoded 3000...
 	 */
 	regmap_write(tcon->regs, SUN4I_TCON_SAFE_PERIOD_REG,
-		     SUN4I_TCON_SAFE_PERIOD_NUM(3000) |
-		     SUN4I_TCON_SAFE_PERIOD_MODE(3));
+		     0x03390023);
+		     //SUN4I_TCON_SAFE_PERIOD_NUM(3000) |
+		     //SUN4I_TCON_SAFE_PERIOD_MODE(3));
 
 	/* Enable the output on the pins */
 	regmap_write(tcon->regs, SUN4I_TCON0_IO_TRI_REG,
@@ -714,12 +730,23 @@ static void sun4i_tcon_finish_page_flip(struct drm_device *dev,
 	spin_unlock_irqrestore(&dev->event_lock, flags);
 }
 
-static irqreturn_t sun4i_tcon_handler(int irq, void *private)
+void sun4i_tcon_handle_vblank(struct sun4i_tcon *tcon)
 {
-	struct sun4i_tcon *tcon = private;
 	struct drm_device *drm = tcon->drm;
 	struct sun4i_crtc *scrtc = tcon->crtc;
 	struct sunxi_engine *engine = scrtc->engine;
+
+	drm_crtc_handle_vblank(&scrtc->crtc);
+	sun4i_tcon_finish_page_flip(drm, scrtc);
+
+	if (engine->ops->vblank_quirk)
+		engine->ops->vblank_quirk(engine);
+}
+EXPORT_SYMBOL(sun4i_tcon_handle_vblank);
+
+static irqreturn_t sun4i_tcon_handler(int irq, void *private)
+{
+	struct sun4i_tcon *tcon = private;
 	unsigned int status;
 
 	regmap_read(tcon->regs, SUN4I_TCON_GINT0_REG, &status);
@@ -729,9 +756,6 @@ static irqreturn_t sun4i_tcon_handler(int irq, void *private)
 			SUN4I_TCON_GINT0_TCON0_TRI_FINISH_INT)))
 		return IRQ_NONE;
 
-	drm_crtc_handle_vblank(&scrtc->crtc);
-	sun4i_tcon_finish_page_flip(drm, scrtc);
-
 	/* Acknowledge the interrupt */
 	regmap_update_bits(tcon->regs, SUN4I_TCON_GINT0_REG,
 			   SUN4I_TCON_GINT0_VBLANK_INT(0) |
@@ -739,8 +763,7 @@ static irqreturn_t sun4i_tcon_handler(int irq, void *private)
 			   SUN4I_TCON_GINT0_TCON0_TRI_FINISH_INT,
 			   0);
 
-	if (engine->ops->vblank_quirk)
-		engine->ops->vblank_quirk(engine);
+	sun4i_tcon_handle_vblank(tcon);
 
 	return IRQ_HANDLED;
 }
@@ -1257,6 +1280,12 @@ static int sun4i_tcon_bind(struct device *dev, struct device *master,
 				   SUN4I_TCON1_CTL_SRC_SEL_MASK,
 				   tcon->id);
 	}
+#if 0
+	/* Test pattern - white */
+	regmap_update_bits(tcon->regs, SUN4I_TCON0_CTL_REG,
+			   SUN4I_TCON0_CTL_SRC_SEL_MASK,
+			   5);
+#endif
 
 	list_add_tail(&tcon->list, &drv->tcon_list);
 
