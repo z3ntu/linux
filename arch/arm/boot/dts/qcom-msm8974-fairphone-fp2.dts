@@ -4,6 +4,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+#include <dt-bindings/clock/qcom,mmcc-msm8974.h>
 
 
 / {
@@ -293,6 +294,16 @@
 				bias-pull-up;
 			};
 		};
+
+		panel_pin: panel {
+			te {
+				pins = "gpio12";
+				function = "mdp_vsync";
+
+				drive-strength = <2>;
+				bias-disable;
+			};
+		};
 	};
 
 	sdhci@f9824900 {
@@ -471,9 +482,16 @@
 			};
 
 			panel: panel@0 {
-				compatible = "sharp,ls052t3sx02";
-
 				reg = <0>;
+				compatible = "otm,otm1902b-1080p";
+
+				// backlight?, reset?, enable?
+
+				disp-te-gpios = <&msmgpio 12 0>;
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&panel_pin>;
+
 				port {
 					panel_in: endpoint {
 						remote-endpoint = <&dsi0_out>;
