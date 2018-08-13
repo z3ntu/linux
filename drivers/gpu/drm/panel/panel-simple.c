@@ -2997,7 +2997,7 @@ static const struct panel_desc_dsi panasonic_vvx10f004b00 = {
 };
 
 static const struct drm_display_mode otm1902b_mode = {
-	.clock = 147290, // or 147291 - actually 147290.88
+	.clock = 73645, // or 147291 - actually 147290.88
 	.hdisplay = 1080,
 	.hsync_start = 1080 + 144,
 	.hsync_end = 1080 + 144 + 12,
@@ -3006,7 +3006,7 @@ static const struct drm_display_mode otm1902b_mode = {
 	.vsync_start = 1920 + 9,
 	.vsync_end = 1920 + 9 + 4,
 	.vtotal = 1920 + 9 + 4 + 3,
-	.vrefresh = 60,
+	.vrefresh = 30,
 };
 
 static const struct panel_desc_dsi otm1902b = {
