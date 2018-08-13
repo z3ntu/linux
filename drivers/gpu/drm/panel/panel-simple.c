@@ -2996,6 +2996,34 @@ static const struct panel_desc_dsi panasonic_vvx10f004b00 = {
 	.lanes = 4,
 };
 
+static const struct drm_display_mode otm1902b_mode = {
+	.clock = 147290, // or 147291 - actually 147290.88
+	.hdisplay = 1080,
+	.hsync_start = 1080 + 144,
+	.hsync_end = 1080 + 144 + 12,
+	.htotal = 1080 + 144 + 12 + 32,
+	.vdisplay = 1920,
+	.vsync_start = 1920 + 9,
+	.vsync_end = 1920 + 9 + 4,
+	.vtotal = 1920 + 9 + 4 + 3,
+	.vrefresh = 60,
+};
+
+static const struct panel_desc_dsi otm1902b = {
+	.desc = {
+		.modes = &otm1902b_mode,
+		.num_modes = 1,
+		.bpc = 8,
+		.size = {
+			.width = 62,
+			.height = 110,
+		},
+	},
+	.flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_EOT_PACKET,
+	.format = MIPI_DSI_FMT_RGB888,
+	.lanes = 4,
+};
+
 static const struct of_device_id dsi_of_match[] = {
 	{
 		.compatible = "auo,b080uan01",
@@ -3013,6 +3041,9 @@ static const struct of_device_id dsi_of_match[] = {
 		.compatible = "panasonic,vvx10f004b00",
 		.data = &panasonic_vvx10f004b00
 	}, {
+		.compatible = "otm,otm1902b-1080p",
+		.data = &otm1902b
+	},{
 		/* sentinel */
 	}
 };
