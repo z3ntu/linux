@@ -19,7 +19,8 @@ In 'cpus' nodes:
 
 In 'operating-points-v2' table:
 - compatible: Should be
-	- 'operating-points-v2-qcom-cpu' for apq8096 and msm8996.
+	- 'operating-points-v2-qcom-cpu' for apq8096, msm8996, msm8974,
+					     apq8064, msm8960 and ipq8074.
 - nvmem-cells: A phandle pointing to a nvmem-cells node representing the
 		efuse registers that has information about the
 		speedbin that is used to select the right frequency/voltage
