@@ -4896,6 +4896,12 @@ M:	Dave Airlie <airlied@redhat.com>
 S:	Odd Fixes
 F:	drivers/gpu/drm/ast/
 
+DRM DRIVER FOR BANANAPI S070WV20-CT16 ICN6211 MIPI-DSI TO RGB PANELS
+M:	Jagan Teki <jagan@amarulasolutions.com>
+S:	Maintained
+F:	drivers/gpu/drm/panel/panel-bananapi-s070wv20-icn6211.c
+F:	Documentation/devicetree/bindings/display/panel/bananapi,s070wv20-ct16.txt
+
 DRM DRIVER FOR BOCHS VIRTUAL GPU
 M:	Gerd Hoffmann <kraxel@redhat.com>
 L:	virtualization@lists.linux-foundation.org
