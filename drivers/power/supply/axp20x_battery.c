@@ -189,6 +189,11 @@ static int axp20x_battery_get_prop(struct power_supply *psy,
 	int ret = 0, reg, val1;
 
 	switch (psp) {
+    case POWER_SUPPLY_PROP_TECHNOLOGY:
+        /* TODO: AXP can be both Li-ion and LiPo */
+        val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
+        break;
+
 	case POWER_SUPPLY_PROP_PRESENT:
 	case POWER_SUPPLY_PROP_ONLINE:
 		ret = regmap_read(axp20x_batt->regmap, AXP20X_PWR_OP_MODE,
@@ -475,6 +480,7 @@ static int axp20x_battery_set_prop(struct power_supply *psy,
 }
 
 static enum power_supply_property axp20x_battery_props[] = {
+	POWER_SUPPLY_PROP_TECHNOLOGY,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_STATUS,
