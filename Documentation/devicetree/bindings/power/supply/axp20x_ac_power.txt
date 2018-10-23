@@ -4,6 +4,7 @@ Required Properties:
  - compatible: One of:
 			"x-powers,axp202-ac-power-supply"
 			"x-powers,axp221-ac-power-supply"
+			"x-powers,axp803-ac-power-supply"
 			"x-powers,axp813-ac-power-supply"
 
 This node is a subnode of the axp20x PMIC.
