@@ -4,6 +4,7 @@ Required properties:
   - compatible: should be one of:
     - "x-powers,axp209-adc",
     - "x-powers,axp221-adc",
+    - "x-powers,axp803-adc",
     - "x-powers,axp813-adc",
   - #io-channel-cells: should be 1,
 
@@ -39,6 +40,7 @@ AXP22x
  2 | batt_chrg_i
  3 | batt_dischrg_i
 
+AXP803
 AXP813
 ------
  0 | pmic_temp
