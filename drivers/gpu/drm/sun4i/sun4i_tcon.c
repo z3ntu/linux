@@ -284,10 +284,6 @@ static void sun4i_tcon0_mode_set_dithering(struct sun4i_tcon *tcon,
 	u32 bus_format = 0;
 	u32 val = 0;
 
-	/* XXX Would this ever happen? */
-	if (!connector)
-		return;
-
 	/*
 	 * FIXME: Undocumented bits
 	 *
@@ -305,11 +301,15 @@ static void sun4i_tcon0_mode_set_dithering(struct sun4i_tcon *tcon,
 	regmap_write(tcon->regs, SUN4I_TCON0_FRM_TBL2_REG, 0x57575555);
 	regmap_write(tcon->regs, SUN4I_TCON0_FRM_TBL3_REG, 0x7f7f7777);
 
-	/* Do dithering if panel only supports 6 bits per color */
-	if (connector->display_info.bpc == 6)
+	/* Do dithering if there's bridge connected */
+	if (!connector)
 		val |= SUN4I_TCON0_FRM_CTL_EN;
 
-	if (connector->display_info.num_bus_formats == 1)
+	/* Do dithering if panel only supports 6 bits per color */
+	if (connector && connector->display_info.bpc == 6)
+		val |= SUN4I_TCON0_FRM_CTL_EN;
+
+	if (connector && connector->display_info.num_bus_formats == 1)
 		bus_format = connector->display_info.bus_formats[0];
 
 	/* Check the connection format */
@@ -493,6 +493,8 @@ static void sun4i_tcon0_mode_set_rgb(struct sun4i_tcon *tcon,
 	/* Set dithering if needed */
 	if (tcon->panel)
 		sun4i_tcon0_mode_set_dithering(tcon, tcon->panel->connector);
+	else
+		sun4i_tcon0_mode_set_dithering(tcon, NULL);
 
 	/* Adjust clock delay */
 	clk_delay = sun4i_tcon_get_clk_delay(mode, 0);
