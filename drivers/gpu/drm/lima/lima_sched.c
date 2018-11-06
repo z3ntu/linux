@@ -383,6 +383,8 @@ static void lima_sched_timedout_job(struct drm_sched_job *job)
 	struct lima_sched_pipe *pipe = to_lima_pipe(job->sched);
 	struct lima_sched_task *task = to_lima_task(job);
 
+	DRM_ERROR("lima job timeout\n");
+
 	lima_sched_handle_error_task(pipe, task);
 }
 

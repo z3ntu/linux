@@ -170,7 +170,12 @@ static void lima_gp_task_fini(struct lima_sched_pipe *pipe)
 
 static void lima_gp_task_error(struct lima_sched_pipe *pipe)
 {
-	lima_gp_hard_reset(pipe->processor[0]);
+	struct lima_ip *ip = pipe->processor[0];
+
+	dev_err(ip->dev->dev, "gp task error int_state=%x status=%x\n",
+		gp_read(INT_STAT), gp_read(STATUS));
+
+	lima_gp_hard_reset(ip);
 }
 
 static void lima_gp_task_mmu_error(struct lima_sched_pipe *pipe)

@@ -359,8 +359,14 @@ static void lima_pp_task_error(struct lima_sched_pipe *pipe)
 {
 	int i;
 
-	for (i = 0; i < pipe->num_processor; i++)
-		lima_pp_hard_reset(pipe->processor[i]);
+	for (i = 0; i < pipe->num_processor; i++) {
+		struct lima_ip *ip = pipe->processor[i];
+
+		dev_err(ip->dev->dev, "pp task error %d int_state=%x status=%x\n",
+			i, pp_read(INT_STATUS), pp_read(STATUS));
+
+		lima_pp_hard_reset(ip);
+	}
 }
 
 static void lima_pp_task_mmu_error(struct lima_sched_pipe *pipe)
