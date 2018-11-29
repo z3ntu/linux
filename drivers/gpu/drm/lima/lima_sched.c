@@ -187,8 +187,12 @@ void lima_sched_context_fini(struct lima_sched_pipe *pipe,
 
 	mutex_destroy(&context->lock);
 
-	if (context->fences)
+	if (context->fences) {
+		int i;
+		for (i = 0; i < lima_sched_max_tasks; i++)
+			dma_fence_put(context->fences[i]);
 		kfree(context->fences);
+	}
 }
 
 static uint32_t lima_sched_context_add_fence(struct lima_sched_context *context,
