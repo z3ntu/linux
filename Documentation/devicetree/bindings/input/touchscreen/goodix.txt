@@ -5,6 +5,7 @@ Required properties:
  - compatible		: Should be "goodix,gt1151"
 				 or "goodix,gt5663"
 				 or "goodix,gt5688"
+				 or "goodix,gt5663"
 				 or "goodix,gt911"
 				 or "goodix,gt9110"
 				 or "goodix,gt912"
