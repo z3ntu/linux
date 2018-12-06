@@ -213,8 +213,11 @@ static int lima_ioctl_wait_fence(struct drm_device *dev, void *data, struct drm_
 
 	if (fence) {
 		err = lima_wait_fence(fence, args->timeout_ns);
+		args->error = fence->error;
 		dma_fence_put(fence);
 	}
+	else
+		args->error = 0;
 
 	return err;
 }

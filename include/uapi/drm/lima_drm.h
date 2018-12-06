@@ -137,7 +137,7 @@ struct drm_lima_wait_fence {
 	__u32 pipe;        /* in */
 	__u64 timeout_ns;  /* in */
 	__u32 seq;         /* in */
-	__u32 _pad;
+	__u32 error;       /* out */
 };
 
 #define LIMA_GEM_WAIT_READ   0x01
@@ -181,7 +181,7 @@ struct drm_lima_gem_mod {
 #define DRM_IOCTL_LIMA_GEM_INFO DRM_IOWR(DRM_COMMAND_BASE + DRM_LIMA_GEM_INFO, struct drm_lima_gem_info)
 #define DRM_IOCTL_LIMA_GEM_VA DRM_IOW(DRM_COMMAND_BASE + DRM_LIMA_GEM_VA, struct drm_lima_gem_va)
 #define DRM_IOCTL_LIMA_GEM_SUBMIT DRM_IOWR(DRM_COMMAND_BASE + DRM_LIMA_GEM_SUBMIT, union drm_lima_gem_submit)
-#define DRM_IOCTL_LIMA_WAIT_FENCE DRM_IOW(DRM_COMMAND_BASE + DRM_LIMA_WAIT_FENCE, struct drm_lima_wait_fence)
+#define DRM_IOCTL_LIMA_WAIT_FENCE DRM_IOWR(DRM_COMMAND_BASE + DRM_LIMA_WAIT_FENCE, struct drm_lima_wait_fence)
 #define DRM_IOCTL_LIMA_GEM_WAIT DRM_IOW(DRM_COMMAND_BASE + DRM_LIMA_GEM_WAIT, struct drm_lima_gem_wait)
 #define DRM_IOCTL_LIMA_CTX DRM_IOWR(DRM_COMMAND_BASE + DRM_LIMA_CTX, struct drm_lima_ctx)
 #define DRM_IOCTL_LIMA_GEM_MOD DRM_IOWR(DRM_COMMAND_BASE + DRM_LIMA_GEM_MOD, struct drm_lima_gem_mod)
