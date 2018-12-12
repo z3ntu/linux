@@ -10,6 +10,7 @@
 
 #include "lima_drv.h"
 #include "lima_gem.h"
+#include "lima_gem_prime.h"
 #include "lima_vm.h"
 #include "lima_object.h"
 
@@ -119,6 +120,9 @@ int lima_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 	dev = file_priv->minor->dev->dev_private;
 	if (dev == NULL)
 		return -EINVAL;
+
+	if (!lima_gem_prime_mmap(filp, vma))
+		return 0;
 
 	return ttm_bo_mmap(filp, vma, &dev->mman.bdev);
 }
