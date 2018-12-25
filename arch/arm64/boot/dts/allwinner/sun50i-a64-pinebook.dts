@@ -53,6 +53,17 @@
 		};
 	};
 
+	hdmi-connector {
+		compatible = "hdmi-connector";
+		type = "c";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
+	};
+
 	reg_vcc3v3: vcc3v3 {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc3v3";
@@ -87,6 +98,10 @@
 	status = "okay";
 };
 
+&de {
+	status = "okay";
+};
+
 &ehci0 {
 	phys = <&usbphy 0>;
 	phy-names = "usb";
@@ -94,6 +109,21 @@
 };
 
 &ehci1 {
+	status = "okay";
+};
+
+&hdmi {
+	hvcc-supply = <&reg_dldo1>;
+	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
+	};
+};
+
+&i2s2 {
 	status = "okay";
 };
 
@@ -344,6 +374,10 @@
 			"MIC1", "Internal Microphone Left",
 			"Internal Microphone Right", "HBIAS",
 			"MIC2", "Internal Microphone Right";
+};
+
+&sound_hdmi {
+	status = "okay";
 };
 
 &tcon0 {
