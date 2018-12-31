@@ -17,6 +17,7 @@ struct lima_bo {
 	struct ttm_placement placement;
 	struct ttm_buffer_object tbo;
 	struct ttm_bo_kmap_obj kmap;
+	struct ttm_bo_kmap_obj dma_buf_vmap;
 
 	struct list_head va;
 

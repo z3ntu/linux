@@ -48,7 +48,7 @@ struct sg_table *lima_gem_prime_get_sg_table(struct drm_gem_object *obj)
 	return drm_prime_pages_to_sg(bo->tbo.ttm->pages, npages);
 }
 
-int lima_gem_prime_mmap(struct file *filp, struct vm_area_struct *vma)
+int lima_gem_prime_dma_buf_mmap(struct file *filp, struct vm_area_struct *vma)
 {
 	struct drm_file *priv = filp->private_data;
 	struct drm_device *dev = priv->minor->dev;
@@ -95,5 +95,50 @@ int lima_gem_prime_mmap(struct file *filp, struct vm_area_struct *vma)
 
 out:
 	drm_gem_object_put_unlocked(obj);
+	return ret;
+}
+
+void *lima_gem_prime_vmap(struct drm_gem_object *obj)
+{
+	struct lima_bo *bo = to_lima_bo(obj);
+	int ret;
+
+	ret = ttm_bo_kmap(&bo->tbo, 0, bo->tbo.num_pages, &bo->dma_buf_vmap);
+	if (ret)
+		return ERR_PTR(ret);
+
+	return bo->dma_buf_vmap.virtual;
+}
+
+void lima_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr)
+{
+	struct lima_bo *bo = to_lima_bo(obj);
+
+	ttm_bo_kunmap(&bo->dma_buf_vmap);
+}
+
+int lima_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
+{
+	struct lima_bo *bo = to_lima_bo(obj);
+	struct lima_device *dev = ttm_to_lima_dev(bo->tbo.bdev);
+	int ret;
+
+	if (!vma->vm_file || !dev)
+		return -ENODEV;
+
+	/* Check for valid size. */
+	if (obj->size < vma->vm_end - vma->vm_start)
+		return -EINVAL;
+
+	vma->vm_pgoff += drm_vma_node_offset_addr(&bo->tbo.vma_node) >> PAGE_SHIFT;
+
+	/* prime mmap does not need to check access, so allow here */
+	ret = drm_vma_node_allow(&obj->vma_node, vma->vm_file->private_data);
+	if (ret)
+		return ret;
+
+	ret = ttm_bo_mmap(vma->vm_file, vma, &dev->mman.bdev);
+	drm_vma_node_revoke(&obj->vma_node, vma->vm_file->private_data);
+
 	return ret;
 }

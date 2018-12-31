@@ -121,7 +121,7 @@ int lima_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 	if (dev == NULL)
 		return -EINVAL;
 
-	if (!lima_gem_prime_mmap(filp, vma))
+	if (!lima_gem_prime_dma_buf_mmap(filp, vma))
 		return 0;
 
 	return ttm_bo_mmap(filp, vma, &dev->mman.bdev);
