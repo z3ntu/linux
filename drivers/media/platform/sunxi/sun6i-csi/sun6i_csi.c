@@ -180,10 +180,13 @@ int sun6i_csi_set_power(struct sun6i_csi *csi, bool enable)
 		return 0;
 	}
 
+	if (of_device_is_compatible(dev->of_node, "allwinner,sun50i-a64-csi"))
+		clk_set_rate_exclusive(sdev->clk_mod, 300000000);
+
 	ret = clk_prepare_enable(sdev->clk_mod);
 	if (ret) {
 		dev_err(sdev->dev, "Enable csi clk err %d\n", ret);
-		return ret;
+		goto clk_mod_put;
 	}
 
 	if (of_device_is_compatible(dev->of_node, "allwinner,sun50i-a64-csi"))
@@ -211,6 +214,9 @@ clk_mod_disable:
 	if (of_device_is_compatible(dev->of_node, "allwinner,sun50i-a64-csi"))
 		clk_rate_exclusive_put(sdev->clk_mod);
 	clk_disable_unprepare(sdev->clk_mod);
+clk_mod_put:
+	if (of_device_is_compatible(dev->of_node, "allwinner,sun50i-a64-csi"))
+		clk_rate_exclusive_put(sdev->clk_mod);
 	return ret;
 }
 
