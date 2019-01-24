@@ -123,8 +123,7 @@
 
 	de: display-engine {
 		compatible = "allwinner,sun50i-a64-display-engine";
-		allwinner,pipelines = <&mixer0>,
-				      <&mixer1>;
+		allwinner,pipelines = <&mixer0>;
 		status = "disabled";
 	};
 
