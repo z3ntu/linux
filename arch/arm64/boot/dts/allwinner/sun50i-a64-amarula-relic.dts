@@ -72,6 +72,18 @@
 		clock-names = "ext_clock";
 		reset-gpios = <&r_pio 0 2 GPIO_ACTIVE_LOW>; /* WL-PMU-EN: PL2 */
 	};
+
+	speaker_amp: audio-amplifier {
+		compatible = "simple-audio-amplifier";
+		/*
+		 * TODO This is actually a fixed regulator controlled by
+		 * the GPIO line on the PMIC. This should be corrected
+		 * once GPIO support is added for this PMIC.
+		 */
+		VCC-supply = <&reg_ldo_io0>;
+		enable-gpios = <&pio 7 7 GPIO_ACTIVE_HIGH>; /* PA-SHDN: PH7 */
+		sound-name-prefix = "Speaker Amp";
+	};
 };
 
 &csi {
@@ -90,6 +102,19 @@
 			pclk-sample = <1>;  /* Rising */
 		};
 	};
+};
+
+&codec {
+	status = "okay";
+};
+
+&codec_analog {
+	hpvcc-supply = <&reg_eldo1>;
+	status = "okay";
+};
+
+&dai {
+	status = "okay";
 };
 
 &de {
@@ -333,6 +358,14 @@
 
 &reg_rtc_ldo {
 	regulator-name = "vcc-rtc";
+};
+
+&sound {
+	status = "okay";
+	simple-audio-card,aux-devs = <&codec_analog>, <&speaker_amp>;
+	simple-audio-card,widgets = "Speaker", "Internal Speaker";
+	simple-audio-card,routing = "Speaker Amp INL", "LINEOUT",
+				    "Speaker Amp INR", "LINEOUT";
 };
 
 &uart0 {
