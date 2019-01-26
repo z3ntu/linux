@@ -125,6 +125,7 @@ static unsigned long ccu_nkm_round_rate(struct ccu_mux_internal *mux,
 	if (nkm->common.features & CCU_FEATURE_FIXED_POSTDIV)
 		rate *= nkm->fixed_post_div;
 
+	printk("round_rate, parent = %d\n", rate);
 	ccu_nkm_find_best(*parent_rate, rate, &_nkm);
 
 	rate = *parent_rate * _nkm.n * _nkm.k / _nkm.m;
@@ -132,6 +133,7 @@ static unsigned long ccu_nkm_round_rate(struct ccu_mux_internal *mux,
 	if (nkm->common.features & CCU_FEATURE_FIXED_POSTDIV)
 		rate /= nkm->fixed_post_div;
 
+	printk("round_rate, rate = %d\n", rate);
 	return rate;
 }
 
@@ -170,6 +172,15 @@ static int ccu_nkm_set_rate(struct clk_hw *hw, unsigned long rate,
 	reg &= ~GENMASK(nkm->n.width + nkm->n.shift - 1, nkm->n.shift);
 	reg &= ~GENMASK(nkm->k.width + nkm->k.shift - 1, nkm->k.shift);
 	reg &= ~GENMASK(nkm->m.width + nkm->m.shift - 1, nkm->m.shift);
+
+	if (nkm->common.reg == 0x40) {
+		printk("rate = %d\n", rate);
+		printk("parent_rate = %d\n", parent_rate);
+		printk("reg = 0x%x\n", reg);
+		printk("_nkm.n = %d, nkm->n.offset = 0x%x, nkm->n.shift = %d\n", _nkm.n, nkm->n.offset, nkm->n.shift);
+		printk("_nkm.k = %d, nkm->k.offset = 0x%x, nkm->k.shift = %d\n", _nkm.k, nkm->k.offset, nkm->k.shift);
+		printk("_nkm.m = %d, nkm->m.offset = 0x%x, nkm->m.shift = %d\n", _nkm.m, nkm->m.offset, nkm->m.shift);
+	}
 
 	reg |= (_nkm.n - nkm->n.offset) << nkm->n.shift;
 	reg |= (_nkm.k - nkm->k.offset) << nkm->k.shift;
