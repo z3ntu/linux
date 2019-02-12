@@ -50,3 +50,39 @@
 	pinctrl-0 = <&r_pwm_pin>;
 	status = "okay";
 };
+
+
+&i2c0 {
+    pinctrl-names = "default";
+    pinctrl-0 = <&i2c0_pins>;
+    status = "okay";
+
+    gt911@5d {
+        compatibile = "goodix,gt911";
+        reg = <0x5d>;
+
+        pinctrl-names = "default";
+        pinctrl-0 = <&gt911_irq_pin>, <&gt911_reset_pin>;
+        interrput-parent = <&pio>;
+        interrputs = <7 4 IRQ_TYPE_EDGE_RISING>;
+        irq-gpios = <&pio 7 4 GPIO_ACTIVE_HIGH>;
+        reset-gpios = <&pio 7 11 GPIO_ACTIVE_HIGH>;
+    };
+
+};
+
+&pio {
+    i2c0_pins: i2c0_pins {
+        pins = "PH0", "PH1";
+        function = "i2c0";
+    };
+    gt911_irq_pin: gt911_irq_pin {
+        pins = "PH4";
+        function = "irq";
+    };
+
+    gt911_reset_pin: gt911_reset_pin {
+        pins = "PH11";
+        function = "gpio_out";
+    };
+};
