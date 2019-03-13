@@ -1,0 +1,30 @@
+image: ubports/build-essential:bionic
+variables:
+  GIT_DEPTH: "1"
+
+build:
+  stage: build
+  tags:
+    - build1-amd64 
+  variables:
+    ARCH: arm64
+    CROSS_COMPILE: aarch64-linux-gnu-
+    KBUILD_DEBARCH: arm64
+    LOCALVERSION: -ubports
+  before_script:
+    - apt install flex bc bison kmod cpio libssl-dev fakeroot rsync -y
+  script:
+    - rm -f *.{deb,dsc,gz} || true
+    - rm -f ../*.{deb,dsc,gz} || true
+    - make pinephone_defconfig
+    - make -j$(nproc) deb-pkg
+    - mkdir -p out
+    - cp ../*.{deb,dsc,gz} .
+  artifacts:
+    paths:
+      - "*.deb"
+      - "*.dsc"
+      - "*.gz"
+  cache:
+    paths:
+      - "*.o"
