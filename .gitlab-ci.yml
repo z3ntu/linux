@@ -1,0 +1,25 @@
+image: ubports/build-essential:xenial
+
+build:
+  stage: build
+  variables:
+    ARCH: arm64
+    CROSS_COMPILE: aarch64-linux-gnu-
+    KBUILD_DEBARCH: arm64
+    LOCALVERSION: -ubports
+  before_script:
+    - apt install flex bc bison kmod cpio libssl-dev -y
+  script:
+    - cp pinephone-config .config
+    - make oldconfig
+    - make deb-pkg
+    - mkdir -p out
+    - cp ../*.{deb,dsc,gz} .
+  artifacts:
+    paths:
+      - "*.deb"
+      - "*.dsc"
+      - "*.gz"
+  cache:
+    paths:
+      - "*.o"
