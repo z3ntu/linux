@@ -1,4 +1,4 @@
-image: ubports/build-essential:xenial
+image: ubports/build-essential:bionic
 
 build:
   stage: build
@@ -8,11 +8,11 @@ build:
     KBUILD_DEBARCH: arm64
     LOCALVERSION: -ubports
   before_script:
-    - apt install flex bc bison kmod cpio libssl-dev -y
+    - apt install flex bc bison kmod cpio libssl-dev fakeroot -y
   script:
     - cp pinephone-config .config
     - make oldconfig
-    - make deb-pkg
+    - make -j$(nproc) deb-pkg
     - mkdir -p out
     - cp ../*.{deb,dsc,gz} .
   artifacts:
