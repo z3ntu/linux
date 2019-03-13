@@ -2,6 +2,9 @@ image: ubports/build-essential:bionic
 
 build:
   stage: build
+  job:
+    tags:
+      - build1-amd64 
   variables:
     ARCH: arm64
     CROSS_COMPILE: aarch64-linux-gnu-
