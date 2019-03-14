@@ -12,6 +12,8 @@ build:
   before_script:
     - apt install flex bc bison kmod cpio libssl-dev fakeroot -y
   script:
+    - rm -f *.{deb,dsc,gz} || true
+    - rm -f ../*.{deb,dsc,gz} || true
     - cp pinephone-config .config
     - make oldconfig
     - make -j$(nproc) deb-pkg
