@@ -117,6 +117,12 @@
 	status = "okay";
 };
 
+&reg_ldo_io0 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-ctp";
+	status = "okay";
+};
 
 &dsi {
 	vcc-dsi-supply = <&reg_dldo1>;		/* VCC3V3-DSI */
@@ -125,10 +131,11 @@
 	status = "okay";
 
 	panel@0 {
-		compatible = "feiyang,fy07024di26a30d";
+		compatible = "pinephone,jd9365da";
 		reg = <0>;
 		avdd-supply = <&reg_dc1sw>;	/* VCC-LCD */
 		dvdd-supply = <&reg_dldo2>;	/* VCC-MIPI */
+		cvdd-supply = <&reg_ldo_io0>;			/* VCC-CTP: GPIO0-LDO */
 		reset-gpios = <&pio 3 24 GPIO_ACTIVE_HIGH>; /* LCD-RST: PD24 */
 		backlight = <&backlight>;
 	};
@@ -168,17 +175,12 @@
 	};
 };
 
-&reg_ldo_io0 {
-	regulator-min-microvolt = <3300000>;
-	regulator-max-microvolt = <3300000>;
-	regulator-name = "vcc-ctp";
-	status = "okay";
-};
+
 
 &i2c0 {
     pinctrl-names = "default";
     pinctrl-0 = <&i2c0_pins>;
-    status = "okay";
+    status = "disabled";
 
     gt911@5d {
         compatible = "goodix,gt911";
@@ -221,7 +223,7 @@
 };
 
 &reg_dc1sw {
-	regulator-name = "vcc-phy";
+	regulator-name = "vcc-lcd";
 };
 
 &reg_dldo1 {
