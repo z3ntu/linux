@@ -259,6 +259,16 @@
 	};
 
 	pinctrl@fd510000 {
+		i2c2_pins: i2c2 {
+			mux {
+				pins = "gpio6", "gpio7";
+				function = "blsp_i2c2";
+
+				drive-strength = <2>;
+				bias-disable;
+			};
+		};
+
 		sdhc1_pin_a: sdhc1-pin-active {
 			clk {
 				pins = "sdc1_clk";
@@ -304,6 +314,25 @@
 				bias-disable;
 			};
 		};
+
+		touch_pin: touch {
+			int {
+				pins = "gpio28";
+				function = "gpio";
+
+				drive-strength = <2>;
+				bias-disable;
+				input-enable;
+			};
+
+			reset {
+				pins = "gpio55";
+				function = "gpio";
+
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+		};
 	};
 
 	sdhci@f9824900 {
@@ -329,6 +358,47 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&sdhc2_pin_a>, <&sdhc2_cd_pin_a>;
+	};
+
+
+	i2c@f9924000 {
+		status = "ok";
+
+		clock-frequency = <384000>;
+		qcom,src-freq = <19200000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&i2c2_pins>;
+
+		synaptics@20 {
+			compatible = "syna,rmi4-i2c";
+			reg = <0x20>;
+
+			interrupts-extended = <&msmgpio 28 IRQ_TYPE_LEVEL_LOW>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			vdd-supply = <&pm8941_l22>;
+			vio-supply = <&pm8941_s3>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&touch_pin>;
+
+			syna,nosleep-mode = <2>;
+			syna,startup-delay-ms = <160>;
+			syna,reset-delay-ms = <100>;
+
+			rmi4-f01@1 {
+				reg = <0x1>;
+				syna,nosleep-mode = <1>;
+			};
+
+			rmi4-f12@12 {
+				reg = <0x12>;
+				syna,sensor-type = <1>;
+			};
+		};
 	};
 
 	usb@f9a55000 {
