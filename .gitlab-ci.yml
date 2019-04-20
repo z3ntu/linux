@@ -1,4 +1,6 @@
 image: ubports/build-essential:bionic
+variables:
+  GIT_DEPTH: "1"
 
 build:
   stage: build
