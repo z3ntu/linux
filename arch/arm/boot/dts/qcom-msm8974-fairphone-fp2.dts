@@ -557,6 +557,7 @@
 				compatible = "otm,otm1902b-1080p";
 
 				// backlight?, reset?, enable?
+				has-dsi-backlight;
 
 				enable-gpios = <&msmgpio 25 0>;
 				disp-te-gpios = <&msmgpio 12 0>;
