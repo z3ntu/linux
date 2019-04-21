@@ -3310,7 +3310,8 @@ static const struct panel_desc_dsi osd101t2045_53ts = {
 };
 
 static const struct drm_display_mode otm1902b_mode = {
-	.clock = 73645, // or 147291 - actually 147290.88
+	.clock = 100000, // or 147291 - actually 147290.88
+//	.clock = 424000,
 	.hdisplay = 1080,
 	.hsync_start = 1080 + 144,
 	.hsync_end = 1080 + 144 + 12,
@@ -3319,7 +3320,7 @@ static const struct drm_display_mode otm1902b_mode = {
 	.vsync_start = 1920 + 9,
 	.vsync_end = 1920 + 9 + 4,
 	.vtotal = 1920 + 9 + 4 + 3,
-	.vrefresh = 30,
+	.vrefresh = 60,
 };
 
 static const struct panel_desc_dsi otm1902b = {
