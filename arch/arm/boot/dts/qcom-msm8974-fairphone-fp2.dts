@@ -368,6 +368,16 @@
 			rgb {
 				led-sources = <7 6 5>;
 			};
+
+			red {
+				led-sources = <7>;
+			};
+			green {
+				led-sources = <6>;
+			};
+			blue {
+				led-sources = <5>;
+			};
 		};
 	};
 };
