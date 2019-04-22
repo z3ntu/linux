@@ -379,7 +379,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			vdd-supply = <&pm8941_l22>;
+			//vdd-supply = <&pm8941_l22>;
 			vio-supply = <&pm8941_s3>;
 
 			pinctrl-names = "default";
