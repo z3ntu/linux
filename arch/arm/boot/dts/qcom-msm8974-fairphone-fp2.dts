@@ -176,8 +176,8 @@
 						regulator-min-microvolt = <1800000>;
 						regulator-max-microvolt = <1800000>;
 
-						regulator-always-on;
-						regulator-boot-on;
+// 						regulator-always-on;
+// 						regulator-boot-on;
 					};
 
 					l13 {
@@ -233,7 +233,7 @@
 
 					l22 {
 						regulator-min-microvolt = <3000000>;
-						regulator-max-microvolt = <3300000>;
+						regulator-max-microvolt = <3000000>; // qcom,platform-supply-entry1
 					};
 
 					l23 {
@@ -320,16 +320,16 @@
 				pins = "gpio28";
 				function = "gpio";
 
-				drive-strength = <2>;
-				bias-disable;
-				input-enable;
+				drive-strength = <8>;
+				bias-pull-down;
+// 				input-enable;
 			};
 
 			reset {
 				pins = "gpio55";
 				function = "gpio";
 
-				drive-strength = <2>;
+				drive-strength = <6>;
 				bias-pull-up;
 			};
 		};
@@ -385,13 +385,13 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&touch_pin>;
 
-			syna,nosleep-mode = <2>;
+// 			syna,nosleep-mode = <2>;
 			syna,startup-delay-ms = <160>;
 			syna,reset-delay-ms = <100>;
 
 			rmi4-f01@1 {
 				reg = <0x1>;
-				syna,nosleep-mode = <1>;
+// 				syna,nosleep-mode = <1>;
 			};
 
 			rmi4-f12@12 {
