@@ -1225,7 +1225,7 @@
 			};
 		};
 
-		mdp_iommu: iommu@fd928000 {
+		/*mdp_iommu: iommu@fd928000 {
 			compatible = "qcom,msm8974-iommu", "qcom,msm-iommu-v1";
 
 			reg = <0xfd928000 0x3000>;
@@ -1341,7 +1341,7 @@
 			clocks = <&rpmcc RPM_SMD_OCMEMGX_CLK>,
 				 <&mmcc OCMEMCX_OCMEMNOC_CLK>;
 			clock-names = "core", "iface";
-		};
+		};*/
 
 	};
 
@@ -1455,7 +1455,7 @@
 		regulator-always-on;
 	};
 
-	gpu_opp_table: opp_table {
+	/*gpu_opp_table: opp_table {
 		compatible = "operating-points-v2";
 
 		opp-578000000 {
@@ -1464,5 +1464,5 @@
 		opp-27000000 {
 			opp-hz = /bits/ 64 <27000000>;
 		};
-	};
+	};*/
 };
