@@ -1167,13 +1167,13 @@
 					 <&mmcc MMSS_MISC_AHB_CLK>,
 					 <&mmcc MMSS_S0_AXI_CLK>,
 					 <&mmcc MMSS_MMSSNOC_AXI_CLK>;
-				clock-names = "mdp_core_clk",
-					      "iface_clk",
-					      "bus_clk",
-					      "byte_clk",
-					      "pixel_clk",
-					      "core_clk",
-					      "core_mmss_clk",
+				clock-names = "mdp_core",
+					      "iface",
+					      "bus",
+					      "byte",
+					      "pixel",
+					      "core",
+					      "core_mmss",
 					      "s0_axi",
 					      "mmssnoc";
 				phys = <&dsi_phy0>;
@@ -1217,7 +1217,7 @@
 				#clock-cells = <1>;
 
 				clocks = <&mmcc MDSS_AHB_CLK>;
-				clock-names = "iface_clk";
+				clock-names = "iface";
 
 				vddio-supply = <&pm8941_l12>;
 
