@@ -1130,7 +1130,7 @@
 					      "core",
 					      "vsync";
 
-				iommus = <&mdp_iommu 1>;
+// 				iommus = <&mdp_iommu 1>;
 
 				ports {
 					#address-cells = <1>;
