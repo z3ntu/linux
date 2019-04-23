@@ -274,13 +274,6 @@
 
 			wcnss {
 				status = "ok";
-
-				bt {
-					local-bd-address = [ 00 11 22 33 44 55 ];
-				};
-				wifi {
-					local-mac-address = [ 00 11 22 33 44 55 ];
-				};
 			};
 		};
 	};
