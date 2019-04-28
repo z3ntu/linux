@@ -1309,7 +1309,7 @@
 				reg = <0x3000 0x1000>;
 				interrupts = <GIC_SPI 241 0>;
 			};
-		};
+		};*/
 
 		gpu@fdb00000 {
 			compatible = "qcom,adreno-330.2", "qcom,adreno";
@@ -1341,7 +1341,7 @@
 			clocks = <&rpmcc RPM_SMD_OCMEMGX_CLK>,
 				 <&mmcc OCMEMCX_OCMEMNOC_CLK>;
 			clock-names = "core", "iface";
-		};*/
+		};
 
 	};
 
@@ -1455,14 +1455,26 @@
 		regulator-always-on;
 	};
 
-	/*gpu_opp_table: opp_table {
+	gpu_opp_table: opp_table {
 		compatible = "operating-points-v2";
 
 		opp-578000000 {
 			opp-hz = /bits/ 64 <578000000>;
 		};
+		/*opp-462400000 {
+			opp-hz = /bits/ 64 <462400000>;
+		};
+		opp-389000000 {
+			opp-hz = /bits/ 64 <389000000>;
+		};
+		opp-330000000 {
+			opp-hz = /bits/ 64 <330000000>;
+		};
+		opp-200000000 {
+			opp-hz = /bits/ 64 <200000000>;
+		};*/
 		opp-27000000 {
 			opp-hz = /bits/ 64 <27000000>;
 		};
-	};*/
+	};
 };
