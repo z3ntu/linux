@@ -1,4 +1,4 @@
-#include "qcom-msm8974.dtsi"
+#include "qcom-msm8974pro.dtsi"
 #include "qcom-pm8841.dtsi"
 #include "qcom-pm8941.dtsi"
 #include <dt-bindings/gpio/gpio.h>
@@ -265,7 +265,7 @@
 				function = "blsp_i2c2";
 
 				drive-strength = <2>;
-				bias-disable;
+				bias-pull-up;
 			};
 		};
 
@@ -321,16 +321,8 @@
 				function = "gpio";
 
 				drive-strength = <8>;
-				bias-pull-down;
-// 				input-enable;
-			};
-
-			reset {
-				pins = "gpio55";
-				function = "gpio";
-
-				drive-strength = <6>;
 				bias-pull-up;
+				input-enable;
 			};
 		};
 	};
@@ -365,16 +357,17 @@
 		status = "ok";
 
 		clock-frequency = <384000>;
-		qcom,src-freq = <19200000>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&i2c2_pins>;
 
 		synaptics@20 {
+			status = "disabled";
 			compatible = "syna,rmi4-i2c";
 			reg = <0x20>;
 
-			interrupts-extended = <&msmgpio 28 IRQ_TYPE_LEVEL_LOW>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <28 IRQ_TYPE_LEVEL_LOW>;
 
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -385,13 +378,13 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&touch_pin>;
 
-// 			syna,nosleep-mode = <2>;
+			syna,nosleep-mode = <2>;
 			syna,startup-delay-ms = <160>;
 			syna,reset-delay-ms = <100>;
 
 			rmi4-f01@1 {
 				reg = <0x1>;
-// 				syna,nosleep-mode = <1>;
+				syna,nosleep-mode = <1>;
 			};
 
 			rmi4-f12@12 {
