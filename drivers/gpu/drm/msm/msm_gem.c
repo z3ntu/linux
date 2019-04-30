@@ -121,7 +121,8 @@ static void put_pages_vram(struct drm_gem_object *obj)
 	struct msm_drm_private *priv = obj->dev->dev_private;
 
 	spin_lock(&priv->vram.lock);
-	drm_mm_remove_node(msm_obj->vram_node);
+	// FIXME Crashes here
+	//drm_mm_remove_node(msm_obj->vram_node);
 	spin_unlock(&priv->vram.lock);
 
 	kvfree(msm_obj->pages);

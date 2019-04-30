@@ -52,7 +52,7 @@ void msm_gem_purge_vma(struct msm_gem_address_space *aspace,
 	if (!vma->mapped)
 		return;
 
-	if (aspace->mmu)
+	if (aspace && aspace->mmu)
 		aspace->mmu->funcs->unmap(aspace->mmu, vma->iova, size);
 
 	vma->mapped = false;
@@ -102,10 +102,12 @@ void msm_gem_close_vma(struct msm_gem_address_space *aspace,
 	if (WARN_ON(vma->inuse > 0 || vma->mapped))
 		return;
 
-	spin_lock(&aspace->lock);
+	// FIXME no aspace
+	//spin_lock(&aspace->lock);
 	if (vma->iova)
 		drm_mm_remove_node(&vma->node);
-	spin_unlock(&aspace->lock);
+	// FIXME no aspace
+	//spin_unlock(&aspace->lock);
 
 	vma->iova = 0;
 
