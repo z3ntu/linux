@@ -81,8 +81,8 @@
 			AVDD-supply = <&reg_dldo3>;
 			DOVDD-supply = <&reg_aldo1>;
 			DVDD-supply = <&reg_eldo3>;
-			reset-gpios = <&pio 4 16 GPIO_ACTIVE_LOW>; /* CSI0-RST: PE16 */
-			powerdown-gpios = <&pio 4 17 GPIO_ACTIVE_HIGH>; /* CSI0-PWDN: PE17 */
+			reset-gpios = <&pio 3 3 GPIO_ACTIVE_LOW>; /* CSI-RST-R: PD3 */
+			powerdown-gpios = <&pio 2 0 GPIO_ACTIVE_HIGH>; /* CSI-STBY-R: PC0 */
 
 			port {
 				ov5640_ep: endpoint {
