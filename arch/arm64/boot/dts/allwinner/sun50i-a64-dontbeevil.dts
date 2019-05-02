@@ -64,8 +64,8 @@
 
 	i2c-csi {
 		compatible = "i2c-gpio";
-		sda-gpios = <&pio 4 13 GPIO_ACTIVE_HIGH>; /* CSI0-SDA: PE13 */
-		scl-gpios = <&pio 4 12 GPIO_ACTIVE_HIGH>; /* CSI0-SCK: PE12 */
+		sda-gpios = <&pio 4 13 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>; /* CSI0-SDA: PE13 */
+		scl-gpios = <&pio 4 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>; /* CSI0-SCK: PE12 */
 		i2c-gpio,delay-us = <5>;
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -269,7 +269,7 @@
 		compatible = "st,lis3mdl-magn";
 		reg = <0x1e>;
 		interrupt-parent = <&pio>;
-		interrupts = <1 1 IRQ_TYPE_EDGE_FALLING>; /* PB1 */
+		interrupts = <1 1 IRQ_TYPE_EDGE_RISING>; /* PB1 */
 	};
 
 	stk3335@47 {
