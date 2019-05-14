@@ -125,6 +125,11 @@
 	};
 };
 
+&reg_ldo_io0 {
+	status = "enabled";
+	regulator-always-on;
+};
+
 &ac_power_supply {
 	status = "okay";
 };
