@@ -1090,6 +1090,7 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 		dev_err(&client->dev, "Controller fail to enable vdd\n");
 		return error;
 	}
+	msleep(300);
 
 	tsdata->wake_gpio = devm_gpiod_get_optional(&client->dev,
 						    "wake", GPIOD_OUT_LOW);
@@ -1203,7 +1204,9 @@ static int edt_ft5x06_ts_remove(struct i2c_client *client)
 {
 	struct edt_ft5x06_ts_data *tsdata = i2c_get_clientdata(client);
 
-	regulator_disable(tsdata->vdd);
+	if (!IS_ERR(tsdata->vdd))
+		regulator_disable(tsdata->vdd);
+
 	edt_ft5x06_ts_teardown_debugfs(tsdata);
 
 	return 0;
