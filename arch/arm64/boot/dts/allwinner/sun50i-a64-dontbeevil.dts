@@ -129,6 +129,20 @@
 		compatible = "gpio-vibrator";
 		enable-gpios = <&pio 3 2 GPIO_ACTIVE_HIGH>; /* PD2 */
 	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		red {
+			gpios = <&r_pio 0 8 GPIO_ACTIVE_LOW>; /* PL8 */
+		};
+		green {
+			gpios = <&r_pio 0 9 GPIO_ACTIVE_LOW>; /* PL9 */
+		};
+		blue {
+			gpios = <&r_pio 0 11 GPIO_ACTIVE_LOW>; /* PL11 */
+		};
+	};
 };
 
 &ac_power_supply {
