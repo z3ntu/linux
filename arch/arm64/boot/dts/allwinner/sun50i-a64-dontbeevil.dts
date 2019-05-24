@@ -143,6 +143,12 @@
 			gpios = <&r_pio 0 11 GPIO_ACTIVE_LOW>; /* PL11 */
 		};
 	};
+
+	speaker_amp: audio-amplifier {
+		compatible = "simple-audio-amplifier";
+		enable-gpios = <&pio 2 7 GPIO_ACTIVE_HIGH>; /* PA-SHDN: PC7 */
+		sound-name-prefix = "Speaker Amp";
+	};
 };
 
 &ac_power_supply {
@@ -400,16 +406,20 @@
 };
 
 &sound {
-	simple-audio-card,aux-devs = <&codec_analog>;
-	simple-audio-card,widgets = "Microphone", "Microphone Jack",
-				    "Headphone", "Headphone Jack";
+	simple-audio-card,aux-devs = <&codec_analog>, <&speaker_amp>;
+	simple-audio-card,widgets = "Microphone", "Microphone",
+				    "Headphone", "Headphone Jack",
+				    "Speaker", "Earpiece Speaker";
 	simple-audio-card,routing =
+			"Microphone", "HBIAS",
+			"MIC2", "Microphone",
+			"Speaker Amp INL", "HP",
+			"Headphone Jack", "Speaker Amp OUTL",
+			"Earpiece Speaker", "EARPIECE",
 			"Left DAC", "AIF1 Slot 0 Left",
 			"Right DAC", "AIF1 Slot 0 Right",
-			"Headphone Jack", "HP",
 			"AIF1 Slot 0 Left ADC", "Left ADC",
-			"AIF1 Slot 0 Right ADC", "Right ADC",
-			"MIC2", "Microphone Jack";
+			"AIF1 Slot 0 Right ADC", "Right ADC";
 	status = "okay";
 };
 
