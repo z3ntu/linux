@@ -1243,6 +1243,63 @@
 			};
 		};
 
+		ocmem: ocmem@fdd00000 {
+			status = "disabled";
+
+			compatible = "qcom,msm8974-ocmem";
+			reg = <0xfdd00000 0x2000>,
+			      <0xfec00000 0x180000>;
+			reg-names = "ctrl",
+			            "mem";
+			clocks = <&rpmcc RPM_SMD_OCMEMGX_CLK>,
+			         <&mmcc OCMEMCX_OCMEMNOC_CLK>;
+			clock-names = "core",
+			              "iface";
+
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			gmu-sram@0 {
+				reg = <0x0 0x100000>;
+			};
+		};
+
+		gpu_opp_table: opp_table {
+			status = "disabled";
+
+			compatible = "operating-points-v2";
+
+			opp-533000000 {
+				opp-hz = /bits/ 64 <533000000>;
+			};
+
+			opp-27000000 {
+				opp-hz = /bits/ 64 <27000000>;
+			};
+		};
+
+		gpu: adreno@fdb00000 {
+			status = "disabled";
+
+			compatible = "qcom,adreno-330.2",
+			             "qcom,adreno";
+			reg = <0xfdb00000 0x10000>;
+			reg-names = "kgsl_3d0_reg_memory";
+			interrupts = <GIC_SPI 33 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "kgsl_3d0_irq";
+			clock-names = "core",
+			              "iface",
+			              "mem_iface";
+			clocks = <&mmcc OXILI_GFX3D_CLK>,
+			         <&mmcc OXILICX_AHB_CLK>,
+			         <&mmcc OXILICX_AXI_CLK>;
+			ocmem = <&ocmem>;
+			power-domains = <&mmcc OXILICX_GDSC>;
+			operating-points-v2 = <&gpu_opp_table>;
+
+			// iommus = <&gpu_iommu 0>;
+		};
+
 		mdss: mdss@fd900000 {
 			status = "disabled";
 
@@ -1288,6 +1345,8 @@
 				              "bus",
 				              "core",
 				              "vsync";
+
+				// iommus = <&mdp_iommu 0>;
 
 				ports {
 					#address-cells = <1>;
