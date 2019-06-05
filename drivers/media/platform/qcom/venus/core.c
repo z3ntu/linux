@@ -281,11 +281,11 @@ static int venus_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_core_deinit;
 
-	ret = pm_runtime_put_sync(dev);
-	if (ret) {
-		pm_runtime_get_noresume(dev);
-		goto err_dev_unregister;
-	}
+//	ret = pm_runtime_put_sync(dev);
+//	if (ret) {
+//		pm_runtime_get_noresume(dev);
+//		goto err_dev_unregister;
+//	}
 
 	venus_dbgfs_init(core);
 
@@ -444,6 +444,39 @@ static const struct venus_resources msm8916_res = {
 	.vmem_addr = 0,
 	.dma_mask = 0xddc00000 - 1,
 	.fwname = "qcom/venus-1.8/venus.mdt",
+};
+
+static const struct freq_tbl msm8974_freq_table[] = {
+	{ 979200, 465000000 },
+	{ 783360, 465000000 },
+	{ 489600, 266670000 },
+	{ 244800, 133330000 },
+};
+
+static const struct reg_val msm8974_reg_preset[] = {
+	{ 0x80004, 0x00000001 },
+	{ 0x80070, 0x00011fff },
+	{ 0x80074, 0x000000a4 },
+	{ 0x800A8, 0x00001fff },
+	{ 0x80124, 0x00000003 },
+	{ 0xe0020, 0x05555556 },
+	{ 0xe0024, 0x0 },
+};
+
+static const struct venus_resources msm8974_res = {
+	.freq_tbl = msm8974_freq_table,
+	.freq_tbl_size = ARRAY_SIZE(msm8974_freq_table),
+	.reg_tbl = msm8974_reg_preset,
+	.reg_tbl_size = ARRAY_SIZE(msm8974_reg_preset),
+	.clks = { "core", "iface", "bus", "ocmem" },
+	.clks_num = 4,
+	.max_load = 1224450, /* 4k @ 30 + 1080p @ 30 */
+	.hfi_version = HFI_VERSION_1XX,
+	.vmem_id = VIDC_RESOURCE_NONE,
+	.vmem_size = 0,
+	.vmem_addr = 0,
+	.dma_mask = 0xddc00000 - 1,
+	.fwname = "venus.mdt",
 };
 
 static const struct freq_tbl msm8996_freq_table[] = {
@@ -614,6 +647,7 @@ static const struct venus_resources sc7180_res = {
 
 static const struct of_device_id venus_dt_match[] = {
 	{ .compatible = "qcom,msm8916-venus", .data = &msm8916_res, },
+	{ .compatible = "qcom,msm8974-venus", .data = &msm8974_res, },
 	{ .compatible = "qcom,msm8996-venus", .data = &msm8996_res, },
 	{ .compatible = "qcom,sdm845-venus", .data = &sdm845_res, },
 	{ .compatible = "qcom,sdm845-venus-v2", .data = &sdm845_res_v2, },
