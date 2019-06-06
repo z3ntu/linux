@@ -48,7 +48,7 @@
 
 static void msm_deinit_vram(struct drm_device *ddev);
 
-static char *vram = "16m";
+static char *vram = "24m";
 MODULE_PARM_DESC(vram, "Configure VRAM size (for devices without IOMMU/GPUMMU)");
 module_param(vram, charp, 0);
 
