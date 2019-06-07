@@ -16,8 +16,7 @@ build:
   script:
     - rm -f *.{deb,dsc,gz} || true
     - rm -f ../*.{deb,dsc,gz} || true
-    - cp pinephone-config .config
-    - make oldconfig
+    - make pinephone_defconfig
     - make -j$(nproc) deb-pkg
     - mkdir -p out
     - cp ../*.{deb,dsc,gz} .
