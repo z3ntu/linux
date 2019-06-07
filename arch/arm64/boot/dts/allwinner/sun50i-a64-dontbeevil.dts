@@ -64,8 +64,8 @@
 
 	i2c-csi {
 		compatible = "i2c-gpio";
-		sda-gpios = <&pio 4 13 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>; /* CSI0-SDA: PE13 */
-		scl-gpios = <&pio 4 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>; /* CSI0-SCK: PE12 */
+		sda-gpios = <&pio 4 13 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>; /* CSI-SDA: PE13 */
+		scl-gpios = <&pio 4 12 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>; /* CSI-SCK: PE12 */
 		i2c-gpio,delay-us = <5>;
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -81,8 +81,8 @@
 			AVDD-supply = <&reg_dldo3>;
 			DOVDD-supply = <&reg_aldo1>;
 			DVDD-supply = <&reg_eldo3>;
-			reset-gpios = <&pio 3 3 GPIO_ACTIVE_LOW>; /* PD3 */
-			powerdown-gpios = <&pio 2 0 GPIO_ACTIVE_HIGH>; /* PC0 */
+			reset-gpios = <&pio 3 3 GPIO_ACTIVE_LOW>; /* CSI-RST-R: PD3 */
+			powerdown-gpios = <&pio 2 0 GPIO_ACTIVE_HIGH>; /* CSI-STBY-R: PC0 */
 
 			port {
 				ov5640_ep: endpoint {
