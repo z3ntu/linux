@@ -143,6 +143,17 @@
 			gpios = <&r_pio 0 11 GPIO_ACTIVE_LOW>; /* PL11 */
 		};
 	};
+
+	sgm3140 {
+		compatible = "sgmicro,sgm3140";
+		flash-gpios = <&pio 3 7 GPIO_ACTIVE_HIGH>; /* FLASH_TRIGOUT: PD7 */
+		enable-gpios = <&pio 1 3 GPIO_ACTIVE_HIGH>; /* FLASH_EN: PB3 */
+
+		flash-led {
+			label = "sgm3140-flash";
+		};
+
+	};
 };
 
 &ac_power_supply {
