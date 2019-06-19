@@ -6,11 +6,14 @@
 #include <linux/of.h>
 #include <linux/platform_device.h>
 
+#include <media/v4l2-flash-led-class.h>
+
 struct sgm3140 {
 	struct gpio_desc *flash_gpio;
 	struct gpio_desc *enable_gpio;
 
 	struct led_classdev_flash fled_cdev;
+	struct v4l2_flash *v4l2_flash;
 };
 
 static struct sgm3140 *flcdev_to_sgm3140(struct led_classdev_flash *flcdev)
@@ -58,12 +61,35 @@ int sgm3140_brightness_set(struct led_classdev *led_cdev,
 	return 0;
 }
 
+static void sgm3140_init_v4l2_flash_config(struct sgm3140 *priv,
+					   struct v4l2_flash_config *v4l2_sd_cfg)
+{
+	struct led_classdev *led_cdev = &priv->fled_cdev.led_cdev;
+	struct led_flash_setting *s;
+
+	strlcpy(v4l2_sd_cfg->dev_name, led_cdev->name,
+		sizeof(v4l2_sd_cfg->dev_name));
+
+	s = &v4l2_sd_cfg->intensity;
+	s->min = 0;
+	s->max = 1;
+	s->step = 1;
+	s->val = 1;
+
+	//v4l2_sd_cfg->has_external_strobe = led_cfg->has_external_strobe;
+}
+
+//static const struct v4l2_flash_ops v4l2_flash_ops = {
+//	.external_strobe_set = max77693_led_external_strobe_set,
+//};
+
 static int sgm3140_probe(struct platform_device *pdev)
 {
 	struct sgm3140 *priv;
 	struct led_classdev *led_cdev;
 	struct led_classdev_flash *fled_cdev;
 	struct device_node *child_node;
+	struct v4l2_flash_config v4l2_sd_cfg;
 	int ret;
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
@@ -113,10 +139,29 @@ static int sgm3140_probe(struct platform_device *pdev)
 	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to register flash device: %d\n",
 			ret);
-		goto err;
+		goto err_flash_register;
 	}
 
-err:
+	sgm3140_init_v4l2_flash_config(priv, &v4l2_sd_cfg);
+
+	/* Create V4L2 Flash subdev */
+	priv->v4l2_flash = v4l2_flash_init(&pdev->dev, of_fwnode_handle(child_node),
+					   fled_cdev, /*&v4l2_flash_ops*/ NULL,
+					   &v4l2_sd_cfg);
+	if (IS_ERR(priv->v4l2_flash)) {
+		ret = PTR_ERR(priv->v4l2_flash);
+		goto err_v4l2_flash_init;
+	}
+
+	//of_node_put(child_node); // FIXME
+
+	dev_err(&pdev->dev, "sgm3140 registered successfully!\n");
+
+	return 0;
+
+err_v4l2_flash_init:
+	led_classdev_flash_unregister(fled_cdev);
+err_flash_register:
 	of_node_put(child_node);
 	return ret;
 }
@@ -125,6 +170,7 @@ static int sgm3140_remove(struct platform_device *pdev)
 {
 	struct sgm3140 *priv = platform_get_drvdata(pdev);
 
+	v4l2_flash_release(priv->v4l2_flash);
 	led_classdev_flash_unregister(&priv->fled_cdev);
 
 	return 0;
