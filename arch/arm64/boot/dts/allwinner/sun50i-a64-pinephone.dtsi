@@ -60,6 +60,17 @@
 		enable-gpios = <&pio 3 2 GPIO_ACTIVE_HIGH>; /* PD2 */
 		vcc-supply = <&reg_dcdc1>;
 	};
+
+	sgm3140: led-controller {
+		compatible = "sgmicro,sgm3140";
+		vin-supply = <&reg_dcdc1>;
+
+		sgm3140_flash: led {
+			function = LED_FUNCTION_FLASH;
+			color = <LED_COLOR_ID_WHITE>;
+			flash-max-timeout-us = <250000>;
+		};
+	};
 };
 
 &codec {
