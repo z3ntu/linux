@@ -33,15 +33,15 @@ int sgm3140_strobe_set(struct led_classdev_flash *fled_cdev, bool state)
 	return 0;
 }
 
-static int sgm3140_timeout_set(struct led_classdev_flash *fled_cdev,
-			       u32 timeout)
-{
-	return 0;
-}
+//static int sgm3140_timeout_set(struct led_classdev_flash *fled_cdev,
+//			       u32 timeout)
+//{
+//	return 0;
+//}
 
 struct led_flash_ops sgm3140_flash_ops = {
 	.strobe_set = sgm3140_strobe_set,
-	.timeout_set = sgm3140_timeout_set,
+//	.timeout_set = sgm3140_timeout_set,
 };
 
 int sgm3140_brightness_set(struct led_classdev *led_cdev,
@@ -98,7 +98,7 @@ static int sgm3140_probe(struct platform_device *pdev)
 	led_cdev = &fled_cdev->led_cdev;
 
 	fled_cdev->ops = &sgm3140_flash_ops;
-	fled_cdev->timeout.max = 300000; /* 300ms */
+//	fled_cdev->timeout.max = 300000; /* 300ms */
 
 	led_cdev->brightness_set_blocking = sgm3140_brightness_set;
 	led_cdev->max_brightness = LED_ON;
