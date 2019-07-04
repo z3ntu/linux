@@ -149,6 +149,21 @@
 		enable-gpios = <&pio 2 7 GPIO_ACTIVE_HIGH>; /* PA-SHDN: PC7 */
 		sound-name-prefix = "Speaker Amp";
 	};
+
+	/*sound-analog {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "i2s-something";
+		simple-audio-card,format = "i2s";
+//		simple-audio-card,mclk-fs = <512>;
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&wm8978>;
+		};
+	};*/
 };
 
 &ac_power_supply {
@@ -290,6 +305,11 @@
 		bias-pull-up;
 		function = "irq";
 	};
+
+	/*i2s0_pins: i2s0-pins {
+		pins = "PB4", "PB5", "PB6", "PB7";
+		function = "i2s0";
+	};*/
 };
 
 
@@ -320,6 +340,12 @@
 		interrupts = <1 0 IRQ_TYPE_EDGE_FALLING>; /* PB0 */
 	};
 };
+
+/*&i2s0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s0_pins>;
+	status = "okay";
+};*/
 
 &lradc {
 	vref-supply = <&reg_aldo3>;
