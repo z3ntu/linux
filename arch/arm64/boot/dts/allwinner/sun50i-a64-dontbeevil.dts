@@ -150,20 +150,22 @@
 		sound-name-prefix = "Speaker Amp";
 	};
 
-	/*sound-analog {
+	
+
+	sound-modem {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "i2s-something";
 		simple-audio-card,format = "i2s";
-//		simple-audio-card,mclk-fs = <512>;
+		simple-audio-card,mclk-fs = <512>;
 
 		simple-audio-card,cpu {
 			sound-dai = <&i2s0>;
 		};
 
-		simple-audio-card,codec {
-			sound-dai = <&wm8978>;
-		};
-	};*/
+		/*simple-audio-card,codec {
+			sound-dai = <&codec>; // FIXME WHAT?
+		};*/
+	};
 };
 
 &ac_power_supply {
@@ -306,10 +308,10 @@
 		function = "irq";
 	};
 
-	/*i2s0_pins: i2s0-pins {
+	i2s0_pins: i2s0-pins {
 		pins = "PB4", "PB5", "PB6", "PB7";
 		function = "i2s0";
-	};*/
+	};
 };
 
 
@@ -341,11 +343,11 @@
 	};
 };
 
-/*&i2s0 {
+&i2s0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2s0_pins>;
 	status = "okay";
-};*/
+};
 
 &lradc {
 	vref-supply = <&reg_aldo3>;
