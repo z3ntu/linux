@@ -275,6 +275,7 @@
 
 		vdd-supply = <&reg_ldo_io0>;
 
+		threshold = <80>;
 		touchscreen-size-x = <720>;
 		touchscreen-size-y = <1440>;
 
