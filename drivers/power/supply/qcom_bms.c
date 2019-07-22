@@ -144,7 +144,7 @@ static int bms_lock_output_data(struct bms_device_info *di)
 				 REG_BMS_CC_DATA_CTL,
 				 BMS_HOLD_OREG_DATA, BMS_HOLD_OREG_DATA);
 	if (ret) {
-		dev_err(di->dev, "failed to lock bms output: %d", ret);
+		dev_err(di->dev, "failed to lock bms output: %d\n", ret);
 		return ret;
 	}
 
@@ -166,7 +166,7 @@ static int bms_unlock_output_data(struct bms_device_info *di)
 				 REG_BMS_CC_DATA_CTL,
 				 BMS_HOLD_OREG_DATA, 0);
 	if (ret) {
-		dev_err(di->dev, "failed to unlock bms output: %d", ret);
+		dev_err(di->dev, "failed to unlock bms output: %d\n", ret);
 		return ret;
 	}
 
@@ -187,12 +187,11 @@ static int bms_read_ocv(struct bms_device_info *di, u32 *ocv)
 	ret = regmap_bulk_read(di->regmap, di->base_addr+
 			       REG_BMS_OCV_FOR_SOC_DATA0, &read_ocv, 2);
 	if (ret) {
-		dev_err(di->dev, "open circuit voltage read failed: %d", ret);
+		dev_err(di->dev, "open circuit voltage read failed: %d\n", ret);
 		goto err_read;
 	}
 
-	dev_dbg(di->dev, "read open circuit voltage of: %d mv", read_ocv);
-
+	dev_dbg(di->dev, "read open circuit voltage of: %d mv\n", read_ocv);
 
 	*ocv = read_ocv * 1000;
 
@@ -220,7 +219,7 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 			       REG_BMS_SHDW_CC_DATA0,
 			       &cc_raw_s36, 5);
 	if (ret) {
-		dev_err(di->dev, "coulomb counter read failed: %d", ret);
+		dev_err(di->dev, "coulomb counter read failed: %d\n", ret);
 		goto err_read;
 	}
 
@@ -243,7 +242,7 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 	/* divide by impedance */
 	*cc_uah = div_s64(cc_pvh, 10000);
 
-	dev_dbg(di->dev, "read coulomb counter value of: %lld uah", *cc_uah);
+	dev_dbg(di->dev, "read coulomb counter value of: %lld uah\n", *cc_uah);
 
 	return 0;
 
@@ -267,7 +266,7 @@ static void bms_reset_cc(struct bms_device_info *di)
 				 BMS_CLEAR_SHDW_CC,
 				 BMS_CLEAR_SHDW_CC);
 	if (ret) {
-		dev_err(di->dev, "coulomb counter reset failed: %d", ret);
+		dev_err(di->dev, "coulomb counter reset failed: %d\n", ret);
 		goto err_lock;
 	}
 
@@ -278,7 +277,7 @@ static void bms_reset_cc(struct bms_device_info *di)
 				 REG_BMS_CC_CLEAR_CTL,
 				 BMS_CLEAR_SHDW_CC, 0);
 	if (ret)
-		dev_err(di->dev, "coulomb counter re-enable failed: %d", ret);
+		dev_err(di->dev, "coulomb counter re-enable failed: %d\n", ret);
 
 err_lock:
 	mutex_unlock(&di->bms_output_lock);
@@ -292,7 +291,7 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 
 	ret = iio_read_channel_raw(di->adc, &temp);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to read temperature: %d", ret);
+		dev_err(di->dev, "failed to read temperature: %d\n", ret);
 		return ret;
 	}
 
@@ -300,7 +299,7 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 
 	ret = bms_read_cc(di, &cc);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to read coulomb counter: %d", ret);
+		dev_err(di->dev, "failed to read coulomb counter: %d\n", ret);
 		return ret;
 	}
 
@@ -317,8 +316,6 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 
 	return 0;
 }
-
-
 
 /*
  * Return power_supply property
@@ -375,7 +372,7 @@ static int bms_probe(struct platform_device *pdev)
 
 	di->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 	if (!di->regmap) {
-		dev_err(di->dev, "Unable to get regmap");
+		dev_err(di->dev, "Unable to get regmap\n");
 		return -EINVAL;
 	}
 
@@ -392,7 +389,7 @@ static int bms_probe(struct platform_device *pdev)
 						 (u8 *)di->ocv_lut.temp_legend,
 						 TEMPERATURE_COLS);
 	if (ret < 0) {
-		dev_err(di->dev, "no open circuit voltage temperature legend found");
+		dev_err(di->dev, "no open circuit voltage temperature legend found\n");
 		return ret;
 	}
 
@@ -401,7 +398,7 @@ static int bms_probe(struct platform_device *pdev)
 						 di->ocv_lut.capacity_legend, 0,
 						 MAX_CAPACITY_ROWS);
 	if (di->ocv_lut.rows < 0) {
-		dev_err(di->dev, "no open circuit voltage capacity legend found");
+		dev_err(di->dev, "no open circuit voltage capacity legend found\n");
 		return ret;
 	}
 
@@ -412,7 +409,7 @@ static int bms_probe(struct platform_device *pdev)
 						  TEMPERATURE_COLS *
 						  MAX_CAPACITY_ROWS);
 	if (ret < 0) {
-		dev_err(di->dev, "no open circuit voltage lut array found");
+		dev_err(di->dev, "no open circuit voltage lut array found\n");
 		return ret;
 	}
 
@@ -421,7 +418,7 @@ static int bms_probe(struct platform_device *pdev)
 						 (u8 *)di->fcc_lut.temp_legend,
 						 TEMPERATURE_COLS);
 	if (ret < 0) {
-		dev_err(di->dev, "no full charge capacity temperature legend found");
+		dev_err(di->dev, "no full charge capacity temperature legend found\n");
 		return ret;
 	}
 
@@ -430,13 +427,13 @@ static int bms_probe(struct platform_device *pdev)
 						  di->fcc_lut.lut,
 						  TEMPERATURE_COLS);
 	if (ret < 0) {
-		dev_err(di->dev, "no full charge capacity lut array found");
+		dev_err(di->dev, "no full charge capacity lut array found\n");
 		return ret;
 	}
 
 	ret = bms_read_ocv(di, &di->ocv);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to read initial open circuit voltage: %d",
+		dev_err(di->dev, "failed to read initial open circuit voltage: %d\n",
 			ret);
 		return ret;
 	}
@@ -450,10 +447,9 @@ static int bms_probe(struct platform_device *pdev)
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					pdev->name, di);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to request handler for open circuit voltage threshold IRQ");
+		dev_err(di->dev, "failed to request handler for open circuit voltage threshold IRQ\n");
 		return ret;
 	}
-
 
 	di->bat_desc.name = "bms";
 	di->bat_desc.type = POWER_SUPPLY_TYPE_BATTERY;
