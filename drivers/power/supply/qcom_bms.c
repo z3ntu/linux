@@ -4,7 +4,10 @@
  * Qualcomm Battery Monitoring System driver
  *
  * Copyright (C) 2018 Craig Tatlor <ctatlor97@gmail.com>
+ * Copyright (C) 2019 Luca Weiss <luca@z3ntu.xyz>
  */
+
+#define DEBUG
 
 #include <linux/module.h>
 #include <linux/fixp-arith.h>
@@ -33,18 +36,9 @@
 #define BMS_SLEEP_CLK_HZ		32764
 
 #define SECONDS_PER_HOUR		3600
-#define TEMPERATURE_COLS		5
-#define MAX_CAPACITY_ROWS		50
+#define TEMPERATURE_COLS		5 // TODO Remove
 
-/* lookup table for ocv -> capacity conversion */
-struct bms_ocv_lut {
-	int rows;
-	s8 temp_legend[TEMPERATURE_COLS];
-	u8 capacity_legend[MAX_CAPACITY_ROWS];
-	u32 lut[MAX_CAPACITY_ROWS][TEMPERATURE_COLS];
-};
-
-/* lookup table for battery temperature -> fcc conversion */
+/* lookup table for battery temperature -> full charge capacity conversion */
 struct bms_fcc_lut {
 	s8 temp_legend[TEMPERATURE_COLS];
 	u32 lut[TEMPERATURE_COLS];
@@ -53,8 +47,8 @@ struct bms_fcc_lut {
 struct bms_device_info {
 	struct device *dev;
 	struct regmap *regmap;
-	struct bms_ocv_lut ocv_lut;
 	struct power_supply_desc bat_desc;
+	struct power_supply_battery_info info;
 	struct bms_fcc_lut fcc_lut;
 	struct iio_channel *adc;
 	struct mutex bms_output_lock;
@@ -76,47 +70,109 @@ static bool between(int left, int right, int val)
 }
 
 static int interpolate_capacity(int temp, u32 ocv,
-				struct bms_ocv_lut *ocv_lut)
+				struct power_supply_battery_info *info)
 {
+	// let's assume temp=15°C, ocv=4000
+	// i = temp capacity index
+	// i2 = capacity index at temperature 'j' ('j-1 < temp < j')
+	// i3 = capacity index at temperature 'j-1' ('j-1 < temp < j')
+	// j = temperature index
+	// pcj = percentage at temperature j
+	// pcj_minus_one = percentage at temperature j-1
 	int pcj_minus_one = 0, pcj = 0, i2 = 0, i3 = 0, i, j;
 
-	for (j = 0; j < TEMPERATURE_COLS; j++)
-		if (temp <= ocv_lut->temp_legend[j])
+	// find the `j` index of temperature which is the next highest to `temp` (e.g. actual 15°C -> 25°C)
+	for (j = 0; j < POWER_SUPPLY_OCV_TEMP_MAX; j++)
+		if (temp <= info->ocv_temp[j]) {
+			printk("found temperature: index %d - value %d\n", j, info->ocv_temp[j]);
 			break;
+		}
 
-	if (ocv >= ocv_lut->lut[0][j])
-		return ocv_lut->capacity_legend[0];
-
-	if (ocv <= ocv_lut->lut[ocv_lut->rows-1][j-1])
-		return ocv_lut->capacity_legend[ocv_lut->rows-1];
-
-	for (i = 0; i < ocv_lut->rows-1; i++) {
-		if (between(ocv_lut->lut[i][j],
-			    ocv_lut->lut[i+1][j], ocv))
-			i2 = i;
-
-		if (between(ocv_lut->lut[i][j-1],
-			    ocv_lut->lut[i+1][j-1], ocv))
-			i3 = i;
+	// Just debug print our data
+	int g;
+	for (g = 0; g < POWER_SUPPLY_OCV_TEMP_MAX; g++) {
+		if(info->ocv_table_size[g] == -EINVAL) {
+			printk("reached -EINVAL for ocv_table_size, breaking...\n");
+			break;
+		}
+		printk("---- for index %d ----\n", g);
+		printk("ocv_temp: %d\n", info->ocv_temp[g]);
+		printk("ocv_table_size %d\n", info->ocv_table_size[g]);
+		printk("ocv_table: %d , %d\n", info->ocv_table[g]->ocv, info->ocv_table[g]->capacity);
+		int f;
+		for (f = 0; f < info->ocv_table_size[g]; f++) {
+			printk("table value: %d , %d\n", info->ocv_table[g][f].ocv, info->ocv_table[g][f].capacity);
+		}
 	}
 
-	/* interpolate two capacities */
-	pcj = fixp_linear_interpolate(ocv_lut->lut[i2][j],
-				      ocv_lut->capacity_legend[i2],
-				      ocv_lut->lut[i2+1][j],
-				      ocv_lut->capacity_legend[i2+1],
+	// TODO Maybe use power_supply_ocv2cap_simple or one of the helpers there?
+
+	// if current ocv value is higher than the ocv value for 100% at the `j` temperature
+	// return 100%
+	if (ocv >= info->ocv_table[j][0].ocv)
+		return info->ocv_table[j][0].capacity;
+	// if current ocv value is lower than the ocv value at 0% at the `j` temperature
+	// return 0%
+	if (ocv <= info->ocv_table[j][info->ocv_table_size[j]-1].ocv)
+		return info->ocv_table[j][info->ocv_table_size[j]-1].capacity;
+
+	// same for temperature j-1
+	if (ocv >= info->ocv_table[j-1][0].ocv)
+		return info->ocv_table[j-1][0].capacity;
+	if (ocv <= info->ocv_table[j-1][info->ocv_table_size[j-1]-1].ocv)
+		return info->ocv_table[j-1][info->ocv_table_size[j-1]-1].capacity;
+
+	// iterate through the ocv values at temperature j
+	for (i = 0; i < info->ocv_table_size[j]-1; i++) {
+		// if our ocv is between capacity `i` and capacity `i+1` (e.g. 75% & 70%) at temp `j`, set i2
+		if (between(info->ocv_table[j][i].ocv,
+			    info->ocv_table[j][i+1].ocv, ocv)) {
+			i2 = i;
+			break;
+		}
+	}
+
+	// iterate through the ocv values at temperature j-1
+	for (i = 0; i < info->ocv_table_size[j-1]-1; i++) {
+		// if our ocv is between capacity `i` and capacity `i+1` (e.g. 75% & 70%) at temp `j-1` (next lower temperature (e.g. 25°C -> 0°C), set i3
+		if (between(info->ocv_table[j-1][i].ocv,
+			    info->ocv_table[j-1][i+1].ocv, ocv)) {
+			i3 = i;
+			break;
+		}
+	}
+
+	/* interpolate two ocv values */
+	// interpolate between e.g. 4038 & 3996 (75% and 70% at 25°C) for temperature j
+	// x = ocv ; y = cap%
+	// point 0 = (4038|75)
+	// point 1 = (3996|70)
+	// find y (capacity%) value for ocv x = 4000 => 70.47%
+	pcj = fixp_linear_interpolate(info->ocv_table[j][i2].ocv,
+				      info->ocv_table[j][i2].capacity,
+				      info->ocv_table[j][i2+1].ocv,
+				      info->ocv_table[j][i2+1].capacity,
 				      ocv);
 
-	pcj_minus_one = fixp_linear_interpolate(ocv_lut->lut[i3][j-1],
-						ocv_lut->capacity_legend[i3],
-						ocv_lut->lut[i3+1][j-1],
-						ocv_lut->capacity_legend[i3+1],
+	// interpolate between e.g. 4051 & 3986 (80% and 75% at 0°C)
+	// x = ocv ; y = cap%
+	// point 0 = (4051|80)
+	// point 1 = (3986|75)
+	// find y (capacity%) value for ocv x = 4000 => 76.07%
+	pcj_minus_one = fixp_linear_interpolate(info->ocv_table[j-1][i3].ocv,
+						info->ocv_table[j-1][i3].capacity,
+						info->ocv_table[j-1][i3+1].ocv,
+						info->ocv_table[j-1][i3+1].capacity,
 						ocv);
 
 	/* interpolate them with the battery temperature */
-	return fixp_linear_interpolate(ocv_lut->temp_legend[j-1],
+	// x = temp°C ; y = ocv
+	// point 0 = (0|pcj_minus_one=76)
+	// point 1 = (25|pcj=70)
+	// find percentage for temp x = 15°C => 72%
+	return fixp_linear_interpolate(info->ocv_temp[j-1],
 				       pcj_minus_one,
-				       ocv_lut->temp_legend[j],
+				       info->ocv_temp[j],
 				       pcj,
 				       temp);
 }
@@ -125,10 +181,15 @@ static int interpolate_fcc(int temp, struct bms_fcc_lut *fcc_lut)
 {
 	int i;
 
+	// find the next highest temperature to the current one
 	for (i = 0; i < TEMPERATURE_COLS; i++)
 		if (temp <= fcc_lut->temp_legend[i])
 			break;
 
+	// x = temp°C ; y = max capacity in mAh
+	// point 0 = (0|2396)
+	// point 1 = (25|2404)
+	// find fcc for temp x = 15°C => 2400.8 mAh
 	return fixp_linear_interpolate(fcc_lut->temp_legend[i-1],
 			     fcc_lut->lut[i-1],
 			     fcc_lut->temp_legend[i],
@@ -144,7 +205,7 @@ static int bms_lock_output_data(struct bms_device_info *di)
 				 REG_BMS_CC_DATA_CTL,
 				 BMS_HOLD_OREG_DATA, BMS_HOLD_OREG_DATA);
 	if (ret) {
-		dev_err(di->dev, "failed to lock bms output: %d", ret);
+		dev_err(di->dev, "failed to lock bms output: %d\n", ret);
 		return ret;
 	}
 
@@ -166,7 +227,7 @@ static int bms_unlock_output_data(struct bms_device_info *di)
 				 REG_BMS_CC_DATA_CTL,
 				 BMS_HOLD_OREG_DATA, 0);
 	if (ret) {
-		dev_err(di->dev, "failed to unlock bms output: %d", ret);
+		dev_err(di->dev, "failed to unlock bms output: %d\n", ret);
 		return ret;
 	}
 
@@ -184,17 +245,18 @@ static int bms_read_ocv(struct bms_device_info *di, u32 *ocv)
 	if (ret)
 		goto err_lock;
 
-	ret = regmap_bulk_read(di->regmap, di->base_addr+
+	ret = regmap_bulk_read(di->regmap, di->base_addr +
 			       REG_BMS_OCV_FOR_SOC_DATA0, &read_ocv, 2);
 	if (ret) {
-		dev_err(di->dev, "open circuit voltage read failed: %d", ret);
+		dev_err(di->dev, "open circuit voltage read failed: %d\n", ret);
 		goto err_read;
 	}
 
-	dev_dbg(di->dev, "read open circuit voltage of: %d mv", read_ocv);
+	/* read_ocv has to be divided by 10 to result in millivolt */
+	dev_dbg(di->dev, "read open circuit voltage of: %d mV\n", read_ocv / 10);
 
-
-	*ocv = read_ocv * 1000;
+	/* convert read_ocv to microvolt */
+	*ocv = read_ocv * 100;
 
 err_read:
 	bms_unlock_output_data(di);
@@ -220,7 +282,7 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 			       REG_BMS_SHDW_CC_DATA0,
 			       &cc_raw_s36, 5);
 	if (ret) {
-		dev_err(di->dev, "coulomb counter read failed: %d", ret);
+		dev_err(di->dev, "coulomb counter read failed: %d\n", ret);
 		goto err_read;
 	}
 
@@ -232,18 +294,18 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 
 	cc_raw = sign_extend32(cc_raw_s36, 28);
 
-	/* convert raw to uv */
+	/* convert raw value to µV */
 	cc_uv = div_s64(cc_raw * BMS_CC_READING_RESOLUTION_N,
 			BMS_CC_READING_RESOLUTION_D);
 
-	/* convert uv to pvh */
+	/* convert µV to picovolt hours */
 	cc_pvh = div_s64(cc_uv * BMS_CC_READING_TICKS * 100000,
 			 BMS_SLEEP_CLK_HZ * SECONDS_PER_HOUR);
 
 	/* divide by impedance */
 	*cc_uah = div_s64(cc_pvh, 10000);
 
-	dev_dbg(di->dev, "read coulomb counter value of: %lld uah", *cc_uah);
+	dev_dbg(di->dev, "read coulomb counter value of: %lld uAh\n", *cc_uah);
 
 	return 0;
 
@@ -267,7 +329,7 @@ static void bms_reset_cc(struct bms_device_info *di)
 				 BMS_CLEAR_SHDW_CC,
 				 BMS_CLEAR_SHDW_CC);
 	if (ret) {
-		dev_err(di->dev, "coulomb counter reset failed: %d", ret);
+		dev_err(di->dev, "coulomb counter reset failed: %d\n", ret);
 		goto err_lock;
 	}
 
@@ -278,7 +340,7 @@ static void bms_reset_cc(struct bms_device_info *di)
 				 REG_BMS_CC_CLEAR_CTL,
 				 BMS_CLEAR_SHDW_CC, 0);
 	if (ret)
-		dev_err(di->dev, "coulomb counter re-enable failed: %d", ret);
+		dev_err(di->dev, "coulomb counter re-enable failed: %d\n", ret);
 
 err_lock:
 	mutex_unlock(&di->bms_output_lock);
@@ -292,33 +354,47 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 
 	ret = iio_read_channel_raw(di->adc, &temp);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to read temperature: %d", ret);
+		dev_err(di->dev, "failed to read temperature: %d\n", ret);
 		return ret;
 	}
 
 	temp_degc = DIV_ROUND_CLOSEST(temp, 1000);
 
+	dev_dbg(di->dev, "read temperature of: %d °C\n", temp_degc);
+
+	// read uAh (maybe 1000000 uAh - 1000 mAh?)
 	ret = bms_read_cc(di, &cc);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to read coulomb counter: %d", ret);
+		dev_err(di->dev, "failed to read coulomb counter: %d\n", ret);
 		return ret;
 	}
 
-	/* interpolate capacity from open circuit voltage */
+	/* interpolate capacity (in %) from open circuit voltage */
+	// get 'perfect' percentage for ocv at temperature according to table => 72%
+	// |    -20°C      |      0°C      |     25°C      |     40°C      |     60°C      |
+	// | ---- | ------ | ---- | ------ | ---- | ------ | ---- | ------ | ---- | ------ |
+	// | 100% | 4334mV | 100% | 4332mV | 100% | 4327mV | 100% | 4324mV | 100% | 4316mV |
+	// |  95% | 4184mV |  95% | 4234mV |  95% | 4249mV |  95% | 4250mV |  95% | 4246mV |
+	// |  90% | 4094mV |  90% | 4162mV |  90% | 4186mV |  90% | 4188mV |  90% | 4186mV |
+	// |  85% | 4020mV |  85% | 4100mV |  85% | 4128mV |  85% | 4132mV |  85% | 4132mV |
+	// |  ... | ...... |  ... | ...... |  ... | ...... |  ... | ...... |  ... | ...... |
+	// |   1% | 3040mV |   1% | 3120mV |   1% | 3160mV |   1% | 3155mV |   1% | 3138mV |
+	// |   0% | 3000mV |   0% | 3012mV |   0% | 3000mV |   0% | 3000mV |   0% | 3005mV |
 	ocv_capacity = interpolate_capacity(temp_degc, di->ocv,
-					    &di->ocv_lut);
+					    &di->info);
 
-	/* interpolate the full charge capacity from temperature */
+	/* interpolate the full charge capacity (in μAh) from temperature */
+	// get the capacity in uAh at 100% for our temperature => 2400 mAh / 2400800 μAh
 	fcc = interpolate_fcc(temp_degc, &di->fcc_lut);
 
-	/* append coloumb counter to capacity */
+	/* append coulomb counter to capacity */
+	// (2400800 μAh * 72%) / 100 = 1728576 μAh = 1728 mAh
 	*capacity = DIV_ROUND_CLOSEST(fcc * ocv_capacity, 100);
+	// (1728576 μAh - $cc μAh) * 100 / 2400800 μAh => 30.34%
 	*capacity = div_s64((*capacity - cc) * 100, fcc);
 
 	return 0;
 }
-
-
 
 /*
  * Return power_supply property
@@ -375,7 +451,7 @@ static int bms_probe(struct platform_device *pdev)
 
 	di->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 	if (!di->regmap) {
-		dev_err(di->dev, "Unable to get regmap");
+		dev_err(di->dev, "Unable to get regmap\n");
 		return -EINVAL;
 	}
 
@@ -388,40 +464,11 @@ static int bms_probe(struct platform_device *pdev)
 		return ret;
 
 	ret = of_property_read_u8_array(di->dev->of_node,
-						 "qcom,ocv-temp-legend-celsius",
-						 (u8 *)di->ocv_lut.temp_legend,
-						 TEMPERATURE_COLS);
-	if (ret < 0) {
-		dev_err(di->dev, "no open circuit voltage temperature legend found");
-		return ret;
-	}
-
-	di->ocv_lut.rows = of_property_read_variable_u8_array(di->dev->of_node,
-						 "qcom,ocv-capacity-legend",
-						 di->ocv_lut.capacity_legend, 0,
-						 MAX_CAPACITY_ROWS);
-	if (di->ocv_lut.rows < 0) {
-		dev_err(di->dev, "no open circuit voltage capacity legend found");
-		return ret;
-	}
-
-	ret = of_property_read_variable_u32_array(di->dev->of_node,
-						  "qcom,ocv-lut-microvolt",
-						  (u32 *)di->ocv_lut.lut,
-						  TEMPERATURE_COLS,
-						  TEMPERATURE_COLS *
-						  MAX_CAPACITY_ROWS);
-	if (ret < 0) {
-		dev_err(di->dev, "no open circuit voltage lut array found");
-		return ret;
-	}
-
-	ret = of_property_read_u8_array(di->dev->of_node,
 						 "qcom,fcc-temp-legend-celsius",
 						 (u8 *)di->fcc_lut.temp_legend,
 						 TEMPERATURE_COLS);
 	if (ret < 0) {
-		dev_err(di->dev, "no full charge capacity temperature legend found");
+		dev_err(di->dev, "no full charge capacity temperature legend found\n");
 		return ret;
 	}
 
@@ -430,13 +477,13 @@ static int bms_probe(struct platform_device *pdev)
 						  di->fcc_lut.lut,
 						  TEMPERATURE_COLS);
 	if (ret < 0) {
-		dev_err(di->dev, "no full charge capacity lut array found");
+		dev_err(di->dev, "no full charge capacity lut array found\n");
 		return ret;
 	}
 
 	ret = bms_read_ocv(di, &di->ocv);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to read initial open circuit voltage: %d",
+		dev_err(di->dev, "failed to read initial open circuit voltage: %d\n",
 			ret);
 		return ret;
 	}
@@ -450,10 +497,9 @@ static int bms_probe(struct platform_device *pdev)
 					IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					pdev->name, di);
 	if (ret < 0) {
-		dev_err(di->dev, "failed to request handler for open circuit voltage threshold IRQ");
+		dev_err(di->dev, "failed to request handler for open circuit voltage threshold IRQ\n");
 		return ret;
 	}
-
 
 	di->bat_desc.name = "bms";
 	di->bat_desc.type = POWER_SUPPLY_TYPE_BATTERY;
@@ -462,14 +508,31 @@ static int bms_probe(struct platform_device *pdev)
 	di->bat_desc.get_property = bms_get_property;
 
 	psy_cfg.drv_data = di;
+	psy_cfg.of_node = di->dev->of_node;
+
 	bat = devm_power_supply_register(di->dev, &di->bat_desc, &psy_cfg);
+	if (IS_ERR(bat)) {
+		dev_err(di->dev, "failed to register battery: %ld\n", PTR_ERR(bat));
+		return PTR_ERR(bat);
+	}
+
+	ret = power_supply_get_battery_info(bat, &di->info);
+	if (ret < 0) {
+		dev_err(di->dev, "failed to get battery info: %d\n", ret);
+		return ret;
+	}
+	// Validate that ocv_temp & ocv_table was populated
+	if (di->info.ocv_table_size[0] == -EINVAL || di->info.ocv_table_size[1] == -EINVAL) {
+		dev_err(di->dev, "failed to get ocv table: %d\n", ret);
+		return ret; // FIXME
+	}
 
 	return PTR_ERR_OR_ZERO(bat);
 }
 
 static const struct of_device_id bms_of_match[] = {
-	{.compatible = "qcom,pm8941-bms", },
-	{ },
+	{ .compatible = "qcom,pm8941-bms", },
+	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, bms_of_match);
 
