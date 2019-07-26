@@ -247,6 +247,8 @@
 		interrupts = <7 4 IRQ_TYPE_EDGE_FALLING>;
 		irq-gpios = <&pio 7 4 GPIO_ACTIVE_LOW>;
 
+		vdd-supply = <&reg_ldo_io0>;
+
 		touchscreen-size-x = <720>;
 		touchscreen-size-y = <1440>;
 
