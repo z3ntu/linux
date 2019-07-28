@@ -153,7 +153,7 @@
 	sound-modem {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "EC25 audio";
-		simple-audio-card,format = "i2s";
+		simple-audio-card,format = "dsp_a";
 		simple-audio-card,mclk-fs = <256>;
 
 		simple-audio-card,cpu {
