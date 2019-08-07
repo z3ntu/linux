@@ -8,6 +8,9 @@
 #include <dt-bindings/clock/qcom,rpmcc.h>
 #include <dt-bindings/reset/qcom,gcc-msm8974.h>
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/soc/qcom,apr.h>
+#include <dt-bindings/sound/qcom,q6afe.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
 
 / {
 	#address-cells = <1>;
@@ -37,11 +40,12 @@
 		};
 
 		adsp_region: adsp@dc00000 {
+			/* note: firmware has size 0x1400000 */
 			reg = <0x0dc00000 0x1900000>;
 			no-map;
 		};
 
-		venus@f500000 {
+		venus_mem: venus@f500000 {
 			reg = <0x0f500000 0x500000>;
 			no-map;
 		};
@@ -341,6 +345,9 @@
 		clock-frequency = <19200000>;
 	};
 
+	sound: sound {
+	};
+
 	adsp-pil {
 		compatible = "qcom,msm8974-adsp-pil";
 
@@ -368,6 +375,52 @@
 			qcom,smd-edge = <1>;
 
 			label = "lpass";
+
+			qcom,remote-pid = <2>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			apr {
+				compatible = "qcom,apr-v2";
+				qcom,smd-channels = "apr_audio_svc";
+				reg = <APR_DOMAIN_ADSP>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				q6core {
+					reg = <APR_SVC_ADSP_CORE>;
+					compatible = "qcom,q6core";
+				};
+
+				q6afe: q6afe {
+					compatible = "qcom,q6afe";
+					reg = <APR_SVC_AFE>;
+					q6afedai: dais {
+						compatible = "qcom,q6afe-dais";
+						#address-cells = <1>;
+						#size-cells = <0>;
+						#sound-dai-cells = <1>;
+					};
+				};
+
+				q6asm: q6asm {
+					compatible = "qcom,q6asm";
+					reg = <APR_SVC_ASM>;
+					q6asmdai: dais {
+						compatible = "qcom,q6asm-dais";
+						#sound-dai-cells = <1>;
+					};
+				};
+
+				q6adm: q6adm {
+					compatible = "qcom,q6adm";
+					reg = <APR_SVC_ADM>;
+					q6routing: routing {
+						compatible = "qcom,q6adm-routing";
+						#sound-dai-cells = <0>;
+					};
+				};
+			};
 		};
 	};
 
@@ -724,7 +777,7 @@
 			status = "disabled";
 		};
 
-		sdhci@f9824900 {
+		sdhc_1: sdhci@f9824900 {
 			compatible = "qcom,msm8974-sdhci", "qcom,sdhci-msm-v4";
 			reg = <0xf9824900 0x11c>, <0xf9824000 0x800>;
 			reg-names = "hc_mem", "core_mem";
@@ -738,7 +791,7 @@
 			status = "disabled";
 		};
 
-		sdhci@f9864900 {
+		sdhc_2: sdhci@f9864900 {
 			compatible = "qcom,msm8974-sdhci", "qcom,sdhci-msm-v4";
 			reg = <0xf9864900 0x11c>, <0xf9864000 0x800>;
 			reg-names = "hc_mem", "core_mem";
@@ -752,7 +805,7 @@
 			status = "disabled";
 		};
 
-		sdhci@f98a4900 {
+		sdhc_3: sdhci@f98a4900 {
 			compatible = "qcom,msm8974-sdhci", "qcom,sdhci-msm-v4";
 			reg = <0xf98a4900 0x11c>, <0xf98a4000 0x800>;
 			reg-names = "hc_mem", "core_mem";
@@ -1336,6 +1389,64 @@
 					etm3_out: endpoint {
 						remote-endpoint = <&kpss_in3>;
 					};
+				};
+			};
+		};
+
+		slimbam: dma@fe104000 {
+			compatible = "qcom,bam-v1.4.0";
+			qcom,controlled-remotely;
+			reg = <0xfe104000 0x20000>;
+			num-channels  = <31>;
+			interrupts = <GIC_SPI 164 IRQ_TYPE_LEVEL_HIGH>;
+			#dma-cells = <1>;
+			qcom,ee = <1>;
+			qcom,num-ees = <2>;
+		};
+
+		slim_msm: slim@fe12f000 {
+			compatible = "qcom,slim-ngd-v1.5.0";
+			reg = <0xfe12f000 0x35000>;
+			reg-names = "ctrl";
+			interrupts = <GIC_SPI 163 IRQ_TYPE_LEVEL_HIGH>;
+			qcom,apps-ch-pipes = <0x60000000>;
+			qcom,ea-pc = <0x30>;
+			dmas =	<&slimbam 3>, <&slimbam 4>,
+				<&slimbam 5>, <&slimbam 6>;
+			dma-names = "rx", "tx", "tx2", "rx2";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ngd@1 {
+				reg = <1>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				taiko_ifd: tai-ifd {
+					compatible = "slim217,0a0";
+					reg  = <0 0>;
+				};
+
+				wcd9320: codec@1 {
+					compatible = "slim217,0a0";
+					reg  = <1 0>;
+
+					interrupt-parent = <&msmgpio>;
+					interrupts = <72 IRQ_TYPE_LEVEL_HIGH>;
+					interrupt-names  = "intr1";
+					interrupt-controller;
+					#interrupt-cells = <1>;
+					reset-gpios = <&msmgpio 63 0>;
+
+					slim-ifc-dev = <&taiko_ifd>;
+
+					vdd-buck-supply = <&pm8941_s2>;
+					vdd-buck-sido-supply = <&pm8941_s2>; // XXX
+					vdd-tx-supply = <&pm8941_s3>;
+					vdd-rx-supply = <&pm8941_s3>;
+					vdd-io-supply = <&pm8941_l1>; // XXX
+
+					#sound-dai-cells = <1>;
 				};
 			};
 		};

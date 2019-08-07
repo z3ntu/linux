@@ -31,7 +31,7 @@ enum {
 	ULL_POST_PROCESSING_PCM_MODE,
 };
 
-#define MAX_SESSIONS	8
+#define MAX_SESSIONS	24
 #define FORMAT_LINEAR_PCM   0x0000
 #define ASM_LAST_BUFFER_FLAG           BIT(30)
 

@@ -51,6 +51,29 @@
 	MSM_FRONTEND_DAI_MULTIMEDIA8, 1, 0, msm_routing_get_audio_mixer,\
 	msm_routing_put_audio_mixer),
 
+#if 0
+#define Q6ROUTING_RX_VOICE_MIXERS(id) \
+	SOC_SINGLE_EXT("CSVoice", id, \
+	MSM_FRONTEND_DAI_CS_VOICE, 1, 0, msm_routing_get_voice_mixer,\
+	msm_routing_put_voice_mixer),\
+	SOC_SINGLE_EXT("Voice2", id,\
+	MSM_FRONTEND_DAI_VOICE2, 1, 0, msm_routing_get_voice_mixer,\
+	msm_routing_put_voice_mixer),\
+	SOC_SINGLE_EXT("Voip", id ,\
+	MSM_FRONTEND_DAI_VOIP, 1, 0, msm_routing_get_voice_mixer,\
+	msm_routing_put_voice_mixer),\
+	SOC_SINGLE_EXT("VoLTE", id ,\
+	MSM_FRONTEND_DAI_VOLTE, 1, 0, msm_routing_get_voice_mixer,\
+	msm_routing_put_voice_mixer),\
+	SOC_SINGLE_EXT("DTMF", id ,\
+	MSM_FRONTEND_DAI_DTMF_RX, 1, 0, msm_routing_get_voice_mixer,\
+	msm_routing_put_voice_mixer),
+
+	SOC_SINGLE_EXT("Voice Stub", id,
+	MSM_FRONTEND_DAI_VOICE_STUB, 1, 0, msm_routing_get_voice_stub_mixer,
+	msm_routing_put_voice_stub_mixer),
+#endif
+
 #define Q6ROUTING_RX_DAPM_ROUTE(mix_name, s)	\
 	{ mix_name, "MultiMedia1", "MM_DL1" },	\
 	{ mix_name, "MultiMedia2", "MM_DL2" },	\
@@ -125,7 +148,9 @@
 	{ mix_name, "TX_CODEC_DMA_TX_2", "TX_CODEC_DMA_TX_2"},	\
 	{ mix_name, "TX_CODEC_DMA_TX_3", "TX_CODEC_DMA_TX_3"},	\
 	{ mix_name, "TX_CODEC_DMA_TX_4", "TX_CODEC_DMA_TX_4"},	\
-	{ mix_name, "TX_CODEC_DMA_TX_5", "TX_CODEC_DMA_TX_5"}
+	{ mix_name, "TX_CODEC_DMA_TX_5", "TX_CODEC_DMA_TX_5"},	\
+	{ mix_name, "VOICE_RECORD_TX", "VOICE_RECORD_TX"},	\
+	{ mix_name, "VOICE_RECORD_RX", "VOICE_RECORD_RX"}
 
 #define Q6ROUTING_TX_MIXERS(id)						\
 	SOC_SINGLE_EXT("PRI_MI2S_TX", PRIMARY_MI2S_TX,			\
@@ -316,7 +341,13 @@
 		msm_routing_put_audio_mixer),				\
 	SOC_SINGLE_EXT("TX_CODEC_DMA_TX_5", TX_CODEC_DMA_TX_5,		\
 		id, 1, 0, msm_routing_get_audio_mixer,			\
-		msm_routing_put_audio_mixer),
+		msm_routing_put_audio_mixer),				\
+	SOC_SINGLE_EXT("VOICE_RECORD_TX", VOICE_RECORD_TX,			\
+		id, 1, 0, msm_routing_get_audio_mixer,			\
+		msm_routing_put_audio_mixer),				\
+	SOC_SINGLE_EXT("VOICE_RECORD_RX", VOICE_RECORD_RX,			\
+		id, 1, 0, msm_routing_get_audio_mixer,			\
+		msm_routing_put_audio_mixer),				\
 
 struct session_data {
 	int state;
@@ -497,6 +528,20 @@ static int msm_routing_put_audio_mixer(struct snd_kcontrol *kcontrol,
 
 	return 1;
 }
+
+#if 0
+static int msm_routing_get_voice_mixer(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	return msm_routing_get_audio_mixer(kcontrol, ucontrol);
+}
+
+static int msm_routing_put_voice_mixer(struct snd_kcontrol *kcontrol,
+				       struct snd_ctl_elem_value *ucontrol)
+{
+	return msm_routing_put_audio_mixer(kcontrol, ucontrol);
+}
+#endif
 
 static const struct snd_kcontrol_new hdmi_mixer_controls[] = {
 	Q6ROUTING_RX_MIXERS(HDMI_RX) };
@@ -712,6 +757,11 @@ static const struct snd_kcontrol_new mmul7_mixer_controls[] = {
 static const struct snd_kcontrol_new mmul8_mixer_controls[] = {
 	Q6ROUTING_TX_MIXERS(MSM_FRONTEND_DAI_MULTIMEDIA8) };
 
+#if 0
+static const struct snd_kcontrol_new slimbus_rx_voice_mixer_controls[] = {
+	Q6ROUTING_RX_VOICE_MIXERS(SLIMBUS_0_RX) };
+#endif
+
 static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	/* Frontend AIF */
 	SND_SOC_DAPM_AIF_IN("MM_DL1", "MultiMedia1 Playback", 0, 0, 0, 0),
@@ -730,6 +780,17 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("MM_UL6", "MultiMedia6 Capture", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("MM_UL7", "MultiMedia7 Capture", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("MM_UL8", "MultiMedia8 Capture", 0, 0, 0, 0),
+
+#if 0
+	SND_SOC_DAPM_AIF_IN("VOIP_DL", "VoIP Playback", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_IN("CS-VOICE_DL1", "CS-VOICE Playback", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_OUT("CS-VOICE_UL1", "CS-VOICE Capture", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_IN("VOICE2_DL", "Voice2 Playback", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_OUT("VOICE2_UL", "Voice2 Capture", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_IN("VoLTE_DL", "VoLTE Playback", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_OUT("VoLTE_UL", "VoLTE Capture", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_OUT("VOIP_UL", "VoIP Capture", 0, 0, 0, 0),
+#endif
 
 	/* Mixer definitions */
 	SND_SOC_DAPM_MIXER("HDMI Mixer", SND_SOC_NOPM, 0, 0,
@@ -945,6 +1006,10 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("MultiMedia8 Mixer", SND_SOC_NOPM, 0, 0,
 		mmul8_mixer_controls, ARRAY_SIZE(mmul8_mixer_controls)),
 
+#if 0
+	SND_SOC_DAPM_MIXER("SLIM_0_RX_Voice Mixer", SND_SOC_NOPM, 0, 0,
+		slimbus_rx_voice_mixer_controls, ARRAY_SIZE(slimbus_rx_voice_mixer_controls)),
+#endif
 };
 
 static const struct snd_soc_dapm_route intercon[] = {
@@ -1037,6 +1102,18 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"MM_UL6", NULL, "MultiMedia6 Mixer"},
 	{"MM_UL7", NULL, "MultiMedia7 Mixer"},
 	{"MM_UL8", NULL, "MultiMedia8 Mixer"},
+
+#if 0
+	{"CS-VOICE_DL1", NULL, "CS-VOICE Playback" },
+
+	{"SLIM_0_RX_Voice Mixer", "CSVoice", "CS-VOICE_DL1"},
+	{"SLIM_0_RX_Voice Mixer", "Voice2", "VOICE2_DL"},
+	{"SLIM_0_RX_Voice Mixer", "VoLTE", "VoLTE_DL"},
+	{"SLIM_0_RX_Voice Mixer", "Voip", "VOIP_DL"},
+	//{"SLIM_0_RX_Voice Mixer", "DTMF", "DTMF_DL_HL"},
+	//{"SLIM_0_RX_Voice Mixer", "Voice Stub", "VOICE_STUB_DL"},
+	{"SLIMBUS_0_RX", NULL, "SLIM_0_RX_Voice Mixer"},
+#endif
 };
 
 static int routing_hw_params(struct snd_soc_component *component,

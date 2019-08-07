@@ -1786,6 +1786,7 @@ static int q6v5_probe(struct platform_device *pdev)
 		goto remove_subdevs;
 	}
 
+	rproc->auto_boot = false;
 	ret = rproc_add(rproc);
 	if (ret)
 		goto remove_sysmon_subdev;
