@@ -155,6 +155,15 @@
 	vcc-pg-supply = <&reg_aldo1>;
 };
 
+/* This i2c interface is exposed on PI-2 BUS, Pin 3 (I2C_SDA) and 5 (I2C_SCL) */
+&i2c0 {
+	status = "okay";
+};
+
+&i2c0_pins {
+	bias-pull-up;
+};
+
 &r_i2c {
 	status = "okay";
 
