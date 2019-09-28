@@ -12,13 +12,13 @@ Required properties:
 - io-channels:                  Should contain IIO channel specifier for the
 				ADC channel that reports battery temperature.
 - io-channel-names:             Should contain "temp".
-- qcom,fcc-temp-legend-celcius: An 8 bit array containing the temperature,
+- qcom,fcc-temp-legend-celsius: An 8 bit array containing the temperature,
 				in degC, for each column of the full charge
 				capacity lookup table.
-- qcom,fcc-lut-microamp-hours:  An array of full charge capacity values in uah,
+- qcom,fcc-lut-microamp-hours:  An array of full charge capacity values in uAh,
 				one entry for each temperature defined in in
-				qcom,fcc-temp-legend-celcius.
-- qcom,ocv-temp-legend-celcius: An 8 bit array containing the temperature,
+				qcom,fcc-temp-legend-celsius.
+- qcom,ocv-temp-legend-celsius: An 8 bit array containing the temperature,
 				in degC, for each column of the OCV lookup
 				table.
 - qcom,ocv-capacity-legend:     An 8 bit array containing the capacity for each
