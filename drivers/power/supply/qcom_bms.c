@@ -87,7 +87,7 @@ static unsigned int interpolate(int y0, int x0, int y1, int x1, int x)
 
 static unsigned int between(int left, int right, int val)
 {
-	if (left <= val && val >= right)
+	if (left <= val && val <= right)
 		return 1;
 
 	return 0;
@@ -174,7 +174,7 @@ static int bms_lock_output_data(struct bms_device_info *di)
 
 	/*
 	 * Sleep for 100 microseconds here to make sure there has
-	 * been at least three cycles of the sleep clock so that 
+	 * been at least three cycles of the sleep clock so that
 	 * the registers are correctly locked.
 	 */
 	udelay(100);
