@@ -174,7 +174,7 @@ static int bms_lock_output_data(struct bms_device_info *di)
 
 	/*
 	 * Sleep for 100 microseconds here to make sure there has
-	 * been at least three cycles of the sleep clock so that
+	 * been at least three cycles of the sleep clock so that 
 	 * the registers are correctly locked.
 	 */
 	udelay(100);
