@@ -309,19 +309,29 @@
 			};
 		};
 
+/*
 		mclk0_pin: mclk0 {
 			clk {
 				pins = "gpio15";
 				function = "cam_mclk0";
 				bias-disable;
-				output-high;
+				//output-high;
 			};
-			/*gpio { // FIXME TODO
-				pins = "gpio4", "gpio16", "gpio96", "gpio57", "gpio145", "gpio29";
-				function = "gpio";
+		};
+*/
+
+		mclk2_pin: mclk2 {
+			clk {
+				pins = "gpio17";
+				function = "cam_mclk2";
 				bias-disable;
-				output-low;
-			};*/
+			};
+			vdig { // FIXME name is weird, v-digital? or reset pin?
+				pins = "gpio18";
+				function = "gpio";
+				drive-strength = <2>;
+				bias-disable;
+			};
 		};
 
 		sdhc1_pin_a: sdhc1-pin-active {
@@ -713,20 +723,22 @@
 
 		clock-frequency = <400000>;
 
-		ov2685: camera-sensor@3c {
+		ov2685: camera-sensor@20 {
 			compatible = "ovti,ov2685";
-			reg = <0x3c>;
+			reg = <0x20>;
 
-			clocks = <&mmcc CAMSS_MCLK0_CLK>;
+			clocks = <&mmcc CAMSS_MCLK2_CLK>;
 			clock-names = "xvclk";
 
 			avdd-supply = <&pm8941_l22>;
 			dovdd-supply = <&pm8941_lvs3>;
 			dvdd-supply = <&pm8941_l3>;
-			reset-gpios = <&msmgpio 17 /* or 18 */ GPIO_ACTIVE_LOW>;
+			reset-gpios = <&msmgpio 18 GPIO_ACTIVE_HIGH>;
+
+			// Uses csid & csiphy instance nr. 2 (0-index-based)
 
 			pinctrl-names = "default";
-			pinctrl-0 = <&mclk0_pin>;
+			pinctrl-0 = <&mclk2_pin>;
 
 			port {
 				ov2685_ep: endpoint {
