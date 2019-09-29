@@ -1,4 +1,4 @@
-#include "qcom-msm8974.dtsi"
+#include "qcom-msm8974pro.dtsi"
 #include "qcom-pm8841.dtsi"
 #include "qcom-pm8941.dtsi"
 #include <dt-bindings/gpio/gpio.h>
@@ -48,6 +48,12 @@
 			wakeup-source;
 			debounce-interval = <15>;
 		};
+	};
+
+	vibrator {
+		compatible = "gpio-vibrator";
+		enable-gpios = <&msmgpio 86 GPIO_ACTIVE_HIGH>;
+		vcc-supply = <&pm8941_l18>;
 	};
 
 	smd {
@@ -215,6 +221,8 @@
 						regulator-max-microvolt = <2950000>;
 
 						regulator-boot-on;
+						regulator-system-load = <200000>;
+						regulator-allow-set-load;
 					};
 
 					l21 {
@@ -251,7 +259,53 @@
 		status = "ok";
 	};
 
+	wcnss-rproc@fb21b000 {
+		status = "ok";
+
+		vddmx-supply = <&pm8841_s1>;
+		vddcx-supply = <&pm8841_s2>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&wcnss_pin_a>;
+
+		smd-edge {
+			qcom,remote-pid = <4>;
+			label = "pronto";
+
+			wcnss {
+				status = "ok";
+			};
+		};
+	};
+
 	pinctrl@fd510000 {
+		cci_i2c_pin: cci-i2c {
+			i2c0 {
+				pins = "gpio19", "gpio20";
+				function = "cci_i2c0";
+
+				drive-strength = <2>;
+				bias-disable;
+			};
+			i2c1 {
+				pins = "gpio21", "gpio22";
+				function = "cci_i2c1";
+
+				drive-strength = <2>;
+				bias-disable;
+			};
+		};
+
+		i2c2_pins: i2c2 {
+			mux {
+				pins = "gpio6", "gpio7";
+				function = "blsp_i2c2";
+
+				drive-strength = <2>;
+				bias-disable;
+			};
+		};
+
 		sdhc1_pin_a: sdhc1-pin-active {
 			clk {
 				pins = "sdc1_clk";
@@ -266,14 +320,6 @@
 			};
 		};
 
-		sdhc2_cd_pin_a: sdhc2-cd-pin-active {
-			pins = "gpio62";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-disable;
-		};
-
 		sdhc2_pin_a: sdhc2-pin-active {
 			clk {
 				pins = "sdc2_clk";
@@ -285,6 +331,61 @@
 				pins = "sdc2_cmd", "sdc2_data";
 				drive-strength = <6>;
 				bias-pull-up;
+			};
+		};
+
+		touch_pin: touch {
+			int {
+				pins = "gpio28";
+				function = "gpio";
+
+				drive-strength = <2>;
+				bias-disable;
+				input-enable;
+			};
+
+			reset {
+				pins = "gpio55";
+				function = "gpio";
+
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+		};
+
+		wcnss_pin_a: wcnss-pin-active {
+			wlan {
+				pins =  "gpio36", "gpio37", "gpio38", "gpio39", "gpio40";
+				function = "wlan";
+
+				drive-strength = <6>;
+				bias-pull-down;
+			};
+
+			bt {
+				pins = "gpio35", "gpio43", "gpio44";
+				function = "bt";
+
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+
+			fm {
+				pins = "gpio41", "gpio42";
+				function = "fm";
+
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
+
+		panel_pin: panel {
+			te {
+				pins = "gpio12";
+				function = "mdp_vsync";
+
+				drive-strength = <2>;
+				bias-disable;
 			};
 		};
 	};
@@ -311,7 +412,56 @@
 		bus-width = <4>;
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&sdhc2_pin_a>, <&sdhc2_cd_pin_a>;
+		pinctrl-0 = <&sdhc2_pin_a>;
+	};
+
+
+	i2c@f9924000 {
+		status = "ok";
+
+		clock-frequency = <384000>;
+		qcom,src-freq = <19200000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&i2c2_pins>;
+
+		synaptics@20 {
+			compatible = "syna,rmi4-i2c";
+			reg = <0x20>;
+
+			interrupts-extended = <&msmgpio 28 IRQ_TYPE_LEVEL_LOW>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			vdd-supply = <&pm8941_l22>;
+			vio-supply = <&pm8941_s3>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&touch_pin>;
+
+			syna,nosleep-mode = <2>;
+			syna,startup-delay-ms = <160>;
+			syna,reset-delay-ms = <100>;
+
+			rmi4-f01@1 {
+				reg = <0x1>;
+				syna,nosleep-mode = <1>;
+			};
+
+			rmi4-f12@12 {
+				reg = <0x12>;
+				syna,sensor-type = <1>;
+			};
+		};
+
+		ilitek2120@41 {
+			compatible = "ilitek,ili210x";
+			reg = <0x41>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <28 IRQ_TYPE_EDGE_FALLING>;
+			reset-gpios = <&msmgpio 55 GPIO_ACTIVE_LOW>;
+		};
 	};
 
 	usb@f9a55000 {
@@ -338,10 +488,96 @@
 			};
 		};
 	};
+
+	ocmem@fdd00000 {
+		status = "ok";
+	};
+
+	mdss@fd900000 {
+		status = "ok";
+
+		mdp@fd900000 {
+			status = "ok";
+		};
+
+		dsi@fd922800 {
+			status = "ok";
+
+			vdda-supply = <&pm8941_l2>;
+			vdd-supply = <&pm8941_l22>;
+			vddio-supply = <&pm8941_l12>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ports {
+				port@1 {
+					endpoint {
+						remote-endpoint = <&panel_in>;
+						data-lanes = <0 1 2 3>;
+					};
+				};
+			};
+
+			panel: panel@0 {
+				reg = <0>;
+				compatible = "something,s6d6fa1";
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&panel_pin>;
+
+				port {
+					panel_in: endpoint {
+						remote-endpoint = <&dsi0_out>;
+					};
+				};
+			};
+		};
+
+		dsi-phy@fd922a00 {
+			status = "ok";
+
+			vddio-supply = <&pm8941_l12>;
+		};
+	};
+
+	imem@fe805000 {
+		status = "okay";
+
+		reboot-mode {
+			mode-normal	= <0x77665501>;
+			mode-bootloader	= <0x77665500>;
+			mode-recovery	= <0x77665502>;
+		};
+	};
+
+	cci@fda0c000 {
+		status = "ok";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&cci_i2c_pin>;
+		clock-frequency = <400000>;
+		// missing:
+		// rear cam
+		// front cam
+		// actuator
+		// eeprom <- what is it for ?
+	};
 };
 
 &spmi_bus {
 	pm8941@0 {
+		charger@1000 {
+			qcom,fast-charge-safe-current = <1500000>; // confirmed
+			qcom,fast-charge-current-limit = <1500000>; // confirmed
+			//qcom,dc-current-limit = <>; // 1800000 is used on other msm8974 devices
+			qcom,fast-charge-safe-voltage = <4380000>; // confirmed
+			qcom,fast-charge-high-threshold-voltage = <4350000>; // confirmed
+			//qcom,fast-charge-low-threshold-voltage = <>; // not present downstream
+			qcom,auto-recharge-threshold-voltage = <4250000>; // confirmed
+			qcom,minimum-input-voltage = <4450000>; // confirmed
+		};
+
 		gpios@c000 {
 			gpio_keys_pin_a: gpio-keys-active {
 				pins = "gpio1", "gpio2", "gpio5";
@@ -349,6 +585,73 @@
 
 				bias-pull-up;
 				power-source = <PM8941_GPIO_S3>;
+			};
+		};
+
+		bms@4000 {
+			status = "ok";
+
+			qcom,fcc-temp-legend-celsius = /bits/ 8 <(-20) 0 25 40 60>;
+			qcom,fcc-lut-microamp-hours = <2361000 2396000 2404000 2403000 2394000>;
+
+			qcom,ocv-temp-legend-celsius = /bits/ 8 <(-20) 0 25 40 60>;
+			qcom,ocv-capacity-legend = /bits/ 8 <100 95 90 85 80 75
+							     70 65 60 55 50 45
+							     40 35 30 25 20 16
+							     13 11 10 9 8 7 6
+							     5 4 3 2 1 0>;
+			qcom,ocv-lut-microvolt = <4334000 4332000 4327000 4324000 4316000
+						  4184000 4234000 4249000 4250000 4246000
+						  4094000 4162000 4186000 4188000 4186000
+						  4020000 4100000 4128000 4132000 4132000
+						  3948000 4051000 4080000 4086000 4087000
+						  3896000 3986000 4038000 4044000 4044000
+						  3852000 3942000 3996000 4000000 3999000
+						  3819000 3901000 3948000 3956000 3956000
+						  3798000 3864000 3892000 3898000 3898000
+						  3782000 3833000 3858000 3862000 3863000
+						  3764000 3804000 3830000 3834000 3836000
+						  3744000 3782000 3807000 3811000 3812000
+						  3722000 3765000 3786000 3790000 3791000
+						  3698000 3747000 3768000 3768000 3760000
+						  3668000 3723000 3748000 3744000 3734000
+						  3630000 3694000 3718000 3714000 3703000
+						  3577000 3674000 3684000 3680000 3672000
+						  3520000 3654000 3672000 3671000 3662000
+						  3466000 3629000 3656000 3652000 3637000
+						  3418000 3599000 3618000 3616000 3600000
+						  3392000 3578000 3594000 3592000 3576000
+						  3359000 3546000 3564000 3562000 3546000
+						  3322000 3510000 3530000 3529000 3514000
+						  3279000 3466000 3494000 3495000 3484000
+						  3233000 3419000 3458000 3462000 3456000
+						  3186000 3369000 3424000 3428000 3423000
+						  3142000 3324000 3384000 3386000 3380000
+						  3104000 3270000 3331000 3334000 3326000
+						  3072000 3203000 3260000 3260000 3251000
+						  3040000 3120000 3160000 3155000 3138000
+						  3000000 3012000 3000000 3000000 3005000>;
+		};
+	};
+
+	pm8941@1 {
+		lpg {
+			status = "okay";
+
+			qcom,power-source = <1>;
+
+			rgb {
+				led-sources = <7 6 5>;
+			};
+
+			red {
+				led-sources = <7>;
+			};
+			green {
+				led-sources = <6>;
+			};
+			blue {
+				led-sources = <5>;
 			};
 		};
 	};
