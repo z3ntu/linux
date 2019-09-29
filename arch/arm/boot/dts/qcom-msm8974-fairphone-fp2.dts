@@ -508,7 +508,18 @@
 	};
 
 	ocmem@fdd00000 {
-		status = "ok";
+		compatible = "qcom,ocmem-msm8974";
+		// "ocmem_ctrl_physical" should be the registers, "ocmem_physical"
+		// is (I think) letting CPU read ocmem directly..
+
+		reg = <0xfdd00000 0x2000>,
+			<0xfec00000 0x180000>;
+		reg-names = "ocmem_ctrl_physical",
+			"ocmem_physical";
+
+		clocks = <&rpmcc RPM_SMD_OCMEMGX_CLK>,
+			<&mmcc OCMEMCX_OCMEMNOC_CLK>;
+		clock-names = "core_clk", "iface_clk";
 	};
 
 	/*mdss@fd900000 {
