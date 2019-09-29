@@ -4,6 +4,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+#include <dt-bindings/clock/qcom,mmcc-msm8974.h>
 
 
 / {
@@ -508,7 +509,7 @@
 		status = "ok";
 	};
 
-	mdss@fd900000 {
+	/*mdss@fd900000 {
 		status = "ok";
 
 		mdp@fd900000 {
@@ -554,7 +555,7 @@
 
 			vddio-supply = <&pm8941_l12>;
 		};
-	};
+	};*/
 
 	imem@fe805000 {
 		status = "okay";
