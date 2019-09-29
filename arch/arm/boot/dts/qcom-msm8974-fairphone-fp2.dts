@@ -13,6 +13,8 @@
 
 	aliases {
 		serial0 = &blsp1_uart2;
+		mmc0 = &sdhc_1;
+		mmc1 = &sdhc_3;
 	};
 
 	chosen {
