@@ -90,6 +90,22 @@
 			};
 		};
 
+		mdss@1a00000 {
+			dsi@1a98000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				vdda-supply = <&pm8916_l2>;
+				vddio-supply = <&pm8916_l6>;
+			};
+
+			dsi-phy@1a98300 {
+				vddio-supply = <&pm8916_l6>;
+
+				qcom,dsi-phy-regulator-ldo-mode;
+			};
+		};
+
 		/*
 		 * Attempting to enable these devices causes a "synchronous
 		 * external abort". Suspected cause is that the debug power
@@ -120,6 +136,79 @@
 		pinctrl-names = "default", "sleep";
 		pinctrl-0 = <&usb_id_default>;
 		pinctrl-1 = <&usb_id_sleep>;
+	};
+
+	/*
+	 * harpia uses a NT50358 regulator to drive the display panel.
+	 * This regulator is apparently compatible with the TPS65132, except for
+	 * some differences with the enable lines, according to the downstream
+	 * kernel.
+	 * (https://github.com/MotorolaMobilityLLC/kernel-msm/blob/nougat-7.1.1-release-harpia/arch/arm/boot/dts/qcom/msm8916-harpia.dtsi#L202)
+	 * TODO: figure out what needs to be done to get a proper driver working
+	 * for this regulator. For now, we can just use fixed-regulator, as the
+	 * regulator reads voltages on startup from an onboard EEPROM, and we
+	 * don't need to adjust the regulator's values.
+	 */
+	nt50358_pos: nt50358-pos {
+		compatible = "regulator-fixed";
+		regulator-name = "nt50358-pos";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&msmgpio 97 0>;
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_p_en_default>;
+	};
+
+	nt50358_neg: nt50358-neg {
+		compatible = "regulator-fixed";
+		regulator-name = "nt50358-neg";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		gpio = <&msmgpio 98 0>;
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_n_en_default>;
+	};
+};
+
+&dsi0 {
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&pmx_mdss_default>;
+	pinctrl-1 = <&pmx_mdss_sleep>;
+
+	panel@0 {
+		compatible = "tianma,499";
+		reg = <0>;
+
+		vsp-supply = <&nt50358_pos>;
+		vsn-supply = <&nt50358_neg>;
+		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
+		backlight-gpios = <&msmgpio 37 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&panel_backlight>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				panel_in: endpoint {
+					remote-endpoint = <&dsi0_out>;
+				};
+			};
+		};
+	};
+
+	ports {
+		port@1 {
+			endpoint {
+				remote-endpoint = <&panel_in>;
+				data-lanes = <0 1 2 3>;
+			};
+		};
 	};
 };
 
@@ -261,6 +350,61 @@
 			pins = "gpio107";
 			drive-strength = <2>;
 			bias-pull-up;
+		};
+	};
+
+	lcd_p_en_default: lcd_p_en_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio97";
+		};
+		pinconf {
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	lcd_n_en_default: lcd_n_en_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio98";
+		};
+		pinconf {
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	panel_backlight: panel_backlight {
+		pinmux {
+			function = "gpio";
+			pins = "gpio37";
+		};
+		pinconf {
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	pmx_mdss_default: pmx_mdss_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio25";
+		};
+		pinconf {
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
+
+	pmx_mdss_sleep: pmx_mdss_sleep {
+		pinmux {
+			function = "gpio";
+			pins = "gpio25";
+		};
+		pinconf {
+			drive-strength = <2>;
+			bias-pull-down;
 		};
 	};
 
