@@ -83,27 +83,25 @@ static int interpolate_capacity(int temp, u32 ocv,
 
 	// find the `j` index of temperature which is the next highest to `temp` (e.g. actual 15°C -> 25°C)
 	for (j = 0; j < POWER_SUPPLY_OCV_TEMP_MAX; j++)
-		if (temp <= info->ocv_temp[j]) {
-			printk("found temperature: index %d - value %d\n", j, info->ocv_temp[j]);
+		if (temp <= info->ocv_temp[j])
 			break;
-		}
 
 	// Just debug print our data
-	int g;
-	for (g = 0; g < POWER_SUPPLY_OCV_TEMP_MAX; g++) {
-		if(info->ocv_table_size[g] == -EINVAL) {
-			printk("reached -EINVAL for ocv_table_size, breaking...\n");
-			break;
-		}
-		printk("---- for index %d ----\n", g);
-		printk("ocv_temp: %d\n", info->ocv_temp[g]);
-		printk("ocv_table_size %d\n", info->ocv_table_size[g]);
-		printk("ocv_table: %d , %d\n", info->ocv_table[g]->ocv, info->ocv_table[g]->capacity);
-		int f;
-		for (f = 0; f < info->ocv_table_size[g]; f++) {
-			printk("table value: %d , %d\n", info->ocv_table[g][f].ocv, info->ocv_table[g][f].capacity);
-		}
-	}
+// 	int g;
+// 	for (g = 0; g < POWER_SUPPLY_OCV_TEMP_MAX; g++) {
+// 		if(info->ocv_table_size[g] == -EINVAL) {
+// 			printk("reached -EINVAL for ocv_table_size, breaking...\n");
+// 			break;
+// 		}
+// 		printk("---- for index %d ----\n", g);
+// 		printk("ocv_temp: %d\n", info->ocv_temp[g]);
+// 		printk("ocv_table_size %d\n", info->ocv_table_size[g]);
+// 		printk("ocv_table: %d , %d\n", info->ocv_table[g]->ocv, info->ocv_table[g]->capacity);
+// 		int f;
+// 		for (f = 0; f < info->ocv_table_size[g]; f++) {
+// 			printk("table value: %d , %d\n", info->ocv_table[g][f].ocv, info->ocv_table[g][f].capacity);
+// 		}
+// 	}
 
 	// TODO Maybe use power_supply_ocv2cap_simple or one of the helpers there?
 
