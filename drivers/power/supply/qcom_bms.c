@@ -60,6 +60,7 @@ struct bms_device_info {
 
 static bool between(int left, int right, int val)
 {
+	printk("checking if value %d is between %d and %d\n", val, left, right);
 	if (left <= val && val <= right)
 		return true;
 
@@ -125,6 +126,7 @@ static int interpolate_capacity(int temp, u32 ocv,
 		// if our ocv is between capacity `i` and capacity `i+1` (e.g. 75% & 70%) at temp `j`, set i2
 		if (between(info->ocv_table[j][i].ocv,
 			    info->ocv_table[j][i+1].ocv, ocv)) {
+			printk("found value between now\n");
 			i2 = i;
 			break;
 		}
@@ -135,6 +137,7 @@ static int interpolate_capacity(int temp, u32 ocv,
 		// if our ocv is between capacity `i` and capacity `i+1` (e.g. 75% & 70%) at temp `j-1` (next lower temperature (e.g. 25°C -> 0°C), set i3
 		if (between(info->ocv_table[j-1][i].ocv,
 			    info->ocv_table[j-1][i+1].ocv, ocv)) {
+			printk("found value between now\n");
 			i3 = i;
 			break;
 		}
@@ -151,6 +154,7 @@ static int interpolate_capacity(int temp, u32 ocv,
 				      info->ocv_table[j][i2+1].ocv,
 				      info->ocv_table[j][i2+1].capacity,
 				      ocv);
+	printk("percent for ocv at j and i2: %d\n", pcj);
 
 	// interpolate between e.g. 4051 & 3986 (80% and 75% at 0°C)
 	// x = ocv ; y = cap%
@@ -162,6 +166,7 @@ static int interpolate_capacity(int temp, u32 ocv,
 						info->ocv_table[j-1][i3+1].ocv,
 						info->ocv_table[j-1][i3+1].capacity,
 						ocv);
+	printk("percent for ocv at j-1 and i3: %d\n", pcj_minus_one);
 
 	/* interpolate them with the battery temperature */
 	// x = temp°C ; y = ocv
@@ -380,16 +385,20 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 	// |   0% | 3000mV |   0% | 3012mV |   0% | 3000mV |   0% | 3000mV |   0% | 3005mV |
 	ocv_capacity = interpolate_capacity(temp_degc, di->ocv,
 					    &di->info);
+	dev_dbg(di->dev, "ocv capacity: %d %%\n", ocv_capacity);
 
 	/* interpolate the full charge capacity (in μAh) from temperature */
 	// get the capacity in uAh at 100% for our temperature => 2400 mAh / 2400800 μAh
 	fcc = interpolate_fcc(temp_degc, &di->fcc_lut);
+	dev_dbg(di->dev, "full charge capacity: %d uAh\n", fcc);
 
 	/* append coulomb counter to capacity */
 	// (2400800 μAh * 72%) / 100 = 1728576 μAh = 1728 mAh
 	*capacity = DIV_ROUND_CLOSEST(fcc * ocv_capacity, 100);
+	dev_dbg(di->dev, "remaining capacity: %d uAh\n", *capacity);
 	// (1728576 μAh - $cc μAh) * 100 / 2400800 μAh => 30.34%
 	*capacity = div_s64((*capacity - cc) * 100, fcc);
+	dev_dbg(di->dev, "remaining capacity: %d %%\n", *capacity);
 
 	return 0;
 }
