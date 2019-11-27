@@ -119,6 +119,26 @@
 		sound-name-prefix = "Speaker Amp";
 	};
 
+	sound-modem {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "EC25 audio";
+		simple-audio-card,format = "dsp_a";
+		simple-audio-card,mclk-fs = <256>;
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s0>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&ec25_codec>;
+		};
+	};
+
+	ec25_codec: ec25-codec {
+		compatible = "quectel,ec25";
+		#sound-dai-cells = <0>;
+	};
+
 	vibrator {
 		compatible = "gpio-vibrator";
 		enable-gpios = <&pio 3 2 GPIO_ACTIVE_HIGH>; /* PD2 */
@@ -242,6 +262,12 @@
 	};
 };
 
+&i2s0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s0_pins>;
+	status = "okay";
+};
+
 &i2c0_pins {
 	bias-pull-up;
 };
@@ -316,6 +342,11 @@
 &pio {
 	vcc-pe-supply = <&reg_aldo1>;
 	vcc-pg-supply = <&reg_dldo4>;
+
+	i2s0_pins: i2s0-pins {
+		pins = "PB4", "PB5", "PB6", "PB7";
+		function = "i2s0";
+	};
 };
 
 &r_pwm {
