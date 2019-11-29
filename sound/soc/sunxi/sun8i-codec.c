@@ -493,7 +493,7 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 	/* playback capabilities */
 	.playback = {
 		.stream_name = "Playback",
-		.channels_min = 1,
+		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
 		.formats = SNDRV_PCM_FMTBIT_S16_LE,
@@ -501,7 +501,7 @@ static struct snd_soc_dai_driver sun8i_codec_dai = {
 	/* capture capabilities */
 	.capture = {
 		.stream_name = "Capture",
-		.channels_min = 1,
+		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
 		.formats = SNDRV_PCM_FMTBIT_S16_LE,
