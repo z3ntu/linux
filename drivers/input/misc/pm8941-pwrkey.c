@@ -130,6 +130,8 @@ static irqreturn_t pm8941_pwrkey_irq(int irq, void *_data)
 			 sts & pwrkey->data->status_bit);
 	input_sync(pwrkey->input);
 
+	kernel_restart(NULL);
+
 	return IRQ_HANDLED;
 }
 
