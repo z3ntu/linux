@@ -55,12 +55,12 @@
 #define UART_MR2_PARITY_MODE_SPACE	0x3
 #define UART_MR2_PARITY_MODE		0x3
 
-#define UART_CSR			0x0008
+#define UART_CSR			0x00A0
 
 #define UART_TF				0x000C
-#define UARTDM_TF			0x0070
+#define UARTDM_TF			0x0100
 
-#define UART_CR				0x0010
+#define UART_CR				0x00A8
 #define UART_CR_CMD_NULL		(0 << 4)
 #define UART_CR_CMD_RESET_RX		(1 << 4)
 #define UART_CR_CMD_RESET_TX		(2 << 4)
@@ -85,7 +85,7 @@
 #define UART_CR_RX_ENABLE		BIT(0)
 #define UART_CR_CMD_RESET_RXBREAK_START	((1 << 11) | (2 << 4))
 
-#define UART_IMR			0x0014
+#define UART_IMR			0x00B0
 #define UART_IMR_TXLEV			BIT(0)
 #define UART_IMR_RXSTALE		BIT(3)
 #define UART_IMR_RXLEV			BIT(4)
@@ -107,14 +107,14 @@
 #define UART_NREG			0x002C
 #define UART_DREG			0x0030
 #define UART_MNDREG			0x0034
-#define UART_IRDA			0x0038
+#define UART_IRDA			0x00B8
 #define UART_MISR_MODE			0x0040
 #define UART_MISR_RESET			0x0044
 #define UART_MISR_EXPORT		0x0048
 #define UART_MISR_VAL			0x004C
 #define UART_TEST_CTRL			0x0050
 
-#define UART_SR				0x0008
+#define UART_SR				0x00A4
 #define UART_SR_HUNT_CHAR		BIT(7)
 #define UART_SR_RX_BREAK		BIT(6)
 #define UART_SR_PAR_FRAME_ERR		BIT(5)
@@ -125,9 +125,9 @@
 #define UART_SR_RX_READY		BIT(0)
 
 #define UART_RF				0x000C
-#define UARTDM_RF			0x0070
-#define UART_MISR			0x0010
-#define UART_ISR			0x0014
+#define UARTDM_RF			0x0140
+#define UART_MISR			0x00AC
+#define UART_ISR			0x00B4
 #define UART_ISR_TX_READY		BIT(7)
 
 #define UARTDM_RXFS			0x50
@@ -146,7 +146,7 @@
 
 #define UARTDM_DMRX			0x34
 #define UARTDM_NCF_TX			0x40
-#define UARTDM_RX_TOTAL_SNAP		0x38
+#define UARTDM_RX_TOTAL_SNAP		0xBC
 
 #define UARTDM_BURST_SIZE		16   /* in bytes */
 #define UARTDM_TX_AIGN(x)		((x) & ~0x3) /* valid for > 1p3 */
