@@ -212,6 +212,38 @@
 	};
 };
 
+&blsp_i2c2 {
+	status = "okay";
+
+	rmi4@20 {
+		compatible = "syna,rmi4-i2c";
+		reg = <0x20>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		interrupt-parent = <&msmgpio>;
+		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
+
+		vdd-supply = <&pm8916_l16>;
+		vio-supply = <&pm8916_l6>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&ts_int_default>;
+
+		syna,startup-delay-ms = <100>;
+
+		rmi4-f01@1 {
+			reg = <1>;
+			syna,nosleep-mode = <1>; // Allow sleeping
+		};
+
+		rmi4-f11@11 {
+			reg = <11>;
+			syna,sensor-type = <1>; // Touchscreen
+		};
+	};
+};
+
 &spmi_bus {
 	pm8916@0 {
 		pon@800 {
@@ -323,7 +355,7 @@
 	};
 
 	l16 {
-		regulator-min-microvolt = <1800000>;
+		regulator-min-microvolt = <3100000>;
 		regulator-max-microvolt = <3300000>;
 	};
 
@@ -415,6 +447,18 @@
 		};
 		pinconf {
 			pins = "gpio118";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	ts_int_default: ts_int_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio13";
+		};
+		pinconf {
+			pins = "gpio13";
 			drive-strength = <2>;
 			bias-disable;
 		};
