@@ -8,6 +8,7 @@ Required properties:
   - compatible : should be one of:
     "bosch,bma180"
     "bosch,bma250"
+    "bosch,bma253"
     "bosch,bma254"
   - reg : the I2C address of the sensor
 
