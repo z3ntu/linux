@@ -117,8 +117,10 @@
 			reg-names = "mic-iomux", "spkr-iomux";
 
 			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&cdc_pdm_lines_act &headphone_switch_en &mic_conn_config>;
-			pinctrl-1 = <&cdc_pdm_lines_sus &headphone_switch_en &mic_conn_config>;
+			pinctrl-0 = <&cdc_pdm_lines_act &headset_switch_supply_en
+				     &headset_switch_in>;
+			pinctrl-1 = <&cdc_pdm_lines_sus &headset_switch_supply_en
+				     &headset_switch_in>;
 
 			qcom,model = "msm8916";
 			qcom,audio-routing =
@@ -320,6 +322,15 @@
 			};
 		};
 	};
+
+	pm8916@1 {
+		codec@f000 {
+			qcom,micbias-lvl = <2800>;
+			qcom,mbhc-vthreshold-low = <75 150 237 450 500>;
+			qcom,mbhc-vthreshold-high = <75 150 237 450 500>;
+			qcom,micbias1-ext-cap;
+		};
+	};
 };
 
 &smd_rpm_regulators {
@@ -462,6 +473,32 @@
 		};
 	};
 
+	headset_switch_in: headset_switch_in {
+		pinmux {
+			function = "gpio";
+			pins = "gpio112";
+		};
+		pinconf {
+			pins = "gpio112";
+			drive-strength = <2>;
+			output-low;
+			bias-disable;
+		};
+	};
+
+	headset_switch_supply_en: headset_switch_supply_en {
+		pinmux {
+			function = "gpio";
+			pins = "gpio111";
+		};
+		pinconf {
+			pins = "gpio111";
+			drive-strength = <2>;
+			output-high;
+			bias-disable;
+		};
+	};
+
 	lcd_p_en_default: lcd_p_en_default {
 		pinmux {
 			function = "gpio";
@@ -537,32 +574,6 @@
 		pinconf {
 			pins = "gpio13";
 			drive-strength = <2>;
-			bias-disable;
-		};
-	};
-
-	headphone_switch_en: headphone_switch_en {
-		pinmux {
-			function = "gpio";
-			pins = "gpio111";
-		};
-		pinconf {
-			pins = "gpio111";
-			drive-strength = <2>;
-			output-high;
-			bias-disable;
-		};
-	};
-
-	mic_conn_config: mic_conn_config {
-		pinmux {
-			function = "gpio";
-			pins = "gpio112";
-		};
-		pinconf {
-			pins = "gpio112";
-			drive-strength = <2>;
-			output-low;
 			bias-disable;
 		};
 	};
