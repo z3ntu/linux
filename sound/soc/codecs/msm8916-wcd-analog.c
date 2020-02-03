@@ -1113,7 +1113,7 @@ static irqreturn_t pm8916_mbhc_switch_irq_handler(int irq, void *arg)
 		ins = true;
 
 	report = pm8916_wcd_analog_switch_check(priv, ins);
-	snd_soc_jack_report(priv->jack, report, btn_mask);
+	snd_soc_jack_report(priv->jack, report, hs_jack_mask);
 
 	return IRQ_HANDLED;
 }
