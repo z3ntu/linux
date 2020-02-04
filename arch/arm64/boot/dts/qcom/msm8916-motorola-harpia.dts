@@ -324,6 +324,10 @@
 	};
 
 	pm8916@1 {
+		vibrator@c000 {
+			status = "okay";
+		};
+
 		codec@f000 {
 			qcom,micbias-lvl = <2800>;
 			qcom,mbhc-vthreshold-low = <75 150 237 450 500>;
