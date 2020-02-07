@@ -278,6 +278,7 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 	if (ret)
 		goto err_lock;
 
+	cc_raw_s36 = 0;
 	ret = regmap_bulk_read(di->regmap, di->base_addr +
 			       REG_BMS_SHDW_CC_DATA0,
 			       &cc_raw_s36, 5);
