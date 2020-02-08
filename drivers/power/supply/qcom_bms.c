@@ -293,7 +293,8 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 
 	mutex_unlock(&di->bms_output_lock);
 
-	cc_raw = sign_extend32(cc_raw_s36, 28);
+	dev_dbg(di->dev, "cc_raw_s36: %lld \n", cc_raw_s36);
+	cc_raw = sign_extend64(cc_raw_s36, 35);
 
 	/* convert raw value to µV */
 	cc_uv = div_s64(cc_raw * BMS_CC_READING_RESOLUTION_N,
