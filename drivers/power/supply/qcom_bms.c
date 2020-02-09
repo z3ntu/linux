@@ -31,7 +31,7 @@
 #define BMS_CLEAR_SHDW_CC		BIT(6)
 
 #define BMS_CC_READING_RESOLUTION_N	542535
-#define BMS_CC_READING_RESOLUTION_D	10000
+#define BMS_CC_READING_RESOLUTION_D	100000
 #define BMS_CC_READING_TICKS		56
 #define BMS_SLEEP_CLK_HZ		32764
 
@@ -247,16 +247,14 @@ static int bms_read_ocv(struct bms_device_info *di, u32 *ocv)
 
 	ret = regmap_bulk_read(di->regmap, di->base_addr +
 			       REG_BMS_OCV_FOR_SOC_DATA0, &read_ocv, 2);
-	if (ret) {
+	if (ret || (read_ocv <= 0x6000)) {
 		dev_err(di->dev, "open circuit voltage read failed: %d\n", ret);
 		goto err_read;
 	}
 
-	/* read_ocv has to be divided by 10 to result in millivolt */
-	dev_dbg(di->dev, "read open circuit voltage of: %d mV\n", read_ocv / 10);
-
 	/* convert read_ocv to microvolt */
-	*ocv = read_ocv * 100;
+	*ocv = ((read_ocv - 0x6000) * 97656 / 1000) * 3; // Value of 3 <- should be the result of a calibration
+	dev_dbg(di->dev, "read open circuit voltage of: %d mV\n", read_ocv / 10);
 
 err_read:
 	bms_unlock_output_data(di);
@@ -300,9 +298,12 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 	cc_uv = div_s64(cc_raw * BMS_CC_READING_RESOLUTION_N,
 			BMS_CC_READING_RESOLUTION_D);
 
+	/* adjust for gain */
+	cc_uv = div_s64(cc_uv * 3291, 100); // Value of 100 <- should be calculated
+
 	/* convert µV to picovolt hours */
 	cc_pvh = div_s64(cc_uv * BMS_CC_READING_TICKS * 100000,
-			 BMS_SLEEP_CLK_HZ * SECONDS_PER_HOUR);
+			 BMS_SLEEP_CLK_HZ * SECONDS_PER_HOUR) * 10;
 
 	/* divide by impedance */
 	*cc_uah = div_s64(cc_pvh, 10000);
@@ -393,7 +394,7 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 	// (2400800 μAh * 72%) / 100 = 1728576 μAh = 1728 mAh
 	*capacity = DIV_ROUND_CLOSEST(fcc * ocv_capacity, 100);
 	// (1728576 μAh - $cc μAh) * 100 / 2400800 μAh => 30.34%
-	*capacity = div_s64((*capacity - cc) * 100, fcc);
+	*capacity = div_s64((*capacity + cc) * 100, fcc);
 
 	return 0;
 }
