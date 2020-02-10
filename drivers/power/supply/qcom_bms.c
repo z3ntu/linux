@@ -22,6 +22,9 @@
 #include <linux/interrupt.h>
 #include <linux/iio/consumer.h>
 
+#define REG_BMS_REVISION_MINOR		0x0
+#define REG_BMS_REVISION_MAJOR		0x1
+
 #define REG_BMS_OCV_FOR_SOC_DATA0	0x90
 #define REG_BMS_SHDW_CC_DATA0		0xA8
 #define REG_BMS_CC_DATA_CTL		0x42
@@ -195,6 +198,31 @@ static int interpolate_fcc(int temp, struct bms_fcc_lut *fcc_lut)
 			     fcc_lut->temp_legend[i],
 			     fcc_lut->lut[i],
 			     temp);
+}
+
+static int bms_read_version(struct bms_device_info *di, u32 *major, u32 *minor)
+{
+	int ret;
+	u32 r1, r2;
+	ret = regmap_read(di->regmap, di->base_addr +
+			       REG_BMS_REVISION_MINOR, &r1);
+	if (ret) {
+		dev_err(di->dev, "Error reading minor version register: %d\n", ret);
+		goto err_read;
+	}
+
+	ret = regmap_read(di->regmap, di->base_addr +
+			       REG_BMS_REVISION_MAJOR, &r2);
+	if (ret) {
+		dev_err(di->dev, "Error reading major version register: %d\n", ret);
+		goto err_read;
+	}
+
+	*major = r2;
+	*minor = r1;
+
+err_read:
+	return ret;
 }
 
 static int bms_lock_output_data(struct bms_device_info *di)
@@ -444,6 +472,7 @@ static int bms_probe(struct platform_device *pdev)
 	struct power_supply_config psy_cfg = {};
 	struct bms_device_info *di;
 	struct power_supply *bat;
+	int major, minor;
 	int ret;
 
 	di = devm_kzalloc(&pdev->dev, sizeof(*di), GFP_KERNEL);
@@ -465,6 +494,11 @@ static int bms_probe(struct platform_device *pdev)
 	ret = of_property_read_u32(di->dev->of_node, "reg", &di->base_addr);
 	if (ret < 0)
 		return ret;
+
+	ret = bms_read_version(di, &major, &minor);
+	if (ret < 0)
+		return ret;
+	dev_info(di->dev, "QCOM BMS version %hhu.%hhu\n", major, minor);
 
 	ret = of_property_read_u8_array(di->dev->of_node,
 						 "qcom,fcc-temp-legend-celsius",
