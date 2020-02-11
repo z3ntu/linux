@@ -238,8 +238,8 @@
 
 &dsi0 {
 	pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&pmx_mdss_default>;
-	pinctrl-1 = <&pmx_mdss_sleep>;
+	pinctrl-0 = <&mdss_default>;
+	pinctrl-1 = <&mdss_sleep>;
 
 	panel@0 {
 		compatible = "tianma,499";
@@ -251,7 +251,7 @@
 		backlight-gpios = <&msmgpio 37 GPIO_ACTIVE_HIGH>;
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&panel_backlight>;
+		pinctrl-0 = <&lcd_bl_en_default>;
 
 		ports {
 			#address-cells = <1>;
@@ -486,7 +486,7 @@
 		};
 	};
 
-	gpio_keys_default: gpio-keys-default {
+	gpio_keys_default: gpio_keys_default {
 		pinmux {
 			function = "gpio";
 			pins = "gpio107";
@@ -524,6 +524,17 @@
 		};
 	};
 
+	lcd_bl_en_default: lcd_bl_en_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio37";
+		};
+		pinconf {
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
 	lcd_p_en_default: lcd_p_en_default {
 		pinmux {
 			function = "gpio";
@@ -546,36 +557,26 @@
 		};
 	};
 
-	panel_backlight: panel_backlight {
-		pinmux {
-			function = "gpio";
-			pins = "gpio37";
+	pmx_mdss {
+		mdss_default: mdss_default {
+			pinmux {
+				function = "gpio";
+				pins = "gpio25";
+			};
+			pinconf {
+				drive-strength = <8>;
+				bias-disable;
+			};
 		};
-		pinconf {
-			drive-strength = <2>;
-			bias-disable;
-		};
-	};
-
-	pmx_mdss_default: pmx_mdss_default {
-		pinmux {
-			function = "gpio";
-			pins = "gpio25";
-		};
-		pinconf {
-			drive-strength = <8>;
-			bias-disable;
-		};
-	};
-
-	pmx_mdss_sleep: pmx_mdss_sleep {
-		pinmux {
-			function = "gpio";
-			pins = "gpio25";
-		};
-		pinconf {
-			drive-strength = <2>;
-			bias-pull-down;
+		mdss_sleep: mdss_sleep {
+			pinmux {
+				function = "gpio";
+				pins = "gpio25";
+			};
+			pinconf {
+				drive-strength = <2>;
+				bias-pull-down;
+			};
 		};
 	};
 
@@ -603,8 +604,8 @@
 		};
 	};
 
-	usb-id {
-		usb_id_default: id-default {
+	usb_id {
+		usb_id_default: id_default {
 			pinmux {
 				function = "gpio";
 				pins = "gpio91";
@@ -615,7 +616,7 @@
 				bias-pull-up;
 			};
 		};
-		usb_id_sleep: id-sleep {
+		usb_id_sleep: id_sleep {
 			pinmux {
 				function = "gpio";
 				pins = "gpio91";
