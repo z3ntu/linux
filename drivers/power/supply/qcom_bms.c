@@ -391,7 +391,7 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 
 	temp_degc = DIV_ROUND_CLOSEST(temp, 1000);
 
-	dev_dbg(di->dev, "read temperature of: %d °C\n", temp_degc);
+	dev_dbg(di->dev, "read temperature of: %d degC\n", temp_degc);
 
 	// read uAh (maybe 1000000 uAh - 1000 mAh?)
 	ret = bms_read_cc(di, &cc);
