@@ -472,6 +472,8 @@
 };
 
 &msmgpio {
+	/delete-node/ blsp1_uart1_default;
+	/delete-node/ blsp1_uart1_sleep;
 	/delete-node/ pmx_sdc2_cd_pin;
 
 	accel_int_default: accel_int_default {
@@ -483,6 +485,30 @@
 			pins = "gpio115", "gpio119";
 			drive-strength = <2>;
 			bias-disable;
+		};
+	};
+
+	blsp1_uart1_default: blsp1_uart1_default {
+		pinmux {
+			function = "blsp_uart1";
+			pins = "gpio0", "gpio1";
+		};
+		pinconf {
+			pins = "gpio0", "gpio1";
+			drive-strength = <16>;
+			bias-disable;
+		};
+	};
+
+	blsp1_uart1_sleep: blsp1_uart1_sleep {
+		pinmux {
+			function = "gpio";
+			pins = "gpio0", "gpio1";
+		};
+		pinconf {
+			pins = "gpio0", "gpio1";
+			drive-strength = <2>;
+			bias-pull-down;
 		};
 	};
 
