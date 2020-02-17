@@ -1168,9 +1168,7 @@ static struct qcom_smd_channel *qcom_smd_create_channel(struct qcom_smd_edge *ed
 	channel->tx_fifo = fifo_base;
 	channel->rx_fifo = fifo_base + fifo_size;
 	channel->fifo_size = fifo_size;
-
 	qcom_smd_channel_reset(channel);
-
 	return channel;
 
 free_name_and_channel:
@@ -1272,7 +1270,16 @@ static void qcom_channel_state_worker(struct work_struct *work)
 		if (channel->state != SMD_CHANNEL_CLOSED)
 			continue;
 
+		/* Sometimes we should show interest too. */
+		SET_TX_CHANNEL_INFO(channel, state, SMD_CHANNEL_OPENING);
+		SET_TX_CHANNEL_FLAG(channel, fSTATE, 1);
+
+		qcom_smd_signal_channel(channel);
+
 		remote_state = GET_RX_CHANNEL_INFO(channel, state);
+
+		printk("Remote state: %u\n", remote_state);
+
 		if (remote_state != SMD_CHANNEL_OPENING &&
 		    remote_state != SMD_CHANNEL_OPENED)
 			continue;
