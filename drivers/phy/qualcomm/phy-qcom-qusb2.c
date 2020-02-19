@@ -123,6 +123,36 @@ enum qusb2phy_reg_layout {
 	QUSB2PHY_INTR_CTRL,
 };
 
+static const unsigned int msm8953_regs_layout[] = {
+	[QUSB2PHY_PLL_STATUS]		= 0x38,
+	[QUSB2PHY_PORT_TUNE1]		= 0x80,
+	[QUSB2PHY_PORT_TUNE2]		= 0x84,
+	[QUSB2PHY_PORT_TUNE3]		= 0x88,
+	[QUSB2PHY_PORT_TUNE4]		= 0x8c,
+	[QUSB2PHY_PORT_TUNE5]		= 0x90,
+	[QUSB2PHY_PORT_TEST1]		= 0xb8,
+	[QUSB2PHY_PORT_TEST2]		= 0x9c,
+	[QUSB2PHY_PORT_POWERDOWN]	= 0xb4,
+	[QUSB2PHY_INTR_CTRL]		= 0xbc,
+};
+
+static const struct qusb2_phy_init_tbl msm8953_init_tbl[] = {
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE1, 0xf8),
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE2, 0xb3),
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE3, 0x83),
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE4, 0xc0),
+
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TEST2, 0x14),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_TUNE, 0x30),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_USER_CTL1, 0x79),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_USER_CTL2, 0x21),
+
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE5, 0x00),
+
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_AUTOPGM_CTL1, 0x9f),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_PWR_CTRL, 0x00),
+};
+
 static const unsigned int msm8996_regs_layout[] = {
 	[QUSB2PHY_PLL_STATUS]		= 0x38,
 	[QUSB2PHY_PORT_TUNE1]		= 0x80,
@@ -239,6 +269,17 @@ static const struct qusb2_phy_cfg msm8996_phy_cfg = {
 	.tbl		= msm8996_init_tbl,
 	.tbl_num	= ARRAY_SIZE(msm8996_init_tbl),
 	.regs		= msm8996_regs_layout,
+
+	.has_pll_test	= true,
+	.disable_ctrl	= (CLAMP_N_EN | FREEZIO_N | POWER_DOWN),
+	.mask_core_ready = PLL_LOCKED,
+	.autoresume_en	 = BIT(3),
+};
+
+static const struct qusb2_phy_cfg msm8953_phy_cfg = {
+	.tbl		= msm8953_init_tbl,
+	.tbl_num	= ARRAY_SIZE(msm8953_init_tbl),
+	.regs		= msm8953_regs_layout,
 
 	.has_pll_test	= true,
 	.disable_ctrl	= (CLAMP_N_EN | FREEZIO_N | POWER_DOWN),
@@ -770,6 +811,9 @@ static const struct of_device_id qusb2_phy_of_match_table[] = {
 	{
 		.compatible	= "qcom,msm8996-qusb2-phy",
 		.data		= &msm8996_phy_cfg,
+	}, {
+		.compatible	= "qcom,msm8953-qusb2-phy",
+		.data		= &msm8953_phy_cfg,
 	}, {
 		.compatible	= "qcom,msm8998-qusb2-phy",
 		.data		= &msm8998_phy_cfg,
