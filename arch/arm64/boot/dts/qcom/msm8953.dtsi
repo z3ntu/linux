@@ -483,6 +483,10 @@
 			#size-cells = <1>;
 			ranges;
 
+			interrupts = <GIC_SPI 136 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 220 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "hs_phy_irq", "ss_phy_irq";
+
 			clocks = <&gcc GCC_PCNOC_USB3_AXI_CLK>,
 				<&gcc GCC_USB30_MASTER_CLK>,
 				<&gcc GCC_USB30_MOCK_UTMI_CLK>,
@@ -506,8 +510,11 @@
 				interrupts = <GIC_SPI 140 IRQ_TYPE_LEVEL_HIGH>;
 				phys = <&hsusb_phy>, <&ssusb_phy_lane>;
 				phy-names = "usb2-phy", "usb3-phy";
-				snps,is-utmi-l1-suspend;
-				snps,hird-threshold = [00];
+				snps,dis-del-phy-power-chg-quirk;
+				snps,dis_u2_susphy_quirk;
+				snps,dis_u3_susphy_quirk;
+				phy_mode = "utmi";
+				snps,hird-threshold = /bits/ 8 <0x10>;
 			};
 		};
 
@@ -543,6 +550,9 @@
 				<&gcc GCC_USB_SS_REF_CLK>;
 			clock-names = "aux", "cfg_ahb", "ref";
 
+			assigned-clocks = <&gcc GCC_USB3_AUX_CLK>;
+			assigned-clock-rates = <19200000>;
+
 			vdda-phy-supply = <&pm8953_l3>;
 			vdda-pll-supply = <&pm8953_l7>;
 
@@ -554,7 +564,7 @@
 			ssusb_phy_lane: lane@78200 {
 				reg = <0x78200 0x200>,
 					<0x78400 0x130>,
-					<0x78600 0x1e0>;
+					<0x78800 0x1e0>;
 				#phy-cells = <0>;
 
 				clock-output-names = "usb3_pipe_clk_src";
