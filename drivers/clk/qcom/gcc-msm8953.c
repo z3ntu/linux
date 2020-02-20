@@ -3541,7 +3541,7 @@ static struct clk_branch gcc_usb3_pipe_clk = {
 		.hw.init = &(struct clk_init_data){
 			.num_parents = 1,
 			.parent_names = (const char*[]){
-				"gcc_usb_pipe_clk_src",
+				"gcc_usb3_pipe_clk_src",
 			},
 			.name ="gcc_usb3_pipe_clk",
 			.ops = &clk_branch_ops,
