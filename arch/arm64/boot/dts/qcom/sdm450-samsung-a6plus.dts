@@ -20,6 +20,13 @@
 	qcom,msm-id = <338 0>;
 	qcom,board-id = <8 4>;
 
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-min-microvolt = <3700000>;
+		regulator-max-microvolt = <3700000>;
+	};
+
 	reserved-memory {
 		/* CONFIG_SEC_DEBUG reserves 8MB */
 		sec_debug_region: sec_debug_region@0 {
@@ -108,8 +115,11 @@
 	size = <0 0xA000000>;
 };
 
-&smd_rpm_regulators{
+&smd_rpm_regulators {
 	compatible = "qcom,rpm-pm8953-regulators";
+
+	vdd-supply = <&vph_pwr>;
+
 	s1 {
 		regulator-min-microvolt = <870000>;
 		regulator-max-microvolt = <1156000>;
