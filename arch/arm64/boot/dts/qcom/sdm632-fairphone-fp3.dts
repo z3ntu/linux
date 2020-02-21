@@ -1,0 +1,136 @@
+// SPDX-License-Identifier: GPL-2.0
+/dts-v1/;
+
+#include "msm8953.dtsi"
+#include "pm8953.dtsi"
+
+/ {
+	model = "Fairphone 3";
+	compatible = "fairphone,fp3", "qcom,sdm632";
+	qcom,msm-id = <349 0>;
+	qcom,board-id = <8 3>;
+	qcom,pmic-id = <0x010016 0x25 0x0 0x0>;
+};
+
+&usb3 {
+	status = "okay";
+};
+
+&usb3_dwc3 {
+	dr_mode = "peripheral";
+};
+
+&hsusb_phy {
+	status = "okay";
+};
+
+&ssusb_phy {
+	status = "okay";
+};
+
+&other_ext_mem {
+	reg = <0x0 0x85b00000 0x0 0xd00000>;
+};
+
+// TODO probably remove qcom,init-voltage - unused
+&smd_rpm_regulators {
+	/*s1 {
+		regulator-min-microvolt = <0x10>;
+		regulator-max-microvolt = <0x180>;
+	};*/
+	s3 {
+		regulator-min-microvolt = <1225000>;
+		regulator-max-microvolt = <1225000>;
+		qcom,init-voltage = <1225000>;
+	};
+	s4 {
+		regulator-min-microvolt = <1900000>;
+		regulator-max-microvolt = <2050000>;
+		qcom,init-voltage = <1900000>;
+	};
+	l1 {
+		regulator-min-microvolt = <1000000>;
+		regulator-max-microvolt = <1100000>;
+		qcom,init-voltage = <1000000>;
+	};
+	l2 {
+		regulator-min-microvolt = <975000>;
+		regulator-max-microvolt = <1225000>;
+		qcom,init-voltage = <975000>;
+	};
+	l3 {
+		regulator-min-microvolt = <925000>;
+		regulator-max-microvolt = <925000>;
+		qcom,init-voltage = <925000>;
+	};
+	l5 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		qcom,init-voltage = <1800000>;
+	};
+	l6 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		qcom,init-voltage = <1800000>;
+	};
+	l7 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1900000>;
+		qcom,init-voltage = <1800000>;
+	};
+	l8 {
+		regulator-min-microvolt = <2900000>;
+		regulator-max-microvolt = <2900000>;
+		qcom,init-voltage = <2900000>;
+	};
+	l9 {
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3300000>;
+		qcom,init-voltage = <3000000>;
+	};
+	l10 {
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2850000>;
+		qcom,init-voltage = <2850000>;
+	};
+	l11 {
+		regulator-min-microvolt = <2950000>;
+		regulator-max-microvolt = <2950000>;
+		qcom,init-voltage = <2950000>;
+	};
+	l12 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2950000>;
+		qcom,init-voltage = <1800000>;
+	};
+	l13 {
+		regulator-min-microvolt = <3125000>;
+		regulator-max-microvolt = <3125000>;
+		qcom,init-voltage = <3125000>;
+	};
+	l16 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		qcom,init-voltage = <1800000>;
+	};
+	l17 {
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2850000>;
+		qcom,init-voltage = <2850000>;
+	};
+	l19 {
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1350000>;
+		qcom,init-voltage = <1200000>;
+	};
+	l22 {
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2850000>;
+		qcom,init-voltage = <2800000>;
+	};
+	l23 {
+		regulator-min-microvolt = <975000>;
+		regulator-max-microvolt = <1225000>;
+		qcom,init-voltage = <975000>;
+	};
+};
