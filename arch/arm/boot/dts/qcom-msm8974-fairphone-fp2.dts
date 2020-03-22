@@ -416,6 +416,22 @@
 				bias-disable;
 			};
 		};
+
+		cdc_reset_active: cdc_reset_active {
+
+		};
+
+		cdc_reset_sleep: cdc_reset_sleep {
+
+		};
+
+		wcd_intr_default: wcd_intr_default {
+			pins = "gpio72";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+			input-enable;
+		};
 	};
 
 	sdhci@f9824900 {
@@ -779,6 +795,14 @@
 				bias-pull-up;
 				power-source = <PM8941_GPIO_S3>;
 			};
+
+			wcd_mclk_default: mclk {
+				pins = "gpio15";
+				function = "func1";
+
+				output-high;
+				power-source = <PM8941_GPIO_S3>;
+			};
 		};
 
 		bms@4000 {
@@ -846,6 +870,95 @@
 			blue {
 				led-sources = <5>;
 			};
+		};
+	};
+};
+
+
+&slim_msm {
+	ngd@1 {
+		wcd9320: codec@1 {
+			clock-names = "mclk", "slimbus";
+			clocks = <&pm8941_clk_divs 1>,
+				 <&xo_board>; // XXX
+			qcom,mbhc-vthreshold = <75 150 237 500 500 500 500 500>; // XXX
+
+			pinctrl-0 = <&cdc_reset_active &wcd_intr_default &wcd_mclk_default>;
+			pinctrl-1 = <&cdc_reset_sleep>;
+			pinctrl-names = "default", "sleep";
+		};
+	};
+};
+
+&sound {
+	compatible = "qcom,apq8096-sndcard";
+	qcom,model = "DB820c";
+	audio-routing =
+		"RX_BIAS", "MCLK",
+		"LDO_H", "MCLK";
+#if 0
+		"AMIC1", "MIC BIAS1 External",
+		"MIC BIAS1 External", "Handset Mic",
+		"AMIC2", "MIC BIAS2 External",
+		"MIC BIAS2 External", "Headset Mic",
+		"AMIC3", "MIC BIAS3 External",
+		"MIC BIAS3 External", "Handset SubMic",
+		"DMIC1", "MIC BIAS1 External",
+		"MIC BIAS1 External", "Digital Mic1",
+		"DMIC2", "MIC BIAS1 External",
+		"MIC BIAS1 External", "Digital Mic2",
+		"DMIC3", "MIC BIAS3 External",
+		"MIC BIAS3 External", "Digital Mic3",
+		"DMIC4", "MIC BIAS3 External",
+		"MIC BIAS3 External", "Digital Mic4",
+		"DMIC5", "MIC BIAS4 External",
+		"MIC BIAS4 External", "Digital Mic5",
+		"DMIC6", "MIC BIAS4 External",
+		"MIC BIAS4 External", "Digital Mic6";
+#endif
+
+	mm1-dai-link {
+		link-name = "MultiMedia1";
+		cpu {
+			sound-dai = <&q6asmdai  MSM_FRONTEND_DAI_MULTIMEDIA1>;
+		};
+	};
+
+	slim-dai-link {
+		link-name = "SLIM Playback";
+		cpu {
+			sound-dai = <&q6afedai SLIMBUS_0_RX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&wcd9320 0>;
+		};
+	};
+
+	// hack
+	mm2-dai-link {
+		link-name = "MultiMedia2";
+		cpu {
+			sound-dai = <&q6asmdai  MSM_FRONTEND_DAI_MULTIMEDIA2>;
+		};
+	};
+
+	modem-dai-link {
+		link-name = "Voice Record RX";
+		cpu {
+			sound-dai = <&q6afedai VOICE_RECORD_RX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&wcd9320 6>;
 		};
 	};
 };
