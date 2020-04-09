@@ -603,6 +603,9 @@ static int a5xx_zap_shader_resume(struct msm_gpu *gpu)
 {
 	int ret;
 
+	if (adreno_is_a506(to_adreno_gpu(gpu)))
+		return 0;
+
 	ret = qcom_scm_set_remote_state(SCM_GPU_ZAP_SHADER_RESUME, GPU_PAS_ID);
 	if (ret)
 		DRM_ERROR("%s: zap-shader resume failed: %d\n",
@@ -898,7 +901,7 @@ static int a5xx_hw_init(struct msm_gpu *gpu)
 	/* Create a privileged buffer for the RPTR shadow */
 	if (a5xx_gpu->has_whereami) {
 		if (!a5xx_gpu->shadow_bo) {
-			a5xx_gpu->shadow = msm_gem_kernel_new(gpu->dev,
+			a5xx_gpu->shadow = msm_gem_kernel_new_locked(gpu->dev,
 				sizeof(u32) * gpu->nr_rings,
 				MSM_BO_UNCACHED | MSM_BO_MAP_PRIV,
 				gpu->aspace, &a5xx_gpu->shadow_bo,
@@ -910,7 +913,9 @@ static int a5xx_hw_init(struct msm_gpu *gpu)
 
 		gpu_write64(gpu, REG_A5XX_CP_RB_RPTR_ADDR,
 			REG_A5XX_CP_RB_RPTR_ADDR_HI, shadowptr(a5xx_gpu, gpu->rb[0]));
-	} else if (gpu->nr_rings > 1) {
+	}
+
+	if (gpu->nr_rings > 1) {
 		/* Disable preemption if WHERE_AM_I isn't available */
 		a5xx_preempt_fini(gpu);
 		gpu->nr_rings = 1;
