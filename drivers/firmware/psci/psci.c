@@ -473,6 +473,8 @@ static void __init psci_init_smccc(void)
 
 static void __init psci_0_2_set_functions(void)
 {
+	int ret;
+
 	pr_info("Using standard PSCI v0.2 function IDs\n");
 
 	psci_ops = (struct psci_operations){
@@ -485,9 +487,19 @@ static void __init psci_0_2_set_functions(void)
 		.migrate_info_type = psci_migrate_info_type,
 	};
 
-	register_restart_handler(&psci_sys_reset_nb);
+	ret = psci_features(PSCI_0_2_FN_SYSTEM_RESET);
 
-	pm_power_off = psci_sys_poweroff;
+	if (ret != PSCI_RET_NOT_SUPPORTED)
+		register_restart_handler(&psci_sys_reset_nb);
+	else
+		pr_info("SYSTEM_RESET not supported.\n");
+
+	ret = psci_features(PSCI_0_2_FN_SYSTEM_OFF);
+
+	if (ret != PSCI_RET_NOT_SUPPORTED)
+		pm_power_off = psci_sys_poweroff;
+	else
+		pr_info("SYSTEM_OFF not supported.\n");
 }
 
 /*
