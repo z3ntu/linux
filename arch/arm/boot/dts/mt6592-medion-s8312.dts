@@ -12,8 +12,21 @@
 	model = "Lenovo Medion Lifetab S8312";
 	compatible = "medion,s8312", "mediatek,mt6592";
 
+	chosen {
+		bootargs = "console=ttyS0,921600n8 earlyprintk";
+		stdout-path = &uart0;
+	};
+
 	memory {
 		device_type = "memory";
 		reg = <0x80000000 0x40000000>;
 	};
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "okay";
 };
