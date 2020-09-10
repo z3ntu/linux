@@ -1492,6 +1492,8 @@ static int wled_configure(struct wled *wled)
 		return -EINVAL;
 	}
 
+	cfg->num_strings = cfg->num_strings - 1;
+
 	for (i = 0; i < size; ++i) {
 		rc = of_property_read_u32(dev->of_node, u32_opts[i].name, &val);
 		if (rc == -EINVAL) {
