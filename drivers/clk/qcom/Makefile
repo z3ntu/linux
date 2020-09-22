@@ -88,3 +88,4 @@ obj-$(CONFIG_QCOM_HFPLL) += hfpll.o
 obj-$(CONFIG_QCOM_ALPHA_PLL) += alpha-pll.o
 obj-$(CONFIG_QCOM_CPU_MUX_DIV) += cpu-mux-div.o
 obj-$(CONFIG_KRAITCC) += krait-cc.o
+obj-$(CONFIG_MSM_GCC_8953_DEBUG) += debug-msm8953.o

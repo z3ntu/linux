@@ -244,6 +244,10 @@
 		};
 	};
 
+	clock-debugger {
+		compatible = "qcom,gcc-msm8953-debug";
+	};
+
 	soc: soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
