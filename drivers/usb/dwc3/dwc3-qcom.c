@@ -389,7 +389,7 @@ static int dwc3_qcom_usb_role_switch_set(struct usb_role_switch *sw,
 
 	qcom->mode = (role == USB_ROLE_HOST) ? USB_DR_MODE_HOST :
 					       USB_DR_MODE_PERIPHERAL;
-	dwc3_qcom_vbus_overrride_enable(qcom, enable);
+	dwc3_qcom_vbus_override_enable(qcom, enable);
 	return 0;
 }
 
