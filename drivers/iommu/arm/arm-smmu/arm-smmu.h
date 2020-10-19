@@ -26,17 +26,21 @@
 /* Configuration registers */
 #define ARM_SMMU_GR0_sCR0		0x0
 #define ARM_SMMU_sCR0_VMID16EN		BIT(31)
+#define ARM_SMMU_sCR0_SMCFCFG		BIT(21)
 #define ARM_SMMU_sCR0_BSU		GENMASK(15, 14)
 #define ARM_SMMU_sCR0_FB		BIT(13)
 #define ARM_SMMU_sCR0_PTM		BIT(12)
 #define ARM_SMMU_sCR0_VMIDPNE		BIT(11)
 #define ARM_SMMU_sCR0_USFCFG		BIT(10)
+#define ARM_SMMU_sCR0_STALLD		BIT(8)
 #define ARM_SMMU_sCR0_GCFGFIE		BIT(5)
 #define ARM_SMMU_sCR0_GCFGFRE		BIT(4)
 #define ARM_SMMU_sCR0_EXIDENABLE	BIT(3)
 #define ARM_SMMU_sCR0_GFIE		BIT(2)
 #define ARM_SMMU_sCR0_GFRE		BIT(1)
 #define ARM_SMMU_sCR0_CLIENTPD		BIT(0)
+
+#define ARM_SMMU_GR0_CR2		0x8
 
 /* Auxiliary Configuration register */
 #define ARM_SMMU_GR0_sACR		0x10
@@ -80,8 +84,10 @@
 #define ARM_SMMU_ID7_MAJOR		GENMASK(7, 4)
 #define ARM_SMMU_ID7_MINOR		GENMASK(3, 0)
 
+#define ARM_SMMU_GR0_GFAR		0x40
 #define ARM_SMMU_GR0_sGFSR		0x48
 #define ARM_SMMU_sGFSR_USF		BIT(1)
+#define ARM_SMMU_GR0_GFSRRESTORE	0x4c
 
 #define ARM_SMMU_GR0_sGFSYNR0		0x50
 #define ARM_SMMU_GR0_sGFSYNR1		0x54
@@ -152,6 +158,9 @@ enum arm_smmu_cbar_type {
 #define ARM_SMMU_SCTLR_M		BIT(0)
 
 #define ARM_SMMU_CB_ACTLR		0x4
+#define ARM_SMMU_CB_ACTLR_BPRCOSH	BIT(28)
+#define ARM_SMMU_CB_ACTLR_BPRCISH	BIT(29)
+#define ARM_SMMU_CB_ACTLR_BPRCNSH	BIT(30)
 
 #define ARM_SMMU_CB_RESUME		0x8
 #define ARM_SMMU_RESUME_TERMINATE	BIT(0)
@@ -205,6 +214,8 @@ enum arm_smmu_cbar_type {
 #define ARM_SMMU_FSR_AFF		BIT(2)
 #define ARM_SMMU_FSR_TF			BIT(1)
 
+#define ARM_SMMU_CB_FSRRESTORE		0x5c
+
 #define ARM_SMMU_FSR_IGN		(ARM_SMMU_FSR_AFF |		\
 					 ARM_SMMU_FSR_ASF |		\
 					 ARM_SMMU_FSR_TLBMCF |		\
@@ -225,6 +236,7 @@ enum arm_smmu_cbar_type {
 
 #define ARM_SMMU_CB_S1_TLBIVA		0x600
 #define ARM_SMMU_CB_S1_TLBIASID		0x610
+#define ARM_SMMU_CB_S1_TLBIALL		0x618
 #define ARM_SMMU_CB_S1_TLBIVAL		0x620
 #define ARM_SMMU_CB_S2_TLBIIPAS2	0x630
 #define ARM_SMMU_CB_S2_TLBIIPAS2L	0x638

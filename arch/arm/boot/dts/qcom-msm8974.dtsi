@@ -1326,6 +1326,91 @@
 			};
 		};
 
+		mdp_iommu: iommu@fd928000 {
+			compatible = "qcom,msm8974-iommu",
+			             "qcom,msm-iommu-v1";
+			reg = <0xfd928000 0x3000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			#iommu-cells = <1>;
+			ranges = <0 0xfd92f000 0x40000>;
+
+			clocks = <&mmcc MDSS_AHB_CLK>,
+			         <&mmcc MDSS_AXI_CLK>;
+			clock-names = "iface",
+			              "bus";
+
+			qcom,iommu-secure-id = <1>;
+
+			interrupts = <0 73 0>;
+			power-domains = <&mmcc MDSS_GDSC>;
+
+			// mdp_0
+			iommu-ctx@0 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x1000 0x1000>;
+				interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			// mdp_1
+			iommu-ctx@1000 {
+				compatible = "qcom,msm-iommu-v1-sec";
+				reg = <0x2000 0x1000>;
+				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			// mdp_2
+			iommu-ctx@2000 {
+				compatible = "qcom,msm-iommu-v1-sec";
+				reg = <0x3000 0x1000>;
+				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
+			};
+		};
+
+		gpu_iommu: iommu@fdb10000 {
+			compatible = "qcom,msm8974-iommu", "qcom,msm-iommu-v1";
+
+			#address-cells = <1>;
+			#size-cells = <1>;
+			#iommu-cells = <1>;
+
+			reg = <0xfdb10000 0x3000>;
+			clocks = <&mmcc OXILICX_AHB_CLK>,
+				 <&mmcc OXILICX_AXI_CLK>,
+				 <&mmcc OXILI_GFX3D_CLK>;
+			clock-names = "iface", "bus", "alt";
+
+			interrupts = <0 38 0>;
+
+			ranges = <0 0xfdb17000 0x10000>;
+//			qcom,iommu-secure-id = <0>;
+
+			power-domains = <&mmcc OXILICX_GDSC>;
+
+			//status = "disabled";
+
+			// gfx3d_user:
+			kgsl-ctx@0 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x1000 0x1000>;
+				interrupts = <GIC_SPI 241 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			// gfx3d_priv:
+			kgsl-ctx@1000 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x2000 0x1000>;
+				interrupts = <GIC_SPI 241 0>;
+			};
+
+			// gfx3d_spare:
+			kgsl-ctx@2000 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x3000 0x1000>;
+				interrupts = <GIC_SPI 241 0>;
+			};
+		};
+
 		ocmem@fdd00000 {
 			compatible = "qcom,msm8974-ocmem";
 			reg = <0xfdd00000 0x2000>,
@@ -1441,7 +1526,7 @@
 			interconnect-names = "gfx-mem",
 			                     "ocmem";
 
-			// iommus = <&gpu_iommu 0>;
+			iommus = <&gpu_iommu 1>, <&gpu_iommu 2>;
 		};
 
 		mdss: mdss@fd900000 {
@@ -1492,6 +1577,8 @@
 
 				interconnects = <&mmssnoc MNOC_MAS_MDP_PORT0 &bimc BIMC_SLV_EBI_CH0>;
 				interconnect-names = "mdp0-mem";
+
+				iommus = <&mdp_iommu 1>;
 
 				ports {
 					#address-cells = <1>;
