@@ -1329,11 +1329,11 @@
 		mdp_iommu: iommu@fd928000 {
 			compatible = "qcom,msm8974-iommu",
 			             "qcom,msm-iommu-v1";
-			reg = <0xfd928000 0x3000>;
+			reg = <0xfd928000 0x7000>;
 			#address-cells = <1>;
 			#size-cells = <1>;
 			#iommu-cells = <1>;
-			ranges = <0 0xfd92f000 0x40000>;
+			ranges = <0 0xfd92f000 0x9000>;
 
 			clocks = <&mmcc MDSS_AHB_CLK>,
 			         <&mmcc MDSS_AXI_CLK>;
@@ -1346,21 +1346,21 @@
 			power-domains = <&mmcc MDSS_GDSC>;
 
 			// mdp_0
-			iommu-ctx@0 {
+			iommu-ctx@1000 {
 				compatible = "qcom,msm-iommu-v1-ns";
 				reg = <0x1000 0x1000>;
 				interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
 			};
 
 			// mdp_1
-			iommu-ctx@1000 {
+			iommu-ctx@2000 {
 				compatible = "qcom,msm-iommu-v1-sec";
 				reg = <0x2000 0x1000>;
 				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
 			};
 
 			// mdp_2
-			iommu-ctx@2000 {
+			iommu-ctx@3000 {
 				compatible = "qcom,msm-iommu-v1-sec";
 				reg = <0x3000 0x1000>;
 				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
@@ -1374,7 +1374,7 @@
 			#size-cells = <1>;
 			#iommu-cells = <1>;
 
-			reg = <0xfdb10000 0x3000>;
+			reg = <0xfdb10000 0x7000>;
 			clocks = <&mmcc OXILICX_AHB_CLK>,
 				 <&mmcc OXILICX_AXI_CLK>,
 				 <&mmcc OXILI_GFX3D_CLK>;
@@ -1382,7 +1382,7 @@
 
 			interrupts = <0 38 0>;
 
-			ranges = <0 0xfdb17000 0x10000>;
+			ranges = <0 0xfdb17000 0x9000>;
 //			qcom,iommu-secure-id = <0>;
 
 			power-domains = <&mmcc OXILICX_GDSC>;
@@ -1390,21 +1390,21 @@
 			//status = "disabled";
 
 			// gfx3d_user:
-			kgsl-ctx@0 {
+			kgsl-ctx@1000 {
 				compatible = "qcom,msm-iommu-v1-ns";
 				reg = <0x1000 0x1000>;
 				interrupts = <GIC_SPI 241 IRQ_TYPE_LEVEL_HIGH>;
 			};
 
 			// gfx3d_priv:
-			kgsl-ctx@1000 {
+			kgsl-ctx@2000 {
 				compatible = "qcom,msm-iommu-v1-ns";
 				reg = <0x2000 0x1000>;
 				interrupts = <GIC_SPI 241 0>;
 			};
 
 			// gfx3d_spare:
-			kgsl-ctx@2000 {
+			kgsl-ctx@3000 {
 				compatible = "qcom,msm-iommu-v1-ns";
 				reg = <0x3000 0x1000>;
 				interrupts = <GIC_SPI 241 0>;
