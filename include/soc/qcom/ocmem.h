@@ -18,10 +18,16 @@
 enum ocmem_client {
 	/* GMEM clients */
 	OCMEM_GRAPHICS = 0x0,
-	/*
-	 * TODO add more once ocmem_allocate() is clever enough to
-	 * deal with multiple clients.
-	 */
+	/* TCMEM clients */
+	OCMEM_VIDEO,
+	OCMEM_CAMERA,
+	/* Dummy Clients */
+	OCMEM_HP_AUDIO,
+	OCMEM_VOICE,
+	/* IMEM Clients */
+	OCMEM_LP_AUDIO,
+	OCMEM_SENSORS,
+	OCMEM_OTHER_OS,
 	OCMEM_CLIENT_MAX,
 };
 
