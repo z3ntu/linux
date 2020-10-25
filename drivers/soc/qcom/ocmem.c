@@ -101,6 +101,28 @@ static struct clk_bulk_data ocmem_clks[] = {
 	},
 };
 
+struct ocmem_table {
+	enum ocmem_client client_id;
+	enum qcom_scm_ocmem_client scm_id;
+} ocmem_client_table[OCMEM_CLIENT_MAX] = {
+	{OCMEM_GRAPHICS, QCOM_SCM_OCMEM_GRAPHICS_ID},
+	{OCMEM_VIDEO, QCOM_SCM_OCMEM_VIDEO_ID},
+	{OCMEM_CAMERA, QCOM_SCM_OCMEM_UNUSED_ID},
+	{OCMEM_HP_AUDIO, QCOM_SCM_OCMEM_UNUSED_ID},
+	{OCMEM_VOICE, QCOM_SCM_OCMEM_UNUSED_ID},
+	{OCMEM_LP_AUDIO, QCOM_SCM_OCMEM_LP_AUDIO_ID},
+	{OCMEM_SENSORS, QCOM_SCM_OCMEM_SENSORS_ID},
+	{OCMEM_OTHER_OS, QCOM_SCM_OCMEM_OTHER_OS_ID},
+};
+
+static enum qcom_scm_ocmem_client get_scm_id(enum ocmem_client client)
+{
+	if (client >= OCMEM_CLIENT_MAX || client < OCMEM_GRAPHICS)
+		return QCOM_SCM_OCMEM_UNUSED_ID;
+
+	return ocmem_client_table[client].scm_id;
+}
+
 static inline void ocmem_write(struct ocmem *ocmem, u32 reg, u32 data)
 {
 	writel(data, ocmem->mmio + reg);
@@ -155,10 +177,22 @@ static unsigned long device_address(struct ocmem *ocmem,
 				    enum ocmem_client client,
 				    unsigned long addr)
 {
-	WARN_ON(client != OCMEM_GRAPHICS);
-
-	/* TODO: gpu uses phys_to_offset, but others do not.. */
-	return phys_to_offset(ocmem, addr);
+	switch (client) {
+	case OCMEM_GRAPHICS:
+	case OCMEM_VIDEO:
+	case OCMEM_CAMERA:
+		return phys_to_offset(ocmem, addr);
+	case OCMEM_LP_AUDIO:
+	case OCMEM_SENSORS:
+	case OCMEM_OTHER_OS:
+		return addr;
+	case OCMEM_HP_AUDIO:
+	case OCMEM_VOICE:
+		return 0x0;
+	case OCMEM_CLIENT_MAX:
+		WARN_ON(client == OCMEM_CLIENT_MAX);
+	}
+	return 0x0;
 }
 
 static void update_range(struct ocmem *ocmem, struct ocmem_buf *buf,
@@ -212,10 +246,6 @@ struct ocmem_buf *ocmem_allocate(struct ocmem *ocmem, enum ocmem_client client,
 	struct ocmem_buf *buf;
 	int ret;
 
-	/* TODO: add support for other clients... */
-	if (WARN_ON(client != OCMEM_GRAPHICS))
-		return ERR_PTR(-ENODEV);
-
 	if (size < OCMEM_MIN_ALLOC || !IS_ALIGNED(size, OCMEM_MIN_ALIGN))
 		return ERR_PTR(-EINVAL);
 
@@ -235,7 +265,7 @@ struct ocmem_buf *ocmem_allocate(struct ocmem *ocmem, enum ocmem_client client,
 	update_range(ocmem, buf, CORE_ON, WIDE_MODE);
 
 	if (qcom_scm_ocmem_lock_available()) {
-		ret = qcom_scm_ocmem_lock(QCOM_SCM_OCMEM_GRAPHICS_ID,
+		ret = qcom_scm_ocmem_lock(get_scm_id(client),
 					  buf->offset, buf->len, WIDE_MODE);
 		if (ret) {
 			dev_err(ocmem->dev, "could not lock: %d\n", ret);
@@ -243,9 +273,11 @@ struct ocmem_buf *ocmem_allocate(struct ocmem *ocmem, enum ocmem_client client,
 			goto err_kfree;
 		}
 	} else {
-		ocmem_write(ocmem, OCMEM_REG_GFX_MPU_START, buf->offset);
-		ocmem_write(ocmem, OCMEM_REG_GFX_MPU_END,
-			    buf->offset + buf->len);
+		if (client == OCMEM_GRAPHICS) {
+			ocmem_write(ocmem, OCMEM_REG_GFX_MPU_START, buf->offset);
+			ocmem_write(ocmem, OCMEM_REG_GFX_MPU_END,
+				    buf->offset + buf->len);
+		}
 	}
 
 	dev_dbg(ocmem->dev, "using %ldK of OCMEM at 0x%08lx for client %d\n",
@@ -265,22 +297,20 @@ EXPORT_SYMBOL(ocmem_allocate);
 void ocmem_free(struct ocmem *ocmem, enum ocmem_client client,
 		struct ocmem_buf *buf)
 {
-	/* TODO: add support for other clients... */
-	if (WARN_ON(client != OCMEM_GRAPHICS))
-		return;
-
 	update_range(ocmem, buf, CLK_OFF, MODE_DEFAULT);
 
 	if (qcom_scm_ocmem_lock_available()) {
 		int ret;
 
-		ret = qcom_scm_ocmem_unlock(QCOM_SCM_OCMEM_GRAPHICS_ID,
+		ret = qcom_scm_ocmem_unlock(get_scm_id(client),
 					    buf->offset, buf->len);
 		if (ret)
 			dev_err(ocmem->dev, "could not unlock: %d\n", ret);
 	} else {
-		ocmem_write(ocmem, OCMEM_REG_GFX_MPU_START, 0x0);
-		ocmem_write(ocmem, OCMEM_REG_GFX_MPU_END, 0x0);
+		if (client == OCMEM_GRAPHICS) {
+			ocmem_write(ocmem, OCMEM_REG_GFX_MPU_START, 0x0);
+			ocmem_write(ocmem, OCMEM_REG_GFX_MPU_END, 0x0);
+		}
 	}
 
 	kfree(buf);
