@@ -2334,7 +2334,7 @@ err_device_init_gpio:
 	vreg_configure(ts, false);
 err_device_init_vreg:
 err_device_init_pdata:
-	kzfree(ts);
+	kfree_sensitive(ts);
 err_device_init:
 	return ret;
 }
@@ -2371,7 +2371,7 @@ static void shutdown(struct i2c_client *client)
 	(void) max1187x_chip_init(ts, false);
 	max1187x_gpio_init(ts, false);
 	vreg_configure(ts, false);
-	kzfree(ts);
+	kfree_sensitive(ts);
 }
 
 /* Commands */
