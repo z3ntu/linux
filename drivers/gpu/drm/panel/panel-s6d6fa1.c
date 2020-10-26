@@ -292,13 +292,8 @@ static const struct drm_panel_funcs s6d6fa1_panel_funcs = {
 static int s6d6fa1_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	u16 brightness = bl->props.brightness;
+	u16 brightness = backlight_get_brightness(bl);
 	int ret;
-
-	if (bl->props.power != FB_BLANK_UNBLANK ||
-	    bl->props.fb_blank != FB_BLANK_UNBLANK ||
-	    bl->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
-		brightness = 0;
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
@@ -314,7 +309,7 @@ static int s6d6fa1_bl_update_status(struct backlight_device *bl)
 static int s6d6fa1_bl_get_brightness(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	u16 brightness = bl->props.brightness;
+	u16 brightness;
 	int ret;
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
@@ -337,7 +332,7 @@ static struct backlight_device *
 s6d6fa1_create_backlight(struct mipi_dsi_device *dsi)
 {
 	struct device *dev = &dsi->dev;
-	struct backlight_properties props = {
+	const struct backlight_properties props = {
 		.type = BACKLIGHT_RAW,
 		.brightness = 255,
 		.max_brightness = 255,
@@ -379,11 +374,7 @@ static int s6d6fa1_probe(struct mipi_dsi_device *dsi)
 		return dev_err_probe(dev, PTR_ERR(ctx->panel.backlight),
 				     "Failed to create backlight\n");
 
-	ret = drm_panel_add(&ctx->panel);
-	if (ret < 0) {
-		dev_err(dev, "Failed to add panel: %d\n", ret);
-		return ret;
-	}
+	drm_panel_add(&ctx->panel);
 
 	ret = mipi_dsi_attach(dsi);
 	if (ret < 0) {
