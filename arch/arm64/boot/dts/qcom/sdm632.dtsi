@@ -1,0 +1,47 @@
+#include "msm8953.dtsi"
+
+/ {
+	soc {
+		/delete-node/syscon@19461d4;
+		apc_mem_acc: syscon@b1d1360 {
+			compatible = "syscon";
+			reg = <0xb1d1360 0x14>;
+		};
+	};
+
+	thermal-zones {
+		/delete-node/cpu0-thermal;
+		/delete-node/cpu1-thermal;
+		/delete-node/cpu2-thermal;
+		/delete-node/cpu3-thermal;
+		/delete-node/cpu4-thermal;
+		/delete-node/cpu5-thermal;
+		/delete-node/cpu6-thermal;
+		/delete-node/cpu7-thermal;
+		CPU_THERMAL(4,  5);
+		CPU_THERMAL(5,  6);
+		CPU_THERMAL(6,  7);
+		CPU_THERMAL(7,  8);
+	};
+};
+
+&gpu_opp_table {
+	GPU_OPP(685000, 7449600, rpmpd_opp_turbo, 0xff);
+	GPU_OPP(725000, 7449600, rpmpd_opp_turbo, 0xff);
+};
+
+&CPU4 {
+	capacity-dmips-mhz = <1980>;
+};
+
+&CPU5 {
+	capacity-dmips-mhz = <1980>;
+};
+
+&CPU6 {
+	capacity-dmips-mhz = <1980>;
+};
+
+&CPU7 {
+	capacity-dmips-mhz = <1980>;
+};
