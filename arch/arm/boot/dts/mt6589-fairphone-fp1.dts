@@ -8,7 +8,7 @@
 	compatible = "fairphone,fp1", "mediatek,mt6589";
 
 	chosen {
-		bootargs = "console=ttyS3,921600n8 earlyprintk";
+		bootargs = "earlycon console=ttyS3,921600n1";
 		stdout-path = &uart3;
 	};
 
