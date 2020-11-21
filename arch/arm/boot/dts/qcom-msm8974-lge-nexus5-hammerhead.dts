@@ -250,10 +250,18 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&vibrator_pin>;
 	};
+
+	wwan {
+		status = "okay";
+	};
 };
 
 &soc {
 	serial@f991d000 {
+		status = "okay";
+	};
+
+	dma-controller@fc834000 {
 		status = "okay";
 	};
 
