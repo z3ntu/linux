@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "qcom-msm8974.dtsi"
+#include "qcom-msm8974pro.dtsi"
 #include "qcom-pm8841.dtsi"
 #include "qcom-pm8941.dtsi"
 #include <dt-bindings/gpio/gpio.h>
@@ -7,8 +6,8 @@
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 
 / {
-	model = "Sony Xperia Z1 Compact";
-	compatible = "sony,xperia-amami", "qcom,msm8974";
+	model = "Sony Xperia Z2 Tablet";
+	compatible = "sony,xperia-castor", "qcom,msm8974";
 
 	aliases {
 		serial0 = &blsp1_uart2;
@@ -54,36 +53,9 @@
 		};
 	};
 
-	memory@0 {
-		reg = <0 0x40000000>, <0x40000000 0x40000000>;
-		device_type = "memory";
-	};
-
 	smd {
 		rpm {
 			rpm_requests {
-				pm8841-regulators {
-					s1 {
-						regulator-min-microvolt = <675000>;
-						regulator-max-microvolt = <1050000>;
-					};
-
-					s2 {
-						regulator-min-microvolt = <500000>;
-						regulator-max-microvolt = <1050000>;
-					};
-
-					s3 {
-						regulator-min-microvolt = <500000>;
-						regulator-max-microvolt = <1050000>;
-					};
-
-					s4 {
-						regulator-min-microvolt = <500000>;
-						regulator-max-microvolt = <1050000>;
-					};
-				};
-
 				pm8941-regulators {
 					vdd_l1_l3-supply = <&pm8941_s1>;
 					vdd_l2_lvs1_2_3-supply = <&pm8941_s3>;
@@ -112,6 +84,8 @@
 						regulator-max-microvolt = <1800000>;
 						regulator-always-on;
 						regulator-boot-on;
+
+						regulator-system-load = <154000>;
 					};
 
 					s4 {
@@ -217,8 +191,8 @@
 					};
 
 					l19 {
-						regulator-min-microvolt = <3300000>;
-						regulator-max-microvolt = <3300000>;
+						regulator-min-microvolt = <2850000>;
+						regulator-max-microvolt = <2850000>;
 					};
 
 					l20 {
@@ -227,7 +201,8 @@
 
 						regulator-allow-set-load;
 						regulator-boot-on;
-						regulator-system-load = <200000>;
+						regulator-allow-set-load;
+						regulator-system-load = <500000>;
 					};
 
 					l21 {
@@ -257,6 +232,49 @@
 			};
 		};
 	};
+
+	vreg_bl_vddio: lcd-backlight-vddio {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_bl_vddio";
+		regulator-min-microvolt = <3150000>;
+		regulator-max-microvolt = <3150000>;
+
+		gpio = <&tlmm 69 0>;
+		enable-active-high;
+
+		vin-supply = <&pm8941_s3>;
+		startup-delay-us = <70000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_backlight_en_pin_a>;
+	};
+
+	vreg_vsp: lcd-dcdc-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_vsp";
+		regulator-min-microvolt = <5600000>;
+		regulator-max-microvolt = <5600000>;
+
+		gpio = <&pm8941_gpios 20 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_dcdc_en_pin_a>;
+	};
+
+	vreg_wlan: wlan-regulator {
+		compatible = "regulator-fixed";
+
+		regulator-name = "wl-reg";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+
+		gpio = <&pm8941_gpios 18 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&wlan_regulator_pin>;
+	};
 };
 
 &soc {
@@ -265,26 +283,36 @@
 
 		vmmc-supply = <&pm8941_l20>;
 		vqmmc-supply = <&pm8941_s3>;
+	};
 
-		bus-width = <8>;
+	sdhci@f9864900 {
+		status = "ok";
+
+		max-frequency = <100000000>;
 		non-removable;
+		vmmc-supply = <&vreg_wlan>;
 
-		pinctrl-names = "default";
-		pinctrl-0 = <&sdhc1_pin_a>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		bcrmf@1 {
+			compatible = "brcm,bcm4339-fmac", "brcm,bcm4329-fmac";
+			reg = <1>;
+
+			brcm,drive-strength = <10>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&wlan_sleep_clk_pin>;
+		};
 	};
 
 	sdhci@f98a4900 {
 		status = "ok";
 
-		bus-width = <4>;
-
 		vmmc-supply = <&pm8941_l21>;
 		vqmmc-supply = <&pm8941_l13>;
 
-		cd-gpios = <&msmgpio 62 GPIO_ACTIVE_LOW>;
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&sdhc2_pin_a>, <&sdhc2_cd_pin_a>;
+		cd-gpios = <&tlmm 62 GPIO_ACTIVE_LOW>;
 	};
 
 	serial@f991e000 {
@@ -292,77 +320,6 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&blsp1_uart2_pin_a>;
-	};
-
-
-	pinctrl@fd510000 {
-		blsp1_uart2_pin_a: blsp1-uart2-pin-active {
-			rx {
-				pins = "gpio5";
-				function = "blsp_uart2";
-
-				drive-strength = <2>;
-				bias-pull-up;
-			};
-
-			tx {
-				pins = "gpio4";
-				function = "blsp_uart2";
-
-				drive-strength = <4>;
-				bias-disable;
-			};
-		};
-
-		i2c2_pins: i2c2 {
-			mux {
-				pins = "gpio6", "gpio7";
-				function = "blsp_i2c2";
-
-				drive-strength = <2>;
-				bias-disable;
-			};
-		};
-
-		sdhc1_pin_a: sdhc1-pin-active {
-			clk {
-				pins = "sdc1_clk";
-				drive-strength = <16>;
-				bias-disable;
-			};
-
-			cmd-data {
-				pins = "sdc1_cmd", "sdc1_data";
-				drive-strength = <10>;
-				bias-pull-up;
-			};
-		};
-
-		sdhc2_cd_pin_a: sdhc2-cd-pin-active {
-			pins = "gpio62";
-			function = "gpio";
-
-			drive-strength = <2>;
-			bias-disable;
-		 };
-
-		sdhc2_pin_a: sdhc2-pin-active {
-			clk {
-				pins = "sdc2_clk";
-				drive-strength = <10>;
-				bias-disable;
-			};
-
-			cmd-data {
-				pins = "sdc2_cmd", "sdc2_data";
-				drive-strength = <6>;
-				bias-pull-up;
-			};
-		};
-	};
-
-	dma-controller@f9944000 {
-		qcom,controlled-remotely;
 	};
 
 	usb@f9a55000 {
@@ -389,14 +346,150 @@
 			};
 		};
 	};
+
+	pinctrl@fd510000 {
+		blsp1_uart2_pin_a: blsp1-uart2-pin-active {
+			rx {
+				pins = "gpio5";
+				function = "blsp_uart2";
+
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+
+			tx {
+				pins = "gpio4";
+				function = "blsp_uart2";
+
+				drive-strength = <4>;
+				bias-disable;
+			};
+		};
+
+		lcd_backlight_en_pin_a: lcd-backlight-vddio {
+			pins = "gpio69";
+			drive-strength = <10>;
+			output-low;
+			bias-disable;
+		};
+
+		ts_int_pin: synaptics {
+			pin {
+				pins = "gpio86";
+				function = "gpio";
+
+				drive-strength = <2>;
+				bias-disable;
+				input-enable;
+			};
+		};
+	};
+
+	i2c@f9964000 {
+		status = "ok";
+
+		clock-frequency = <355000>;
+		qcom,src-freq = <50000000>;
+
+		synaptics@2c {
+			compatible = "syna,rmi4-i2c";
+			reg = <0x2c>;
+
+			interrupt-parent = <&tlmm>;
+			interrupts = <86 IRQ_TYPE_EDGE_FALLING>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			vdd-supply = <&pm8941_l22>;
+			vio-supply = <&pm8941_lvs3>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&ts_int_pin>;
+
+			syna,startup-delay-ms = <10>;
+
+			rmi-f01@1 {
+				reg = <0x1>;
+				syna,nosleep = <1>;
+			};
+
+			rmi-f11@11 {
+				reg = <0x11>;
+				syna,f11-flip-x = <1>;
+				syna,sensor-type = <1>;
+			};
+		};
+	};
+
+	i2c@f9967000 {
+		status = "ok";
+
+		clock-frequency = <355000>;
+		qcom,src-freq = <50000000>;
+
+		lp8566_wled: backlight@2c {
+			compatible = "ti,lp8556";
+			reg = <0x2c>;
+			power-supply = <&vreg_bl_vddio>;
+
+			bl-name = "backlight";
+			dev-ctrl = /bits/ 8 <0x05>;
+			init-brt = /bits/ 8 <0x3f>;
+			rom_a0h {
+				rom-addr = /bits/ 8 <0xa0>;
+				rom-val = /bits/ 8 <0xff>;
+			};
+			rom_a1h {
+				rom-addr = /bits/ 8 <0xa1>;
+				rom-val = /bits/ 8 <0x3f>;
+			};
+			rom_a2h {
+				rom-addr = /bits/ 8 <0xa2>;
+				rom-val = /bits/ 8 <0x20>;
+			};
+			rom_a3h {
+				rom-addr = /bits/ 8 <0xa3>;
+				rom-val = /bits/ 8 <0x5e>;
+			};
+			rom_a4h {
+				rom-addr = /bits/ 8 <0xa4>;
+				rom-val = /bits/ 8 <0x02>;
+			};
+			rom_a5h {
+				rom-addr = /bits/ 8 <0xa5>;
+				rom-val = /bits/ 8 <0x04>;
+			};
+			rom_a6h {
+				rom-addr = /bits/ 8 <0xa6>;
+				rom-val = /bits/ 8 <0x80>;
+			};
+			rom_a7h {
+				rom-addr = /bits/ 8 <0xa7>;
+				rom-val = /bits/ 8 <0xf7>;
+			};
+			rom_a9h {
+				rom-addr = /bits/ 8 <0xa9>;
+				rom-val = /bits/ 8 <0x80>;
+			};
+			rom_aah {
+				rom-addr = /bits/ 8 <0xaa>;
+				rom-val = /bits/ 8 <0x0f>;
+			};
+			rom_aeh {
+				rom-addr = /bits/ 8 <0xae>;
+				rom-val = /bits/ 8 <0x0f>;
+			};
+		};
+	};
 };
 
 &spmi_bus {
 	pm8941@0 {
 		charger@1000 {
-			qcom,fast-charge-safe-current = <1300000>;
-			qcom,fast-charge-current-limit = <1300000>;
-			qcom,dc-current-limit = <1300000>;
+			qcom,fast-charge-safe-current = <1500000>;
+			qcom,fast-charge-current-limit = <1500000>;
+			qcom,dc-current-limit = <1800000>;
 			qcom,fast-charge-safe-voltage = <4400000>;
 			qcom,fast-charge-high-threshold-voltage = <4350000>;
 			qcom,fast-charge-low-threshold-voltage = <3400000>;
@@ -406,31 +499,45 @@
 
 		gpios@c000 {
 			gpio_keys_pin_a: gpio-keys-active {
-				pins = "gpio2", "gpio3", "gpio4", "gpio5";
+				pins = "gpio2", "gpio5";
 				function = "normal";
 
 				bias-pull-up;
 				power-source = <PM8941_GPIO_S3>;
 			};
+
+			wlan_sleep_clk_pin: wl-sleep-clk {
+				pins = "gpio17";
+				function = "func2";
+
+				output-high;
+				power-source = <PM8941_GPIO_S3>;
+			};
+
+			wlan_regulator_pin: wl-reg-active {
+				pins = "gpio18";
+				function = "normal";
+
+				bias-disable;
+				power-source = <PM8941_GPIO_S3>;
+			};
+
+			lcd_dcdc_en_pin_a: lcd-dcdc-en-active {
+				pins = "gpio20";
+				function = "normal";
+
+				bias-disable;
+				power-source = <PM8941_GPIO_S3>;
+				input-disable;
+				output-low;
+			};
+
 		};
 
 		coincell@2800 {
 			status = "ok";
 			qcom,rset-ohms = <2100>;
 			qcom,vset-millivolts = <3000>;
-		};
-	};
-
-	pm8941@1 {
-		wled@d800 {
-			status = "ok";
-
-			qcom,cs-out;
-			qcom,current-limit = <20>;
-			qcom,current-boost-limit = <805>;
-			qcom,switching-freq = <1600>;
-			qcom,ovp = <29>;
-			qcom,num-strings = <2>;
 		};
 	};
 };
