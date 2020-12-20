@@ -1872,6 +1872,46 @@
 			status = "disabled";
 		};
 
+		ipa_bam: dma@7904000 {
+			compatible = "qcom,bam-v1.7.0";
+			reg = <0x7904000 0x26934>;
+			interrupts = <GIC_SPI 230 IRQ_TYPE_LEVEL_HIGH>;
+			/* FIXME: use mem_clk */
+			clocks = <&rpmcc RPM_SMD_IPA_CLK>;
+			clock-names = "bam_clk";
+			#dma-cells = <1>;
+			qcom,ee = <0>;
+			status = "ok";
+		};
+
+		ipa: ipa@7940000 {
+			compatible = "qcom,ipa-v2.6-lite";
+
+			reg = <0x7940000 0x5000>,
+			      <0x7945000 0x2000>;
+			reg-names = "ipa-reg", "ipa-shared";
+
+			interrupts = <GIC_SPI 228 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "ipa";
+
+			clocks = <&rpmcc RPM_SMD_IPA_CLK>;
+			clock-names = "core";
+
+			interconnects = <&snoc MAS_IPA &bimc SLV_EBI>,
+				        <&snoc MAS_IPA &snoc SLV_IMEM>,
+					<&bimc MAS_APPS_PROC &pcnoc SLV_IPA_CFG>;
+			interconnect-names = "memory",
+					     "imem",
+					     "config";
+
+			dmas = <&ipa_bam 2>, <&ipa_bam 3>, <&ipa_bam 4>, <&ipa_bam 5>,
+			       <&ipa_bam 6>, <&ipa_bam 7>, <&ipa_bam 8>, <&ipa_bam 9>;
+			dma-names = "ap_lan_rx", "cmd_tx", "ap_modem_tx", "ap_modem_rx",
+				    "modem_lan_tx", "modem_cmd_tx", "modem_lan_rx", "modem_ap_rx";
+
+			modem-remoteproc = <&modem>;
+		};
+
 		dma_blsp2: qcom,sps-dma@7ac4000 {
 			compatible = "qcom,bam-v1.7.0";
 			reg = <0x7ac4000 0x25000>;
