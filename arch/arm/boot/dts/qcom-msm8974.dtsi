@@ -1580,9 +1580,17 @@
 			compatible = "syscon", "simple-mfd";
 			reg = <0xfe805000 0x1000>;
 
-			reboot-mode {
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			reboot-mode@65c {
 				compatible = "syscon-reboot-mode";
 				offset = <0x65c>;
+			};
+
+			pil-reloc@94c {
+				compatible = "qcom,pil-reloc-info";
+				reg = <0x94c 0xc8>;
 			};
 		};
 	};
