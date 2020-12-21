@@ -225,7 +225,10 @@ static int a3xx_hw_init(struct msm_gpu *gpu)
 	/* Turn on hang detection - this spews a lot of useful information
 	 * into the RBBM registers on a hang:
 	 */
-	gpu_write(gpu, REG_A3XX_RBBM_INTERFACE_HANG_INT_CTL, 0x00010fff);
+	if (adreno_is_a330v2(adreno_gpu))
+		gpu_write(gpu, REG_A3XX_RBBM_INTERFACE_HANG_INT_CTL, 0x8000ffff);
+	else
+		gpu_write(gpu, REG_A3XX_RBBM_INTERFACE_HANG_INT_CTL, 0x00010fff);
 
 	/* Enable 64-byte cacheline size. HW Default is 32-byte (0x000000E0): */
 	gpu_write(gpu, REG_A3XX_UCHE_CACHE_MODE_CONTROL_REG, 0x00000001);
