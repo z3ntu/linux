@@ -254,9 +254,6 @@ static int a3xx_hw_init(struct msm_gpu *gpu)
 			(unsigned int)(a3xx_gpu->ocmem.base >> 14));
 	}
 
-	/* Turn on performance counters: */
-	gpu_write(gpu, REG_A3XX_RBBM_PERFCTR_CTL, 0x01);
-
 	/* Enable the perfcntrs that we use.. */
 	for (i = 0; i < gpu->num_perfcntrs; i++) {
 		const struct msm_gpu_perfcntr *perfcntr = &gpu->perfcntrs[i];
@@ -302,6 +299,9 @@ static int a3xx_hw_init(struct msm_gpu *gpu)
 
 	/* VBIF registers */
 	gpu_write(gpu, REG_A3XX_CP_PROTECT(12), 0x6b00c000);
+
+	/* Turn on performance counters: */
+	gpu_write(gpu, REG_A3XX_RBBM_PERFCTR_CTL, 0x01);
 
 	/* NOTE: PM4/micro-engine firmware registers look to be the same
 	 * for a2xx and a3xx.. we could possibly push that part down to
