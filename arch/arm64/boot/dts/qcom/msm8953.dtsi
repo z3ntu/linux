@@ -1647,6 +1647,9 @@
 
 			bus-width = <4>;
 
+			assigned-peak-bw-kBps = <1200000>, <1200000>, <74000>;
+			assigned-peak-bw-names = "vfe0-mem", "vfe1-mem", "cpu-cfg";
+
 			status = "disabled";
 
 			sdhc2_opp_table: sdhc2-opp-table {
