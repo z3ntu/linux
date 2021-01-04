@@ -1356,14 +1356,14 @@
 			iommu-ctx@2000 {
 				compatible = "qcom,msm-iommu-v1-sec";
 				reg = <0x2000 0x1000>;
-				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <GIC_SPI 46 0>;
 			};
 
 			// mdp_2
 			iommu-ctx@3000 {
 				compatible = "qcom,msm-iommu-v1-sec";
 				reg = <0x3000 0x1000>;
-				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
+				interrupts = <GIC_SPI 46 0>;
 			};
 		};
 
