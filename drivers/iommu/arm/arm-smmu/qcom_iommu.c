@@ -61,7 +61,6 @@ struct qcom_iommu_dev {
 struct qcom_iommu_ctx {
 	struct device		*dev;
 	void __iomem		*base;
-	bool			 secure_init;
 	u8			 asid;      /* asid and ctx bank # are 1:1 */
 	struct iommu_domain	*domain;
 };
@@ -272,6 +271,34 @@ static void qcom_iommu_unhalt(struct qcom_iommu_dev *qcom_iommu)
 
 static int qcom_iommu_non_secure_init(struct qcom_iommu_dev *qcom_iommu);
 
+static void qcom_iommu_reset_context(struct qcom_iommu_ctx *ctx)
+{
+	iommu_writel(ctx, ARM_SMMU_CB_ACTLR, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_FAR, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_FSRRESTORE, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR1, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_PAR, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR0, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_SCTLR, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_S1_TLBIALL, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_TCR, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_TTBR0, 0);
+	iommu_writel(ctx, ARM_SMMU_CB_TTBR1, 0);
+}
+
+static void qcom_iommu_release_smg(struct qcom_iommu_dev *qcom_iommu)
+{
+	int smrs;
+	u32 reg;
+	int i;
+
+	reg = readl(qcom_iommu->local_base + ARM_SMMU_GR0_ID0);
+	smrs = reg & ARM_SMMU_ID0_NUMSMRG;
+
+	for (; i < smrs; i++)
+		writel(0, qcom_iommu->local_base + ARM_SMMU_GR0_SMR(i));
+}
+
 static int qcom_iommu_init_domain(struct iommu_domain *domain,
 				  struct qcom_iommu_dev *qcom_iommu,
 				  struct device *dev)
@@ -323,90 +350,29 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 	domain->geometry.aperture_end = (1ULL << pgtbl_cfg.ias) - 1;
 	domain->geometry.force_aperture = true;
 
-	if (!qcom_iommu->sec_id) {
+	if (qcom_iommu->sec_id) {
+		dev_err(qcom_iommu->dev, "%s() restore_sec(%d)\n", __func__,
+		        qcom_iommu->sec_id);
+		ret = qcom_scm_restore_sec_cfg(qcom_iommu->sec_id, 0);
+		if (ret) {
+			dev_err(qcom_iommu->dev, "secure init failed: %d\n", ret);
+			return -ENODEV;
+		}
+	} else {
+		dev_err(qcom_iommu->dev, "non-secure iommu initialization\n");
 		qcom_iommu_halt(qcom_iommu);
-		qcom_iommu_non_secure_init(qcom_iommu);
+		ret = qcom_iommu_non_secure_init(qcom_iommu);
 		qcom_iommu_unhalt(qcom_iommu);
+		if (ret) {
+			dev_err(qcom_iommu->dev, "non-secure init failed\n");
+			return ret;
+		}
 	}
 
 //	qcom_iommu_halt(qcom_iommu);
 
 	for (i = 0; i < fwspec->num_ids; i++) {
 		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
-
-		if (!ctx->secure_init) {
-			ctx->secure_init = true;
-
-			dev_err(ctx->dev, "%s() restore_sec(%d)\n", __func__, qcom_iommu->sec_id);
-
-			if (qcom_iommu->sec_id) {
-				ret = qcom_scm_restore_sec_cfg(qcom_iommu->sec_id, i + 1);
-				if (ret) {
-					dev_err(qcom_iommu->dev, "secure init failed: %d\n", ret);
-					return -ENODEV;
-				}
-			}
-
-#if 0
-			printk(KERN_ERR "%s(%s)\n", __func__, ctx->dev->of_node->name);
-			if (!strcmp(ctx->dev->of_node->name, "kgsl-ctx")) {
-				printk(KERN_ERR "%s() setting bfb\n", __func__);
-				writel(3, qcom_iommu->local_base + 0x204c);
-				printk(KERN_ERR "*\n");
-				writel(0, qcom_iommu->local_base + 0x2050);
-				printk(KERN_ERR "*\n");
-				//writel(4, qcom_iommu->local_base + 0x2514);
-				printk(KERN_ERR "*\n");
-				writel(0x10, qcom_iommu->local_base + 0x2540);
-				printk(KERN_ERR "*\n");
-				writel(0, qcom_iommu->local_base + 0x256c);
-				printk(KERN_ERR "*\n");
-				//writel(0, qcom_iommu->local_base + 0x20ac);
-				//printk(KERN_ERR "*\n");
-				//writel(0, qcom_iommu->local_base + 0x215c);
-				//printk(KERN_ERR "*\n");
-				//writel(0x20, qcom_iommu->local_base + 0x220c);
-				//printk(KERN_ERR "*\n");
-				//writel(0, qcom_iommu->local_base + 0x2314);
-				//printk(KERN_ERR "*\n");
-				//writel(1, qcom_iommu->local_base + 0x2394);
-				//printk(KERN_ERR "*\n");
-				//writel(0x81, qcom_iommu->local_base + 0x2414);
-				//printk(KERN_ERR "*\n");
-				//writel(0, qcom_iommu->local_base + 0x2008);
-				//printk(KERN_ERR "*\n");
-			}
-
-			printk(KERN_ERR "%s(%s)\n", __func__, ctx->dev->of_node->name);
-			if (!strcmp(ctx->dev->of_node->name, "kgsl-ctx")) {
-				printk(KERN_ERR "%s() setting bfb\n", __func__);
-				writel(3, qcom_iommu->local_base + 0x204c);
-				printk(KERN_ERR "*\n");
-				writel(0, qcom_iommu->local_base + 0x2050);
-				printk(KERN_ERR "*\n");
-				writel(4, qcom_iommu->local_base + 0x2514);
-				printk(KERN_ERR "*\n");
-				writel(0x10, qcom_iommu->local_base + 0x2540);
-				printk(KERN_ERR "*\n");
-				writel(0, qcom_iommu->local_base + 0x256c);
-				printk(KERN_ERR "*\n");
-				writel(0, qcom_iommu->local_base + 0x20ac);
-				printk(KERN_ERR "*\n");
-				writel(1, qcom_iommu->local_base + 0x215c);
-				printk(KERN_ERR "*\n");
-				writel(0x21, qcom_iommu->local_base + 0x220c);
-				printk(KERN_ERR "*\n");
-				writel(0, qcom_iommu->local_base + 0x2314);
-				printk(KERN_ERR "*\n");
-				writel(1, qcom_iommu->local_base + 0x2394);
-				printk(KERN_ERR "*\n");
-				writel(0x81, qcom_iommu->local_base + 0x2414);
-				printk(KERN_ERR "*\n");
-				writel(0, qcom_iommu->local_base + 0x2008);
-				printk(KERN_ERR "*\n");
-			}
-#endif
-		}
 
 		printk(KERN_ERR "%s() reset\n", __func__);
 
@@ -423,14 +389,7 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 */
 
 		/* Reset context */
-		iommu_writel(ctx, ARM_SMMU_CB_ACTLR, 0);
-		iommu_writel(ctx, ARM_SMMU_CB_FAR, 0);
-		iommu_writel(ctx, ARM_SMMU_CB_FSRRESTORE, 0);
-		iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR1, 0);
-		iommu_writel(ctx, ARM_SMMU_CB_PAR, 0);
-		iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR0, 0);
-		iommu_writel(ctx, ARM_SMMU_CB_SCTLR, 0);
-		iommu_writel(ctx, ARM_SMMU_CB_S1_TLBIALL, 0);
+		qcom_iommu_reset_context(ctx);
 
 		printk(KERN_ERR "%s() actlr\n", __func__);
 
@@ -630,11 +589,17 @@ static void qcom_iommu_detach_dev(struct iommu_domain *domain, struct device *de
 	for (i = 0; i < fwspec->num_ids; i++) {
 		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
 
-		/* Disable the context bank: */
-		iommu_writel(ctx, ARM_SMMU_CB_SCTLR, 0);
+		qcom_iommu_reset_context(ctx);
 
 		ctx->domain = NULL;
 	}
+
+	if (!qcom_iommu->sec_id) {
+		qcom_iommu_halt(qcom_iommu);
+		qcom_iommu_release_smg(qcom_iommu);
+		qcom_iommu_unhalt(qcom_iommu);
+	}
+
 	pm_runtime_put_sync(qcom_iommu->dev);
 }
 
@@ -1010,7 +975,7 @@ static int qcom_iommu_non_secure_init(struct qcom_iommu_dev *qcom_iommu)
 		reg = readl(qcom_iommu->local_base + ARM_SMMU_GR0_SMR(i));
 		writel(ARM_SMMU_SMR_VALID | i, qcom_iommu->local_base + ARM_SMMU_GR0_SMR(i));
 
-		writel(0 << 16 | 0x0a << 12 | i, qcom_iommu->local_base + ARM_SMMU_GR0_S2CR(i));
+		writel(3 << 18 | 0x0a << 12 | i, qcom_iommu->local_base + ARM_SMMU_GR0_S2CR(i));
 	}
 	for (; i < smrs; i++)
 		writel(0, qcom_iommu->local_base + ARM_SMMU_GR0_SMR(i));
@@ -1150,27 +1115,6 @@ static int qcom_iommu_device_probe(struct platform_device *pdev)
 
 	iommu_device_set_ops(&qcom_iommu->iommu, &qcom_iommu_ops);
 	iommu_device_set_fwnode(&qcom_iommu->iommu, dev->fwnode);
-
-	pm_runtime_get_sync(dev);
-
-	if (qcom_iommu->sec_id) {
-		dev_err(qcom_iommu->dev, "%s() restore_sec(%d)\n", __func__,
-		        qcom_iommu->sec_id);
-		ret = qcom_scm_restore_sec_cfg(qcom_iommu->sec_id, 0);
-		if (ret) {
-			dev_err(qcom_iommu->dev, "secure init failed: %d\n", ret);
-			return -ENODEV;
-		}
-	} else {
-		dev_err(&pdev->dev, "non-secure iommu initialization\n");
-
-		ret = qcom_iommu_non_secure_init(qcom_iommu);
-		if (ret) {
-			dev_err(qcom_iommu->dev, "non-secure init failed\n");
-			return ret;
-		}
-	}
-	pm_runtime_put_sync(dev);
 
 	ret = iommu_device_register(&qcom_iommu->iommu);
 	if (ret) {
