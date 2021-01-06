@@ -36,6 +36,7 @@
 #include "arm-smmu.h"
 
 #define SMMU_INTR_SEL_NS     0x2000
+#define QCOM_IOMMU_BFB_MAX_REGS 32
 
 enum qcom_iommu_clk {
 	CLK_IFACE,
@@ -46,6 +47,7 @@ enum qcom_iommu_clk {
 };
 
 struct qcom_iommu_ctx;
+struct qcom_iommu_bfb_settings;
 
 struct qcom_iommu_dev {
 	/* IOMMU core code handle */
@@ -54,6 +56,7 @@ struct qcom_iommu_dev {
 	struct clk_bulk_data clks[CLK_NUM];
 	void __iomem		*local_base;
 	u32			 sec_id;
+	struct qcom_iommu_bfb_settings *bfb;
 	u8			 num_ctxs;
 	struct qcom_iommu_ctx	*ctxs[];   /* indexed by asid-1 */
 };
@@ -73,6 +76,14 @@ struct qcom_iommu_domain {
 	struct qcom_iommu_dev	*iommu;
 	struct iommu_fwspec	*fwspec;
 };
+
+struct qcom_iommu_bfb_settings {
+	u32 regs[QCOM_IOMMU_BFB_MAX_REGS];
+	u32 data[QCOM_IOMMU_BFB_MAX_REGS];
+	int len;
+};
+
+static void qcom_iommu_apply_bfb(struct qcom_iommu_dev *dev);
 
 static struct qcom_iommu_domain *to_qcom_iommu_domain(struct iommu_domain *dom)
 {
@@ -368,6 +379,7 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 			return ret;
 		}
 	}
+	qcom_iommu_apply_bfb(qcom_iommu);
 
 //	qcom_iommu_halt(qcom_iommu);
 
@@ -1006,6 +1018,58 @@ static int qcom_iommu_non_secure_init(struct qcom_iommu_dev *qcom_iommu)
 	return 0;
 }
 
+static void qcom_iommu_apply_bfb(struct qcom_iommu_dev *dev)
+{
+	struct qcom_iommu_bfb_settings *bfb = dev->bfb;
+	int i;
+
+	if (bfb)
+		for (i = 0; i < bfb->len; i++)
+			writel(bfb->data[i], dev->local_base + bfb->regs[i]);
+}
+
+
+static int qcom_iommu_parse_bfb_dt(struct qcom_iommu_dev *dev)
+{
+	struct device_node *np = dev->dev->of_node;
+	struct qcom_iommu_bfb_settings *bfb;
+	int ret;
+	const void *regs, *data;
+	int regs_len, data_len;
+
+	regs = of_get_property(np, "qcom,iommu-bfb-regs", &regs_len);
+	data = of_get_property(np, "qcom,iommu-bfb-data", &data_len);
+	if ((regs != NULL) + (data != NULL) == 1) {
+		return -EINVAL;
+	}
+	if (regs == NULL && data == NULL) {
+		return 0;
+	}
+	if (regs_len != data_len) {
+		return -EINVAL;
+	}
+
+	bfb = devm_kzalloc(dev->dev, sizeof(*bfb), GFP_KERNEL);
+	if (!bfb) {
+		return -ENOMEM;
+	}
+
+	bfb->len = regs_len / sizeof(bfb->regs[0]);
+
+	ret = of_property_read_u32_array(np, "qcom,iommu-bfb-regs",
+			bfb->regs, bfb->len);
+	if (ret)
+		return ret;
+
+	ret = of_property_read_u32_array(np, "qcom,iommu-bfb-data",
+			bfb->data, bfb->len);
+	if (ret)
+		return ret;
+
+	dev->bfb = bfb;
+	return 0;
+}
+
 static int qcom_iommu_device_probe(struct platform_device *pdev)
 {
 	struct device_node *child;
@@ -1077,6 +1141,12 @@ static int qcom_iommu_device_probe(struct platform_device *pdev)
 			dev_err(dev, "cannot init secure pg table(%d)\n", ret);
 			return ret;
 		}
+	}
+
+	ret = qcom_iommu_parse_bfb_dt(qcom_iommu);
+	if (ret) {
+		dev_err(dev, "cannot parse bfb data\n");
+		return ret;
 	}
 
 	platform_set_drvdata(pdev, qcom_iommu);
