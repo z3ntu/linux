@@ -375,10 +375,10 @@ static int cci_reset(struct cci *cci)
 {
 	unsigned long time;
 
-	cci->master[MASTER_1].complete_pending = 1;
+	cci->master[MASTER_0].complete_pending = 1;
 	writel(CCI_RESET_CMD_MASK, cci->base + CCI_RESET_CMD);
 	time = wait_for_completion_timeout(
-				&cci->master[MASTER_1].irq_complete,
+				&cci->master[MASTER_0].irq_complete,
 				msecs_to_jiffies(CCI_TIMEOUT_MS));
 	if (!time) {
 		dev_err(cci->dev, "CCI reset timeout\n");
@@ -474,7 +474,7 @@ static int cci_validate_queue(struct cci *cci, u32 len, u8 master, u8 queue)
 
 static int cci_i2c_read(struct cci *cci, u16 addr, u8 *buf, u16 len)
 {
-	u8 master = MASTER_1;
+	u8 master = MASTER_0;
 	u8 queue = QUEUE_1;
 	u32 val;
 	u32 words_read, words_exp;
@@ -529,7 +529,7 @@ static int cci_i2c_read(struct cci *cci, u16 addr, u8 *buf, u16 len)
 
 static int cci_i2c_write(struct cci *cci, u16 addr, u8 *buf, u16 len)
 {
-	u8 master = MASTER_1;
+	u8 master = MASTER_0;
 	u8 queue = QUEUE_0;
 	u8 load[12] = { 0 };
 	u8 i, j;
