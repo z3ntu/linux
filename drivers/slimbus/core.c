@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2011-2017, The Linux Foundation
  */
+#define DEBUG
 
 #include <linux/kernel.h>
 #include <linux/errno.h>
@@ -74,7 +75,7 @@ static int slim_device_probe(struct device *dev)
 	if (!ret) {
 		slim_device_update_status(sbdev, SLIM_DEVICE_STATUS_UP);
 	} else {
-		dev_err(&sbdev->dev, "Failed to get logical address\n");
+		dev_err(&sbdev->dev, "Failed to get logical address: %d\n", ret);
 		ret = -EPROBE_DEFER;
 	}
 
@@ -442,16 +443,21 @@ static int slim_device_alloc_laddr(struct slim_device *sbdev,
 	mutex_lock(&ctrl->lock);
 	if (ctrl->get_laddr) {
 		ret = ctrl->get_laddr(ctrl, &sbdev->e_addr, &laddr);
-		if (ret < 0)
+		if (ret < 0) {
+			printk(KERN_ERR "slimbus dbg1\n");
 			goto err;
+		}
 	} else if (report_present) {
 		ret = ida_simple_get(&ctrl->laddr_ida,
 				     0, SLIM_LA_MANAGER - 1, GFP_KERNEL);
-		if (ret < 0)
+		if (ret < 0) {
+			printk(KERN_ERR "slimbus dbg2\n");
 			goto err;
+		}
 
 		laddr = ret;
 	} else {
+		printk(KERN_ERR "slimbus dbg3\n");
 		ret = -EINVAL;
 		goto err;
 	}
@@ -459,6 +465,7 @@ static int slim_device_alloc_laddr(struct slim_device *sbdev,
 	if (ctrl->set_laddr) {
 		ret = ctrl->set_laddr(ctrl, &sbdev->e_addr, laddr);
 		if (ret) {
+			printk(KERN_ERR "slimbus dbg4\n");
 			ret = -EINVAL;
 			goto err;
 		}
