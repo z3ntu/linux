@@ -606,6 +606,29 @@
 		};
 	};
 
+	video-codec@fdc00000 {
+		compatible = "qcom,msm8974-venus";
+		reg = <0xfdc00000 0xff000>;
+		interrupts = <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&mmcc VENUS0_VCODEC0_CLK>,
+			 <&mmcc VENUS0_AHB_CLK>,
+			 <&mmcc VENUS0_AXI_CLK>,
+			 <&mmcc VENUS0_OCMEMNOC_CLK>;
+		clock-names = "core", "iface", "bus", "ocmem";
+		power-domains = <&mmcc VENUS0_GDSC>;
+
+		// iommus = <&venus_iommu 0>;
+		memory-region = <&venus_mem>;
+
+		video-decoder {
+			compatible = "venus-decoder";
+		};
+
+		video-encoder {
+			compatible = "venus-encoder";
+		};
+	};
+
 	camss: camss@fda00000 {
 		// missing cpp and cci blocks + msm-cam
 
