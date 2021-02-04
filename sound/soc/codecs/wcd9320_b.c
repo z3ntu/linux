@@ -622,7 +622,7 @@ static int taiko_codec_dsm_mux_event(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		reg_val = snd_soc_component_read32(comp, WCD9320_CDC_CONN_CLSH_CTL);
+		reg_val = snd_soc_component_read(comp, WCD9320_CDC_CONN_CLSH_CTL);
 
 		if ((reg_val & 0x30) == 0x10)
 			zoh_mux_val = 0x04;
@@ -1562,8 +1562,8 @@ static int wcd9320_hw_params(struct snd_pcm_substream *substream,
 		for (j = 0; j < WCD9320_NUM_INTERPOLATORS; j++) {
 			rx_mix_1_reg_2 = rx_mix_1_reg_1 + 1;
 
-			rx_mix_1_reg_1_val = snd_soc_component_read32(component, rx_mix_1_reg_1);
-			rx_mix_1_reg_2_val = snd_soc_component_read32(component, rx_mix_1_reg_2);
+			rx_mix_1_reg_1_val = snd_soc_component_read(component, rx_mix_1_reg_1);
+			rx_mix_1_reg_2_val = snd_soc_component_read(component, rx_mix_1_reg_2);
 
 			printk("%.2X %.2X %.2X\n", rx_mix_1_reg_1_val, rx_mix_1_reg_2_val, rx_mix1_inp);
 
