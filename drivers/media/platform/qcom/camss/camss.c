@@ -389,7 +389,6 @@ static const struct resources vfe_res_8x96[] = {
 		.interrupt = { "vfe1" }
 	}
 };
-#endif
 
 static const struct resources csiphy_res_660[] = {
 	/* CSIPHY0 */
@@ -572,6 +571,7 @@ static const struct resources vfe_res_660[] = {
 		.interrupt = { "vfe1" }
 	}
 };
+#endif
 
 /*
  * camss_add_clock_margin - Add margin to clock frequency rate
