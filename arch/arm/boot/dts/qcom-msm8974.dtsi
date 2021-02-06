@@ -383,7 +383,7 @@
 			apr {
 				compatible = "qcom,apr-v2";
 				qcom,smd-channels = "apr_audio_svc";
-				reg = <APR_DOMAIN_ADSP>;
+				qcom,apr-domain = <APR_DOMAIN_ADSP>;
 				#address-cells = <1>;
 				#size-cells = <0>;
 
