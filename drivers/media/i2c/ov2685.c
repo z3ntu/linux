@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Fuzhou Rockchip Electronics Co., Ltd.
  */
 
+#define DEBUG
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/delay.h>
@@ -280,6 +281,7 @@ static int ov2685_write_array(struct i2c_client *client,
 		ret = ov2685_write_reg(client, regs[i].addr,
 				       OV2685_REG_VALUE_08BIT, regs[i].val);
 
+	printk(KERN_ERR "DBG8 %d\n", ret);
 	return ret;
 }
 
@@ -415,12 +417,16 @@ static int __ov2685_power_on(struct ov2685 *ov2685)
 	delay_us = ov2685_cal_delay(8192);
 	usleep_range(delay_us, delay_us * 2);
 
+	dev_err(dev, "DBG6\n");
 	/* HACK: ov2685 would output messy data after reset(R0103),
 	 * writing register before .s_stream() as a workaround
 	 */
 	ret = ov2685_write_array(ov2685->client, ov2685->cur_mode->reg_list);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "Failed to write to i2c\n");
 		goto disable_supplies;
+	}
+	dev_err(dev, "DBG7\n");
 
 	return 0;
 
@@ -715,6 +721,8 @@ static int ov2685_probe(struct i2c_client *client,
 	struct ov2685 *ov2685;
 	int ret;
 
+	dev_err(dev, "DBG0\n");
+
 	ov2685 = devm_kzalloc(dev, sizeof(*ov2685), GFP_KERNEL);
 	if (!ov2685)
 		return -ENOMEM;
@@ -722,6 +730,7 @@ static int ov2685_probe(struct i2c_client *client,
 	ov2685->client = client;
 	ov2685->cur_mode = &supported_modes[0];
 
+	dev_err(dev, "DBG1\n");
 	ov2685->xvclk = devm_clk_get(dev, "xvclk");
 	if (IS_ERR(ov2685->xvclk)) {
 		dev_err(dev, "Failed to get xvclk\n");
@@ -733,30 +742,35 @@ static int ov2685_probe(struct i2c_client *client,
 		return ret;
 	}
 	if (clk_get_rate(ov2685->xvclk) != OV2685_XVCLK_FREQ)
-		dev_warn(dev, "xvclk mismatched, modes are based on 24MHz\n");
+		dev_warn(dev, "xvclk mismatched (%lu), modes are based on 24MHz\n", clk_get_rate(ov2685->xvclk));
 
+	dev_err(dev, "DBG2\n");
 	ov2685->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(ov2685->reset_gpio)) {
 		dev_err(dev, "Failed to get reset-gpios\n");
 		return -EINVAL;
 	}
 
+	dev_err(dev, "DBG3\n");
 	ret = ov2685_configure_regulators(ov2685);
 	if (ret) {
 		dev_err(dev, "Failed to get power regulators\n");
 		return ret;
 	}
 
+	dev_err(dev, "DBG4\n");
 	mutex_init(&ov2685->mutex);
 	v4l2_i2c_subdev_init(&ov2685->subdev, client, &ov2685_subdev_ops);
 	ret = ov2685_initialize_controls(ov2685);
 	if (ret)
 		goto err_destroy_mutex;
 
+	dev_err(dev, "DBG5\n");
 	ret = __ov2685_power_on(ov2685);
 	if (ret)
 		goto err_free_handler;
 
+	dev_err(dev, "DBG6\n");
 	ret = ov2685_check_sensor_id(ov2685, client);
 	if (ret)
 		goto err_power_off;

@@ -309,28 +309,28 @@
 			};
 		};
 
-/*
 		mclk0_pin: mclk0 {
 			clk {
 				pins = "gpio15";
 				function = "cam_mclk0";
 				bias-disable;
-				//output-high;
+				output-high;
 			};
 		};
-*/
 
 		mclk2_pin: mclk2 {
 			clk {
 				pins = "gpio17";
 				function = "cam_mclk2";
 				bias-disable;
+				output-high;
 			};
 			vdig { // FIXME name is weird, v-digital? or reset pin?
 				pins = "gpio18";
 				function = "gpio";
-				drive-strength = <2>;
+				//drive-strength = <2>;
 				bias-disable;
+				output-low;
 			};
 		};
 
@@ -708,23 +708,23 @@
 			<&mmcc CAMSS_CSI_VFE1_CLK>,
 			<&mmcc CAMSS_VFE_VFE_AHB_CLK>,
 			<&mmcc CAMSS_VFE_VFE_AXI_CLK>;
-		// CAMSS_VFE_VFE_OCMEMNOC_CLK
-                clock-names = "top_ahb",
-                        "ispif_ahb",
-                        "csiphy0_timer",
-                        "csiphy1_timer",
-                        "csiphy2_timer",
-                        "csi0_ahb", "csi0", "csi0_phy", "csi0_pix", "csi0_rdi",
-                        "csi1_ahb", "csi1", "csi1_phy", "csi1_pix", "csi1_rdi",
-                        "csi2_ahb", "csi2", "csi2_phy", "csi2_pix", "csi2_rdi",
-                        "csi3_ahb", "csi3", "csi3_phy", "csi3_pix", "csi3_rdi",
-                        // "camss_ahb",
-                        "vfe0",
-                        "vfe1",
-                        "csi_vfe0",
-                        "csi_vfe1",
-                        "iface",
-                        "bus";
+			// CAMSS_VFE_VFE_OCMEMNOC_CLK
+		clock-names = "top_ahb",
+			"ispif_ahb",
+			"csiphy0_timer",
+			"csiphy1_timer",
+			"csiphy2_timer",
+			"csi0_ahb", "csi0", "csi0_phy", "csi0_pix", "csi0_rdi",
+			"csi1_ahb", "csi1", "csi1_phy", "csi1_pix", "csi1_rdi",
+			"csi2_ahb", "csi2", "csi2_phy", "csi2_pix", "csi2_rdi",
+			"csi3_ahb", "csi3", "csi3_phy", "csi3_pix", "csi3_rdi",
+			// "camss_ahb",
+			"vfe0",
+			"vfe1",
+			"csi_vfe0",
+			"csi_vfe1",
+			"iface",
+			"bus";
 		vdda-supply = <&pm8941_l12>;
 		// iommus = <...>;
 		ports {
@@ -735,6 +735,14 @@
 				csiphy0_ep: endpoint {
 					clock-lanes = <1>;
 					data-lanes = <0 2 3 4>;
+					remote-endpoint = <&ov8865_ep>;
+				};
+			};
+			port@2 {
+				reg = <2>;
+				csiphy2_ep: endpoint {
+					clock-lanes = <1>;
+					data-lanes = <0 2 3 4>;
 					remote-endpoint = <&ov2685_ep>;
 				};
 			};
@@ -742,7 +750,7 @@
 	};
 
 	qcom,cci@fda0c000 {
-		compatible = "qcom,cci-v1.0.8";
+		compatible = "qcom,msm8974-cci";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0xfda0c000 0x1000>;
@@ -762,29 +770,71 @@
 
 		clock-frequency = <400000>;
 
-		ov2685: camera-sensor@20 {
-			compatible = "ovti,ov2685";
-			reg = <0x20>;
+		i2c-bus@0 {
+			reg = <0>;
+			clock-frequency = <400000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-			clocks = <&mmcc CAMSS_MCLK2_CLK>;
-			clock-names = "xvclk";
+			// ov8865
+			ov8865: camera-sensor@20 {
+				compatible = "ovti,ov8865";
+				reg = <0x20>;
 
-			avdd-supply = <&pm8941_l22>;
-			dovdd-supply = <&pm8941_lvs3>;
-			dvdd-supply = <&pm8941_l3>;
-			reset-gpios = <&msmgpio 18 GPIO_ACTIVE_HIGH>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&mclk0_pin>;
 
-			// Uses csid & csiphy instance nr. 2 (0-index-based)
+				clocks = <&mmcc CAMSS_MCLK0_CLK>;
+				assigned-clocks = <&mmcc CAMSS_MCLK0_CLK>;
+				assigned-clock-rates = <24000000>;
 
-			pinctrl-names = "default";
-			pinctrl-0 = <&mclk2_pin>;
+				avdd-supply = <&pm8941_l17>; // vana
+				dovdd-supply = <&pm8941_lvs3>; // vio
+				dvdd-supply = <&pm8941_l3>; // vdig
 
-			port {
-				ov2685_ep: endpoint {
-					clock-lanes = <1>;
-					data-lanes = <0 2 3 4>;
-					remote-endpoint = <&csiphy0_ep>;
-					//data-lanes = <1>;
+				powerdown-gpios = <&msmgpio 89 GPIO_ACTIVE_LOW>;
+				reset-gpios = <&msmgpio 90 GPIO_ACTIVE_LOW>;
+
+				port {
+					ov8865_ep: endpoint {
+						clock-lanes = <1>;
+						data-lanes = <0 2 3 4>;
+						remote-endpoint = <&csiphy0_ep>;
+					};
+				};
+			};
+		};
+
+		i2c-bus@1 {
+			reg = <1>;
+			clock-frequency = <400000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ov2685: camera-sensor@20 {
+				compatible = "ovti,ov2685";
+				reg = <0x20>;
+
+				clocks = <&mmcc CAMSS_MCLK2_CLK>;
+				clock-names = "xvclk";
+
+				avdd-supply = <&pm8941_l22>;
+				dovdd-supply = <&pm8941_lvs3>;
+				dvdd-supply = <&pm8941_l3>;
+				reset-gpios = <&msmgpio 18 GPIO_ACTIVE_HIGH>;
+
+				// Uses csid & csiphy instance nr. 2 (0-index-based)
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&mclk2_pin>;
+
+				port {
+					ov2685_ep: endpoint {
+						clock-lanes = <1>;
+						data-lanes = <0 2 3 4>;
+						remote-endpoint = <&csiphy2_ep>;
+						//data-lanes = <1>;
+					};
 				};
 			};
 		};

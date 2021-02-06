@@ -2865,8 +2865,8 @@ static int ov8865_probe(struct i2c_client *client)
 	rate = clk_get_rate(sensor->extclk);
 	if (rate != OV8865_EXTCLK_RATE) {
 		dev_err(dev, "clock rate %lu Hz is unsupported\n", rate);
-		ret = -EINVAL;
-		goto error_endpoint;
+		//ret = -EINVAL;
+		//goto error_endpoint;
 	}
 
 	/* Subdev, entity and pad */
@@ -2908,6 +2908,11 @@ static int ov8865_probe(struct i2c_client *client)
 	ret = v4l2_async_register_subdev_sensor_common(subdev);
 	if (ret)
 		goto error_pm;
+
+	ret = ov8865_resume(sensor->dev);
+	if (ret) {
+		dev_err(sensor->dev, "DBG failed to resume sensor\n");
+	}
 
 	return 0;
 
