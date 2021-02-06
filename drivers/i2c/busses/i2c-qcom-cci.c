@@ -2,6 +2,7 @@
 // Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
 // Copyright (c) 2017-20 Linaro Limited.
 
+#define DEBUG
 #include <linux/clk.h>
 #include <linux/completion.h>
 #include <linux/i2c.h>
@@ -238,6 +239,8 @@ static int cci_reset(struct cci *cci)
 	reinit_completion(&cci->master[0].irq_complete);
 	writel(CCI_RESET_CMD_MASK, cci->base + CCI_RESET_CMD);
 
+	// FIXME panics after this failure:
+	// i2c-qcom-cci fda0c000.qcom,cci: /soc/qcom,cci@fda0c000/camera-sensor@20 invalid 'reg' value: 32 (max is 1)
 	if (!wait_for_completion_timeout(&cci->master[0].irq_complete,
 					 CCI_TIMEOUT)) {
 		dev_err(cci->dev, "CCI reset timeout\n");
@@ -686,7 +689,7 @@ static int cci_remove(struct platform_device *pdev)
 }
 
 static const struct cci_data cci_v1_data = {
-	.num_masters = 1,
+	.num_masters = 2,
 	.queue_size = { 64, 16 },
 	.quirks = {
 		.max_write_len = 10,
@@ -767,6 +770,7 @@ static const struct cci_data cci_v2_data = {
 
 static const struct of_device_id cci_dt_match[] = {
 	{ .compatible = "qcom,msm8916-cci", .data = &cci_v1_data},
+	{ .compatible = "qcom,msm8974-cci", .data = &cci_v1_data},
 	{ .compatible = "qcom,msm8996-cci", .data = &cci_v2_data},
 	{ .compatible = "qcom,sdm845-cci", .data = &cci_v2_data},
 	{ .compatible = "qcom,sm8250-cci", .data = &cci_v2_data},

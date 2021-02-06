@@ -862,7 +862,7 @@
 	};
 
 	cci: qcom,cci@fda0c000 {
-		compatible = "qcom,cci-v1.0.8";
+		compatible = "qcom,msm8974-cci";
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0xfda0c000 0x1000>;
@@ -882,30 +882,37 @@
 
 		clock-frequency = <400000>;
 
-		rearcam@10 {
-			compatible = "sony,imx179";
-			reg = <0x10>;
+		i2c-bus@0 {
+			reg = <0>;
+			clock-frequency = <400000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
 
-			clocks = <&mmcc CAMSS_MCLK0_CLK>;
-			clock-names = "mclk";
+			rearcam@10 {
+				compatible = "sony,imx179";
+				reg = <0x10>;
 
-			reset-gpios = <&msmgpio 4 GPIO_ACTIVE_HIGH>;
-			vana-gpios = <&msmgpio 16 GPIO_ACTIVE_HIGH>;
-			vio-gpios = <&msmgpio 96 GPIO_ACTIVE_HIGH>;
-			vcm-gpios = <&msmgpio 57 GPIO_ACTIVE_HIGH>;
-			oisldo-gpios = <&msmgpio 145 GPIO_ACTIVE_HIGH>;
-			oisreset-gpios = <&msmgpio 29 GPIO_ACTIVE_HIGH>;
+				clocks = <&mmcc CAMSS_MCLK0_CLK>;
+				clock-names = "mclk";
 
-			vdig-supply = <&pm8941_l3>;
+				reset-gpios = <&msmgpio 4 GPIO_ACTIVE_HIGH>;
+				vana-gpios = <&msmgpio 16 GPIO_ACTIVE_HIGH>;
+				vio-gpios = <&msmgpio 96 GPIO_ACTIVE_HIGH>;
+				vcm-gpios = <&msmgpio 57 GPIO_ACTIVE_HIGH>;
+				oisldo-gpios = <&msmgpio 145 GPIO_ACTIVE_HIGH>;
+				oisreset-gpios = <&msmgpio 29 GPIO_ACTIVE_HIGH>;
 
-			pinctrl-names = "default";
-			pinctrl-0 = <&mclk0_pin>;
+				vdig-supply = <&pm8941_l3>;
 
-			port {
-				imx179_ep: endpoint {
-					clock-lanes = <1>;
-					data-lanes = <0 2 3 4>;
-					remote-endpoint = <&csiphy0_ep>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&mclk0_pin>;
+
+				port {
+					imx179_ep: endpoint {
+						clock-lanes = <1>;
+						data-lanes = <0 2 3 4>;
+						remote-endpoint = <&csiphy0_ep>;
+					};
 				};
 			};
 		};
