@@ -1,6 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (C) 2017 Linaro Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
  */
 
 #include <linux/device.h>
@@ -90,14 +99,8 @@ static void venus_reset_cpu(struct venus_core *core)
 
 int venus_set_hw_state(struct venus_core *core, bool resume)
 {
-	int ret;
-
-	if (core->use_tz) {
-		ret = qcom_scm_set_remote_state(resume, 0);
-		if (resume && ret == -EINVAL)
-			ret = 0;
-		return ret;
-	}
+	if (core->use_tz)
+		return qcom_scm_set_remote_state(resume, 0);
 
 	if (resume)
 		venus_reset_cpu(core);
@@ -130,11 +133,11 @@ static int venus_load_fw(struct venus_core *core, const char *fwname,
 
 	ret = of_address_to_resource(node, 0, &r);
 	if (ret)
-		goto err_put_node;
+		return ret;
 
 	ret = request_firmware(&mdt, fwname, dev);
 	if (ret < 0)
-		goto err_put_node;
+		return ret;
 
 	fw_size = qcom_mdt_get_size(mdt);
 	if (fw_size < 0) {
@@ -152,7 +155,8 @@ static int venus_load_fw(struct venus_core *core, const char *fwname,
 
 	mem_va = memremap(r.start, *mem_size, MEMREMAP_WC);
 	if (!mem_va) {
-		dev_err(dev, "unable to map memory region: %pR\n", &r);
+		dev_err(dev, "unable to map memory region: %pa+%zx\n",
+			&r.start, *mem_size);
 		ret = -ENOMEM;
 		goto err_release_fw;
 	}
@@ -167,8 +171,6 @@ static int venus_load_fw(struct venus_core *core, const char *fwname,
 	memunmap(mem_va);
 err_release_fw:
 	release_firmware(mdt);
-err_put_node:
-	of_node_put(node);
 	return ret;
 }
 
@@ -217,14 +219,9 @@ static int venus_shutdown_no_tz(struct venus_core *core)
 
 	iommu = core->fw.iommu_domain;
 
-	if (core->fw.mapped_mem_size && iommu) {
-		unmapped = iommu_unmap(iommu, VENUS_FW_START_ADDR, mapped);
-
-		if (unmapped != mapped)
-			dev_err(dev, "failed to unmap firmware\n");
-		else
-			core->fw.mapped_mem_size = 0;
-	}
+	unmapped = iommu_unmap(iommu, VENUS_FW_START_ADDR, mapped);
+	if (unmapped != mapped)
+		dev_err(dev, "failed to unmap firmware\n");
 
 	return 0;
 }
@@ -232,7 +229,6 @@ static int venus_shutdown_no_tz(struct venus_core *core)
 int venus_boot(struct venus_core *core)
 {
 	struct device *dev = core->dev;
-	const struct venus_resources *res = core->res;
 	phys_addr_t mem_phys;
 	size_t mem_size;
 	int ret;
@@ -256,23 +252,7 @@ int venus_boot(struct venus_core *core)
 	else
 		ret = venus_boot_no_tz(core, mem_phys, mem_size);
 
-	if (ret)
-		return ret;
-
-	if (core->use_tz && res->cp_size) {
-		ret = qcom_scm_mem_protect_video_var(res->cp_start,
-						     res->cp_size,
-						     res->cp_nonpixel_start,
-						     res->cp_nonpixel_size);
-		if (ret) {
-			qcom_scm_pas_shutdown(VENUS_PAS_ID);
-			dev_err(dev, "set virtual address ranges fail (%d)\n",
-				ret);
-			return ret;
-		}
-	}
-
-	return 0;
+	return ret;
 }
 
 int venus_shutdown(struct venus_core *core)
@@ -360,11 +340,7 @@ void venus_firmware_deinit(struct venus_core *core)
 	iommu = core->fw.iommu_domain;
 
 	iommu_detach_device(iommu, core->fw.dev);
-
-	if (core->fw.iommu_domain) {
-		iommu_domain_free(iommu);
-		core->fw.iommu_domain = NULL;
-	}
+	iommu_domain_free(iommu);
 
 	platform_device_unregister(to_platform_device(core->fw.dev));
 }

@@ -107,9 +107,4 @@ static inline u32 frate_step(struct venus_inst *inst)
 	return cap_step(inst, HFI_CAPABILITY_FRAMERATE);
 }
 
-static inline u32 core_num_max(struct venus_inst *inst)
-{
-	return cap_max(inst, HFI_CAPABILITY_MAX_VIDEOCORES);
-}
-
 #endif
