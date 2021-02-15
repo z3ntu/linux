@@ -17,7 +17,11 @@
 
 /* Maximum number of channels and event rings supported by the driver */
 #define GSI_CHANNEL_COUNT_MAX	23
+#define BAM_CHANNEL_COUNT_MAX	20
 #define GSI_EVT_RING_COUNT_MAX	20
+#define IPA_CHANNEL_COUNT_MAX	MAX(GSI_CHANNEL_COUNT_MAX, \
+				    BAM_CHANNEL_COUNT_MAX)
+#define MAX(a, b)		((a > b) ? a : b)
 
 /* Maximum TLV FIFO size for a channel; 64 here is arbitrary (and high) */
 #define GSI_TLV_MAX		64
@@ -119,6 +123,8 @@ struct ipa_channel {
 	struct gsi_ring tre_ring;
 	u32 evt_ring_id;
 
+	struct dma_chan *dma_chan;
+
 	u64 byte_count;			/* total # bytes transferred */
 	u64 trans_count;		/* total # transactions */
 	/* The following counts are used only for TX endpoints */
@@ -154,7 +160,7 @@ struct ipa_dma {
 	u32 irq;
 	u32 channel_count;
 	u32 evt_ring_count;
-	struct ipa_channel channel[GSI_CHANNEL_COUNT_MAX];
+	struct ipa_channel channel[IPA_CHANNEL_COUNT_MAX];
 	struct gsi_evt_ring evt_ring[GSI_EVT_RING_COUNT_MAX];
 	u32 event_bitmap;		/* allocated event rings */
 	u32 modem_channel_bitmap;	/* modem channels to allocate */
@@ -174,6 +180,7 @@ struct ipa_dma {
 	void (*channel_reset)(struct ipa_dma *dma_subsys, u32 channel_id, bool doorbell);
 	int (*channel_suspend)(struct ipa_dma *dma_subsys, u32 channel_id, bool stop);
 	int (*channel_resume)(struct ipa_dma *dma_subsys, u32 channel_id, bool start);
+	void (*trans_commit)(struct ipa_trans *trans, bool ring_db);
 };
 
 /**
@@ -275,7 +282,7 @@ static inline int ipa_channel_resume(struct ipa_dma *dma_subsys, u32 channel_id,
 }
 
 /**
- * ipa_dma_init() - Initialize the GSI subsystem
+ * ipa_init/bam_init() - Initialize the GSI/BAM subsystem
  * @dma_subsys:	Address of ipa_dma structure embedded in an IPA structure
  * @pdev:	IPA platform device
  * @version:	IPA hardware version (implies GSI version)
@@ -284,11 +291,15 @@ static inline int ipa_channel_resume(struct ipa_dma *dma_subsys, u32 channel_id,
  *
  * Return:	0 if successful, or a negative error code
  *
- * Early stage initialization of the GSI subsystem, performing tasks
- * that can be done before the GSI hardware is ready to use.
+ * Early stage initialization of the GSI/BAM subsystem, performing tasks
+ * that can be done before the GSI/BAM hardware is ready to use.
  */
 
 int gsi_init(struct ipa_dma *dma_subsys, struct platform_device *pdev,
+	     enum ipa_version version, u32 count,
+	     const struct ipa_gsi_endpoint_data *data);
+
+int bam_init(struct ipa_dma *dma_subsys, struct platform_device *pdev,
 	     enum ipa_version version, u32 count,
 	     const struct ipa_gsi_endpoint_data *data);
 
