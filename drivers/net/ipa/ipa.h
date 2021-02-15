@@ -91,7 +91,7 @@ struct ipa {
 	struct ipa_clock *clock;
 
 	dma_addr_t table_addr;
-	__le64 *table_virt;
+	void *table_virt;
 
 	struct ipa_interrupt *interrupt;
 	bool uc_loaded;
