@@ -68,7 +68,7 @@ int ipa_mem_setup(struct ipa *ipa)
 	/* Get a transaction to define the header memory region and to zero
 	 * the processing context and modem memory regions.
 	 */
-	trans = ipa_cmd_trans_alloc(ipa, 4);
+	trans = ipa_cmd_trans_alloc(ipa, 5);
 	if (!trans) {
 		dev_err(&ipa->pdev->dev, "no transaction for memory setup\n");
 		return -EBUSY;
@@ -89,7 +89,13 @@ int ipa_mem_setup(struct ipa *ipa)
 
 	ipa_mem_zero_region_add(trans, &ipa->mem[IPA_MEM_MODEM]);
 
+	ipa_mem_zero_region_add(trans, &ipa->mem[IPA_MEM_ZIP]);
+
 	ipa_trans_commit_wait(trans);
+
+	/* On IPA version <=2.6L (except 2.5) there is no PROC_CTX.  */
+	if (ipa->version != IPA_VERSION_2_5 && ipa->version <= IPA_VERSION_2_6L)
+		return 0;
 
 	/* Tell the hardware where the processing context area is located */
 	offset = ipa->mem_offset + ipa->mem[IPA_MEM_MODEM_PROC_CTX].offset;
@@ -156,10 +162,15 @@ int ipa_mem_config(struct ipa *ipa)
 	/* Check the advertised location and size of the shared memory area */
 	val = ioread32(ipa->reg_virt + ipa_reg_shared_mem_size_offset(ipa->version));
 
-	/* The fields in the register are in 8 byte units */
-	ipa->mem_offset = 8 * u32_get_bits(val, SHARED_MEM_BADDR_FMASK);
-	/* Make sure the end is within the region's mapped space */
-	mem_size = 8 * u32_get_bits(val, SHARED_MEM_SIZE_FMASK);
+	if (IPA_VERSION_RANGE(ipa->version, 2_0, 2_6L)) {
+		/* The fields in the register are in 8 byte units */
+		ipa->mem_offset = 8 * u32_get_bits(val, SHARED_MEM_BADDR_FMASK);
+		/* Make sure the end is within the region's mapped space */
+		mem_size = 8 * u32_get_bits(val, SHARED_MEM_SIZE_FMASK);
+	} else {
+		ipa->mem_offset = u32_get_bits(val, SHARED_MEM_BADDR_FMASK);
+		mem_size = u32_get_bits(val, SHARED_MEM_SIZE_FMASK);
+	}
 
 	/* If the sizes don't match, issue a warning */
 	if (ipa->mem_offset + mem_size < ipa->mem_size) {
@@ -416,6 +427,10 @@ static int ipa_smem_init(struct ipa *ipa, u32 item, size_t size)
 		return -EINVAL;
 	}
 
+	/* IPA v2.6L does not use IOMMU */
+	if (ipa->version <= IPA_VERSION_2_6L)
+		return 0;
+
 	domain = iommu_get_domain_for_dev(dev);
 	if (!domain) {
 		dev_err(dev, "no IOMMU domain found for SMEM\n");
@@ -443,6 +458,9 @@ static void ipa_smem_exit(struct ipa *ipa)
 	struct device *dev = &ipa->pdev->dev;
 	struct iommu_domain *domain;
 
+	if (ipa->version <= IPA_VERSION_2_6L)
+		return;
+
 	domain = iommu_get_domain_for_dev(dev);
 	if (domain) {
 		size_t size;
@@ -467,7 +485,8 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 	struct resource *res;
 	int ret;
 
-	ret = dma_set_mask_and_coherent(&ipa->pdev->dev, DMA_BIT_MASK(64));
+	ret = dma_set_mask_and_coherent(&ipa->pdev->dev, IPA_IS_64BIT(ipa->version) ?
+					DMA_BIT_MASK(64) : DMA_BIT_MASK(32));
 	if (ret) {
 		dev_err(dev, "error %d setting DMA mask\n", ret);
 		return ret;
