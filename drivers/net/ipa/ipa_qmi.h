@@ -39,6 +39,7 @@ struct ipa_qmi {
 	bool indication_sent;
 };
 
+void ipa_qmi_signal_uc_loaded(struct ipa *ipa);
 int ipa_qmi_setup(struct ipa *ipa);
 void ipa_qmi_teardown(struct ipa *ipa);
 
