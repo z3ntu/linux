@@ -4,6 +4,7 @@
  * Copyright 2020 Bootlin
  * Author: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
  */
+#define DEBUG
 
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -1404,6 +1405,7 @@ static int ov8865_chip_id_check(struct ov8865_sensor *sensor)
 				value, values[i]);
 			return -EINVAL;
 		}
+		dev_err(sensor->dev, "chip id value matches! %#x\n", value);
 	}
 
 	return 0;
@@ -2172,6 +2174,8 @@ static int ov8865_state_mipi_configure(struct ov8865_sensor *sensor,
 	unsigned int i, j;
 	s64 mipi_pixel_rate;
 
+	return 0; // FIXME
+
 	mipi_clk_rate = ov8865_mode_mipi_clk_rate(sensor, mode);
 	if (!mipi_clk_rate)
 		return -EINVAL;
@@ -2864,7 +2868,7 @@ static int ov8865_probe(struct i2c_client *client)
 
 	rate = clk_get_rate(sensor->extclk);
 	if (rate != OV8865_EXTCLK_RATE) {
-		dev_err(dev, "clock rate %lu Hz is unsupported\n", rate);
+		dev_err(dev, "IGNORED clock rate %lu Hz is unsupported\n", rate);
 		//ret = -EINVAL;
 		//goto error_endpoint;
 	}

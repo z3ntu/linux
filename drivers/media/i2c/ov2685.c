@@ -84,7 +84,7 @@ struct ov2685_mode {
 struct ov2685 {
 	struct i2c_client	*client;
 	struct clk		*xvclk;
-	struct gpio_desc	*reset_gpio;
+//	struct gpio_desc	*reset_gpio;
 	struct regulator_bulk_data supplies[OV2685_NUM_SUPPLIES];
 
 	bool			streaming;
@@ -403,7 +403,7 @@ static int __ov2685_power_on(struct ov2685 *ov2685)
 		return ret;
 	}
 
-	gpiod_set_value_cansleep(ov2685->reset_gpio, 1);
+//	gpiod_set_value_cansleep(ov2685->reset_gpio, 1);
 
 	ret = regulator_bulk_enable(OV2685_NUM_SUPPLIES, ov2685->supplies);
 	if (ret < 0) {
@@ -412,7 +412,7 @@ static int __ov2685_power_on(struct ov2685 *ov2685)
 	}
 
 	/* The minimum delay between power supplies and reset rising can be 0 */
-	gpiod_set_value_cansleep(ov2685->reset_gpio, 0);
+//	gpiod_set_value_cansleep(ov2685->reset_gpio, 0);
 	/* 8192 xvclk cycles prior to the first SCCB transaction */
 	delay_us = ov2685_cal_delay(8192);
 	usleep_range(delay_us, delay_us * 2);
@@ -445,7 +445,7 @@ static void __ov2685_power_off(struct ov2685 *ov2685)
 
 	usleep_range(delay_us, delay_us * 2);
 	clk_disable_unprepare(ov2685->xvclk);
-	gpiod_set_value_cansleep(ov2685->reset_gpio, 1);
+//	gpiod_set_value_cansleep(ov2685->reset_gpio, 1);
 	regulator_bulk_disable(OV2685_NUM_SUPPLIES, ov2685->supplies);
 }
 
@@ -745,11 +745,11 @@ static int ov2685_probe(struct i2c_client *client,
 		dev_warn(dev, "xvclk mismatched (%lu), modes are based on 24MHz\n", clk_get_rate(ov2685->xvclk));
 
 	dev_err(dev, "DBG2\n");
-	ov2685->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(ov2685->reset_gpio)) {
-		dev_err(dev, "Failed to get reset-gpios\n");
-		return -EINVAL;
-	}
+//	ov2685->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
+//	if (IS_ERR(ov2685->reset_gpio)) {
+//		dev_err(dev, "Failed to get reset-gpios\n");
+//		return -EINVAL;
+//	}
 
 	dev_err(dev, "DBG3\n");
 	ret = ov2685_configure_regulators(ov2685);

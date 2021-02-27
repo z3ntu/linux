@@ -408,7 +408,21 @@
 					reg = <APR_SVC_ASM>;
 					q6asmdai: dais {
 						compatible = "qcom,q6asm-dais";
+						#address-cells = <1>;
+						#size-cells = <0>;
 						#sound-dai-cells = <1>;
+
+						dai@0 {
+							reg = <0>;
+						};
+
+						dai@1 {
+							reg = <1>;
+						};
+
+						dai@2 {
+							reg = <2>;
+						};
 					};
 				};
 
