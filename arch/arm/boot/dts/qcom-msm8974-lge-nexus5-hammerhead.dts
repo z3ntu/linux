@@ -1129,9 +1129,10 @@
 &sound {
 	compatible = "qcom,apq8096-sndcard";
 	qcom,model = "DB820c";
-	audio-routing =
-		"RX_BIAS", "MCLK",
-		"LDO_H", "MCLK";
+	audio-routing =	"RX_BIAS", "MCLK",
+		"MM_DL1",  "MultiMedia1 Playback",
+		"MM_DL2",  "MultiMedia2 Playback",
+		"MultiMedia3 Capture", "MM_UL3";
 #if 0
 		"AMIC1", "MIC BIAS1 External",
 		"MIC BIAS1 External", "Handset Mic",
