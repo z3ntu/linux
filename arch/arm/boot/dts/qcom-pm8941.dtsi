@@ -101,6 +101,11 @@
 			#size-cells = <0>;
 			#io-channel-cells = <1>;
 
+			bat_id {
+				reg = <VADC_LR_MUX2_BAT_ID>;
+				qcom,ratiometric;
+				qcom,hw-settle-time = <200>;
+			};
 			bat_temp {
 				reg = <VADC_LR_MUX1_BAT_THERM>;
 			};
@@ -142,8 +147,9 @@
 			reg = <0x4000>;
 			interrupts = <0x0 0x40 0x4 IRQ_TYPE_EDGE_RISING>;
 			interrupt-names = "ocv_thr";
-			io-channels = <&pm8941_vadc VADC_LR_MUX1_BAT_THERM>;
-			io-channel-names = "temp";
+			io-channels = <&pm8941_vadc VADC_LR_MUX1_BAT_THERM>,
+				      <&pm8941_vadc VADC_LR_MUX2_BAT_ID>;
+			io-channel-names = "temp", "id";
 			status = "disabled";
 		};
 	};

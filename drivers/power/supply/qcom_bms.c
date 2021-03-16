@@ -53,7 +53,8 @@ struct bms_device_info {
 	struct power_supply_desc bat_desc;
 	struct power_supply_battery_info info;
 	struct bms_fcc_lut fcc_lut;
-	struct iio_channel *adc;
+	struct iio_channel *temp_adc;
+	struct iio_channel *id_adc;
 	struct mutex bms_output_lock;
 	u32 base_addr;
 
@@ -383,11 +384,13 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 	int ret, temp, ocv_capacity, temp_degc;
 	s64 cc = 0;
 
-	ret = iio_read_channel_raw(di->adc, &temp);
+	ret = iio_read_channel_raw(di->temp_adc, &temp);
 	if (ret < 0) {
 		dev_err(di->dev, "failed to read temperature: %d\n", ret);
 		return ret;
 	}
+
+	dev_dbg(di->dev, "temp_adc result: %d\n", temp);
 
 	temp_degc = DIV_ROUND_CLOSEST(temp, 1000);
 
@@ -487,9 +490,51 @@ static int bms_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	di->adc = devm_iio_channel_get(&pdev->dev, "temp");
-	if (IS_ERR(di->adc))
-		return PTR_ERR(di->adc);
+	// temp adc
+
+	di->id_adc = devm_iio_channel_get(&pdev->dev, "id");
+	if (IS_ERR(di->id_adc))
+		return PTR_ERR(di->id_adc);
+
+	int batt_id_uv;
+	ret = iio_read_channel_raw(di->id_adc, &batt_id_uv);
+	if (ret < 0) {
+		dev_err(di->dev, "failed to read from id iio channel: %d\n", ret);
+		return ret;
+	}
+	dev_err(di->dev, "id resistor: %d\n", batt_id_uv);
+
+	ret = iio_read_channel_processed(di->id_adc, &batt_id_uv);
+	if (ret < 0) {
+		dev_err(di->dev, "failed to read from id iio channel: %d\n", ret);
+		return ret;
+	}
+	dev_err(di->dev, "id resistor (processed): %d\n", batt_id_uv);
+
+	int vadc_vdd = 1800000;
+	int rpull_up = 100;
+
+	int64_t resistor_value_kohm, denom;
+	if (batt_id_uv == 0) {
+		/* vadc not correct or batt id line grounded, report 0 kohms */
+		dev_err(di->dev, "batt_id_uv is 0!!");
+	}
+	/* calculate the battery id resistance reported via ADC */
+	denom = div64_s64(vadc_vdd * 1000000LL, batt_id_uv) - 1000000LL;
+
+	if (denom == 0) {
+		/* batt id connector might be open, return 0 kohms */
+		dev_err(di->dev, "denom is 0!!");
+	}
+	resistor_value_kohm = div64_s64(rpull_up * 1000000LL + denom/2, denom);
+
+	dev_err(di->dev, "batt id voltage = %d, resistor value = %lld\n", batt_id_uv, resistor_value_kohm);
+
+
+	di->temp_adc = devm_iio_channel_get(&pdev->dev, "temp");
+	if (IS_ERR(di->temp_adc))
+		return PTR_ERR(di->temp_adc);
+
 
 	ret = of_property_read_u32(di->dev->of_node, "reg", &di->base_addr);
 	if (ret < 0)
