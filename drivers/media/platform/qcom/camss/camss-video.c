@@ -991,7 +991,8 @@ int msm_video_register(struct camss_video *video, struct v4l2_device *v4l2_dev,
 
 	mutex_init(&video->lock);
 
-	if (video->camss->version == CAMSS_8x16) {
+	if (video->camss->version == CAMSS_8x16 ||
+		video->camss->version == CAMSS_8x74) {
 		if (is_pix) {
 			video->formats = formats_pix_8x16;
 			video->nformats = ARRAY_SIZE(formats_pix_8x16);
