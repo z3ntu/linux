@@ -1112,6 +1112,7 @@ int msm_ispif_subdev_init(struct camss *camss,
 	if (camss->version == CAMSS_8x16)
 		ispif->line_num = 2;
 	else if (camss->version == CAMSS_8x96 ||
+		 camss->version == CAMSS_8x74 ||
 		 camss->version == CAMSS_660)
 		ispif->line_num = 4;
 	else
@@ -1126,7 +1127,8 @@ int msm_ispif_subdev_init(struct camss *camss,
 		ispif->line[i].ispif = ispif;
 		ispif->line[i].id = i;
 
-		if (camss->version == CAMSS_8x16) {
+		if (camss->version == CAMSS_8x16 ||
+			   camss->version == CAMSS_8x74) {
 			ispif->line[i].formats = ispif_formats_8x16;
 			ispif->line[i].nformats =
 					ARRAY_SIZE(ispif_formats_8x16);
@@ -1163,6 +1165,7 @@ int msm_ispif_subdev_init(struct camss *camss,
 		ret = devm_request_irq(dev, ispif->irq, ispif_isr_8x16,
 			       IRQF_TRIGGER_RISING, ispif->irq_name, ispif);
 	else if (camss->version == CAMSS_8x96 ||
+		 camss->version == CAMSS_8x74 ||
 		 camss->version == CAMSS_660)
 		ret = devm_request_irq(dev, ispif->irq, ispif_isr_8x96,
 			       IRQF_TRIGGER_RISING, ispif->irq_name, ispif);
