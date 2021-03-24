@@ -184,27 +184,6 @@
 			status = "disabled";
 		};
 
-		qcom-labibb-regulator {
-			compatible = "qcom,pmi8998-lab-ibb";
-			labibb-mode = "lcd";
-			#address-cells = <1>;
-			#size-cells = <0>;
-
-			ibb_vreg: ibb@dc00 {
-				reg = <0xdc00>;
-				regulator-name = "ibb";
-				interrupts = <0x03 0xde 0x0 IRQ_TYPE_EDGE_RISING>;
-				interrupt-names = "ibb-sc-err";
-			};
-
-			lab_vreg: lab@de00 {
-				reg = <0xde00>;
-				regulator-name = "lab";
-				interrupts = <0x03 0xde 0x2 IRQ_TYPE_EDGE_RISING>;
-				interrupt-names = "lab-sc-err";
-			};
-		};
-
 		pmi8950_wled: wled@d800 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -249,5 +228,20 @@
 				<3 0xc0 1 IRQ_TYPE_NONE>;
 			interrupt-names = "sc-irq", "play-irq";
 		};
+	};
+};
+
+/ {
+	ibb_vreg: fake-ibb-vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "fakeibb_vreg";
+		regulator-min-microvolt = <4000000>;
+		regulator-max-microvolt = <4000000>;
+	};
+	lab_vreg: fake-lab-vreg {
+		compatible = "regulator-fixed";
+		regulator-name = "fakelab_vreg";
+		regulator-min-microvolt = <4000000>;
+		regulator-max-microvolt = <4000000>;
 	};
 };
