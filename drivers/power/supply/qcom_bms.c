@@ -86,14 +86,15 @@ static int interpolate_capacity(int temp, u32 ocv,
 	int pcj_minus_one = 0, pcj = 0, i2 = 0, i3 = 0, i, j;
 
 	// find the `j` index of temperature which is the next highest to `temp` (e.g. actual 15°C -> 25°C)
-	for (j = 0; j < POWER_SUPPLY_OCV_TEMP_MAX; j++)
+	for (j = 0; j < POWER_SUPPLY_OCV_TEMP_MAX; j++) {
 		if (temp <= info->ocv_temp[j]) {
 			printk("found temperature: index %d - value %d\n", j, info->ocv_temp[j]);
 			break;
 		}
+	}
 
 	// Just debug print our data
-	int g;
+	/*int g;
 	for (g = 0; g < POWER_SUPPLY_OCV_TEMP_MAX; g++) {
 		if(info->ocv_table_size[g] == -EINVAL) {
 			printk("reached -EINVAL for ocv_table_size, breaking...\n");
@@ -107,7 +108,7 @@ static int interpolate_capacity(int temp, u32 ocv,
 		for (f = 0; f < info->ocv_table_size[g]; f++) {
 			printk("table value: %d , %d\n", info->ocv_table[g][f].ocv, info->ocv_table[g][f].capacity);
 		}
-	}
+	}*/
 
 	// TODO Maybe use power_supply_ocv2cap_simple or one of the helpers there?
 
@@ -391,6 +392,14 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 	}
 
 	dev_dbg(di->dev, "temp_adc result: %d\n", temp);
+
+	ret = iio_read_channel_processed(di->temp_adc, &temp);
+	if (ret < 0) {
+		dev_err(di->dev, "failed to read temperature: %d\n", ret);
+		return ret;
+	}
+
+	dev_dbg(di->dev, "temp_adc (processed) result: %d\n", temp);
 
 	temp_degc = DIV_ROUND_CLOSEST(temp, 1000);
 
