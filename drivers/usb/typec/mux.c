@@ -141,6 +141,48 @@ void typec_switch_put(struct typec_switch *sw)
 }
 EXPORT_SYMBOL_GPL(typec_switch_put);
 
+static ssize_t orientation_store(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count) {
+	enum typec_orientation orientation = TYPEC_ORIENTATION_NONE;
+	struct typec_switch_dev *sw = to_typec_switch_dev(dev);
+	int ret;
+
+	if (count <= 3)
+		return -EINVAL;
+
+	if (!strncasecmp(buf, "cc1", 3))
+		orientation = TYPEC_ORIENTATION_NORMAL;
+	else if (!strncasecmp(buf, "cc2", 3))
+		orientation = TYPEC_ORIENTATION_REVERSE;
+
+	dev_info(dev, "Overriding switch to %s direction",
+			orientation == TYPEC_ORIENTATION_REVERSE ? "CC2" :
+			orientation == TYPEC_ORIENTATION_NORMAL ? "CC1" :
+			"none");
+
+	ret = sw->set(sw, orientation);
+	if (ret < 0)
+		return ret;
+
+	return count;
+}
+
+static DEVICE_ATTR_WO(orientation);
+
+static struct attribute *typec_switch_attrs[] = {
+	&dev_attr_orientation.attr,
+	NULL
+};
+
+static struct attribute_group typec_switch_attr_group = {
+	.attrs = typec_switch_attrs,
+};
+
+static const struct attribute_group *typec_switch_attr_groups[] = {
+	&typec_switch_attr_group,
+	NULL
+};
+
 static void typec_switch_release(struct device *dev)
 {
 	kfree(to_typec_switch_dev(dev));
@@ -149,6 +191,7 @@ static void typec_switch_release(struct device *dev)
 const struct device_type typec_switch_dev_type = {
 	.name = "orientation_switch",
 	.release = typec_switch_release,
+	.groups = typec_switch_attr_groups,
 };
 
 /**
