@@ -15,6 +15,17 @@
 
 	chosen { };
 
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		smem_region: smem@fa00000 {
+			reg = <0x3000000 0x100000>;
+			no-map;
+		};
+	};
+
 	memory@0 {
 		device_type = "memory";
 		reg = <0x0 0x0>;
@@ -131,6 +142,23 @@
 				status = "disabled";
 			};
 		};
+
+		//rpm_msg_ram: memory@fc428000 {
+		//	compatible = "qcom,rpm-msg-ram";
+		//	reg = <0xfc428000 0x4000>;
+		//};
+
+		tcsr_mutex_block: syscon@fd484000 {
+			compatible = "syscon";
+			reg = <0xfd484000 0x2000>;
+		};
+
+		tcsr_mutex: tcsr-mutex {
+			compatible = "qcom,tcsr-mutex";
+			syscon = <&tcsr_mutex_block 0 0x80>;
+
+			#hwlock-cells = <1>;
+		};
 	};
 
 	timer {
@@ -144,4 +172,22 @@
 			     <GIC_PPI 1
 				(GIC_CPU_MASK_RAW(15) | IRQ_TYPE_LEVEL_LOW)>;
 	};
+
+	firmware {
+		scm {
+			compatible = "qcom,scm-msm8226", "qcom,scm";
+			clocks = <&gcc GCC_CE1_CLK>, <&gcc GCC_CE1_AXI_CLK>, <&gcc GCC_CE1_AHB_CLK>;
+			clock-names = "core", "bus", "iface";
+		};
+	};
+
+	smem {
+		compatible = "qcom,smem";
+
+		memory-region = <&smem_region>;
+		//qcom,rpm-msg-ram = <&rpm_msg_ram>;
+
+		hwlocks = <&tcsr_mutex 3>;
+	};
+
 };
