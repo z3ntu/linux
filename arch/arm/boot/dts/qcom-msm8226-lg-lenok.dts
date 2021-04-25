@@ -1,11 +1,10 @@
 #include "qcom-msm8226.dtsi"
 
 / {
-	//model = "LG G Watch R";
+	model = "LG G Watch R";
 	//compatible = "lg,lenok", "qcom,msm8226";
 	//qcom,board-id = <132 0x0a>;
 	//qcom,msm-id = <199 0x20000>;
-	model = "LGE APQ 8026v2 LENOK rev-1.0";
 	compatible = "qcom,apq8026";
 	qcom,board-id = <132 0x0a>;
 	qcom,msm-id = <199 0x20000>;
