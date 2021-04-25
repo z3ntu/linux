@@ -1,0 +1,26 @@
+#include "qcom-msm8226.dtsi"
+
+/ {
+	//model = "LG G Watch R";
+	//compatible = "lg,lenok", "qcom,msm8226";
+	//qcom,board-id = <132 0x0a>;
+	//qcom,msm-id = <199 0x20000>;
+	model = "LGE APQ 8026v2 LENOK rev-1.0";
+	compatible = "qcom,apq8026";
+	qcom,board-id = <132 0x0a>;
+	qcom,msm-id = <199 0x20000>;
+
+	aliases {
+		serial0 = &blsp1_uart3;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+};
+
+&soc {
+	serial@f991f000 {
+		status = "ok";
+	};
+};
