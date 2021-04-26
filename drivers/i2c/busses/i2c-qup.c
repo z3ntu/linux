@@ -5,6 +5,7 @@
  *
  */
 
+#define DEBUG
 #include <linux/acpi.h>
 #include <linux/atomic.h>
 #include <linux/clk.h>
