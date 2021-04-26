@@ -21,6 +21,38 @@
 
 &soc {
 	serial@f991f000 {
-		status = "ok";
+		status = "okay";
+	};
+};
+
+&blsp1_i2c5 {
+	status = "okay";
+	//pinctrl-names = "default";
+	//pinctrl-0 = <&i2c11_pins>;
+	clock-frequency = <384000>;
+
+	synaptics@20 {
+		compatible = "syna,rmi4-i2c";
+		reg = <0x20>;
+
+		interrupts-extended = <&tlmm 17 IRQ_TYPE_EDGE_FALLING>;
+		vdd-supply = <&pm8226_l15>;
+		vio-supply = <&pm8226_l22>;
+
+		//pinctrl-names = "default";
+		//pinctrl-0 = <&touch_pin>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		rmi4-f01@1 {
+			reg = <0x1>;
+			syna,nosleep-mode = <1>;
+		};
+
+		rmi4-f12@12 {
+			reg = <0x12>;
+			syna,sensor-type = <1>;
+		};
 	};
 };

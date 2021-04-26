@@ -45,6 +45,11 @@
 			#interrupt-cells = <3>;
 		};
 
+		apcs: syscon@f9011000 {
+			compatible = "syscon";
+			reg = <0xf9011000 0x1000>;
+		};
+
 		gcc: clock-controller@fc400000 {
 			compatible = "qcom,gcc-msm8226";
 			reg = <0xfc400000 0x4000>;
@@ -64,6 +69,11 @@
 			interrupts = <GIC_SPI 208 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		// no BLSP1 UART1 configured?
+
+		/* BLSP1 UART2 */
+		serial@f995e000 { /* TODO */ };
+
 		blsp1_uart3: serial@f991f000 {
 			compatible = "qcom,msm-uartdm-v1.4", "qcom,msm-uartdm";
 			reg = <0xf991f000 0x1000>;
@@ -71,6 +81,30 @@
 			clocks = <&gcc GCC_BLSP1_UART3_APPS_CLK>, <&gcc GCC_BLSP1_AHB_CLK>;
 			clock-names = "core", "iface";
 			status = "disabled";
+		};
+
+		/* BLSP1 QUP1 */
+		i2c@f9923000 { /* TODO */ };
+
+		/* BLSP1 QUP2 */
+		i2c@f9924000 { /* TODO */ };
+
+		/* BLSP1 QUP3 */
+		i2c@f9925000 { /* TODO */ };
+
+		/* BLSP1 QUP4 */
+		i2c@f9926000 { /* TODO */ };
+
+		/* BLSP1 QUP5 */
+		blsp1_i2c5: i2c@f9927000 {
+			status = "disabled";
+			compatible = "qcom,i2c-qup-v2.1.1";
+			reg = <0xf9927000 0x1000>;
+			interrupts = <GIC_SPI 99 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&gcc GCC_BLSP1_QUP5_I2C_APPS_CLK>, <&gcc GCC_BLSP1_AHB_CLK>;
+			clock-names = "core", "iface";
+			#address-cells = <1>;
+			#size-cells = <0>;
 		};
 
 		restart@fc4ab000 {
