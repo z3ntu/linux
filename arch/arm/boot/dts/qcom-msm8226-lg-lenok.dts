@@ -26,12 +26,12 @@
 };
 
 &blsp1_i2c5 {
-	status = "okay";
+	//status = "okay";
 	//pinctrl-names = "default";
 	//pinctrl-0 = <&i2c11_pins>;
-	clock-frequency = <384000>;
+	//clock-frequency = <384000>;
 
-	synaptics@20 {
+	/*synaptics@20 {
 		compatible = "syna,rmi4-i2c";
 		reg = <0x20>;
 
@@ -54,5 +54,5 @@
 			reg = <0x12>;
 			syna,sensor-type = <1>;
 		};
-	};
+	};*/
 };
