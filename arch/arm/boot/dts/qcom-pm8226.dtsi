@@ -20,4 +20,18 @@
 		};
 	};
 
+	pm8226_1: pm8226@1 {
+		compatible = "qcom,pm8226", "qcom,spmi-pmic";
+		reg = <0x1 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		regulators {
+			compatible = "qcom,pm8226-regulators";
+			//interrupts = <0x1 0x83 0x2 0>, <0x1 0x84 0x2 0>;
+			//interrupt-names = "ocp-5vs1", "ocp-5vs2";
+			//vin_5vs-supply = <&pm8941_5v>;
+		};
+	};
+
 };

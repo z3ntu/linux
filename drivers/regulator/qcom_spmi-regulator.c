@@ -1848,6 +1848,51 @@ static int spmi_regulator_of_parse(struct device_node *node,
 	return 0;
 }
 
+static const struct spmi_regulator_data pm8226_regulators[] = {
+	{ "s1", 0x1400, "vdd_s1", },
+	{ "s2", 0x1700, "vdd_s2", },
+	{ "s3", 0x1a00, "vdd_s3", },
+	{ "s4", 0x1d00, "vdd_s4", },
+	{ "s5", 0x2000, "vdd_s5", },
+	// GR1: L1, L2, L4, L5
+	// GR2: L3, L24, L26
+	// GR3: L6, L7, L8, L9, L27
+	// GR4: L10, L11, L13
+	// GR5: L14, L12
+	// GR6: L15, L16, L17, L18
+	// GR7: L19, L20, L21, L22, L23, L28
+	{ "l1", 0x4000, "vdd_gr1", },
+	{ "l2", 0x4100, "vdd_gr1", },
+	{ "l3", 0x4200, "vdd_gr2", },
+	{ "l4", 0x4300, "vdd_gr1", },
+	{ "l5", 0x4400, "vdd_gr1", },
+	{ "l6", 0x4500, "vdd_gr3", },
+	{ "l7", 0x4600, "vdd_gr3", },
+	{ "l8", 0x4700, "vdd_gr3", },
+	{ "l9", 0x4800, "vdd_gr3", },
+	{ "l10", 0x4900, "vdd_gr4", },
+	{ "l11", 0x4a00, "vdd_gr4", },
+	{ "l12", 0x4b00, "vdd_gr5", },
+	{ "l13", 0x4c00, "vdd_gr4", },
+	{ "l14", 0x4d00, "vdd_gr5", },
+	{ "l15", 0x4e00, "vdd_gr6", },
+	{ "l16", 0x4f00, "vdd_gr6", },
+	{ "l17", 0x5000, "vdd_gr6", },
+	{ "l18", 0x5100, "vdd_gr6", },
+	{ "l19", 0x5200, "vdd_gr7", },
+	{ "l20", 0x5300, "vdd_gr7", },
+	{ "l21", 0x5400, "vdd_gr7", },
+	{ "l22", 0x5500, "vdd_gr7", },
+	{ "l23", 0x5600, "vdd_gr7", },
+	{ "l24", 0x5700, "vdd_gr2", },
+	{ "l25", 0x5800, },
+	{ "l26", 0x5900, "vdd_gr2", },
+	{ "l27", 0x5a00, "vdd_gr3", },
+	{ "l28", 0x5b00, "vdd_gr7", },
+	{ "lvs1", 0x8000, },
+	{ }
+};
+
 static const struct spmi_regulator_data pm8941_regulators[] = {
 	{ "s1", 0x1400, "vdd_s1", },
 	{ "s2", 0x1700, "vdd_s2", },
@@ -2085,6 +2130,7 @@ static const struct spmi_regulator_data pms405_regulators[] = {
 static const struct of_device_id qcom_spmi_regulator_match[] = {
 	{ .compatible = "qcom,pm8004-regulators", .data = &pm8004_regulators },
 	{ .compatible = "qcom,pm8005-regulators", .data = &pm8005_regulators },
+	{ .compatible = "qcom,pm8226-regulators", .data = &pm8226_regulators },
 	{ .compatible = "qcom,pm8841-regulators", .data = &pm8841_regulators },
 	{ .compatible = "qcom,pm8916-regulators", .data = &pm8916_regulators },
 	{ .compatible = "qcom,pm8941-regulators", .data = &pm8941_regulators },
@@ -2128,6 +2174,19 @@ static int qcom_spmi_regulator_probe(struct platform_device *pdev)
 	match = of_match_device(qcom_spmi_regulator_match, &pdev->dev);
 	if (!match)
 		return -ENODEV;
+
+/*
+#define DUMP_SZ 0x6000
+	{
+		int i;
+		void* data = kzalloc(DUMP_SZ, GFP_KERNEL);
+		for (i = 0 ; i < DUMP_SZ; i++ )
+			regmap_bulk_read(regmap, i, ((u8*) data) + i, 1);
+
+		print_hex_dump(KERN_INFO, "SPMI: ", DUMP_PREFIX_OFFSET, 16, 1, data, DUMP_SZ, true);
+		kfree(data);
+	}
+*/
 
 	if (of_find_property(node, "qcom,saw-reg", &lenp)) {
 		syscon = of_parse_phandle(node, "qcom,saw-reg", 0);
