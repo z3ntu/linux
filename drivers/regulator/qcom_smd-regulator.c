@@ -708,6 +708,62 @@ static const struct rpm_regulator_data rpm_mp5496_regulators[] = {
 	{}
 };
 
+static const struct rpm_regulator_data rpm_pm8226_regulators[] = {
+	{ "s1", QCOM_SMD_RPM_SMPA, 1, &pm8226_FIXME, "vdd_s1" },
+	{ "s3", QCOM_SMD_RPM_SMPA, 3, &pm8226_FIXME, "vdd_s3" },
+	{ "s4", QCOM_SMD_RPM_SMPA, 4, &pm8226_FIXME, "vdd_s4" },
+	{ "s5", QCOM_SMD_RPM_SMPA, 5, &pm8226_FIXME, "vdd_s5" },
+	{ "l1", QCOM_SMD_RPM_LDOA, 1, &pm8226_FIXME, "vdd_gr1" },
+	{ "l2", QCOM_SMD_RPM_LDOA, 2, &pm8226_FIXME, "vdd_gr1" },
+	{ "l3", QCOM_SMD_RPM_LDOA, 3, &pm8226_FIXME, "vdd_gr2" },
+	{ "l4", QCOM_SMD_RPM_LDOA, 4, &pm8226_FIXME, "vdd_gr1" },
+	{ "l5", QCOM_SMD_RPM_LDOA, 5, &pm8226_FIXME, "vdd_gr1" },
+	{ "l6", QCOM_SMD_RPM_LDOA, 6, &pm8226_FIXME, "vdd_gr3" },
+	{ "l7", QCOM_SMD_RPM_LDOA, 7, &pm8226_FIXME, "vdd_gr3" },
+	{ "l8", QCOM_SMD_RPM_LDOA, 8, &pm8226_FIXME, "vdd_gr3" },
+	{ "l9", QCOM_SMD_RPM_LDOA, 9, &pm8226_FIXME, "vdd_gr3" },
+	{ "l10", QCOM_SMD_RPM_LDOA, 10, &pm8226_FIXME, "vdd_gr4" },
+	// FIXME l11
+	{ "l12", QCOM_SMD_RPM_LDOA, 12, &pm8226_FIXME, "vdd_gr5" },
+	// FIXME l13
+	{ "l14", QCOM_SMD_RPM_LDOA, 14, &pm8226_FIXME, "vdd_gr5" },
+	{ "l15", QCOM_SMD_RPM_LDOA, 15, &pm8226_FIXME, "vdd_gr6" },
+	{ "l16", QCOM_SMD_RPM_LDOA, 16, &pm8226_FIXME, "vdd_gr6" },
+	{ "l17", QCOM_SMD_RPM_LDOA, 17, &pm8226_FIXME, "vdd_gr6" },
+	{ "l18", QCOM_SMD_RPM_LDOA, 18, &pm8226_FIXME, "vdd_gr6" },
+	{ "l19", QCOM_SMD_RPM_LDOA, 19, &pm8226_FIXME, "vdd_gr7" },
+	{ "l20", QCOM_SMD_RPM_LDOA, 20, &pm8226_FIXME, "vdd_gr7" },
+	{ "l21", QCOM_SMD_RPM_LDOA, 21, &pm8226_FIXME, "vdd_gr7" },
+	{ "l22", QCOM_SMD_RPM_LDOA, 22, &pm8226_FIXME, "vdd_gr7" },
+	{ "l23", QCOM_SMD_RPM_LDOA, 23, &pm8226_FIXME, "vdd_gr7" },
+	{ "l24", QCOM_SMD_RPM_LDOA, 24, &pm8226_FIXME, "vdd_gr2" },
+	{ "l25", QCOM_SMD_RPM_LDOA, 25, &pm8226_FIXME, "vdd_gr????" },
+	{ "l26", QCOM_SMD_RPM_LDOA, 26, &pm8226_FIXME, "vdd_gr2" },
+	{ "l27", QCOM_SMD_RPM_LDOA, 27, &pm8226_FIXME, "vdd_gr3" },
+	{ "l28", QCOM_SMD_RPM_LDOA, 28, &pm8226_FIXME, "vdd_gr7" },
+
+	{ "lvs1", QCOM_SMD_RPM_VSA, 1, &pm8226_FIXME, "vdd_gr????" },
+	// Supply pins are named weirdly, VDD_GR1-VDD;GR7
+	// GR1: L1, L2, L4, L5
+	// GR2: L3, L24, L26
+	// GR3: L6, L7, L8, L9, L27
+	// GR4: L10, L11, L13
+	// GR5: L14, L12
+	// GR6: L15, L16, L17, L18
+	// GR7: L19, L20, L21, L22, L23, L28
+	// --------------------
+	// gr1-supply = vreg_s3
+	// gr2-supply = vreg_s3
+	// gr3-supply = vreg_s4
+	// gr4-supply = vreg_s4
+	// gr5-supply = vpwr
+	// vdd-l25-supply??? = vpwr
+	// gr6-supply = vpwr_boost_bypass / vpwr
+	// gr7-supply = vpwr_boost_bypass / vpwr
+	//
+	{}
+};
+
 static const struct rpm_regulator_data rpm_pm8841_regulators[] = {
 	{ "s1", QCOM_SMD_RPM_SMPB, 1, &pm8x41_hfsmps, "vdd_s1" },
 	{ "s2", QCOM_SMD_RPM_SMPB, 2, &pm8841_ftsmps, "vdd_s2" },
@@ -1090,6 +1146,7 @@ static const struct rpm_regulator_data rpm_pms405_regulators[] = {
 
 static const struct of_device_id rpm_of_match[] = {
 	{ .compatible = "qcom,rpm-mp5496-regulators", .data = &rpm_mp5496_regulators },
+	{ .compatible = "qcom,rpm-pm8226-regulators", .data = &rpm_pm8226_regulators },
 	{ .compatible = "qcom,rpm-pm8841-regulators", .data = &rpm_pm8841_regulators },
 	{ .compatible = "qcom,rpm-pm8916-regulators", .data = &rpm_pm8916_regulators },
 	{ .compatible = "qcom,rpm-pm8941-regulators", .data = &rpm_pm8941_regulators },
