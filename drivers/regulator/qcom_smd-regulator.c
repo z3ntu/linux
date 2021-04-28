@@ -251,6 +251,74 @@ static const struct regulator_desc pma8084_switch = {
 	.ops = &rpm_switch_ops,
 };
 
+static const struct regulator_desc pm8226_ftsmps = {
+	// => SPMI_VOLTAGE_RANGE(0,       0,  320000, 1352000, 1352000,  4000),
+	// (set_point_max_uV - set_point_min_uV) / range_sel = max_sel
+	// (1352000-320000)/4000 = 258
+	// => REGULATOR_LINEAR_RANGE(320000, 0, 258, 4000),
+	//
+	// range 1: (1275000-350000)/5000 = 185
+	// range 2: (2040000-1280000)/10000 = 76
+	//          185 + 76 = 261
+	// n_voltages = 261+1 = 262
+	.linear_ranges = (struct linear_range[]) {
+		REGULATOR_LINEAR_RANGE( 350000,   0, 184,  5000),
+		REGULATOR_LINEAR_RANGE(1280000, 185, 261, 10000),
+	},
+	.n_linear_ranges = 2,
+	.n_voltages = 262,
+	.ops = &rpm_smps_ldo_ops,
+};
+
+static const struct regulator_desc pm8226_smps = {
+	// (1562500-375000)/12500 = 95
+	// (3125000-1575000)/25000 = 62
+	.linear_ranges = (struct linear_range[]) {
+		REGULATOR_LINEAR_RANGE( 375000, 0,   95, 12500),
+		// TODO first param 1575000?
+		REGULATOR_LINEAR_RANGE(1550000, 96, 158, 25000),
+	},
+	.n_linear_ranges = 2,
+	.n_voltages = 159,
+	.ops = &rpm_smps_ldo_ops,
+};
+
+static const struct regulator_desc pm8226_nldo3 = {
+	.linear_ranges = (struct linear_range[]) {
+		REGULATOR_LINEAR_RANGE(375000, 0, 92, 12500),
+	},
+	.n_linear_ranges = 1,
+	.n_voltages = 93,
+	.ops = &rpm_smps_ldo_ops,
+};
+
+// FIXME need pm8226_nldo1
+
+static const struct regulator_desc pm8226_pldo = {
+	.linear_ranges = (struct linear_range[]) {
+		REGULATOR_LINEAR_RANGE( 750000,  0,  63, 12500),
+		REGULATOR_LINEAR_RANGE(1550000, 64, 126, 25000),
+		REGULATOR_LINEAR_RANGE(3100000, 127, 163, 50000),
+	},
+	.n_linear_ranges = 3,
+	.n_voltages = 164,
+	.ops = &rpm_smps_ldo_ops,
+};
+
+static const struct regulator_desc pm8226_lnldo = {
+	.linear_ranges = (struct linear_range[]) {
+		REGULATOR_LINEAR_RANGE(1380000, 8, 15, 120000),
+		REGULATOR_LINEAR_RANGE(690000, 0, 7, 60000),
+	},
+	.n_linear_ranges = 2,
+	.n_voltages = 16,
+	.ops = &rpm_smps_ldo_ops,
+};
+
+static const struct regulator_desc pm8226_switch = {
+	.ops = &rpm_switch_ops,
+};
+
 static const struct regulator_desc pm8x41_hfsmps = {
 	.linear_ranges = (struct linear_range[]) {
 		REGULATOR_LINEAR_RANGE( 375000,  0,  95, 12500),
@@ -709,40 +777,41 @@ static const struct rpm_regulator_data rpm_mp5496_regulators[] = {
 };
 
 static const struct rpm_regulator_data rpm_pm8226_regulators[] = {
-	{ "s1", QCOM_SMD_RPM_SMPA, 1, &pm8226_FIXME, "vdd_s1" },
-	{ "s3", QCOM_SMD_RPM_SMPA, 3, &pm8226_FIXME, "vdd_s3" },
-	{ "s4", QCOM_SMD_RPM_SMPA, 4, &pm8226_FIXME, "vdd_s4" },
-	{ "s5", QCOM_SMD_RPM_SMPA, 5, &pm8226_FIXME, "vdd_s5" },
-	{ "l1", QCOM_SMD_RPM_LDOA, 1, &pm8226_FIXME, "vdd_gr1" },
-	{ "l2", QCOM_SMD_RPM_LDOA, 2, &pm8226_FIXME, "vdd_gr1" },
-	{ "l3", QCOM_SMD_RPM_LDOA, 3, &pm8226_FIXME, "vdd_gr2" },
-	{ "l4", QCOM_SMD_RPM_LDOA, 4, &pm8226_FIXME, "vdd_gr1" },
-	{ "l5", QCOM_SMD_RPM_LDOA, 5, &pm8226_FIXME, "vdd_gr1" },
-	{ "l6", QCOM_SMD_RPM_LDOA, 6, &pm8226_FIXME, "vdd_gr3" },
-	{ "l7", QCOM_SMD_RPM_LDOA, 7, &pm8226_FIXME, "vdd_gr3" },
-	{ "l8", QCOM_SMD_RPM_LDOA, 8, &pm8226_FIXME, "vdd_gr3" },
-	{ "l9", QCOM_SMD_RPM_LDOA, 9, &pm8226_FIXME, "vdd_gr3" },
-	{ "l10", QCOM_SMD_RPM_LDOA, 10, &pm8226_FIXME, "vdd_gr4" },
-	// FIXME l11
-	{ "l12", QCOM_SMD_RPM_LDOA, 12, &pm8226_FIXME, "vdd_gr5" },
-	// FIXME l13
-	{ "l14", QCOM_SMD_RPM_LDOA, 14, &pm8226_FIXME, "vdd_gr5" },
-	{ "l15", QCOM_SMD_RPM_LDOA, 15, &pm8226_FIXME, "vdd_gr6" },
-	{ "l16", QCOM_SMD_RPM_LDOA, 16, &pm8226_FIXME, "vdd_gr6" },
-	{ "l17", QCOM_SMD_RPM_LDOA, 17, &pm8226_FIXME, "vdd_gr6" },
-	{ "l18", QCOM_SMD_RPM_LDOA, 18, &pm8226_FIXME, "vdd_gr6" },
-	{ "l19", QCOM_SMD_RPM_LDOA, 19, &pm8226_FIXME, "vdd_gr7" },
-	{ "l20", QCOM_SMD_RPM_LDOA, 20, &pm8226_FIXME, "vdd_gr7" },
-	{ "l21", QCOM_SMD_RPM_LDOA, 21, &pm8226_FIXME, "vdd_gr7" },
-	{ "l22", QCOM_SMD_RPM_LDOA, 22, &pm8226_FIXME, "vdd_gr7" },
-	{ "l23", QCOM_SMD_RPM_LDOA, 23, &pm8226_FIXME, "vdd_gr7" },
-	{ "l24", QCOM_SMD_RPM_LDOA, 24, &pm8226_FIXME, "vdd_gr2" },
-	{ "l25", QCOM_SMD_RPM_LDOA, 25, &pm8226_FIXME, "vdd_gr????" },
-	{ "l26", QCOM_SMD_RPM_LDOA, 26, &pm8226_FIXME, "vdd_gr2" },
-	{ "l27", QCOM_SMD_RPM_LDOA, 27, &pm8226_FIXME, "vdd_gr3" },
-	{ "l28", QCOM_SMD_RPM_LDOA, 28, &pm8226_FIXME, "vdd_gr7" },
+	{ "s1", QCOM_SMD_RPM_SMPA, 1, &pm8226_ftsmps, "vdd_s1" },
+	{ "s2", QCOM_SMD_RPM_SMPA, 2, &pm8226_ftsmps, "vdd_s2" },
+	{ "s3", QCOM_SMD_RPM_SMPA, 3, &pm8226_smps, "vdd_s3" },
+	{ "s4", QCOM_SMD_RPM_SMPA, 4, &pm8226_smps, "vdd_s4" },
+	{ "s5", QCOM_SMD_RPM_SMPA, 5, &pm8226_smps, "vdd_s5" },
+	{ "l1", QCOM_SMD_RPM_LDOA, 1, &pm8226_nldo3, "vdd_gr1" },
+	{ "l2", QCOM_SMD_RPM_LDOA, 2, &pm8226_nldo3, "vdd_gr1" },
+	{ "l3", QCOM_SMD_RPM_LDOA, 3, &pm8226_nldo3, "vdd_gr2" },
+	{ "l4", QCOM_SMD_RPM_LDOA, 4, &pm8226_ndlo1, "vdd_gr1" },
+	{ "l5", QCOM_SMD_RPM_LDOA, 5, &pm8226_ndlo1, "vdd_gr1" },
+	{ "l6", QCOM_SMD_RPM_LDOA, 6, &pm8226_pldo, "vdd_gr3" },
+	{ "l7", QCOM_SMD_RPM_LDOA, 7, &pm8226_pldo, "vdd_gr3" },
+	{ "l8", QCOM_SMD_RPM_LDOA, 8, &pm8226_pldo, "vdd_gr3" },
+	{ "l9", QCOM_SMD_RPM_LDOA, 9, &pm8226_pldo, "vdd_gr3" },
+	{ "l10", QCOM_SMD_RPM_LDOA, 10, &pm8226_pldo, "vdd_gr4" },
+	// FIXME l11 ln_ldo
+	{ "l12", QCOM_SMD_RPM_LDOA, 12, &pm8226_pldo, "vdd_gr5" },
+	// FIXME l13 ln_ldo
+	{ "l14", QCOM_SMD_RPM_LDOA, 14, &pm8226_pldo, "vdd_gr5" },
+	{ "l15", QCOM_SMD_RPM_LDOA, 15, &pm8226_pldo, "vdd_gr6" },
+	{ "l16", QCOM_SMD_RPM_LDOA, 16, &pm8226_pldo, "vdd_gr6" },
+	{ "l17", QCOM_SMD_RPM_LDOA, 17, &pm8226_pldo, "vdd_gr6" },
+	{ "l18", QCOM_SMD_RPM_LDOA, 18, &pm8226_pldo, "vdd_gr6" },
+	{ "l19", QCOM_SMD_RPM_LDOA, 19, &pm8226_pldo, "vdd_gr7" },
+	{ "l20", QCOM_SMD_RPM_LDOA, 20, &pm8226_pldo, "vdd_gr7" },
+	{ "l21", QCOM_SMD_RPM_LDOA, 21, &pm8226_pldo, "vdd_gr7" },
+	{ "l22", QCOM_SMD_RPM_LDOA, 22, &pm8226_pldo, "vdd_gr7" },
+	{ "l23", QCOM_SMD_RPM_LDOA, 23, &pm8226_pldo, "vdd_gr7" },
+	{ "l24", QCOM_SMD_RPM_LDOA, 24, &pm8226_nldo3, "vdd_gr2" },
+	{ "l25", QCOM_SMD_RPM_LDOA, 25, &pm8226_pldo },
+	{ "l26", QCOM_SMD_RPM_LDOA, 26, &pm8226_nldo3, "vdd_gr2" },
+	{ "l27", QCOM_SMD_RPM_LDOA, 27, &pm8226_pldo, "vdd_gr3" },
+	{ "l28", QCOM_SMD_RPM_LDOA, 28, &pm8226_pldo, "vdd_gr7" },
 
-	{ "lvs1", QCOM_SMD_RPM_VSA, 1, &pm8226_FIXME, "vdd_gr????" },
+	{ "lvs1", QCOM_SMD_RPM_VSA, 1, &pm8226_switch },
 	// Supply pins are named weirdly, VDD_GR1-VDD;GR7
 	// GR1: L1, L2, L4, L5
 	// GR2: L3, L24, L26
