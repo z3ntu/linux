@@ -292,7 +292,15 @@ static const struct regulator_desc pm8226_nldo3 = {
 	.ops = &rpm_smps_ldo_ops,
 };
 
-// FIXME need pm8226_nldo1
+// FIXME is a copy-paste of nldo3, has different ranges MAYBE?
+static const struct regulator_desc pm8226_nldo1 = {
+	.linear_ranges = (struct linear_range[]) {
+		REGULATOR_LINEAR_RANGE(375000, 0, 92, 12500),
+	},
+	.n_linear_ranges = 1,
+	.n_voltages = 93,
+	.ops = &rpm_smps_ldo_ops,
+};
 
 static const struct regulator_desc pm8226_pldo = {
 	.linear_ranges = (struct linear_range[]) {
@@ -785,8 +793,8 @@ static const struct rpm_regulator_data rpm_pm8226_regulators[] = {
 	{ "l1", QCOM_SMD_RPM_LDOA, 1, &pm8226_nldo3, "vdd_gr1" },
 	{ "l2", QCOM_SMD_RPM_LDOA, 2, &pm8226_nldo3, "vdd_gr1" },
 	{ "l3", QCOM_SMD_RPM_LDOA, 3, &pm8226_nldo3, "vdd_gr2" },
-	{ "l4", QCOM_SMD_RPM_LDOA, 4, &pm8226_ndlo1, "vdd_gr1" },
-	{ "l5", QCOM_SMD_RPM_LDOA, 5, &pm8226_ndlo1, "vdd_gr1" },
+	{ "l4", QCOM_SMD_RPM_LDOA, 4, &pm8226_nldo1, "vdd_gr1" },
+	{ "l5", QCOM_SMD_RPM_LDOA, 5, &pm8226_nldo1, "vdd_gr1" },
 	{ "l6", QCOM_SMD_RPM_LDOA, 6, &pm8226_pldo, "vdd_gr3" },
 	{ "l7", QCOM_SMD_RPM_LDOA, 7, &pm8226_pldo, "vdd_gr3" },
 	{ "l8", QCOM_SMD_RPM_LDOA, 8, &pm8226_pldo, "vdd_gr3" },
