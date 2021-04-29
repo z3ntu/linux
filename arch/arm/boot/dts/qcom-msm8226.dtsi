@@ -193,10 +193,10 @@
 			};
 		};
 
-		//rpm_msg_ram: memory@fc428000 {
-		//	compatible = "qcom,rpm-msg-ram";
-		//	reg = <0xfc428000 0x4000>;
-		//};
+		rpm_msg_ram: memory@fc428000 {
+			compatible = "qcom,rpm-msg-ram";
+			reg = <0xfc428000 0x4000>;
+		};
 
 		tcsr_mutex_block: syscon@fd484000 {
 			compatible = "syscon";
@@ -291,7 +291,7 @@
 		compatible = "qcom,smem";
 
 		memory-region = <&smem_region>;
-		//qcom,rpm-msg-ram = <&rpm_msg_ram>;
+		qcom,rpm-msg-ram = <&rpm_msg_ram>;
 
 		hwlocks = <&tcsr_mutex 3>;
 	};
