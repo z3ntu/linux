@@ -12,6 +12,7 @@
 /delete-node/ &mba_region;
 /delete-node/ &mpss_region;
 /delete-node/ &smem_region;
+/delete-node/ &wcnss_region;
 
 / {
 	model = "HTC One Mini 2";

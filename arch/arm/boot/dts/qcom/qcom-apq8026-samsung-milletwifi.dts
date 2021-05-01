@@ -15,6 +15,7 @@
 /delete-node/ &mba_region;
 /delete-node/ &mpss_region;
 /delete-node/ &smem_region;
+/delete-node/ &wcnss_region;
 
 / {
 	model = "Samsung Galaxy Tab 4 8.0 Wi-Fi";
