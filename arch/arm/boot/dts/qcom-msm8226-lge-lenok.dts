@@ -22,22 +22,88 @@
 	};
 };
 
-&blsp1_i2c5 {
-	//status = "okay";
-	//pinctrl-names = "default";
-	//pinctrl-0 = <&i2c11_pins>;
-	//clock-frequency = <384000>;
+&tlmm {
+	touch_pins: touch {
+		irq {
+			pins = "gpio17";
+			function = "gpio";
 
-	/*synaptics@20 {
+			drive-strength = <8>;
+			bias-pull-down;
+			input-enable;
+		};
+
+		reset {
+			pins = "gpio16";
+			function = "gpio";
+
+			drive-strength = <8>;
+			bias-disable;
+			output-high;
+		};
+	};
+
+	vibrator_pin: vibrator {
+		core {
+			pins = "gpio33";
+			function = "gp0_clk";
+
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		enable {
+			pins = "gpio62";
+			function = "gpio";
+
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+
+	/*sdhc1_pin_a: sdhc1-pin-active {
+		clk {
+			pins = "sdc1_clk";
+			drive-strength = <10>;
+			bias-disable;
+		};
+
+		cmd-data {
+			pins = "sdc1_cmd", "sdc1_data";
+			drive-strength = <10>;
+			bias-pull-up;
+		};
+	};*/
+};
+
+&blsp1_i2c1 {
+	//status = "okay";
+	//clock-frequency = <>;
+
+	// charger is pm8226_chg
+
+	fuelgauge: fuel-gauge@55 {
+		compatible = "ti,bq27421";
+		reg = <0x55>;
+		//monitored-battery = <&bat>;
+	};
+};
+
+&blsp1_i2c5 {
+	status = "okay";
+	clock-frequency = <384000>;
+
+	synaptics@20 {
 		compatible = "syna,rmi4-i2c";
 		reg = <0x20>;
 
+		//synaptics,reset-gpio = <&msmgpio 16 0x00>;
 		interrupts-extended = <&tlmm 17 IRQ_TYPE_EDGE_FALLING>;
 		vdd-supply = <&pm8226_l15>;
 		vio-supply = <&pm8226_l22>;
 
-		//pinctrl-names = "default";
-		//pinctrl-0 = <&touch_pin>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&touch_pins>;
 
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -51,5 +117,18 @@
 			reg = <0x12>;
 			syna,sensor-type = <1>;
 		};
-	};*/
+	};
+};
+
+&sdhc_1 {
+	status = "okay";
+
+	vmmc-supply = <&pm8226_l17>;
+	vqmmv-supply = <&pm8226_l6>;
+
+	bus-width = <8>;
+	non-removable;
+
+	//pinctrl-names = "default";
+	//pinctrl-0 = <&sdhc1_pin_a>;
 };

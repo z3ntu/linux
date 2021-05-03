@@ -21,7 +21,7 @@
 		#size-cells = <1>;
 		ranges;
 
-		smem_region: smem@fa00000 {
+		smem_region: smem@3000000 {
 			reg = <0x3000000 0x100000>;
 			no-map;
 		};
@@ -82,6 +82,13 @@
 			interrupt-controller;
 			#interrupt-cells = <2>;
 			interrupts = <GIC_SPI 208 IRQ_TYPE_LEVEL_HIGH>;
+
+			blsp1_i2c5_pins: blsp1-i2c5 {
+				pins = "gpio18", "gpio19";
+				function = "blsp_i2c5";
+				drive-strength = <2>;
+				bias-disable;
+			};
 		};
 
 		// no BLSP1 UART1 configured?
@@ -99,7 +106,7 @@
 		};
 
 		/* BLSP1 QUP1 */
-		i2c@f9923000 { /* TODO */ };
+		blsp1_i2c1: i2c@f9923000 { /* TODO */ };
 
 		/* BLSP1 QUP2 */
 		i2c@f9924000 { /* TODO */ };
@@ -113,16 +120,19 @@
 		/* BLSP1 QUP5 */
 		blsp1_i2c5: i2c@f9927000 {
 			status = "disabled";
+			// FIXME: Revision 20030002
 			compatible = "qcom,i2c-qup-v2.1.1";
 			reg = <0xf9927000 0x1000>;
 			interrupts = <GIC_SPI 99 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&gcc GCC_BLSP1_QUP5_I2C_APPS_CLK>, <&gcc GCC_BLSP1_AHB_CLK>;
 			clock-names = "core", "iface";
+			pinctrl-names = "default";
+			pinctrl-0 = <&blsp1_i2c5_pins>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 		};
 
-		sdhci@f9824900 {
+		sdhc_1: sdhci@f9824900 {
 			compatible = "qcom,msm8226-sdhci", "qcom,sdhci-msm-v4";
 			reg = <0xf9824900 0x11c>, <0xf9824000 0x800>;
 			reg-names = "hc_mem", "core_mem";
@@ -136,7 +146,7 @@
 			status = "disabled";
 		};
 
-		sdhci@f98a4900 {
+		sdhc_2: sdhci@f98a4900 {
 			compatible = "qcom,msm8226-sdhci", "qcom,sdhci-msm-v4";
 			reg = <0xf98a4900 0x11c>, <0xf98a4000 0x800>;
 			reg-names = "hc_mem", "core_mem";
@@ -145,6 +155,20 @@
 			interrupt-names = "hc_irq", "pwr_irq";
 			clocks = <&gcc GCC_SDCC2_APPS_CLK>,
 				 <&gcc GCC_SDCC2_AHB_CLK>,
+				 <&xo_board>;
+			clock-names = "core", "iface", "xo";
+			status = "disabled";
+		};
+
+		sdhc_3: sdhci@f9864900 {
+			compatible = "qcom,msm8226-sdhci", "qcom,sdhci-msm-v4";
+			reg = <0xf9864900 0x11c>, <0xf9864000 0x800>;
+			reg-names = "hc_mem", "core_mem";
+			interrupts = <GIC_SPI 127 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 224 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "hc_irq", "pwr_irq";
+			clocks = <&gcc GCC_SDCC3_APPS_CLK>,
+				 <&gcc GCC_SDCC3_AHB_CLK>,
 				 <&xo_board>;
 			clock-names = "core", "iface", "xo";
 			status = "disabled";
