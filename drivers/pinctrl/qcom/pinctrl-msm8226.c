@@ -359,6 +359,16 @@ enum msm8226_functions {
 	MSM_MUX_cam_mclk0,
 	MSM_MUX_cam_mclk1,
 	MSM_MUX_wlan,
+	MSM_MUX_cci_timer0,
+	MSM_MUX_cci_timer1,
+	MSM_MUX_cci_timer2,
+	MSM_MUX_cci_timer3,
+	MSM_MUX_cci_timer4,
+	MSM_MUX_cci_async_in0,
+	MSM_MUX_cci_async_in1,
+	MSM_MUX_cci_async_in2,
+	MSM_MUX_gp0_clk,
+	MSM_MUX_gp1_clk,
 	MSM_MUX_NA,
 };
 
@@ -427,6 +437,19 @@ static const char * const cci_i2c0_groups[] = { "gpio29", "gpio30" };
 static const char * const cam_mclk0_groups[] = { "gpio26" };
 static const char * const cam_mclk1_groups[] = { "gpio27" };
 
+static const char * const cci_timer0_groups[] = { "gpio31" };
+static const char * const cci_timer1_groups[] = { "gpio32" };
+static const char * const cci_timer2_groups[] = { "gpio38" };
+static const char * const cci_timer3_groups[] = { "gpio33" };
+static const char * const cci_timer4_groups[] = { "gpio34" };
+
+static const char * const cci_async_in0_groups[] = { "gpio35" };
+static const char * const cci_async_in1_groups[] = { "gpio33" };
+static const char * const cci_async_in2_groups[] = { "gpio34" };
+
+static const char * const gp0_clk_groups[] = { "gpio33" };
+static const char * const gp1_clk_groups[] = { "gpio34" };
+
 static const char * const wlan_groups[] = {
 	"gpio40", "gpio41", "gpio42", "gpio43", "gpio44"
 };
@@ -452,6 +475,16 @@ static const struct msm_function msm8226_functions[] = {
 	FUNCTION(blsp_uart5),
 	FUNCTION(cam_mclk0),
 	FUNCTION(cam_mclk1),
+	FUNCTION(cci_timer0),
+	FUNCTION(cci_timer1),
+	FUNCTION(cci_timer2),
+	FUNCTION(cci_timer3),
+	FUNCTION(cci_timer4),
+	FUNCTION(cci_async_in0),
+	FUNCTION(cci_async_in1),
+	FUNCTION(cci_async_in2),
+	FUNCTION(gp0_clk),
+	FUNCTION(gp1_clk),
 	FUNCTION(wlan),
 };
 
@@ -489,8 +522,8 @@ static const struct msm_pingroup msm8226_groups[] = {
 	PINGROUP(30,  cci_i2c0, NA, NA, NA, NA, NA, NA),
 	PINGROUP(31,  NA, NA, NA, NA, NA, NA, NA),
 	PINGROUP(32,  NA, NA, NA, NA, NA, NA, NA),
-	PINGROUP(33,  NA, NA, NA, NA, NA, NA, NA),
-	PINGROUP(34,  NA, NA, NA, NA, NA, NA, NA),
+	PINGROUP(33,  cci_timer3, cci_async_in1, gp0_clk, NA, NA, NA, NA),
+	PINGROUP(34,  cci_timer4, cci_async_in2, gp1_clk, NA, NA, NA, NA),
 	PINGROUP(35,  NA, NA, NA, NA, NA, NA, NA),
 	PINGROUP(36,  NA, NA, NA, NA, NA, NA, NA),
 	PINGROUP(37,  NA, NA, NA, NA, NA, NA, NA),
