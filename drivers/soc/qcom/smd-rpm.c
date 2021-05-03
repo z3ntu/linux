@@ -219,6 +219,8 @@ static int qcom_smd_rpm_probe(struct rpmsg_device *rpdev)
 	if (ret)
 		platform_device_unregister(rpm->icc);
 
+	dev_err(&rpdev->dev, "%s: ret: %d\n", __func__, ret);
+
 	return ret;
 }
 

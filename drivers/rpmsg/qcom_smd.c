@@ -1545,6 +1545,8 @@ static int qcom_smd_probe(struct platform_device *pdev)
 	for_each_available_child_of_node(pdev->dev.of_node, node)
 		qcom_smd_register_edge(&pdev->dev, node);
 
+	dev_err(&pdev->dev, "%s: success\n", __func__);
+
 	return 0;
 }
 

@@ -271,9 +271,12 @@ static int glink_rpm_probe(struct platform_device *pdev)
 	if (!rx_pipe || !tx_pipe)
 		return -ENOMEM;
 
+	dev_err(&pdev->dev, "%s!\n", __func__);
+
 	np = of_parse_phandle(dev->of_node, "qcom,rpm-msg-ram", 0);
 	ret = of_address_to_resource(np, 0, &r);
 	of_node_put(np);
+	dev_err(&pdev->dev, "%s: ret: %d\n", __func__, ret);
 	if (ret)
 		return ret;
 

@@ -1290,6 +1290,7 @@ static int rpm_reg_probe(struct platform_device *pdev)
 		}
 	}
 
+	dev_err(&pdev->dev, "%s: success\n", __func__);
 	return 0;
 }
 
