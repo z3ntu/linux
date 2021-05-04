@@ -14,6 +14,28 @@
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
+
+	/*vibrator {
+		compatible = "clk-vibrator";
+
+		vcc-supply = <&pm8226_l28>;
+
+		clocks = <&mmcc CAMSS_GP0_CLK>;
+		clock-names = "core";
+		clock-frequency = <24000>;
+
+		enable-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&vibrator_pin>;
+	};*/
+
+	bat: battery {
+		compatible = "simple-battery";
+		voltage-min-design-microvolt = <4100000>;
+		//energy-full-design-microwatt-hours = <5290000>;
+		//charge-full-design-microamp-hours = <1430000>;
+	};
 };
 
 &soc {
@@ -61,7 +83,7 @@
 		};
 	};
 
-	/*sdhc1_pin_a: sdhc1-pin-active {
+	sdhc1_pin_a: sdhc1-pin-active {
 		clk {
 			pins = "sdc1_clk";
 			drive-strength = <10>;
@@ -73,27 +95,85 @@
 			drive-strength = <10>;
 			bias-pull-up;
 		};
-	};*/
+	};
+
+	sdhc3_pin_a: sdhc3-pin-active {
+		data {
+			pins = "gpio39", "gpio40", "gpio41", "gpio42";
+			function = "sdc3";
+
+			drive-strength = <4>;
+			bias-pull-up;
+		};
+		cmd {
+			pins = "gpio43";
+			function = "sdc3";
+
+			drive-strength = <10>;
+			bias-pull-up;
+		};
+		clk {
+			pins = "gpio44";
+			function = "sdc3";
+
+			drive-strength = <10>;
+			bias-disable;
+		};
+	};
+
+	blsp1_uart4_pin_a: blsp1-uart4-pin-active {
+		mux {
+			pins = "gpio12", "gpio13", "gpio14", "gpio15";
+			function = "blsp_uart4";
+
+			drive-strength = <8>;
+			bias-disable;
+		};
+	};
 };
 
 &blsp1_i2c1 {
-	//status = "okay";
-	//clock-frequency = <>;
+	status = "okay";
+	clock-frequency = <400000>;
 
 	// charger is pm8226_chg
 
 	fuelgauge: fuel-gauge@55 {
 		compatible = "ti,bq27421";
 		reg = <0x55>;
-		//monitored-battery = <&bat>;
+		monitored-battery = <&bat>;
 	};
+};
+
+&blsp1_uart4 {
+	// FIXME Unable to handle kernel paging request at virtual address 313a3075
+// [    2.572999] [<c0803d84>] (clk_core_prepare) from [<c0804084>] (clk_prepare+0x20/0x30)
+// [    2.581150] [<c0804084>] (clk_prepare) from [<c085831c>] (msm_startup+0x5c/0x3ec)
+// [    2.588963] [<c085831c>] (msm_startup) from [<c08557a4>] (uart_port_startup+0x140/0x248)
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&blsp1_uart4_pin_a>;
+
+	// BCM4343 WKUBG
+	/*bluetooth {
+		compatible = "brcm,bcm43438-bt";
+		//max-speed = <3000000>;
+
+//		pinctrl-names = "default";
+//		pinctrl-0 = <&bt_pin>;
+
+		host-wakeup-gpios = <&tlmm 48 GPIO_ACTIVE_HIGH>;
+		device-wakeup-gpios = <&tlmm 47 GPIO_ACTIVE_HIGH>;
+		shutdown-gpios = <&tlmm 45 GPIO_ACTIVE_HIGH>;
+	};*/
 };
 
 &blsp1_i2c5 {
 	status = "okay";
 	clock-frequency = <384000>;
 
-	synaptics@20 {
+	touchscreen@20 {
 		compatible = "syna,rmi4-i2c";
 		reg = <0x20>;
 
@@ -124,11 +204,52 @@
 	status = "okay";
 
 	vmmc-supply = <&pm8226_l17>;
-	vqmmv-supply = <&pm8226_l6>;
+	vqmmc-supply = <&pm8226_l6>;
 
 	bus-width = <8>;
 	non-removable;
 
-	//pinctrl-names = "default";
-	//pinctrl-0 = <&sdhc1_pin_a>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdhc1_pin_a>;
+};
+
+&sdhc_3 {
+	status = "okay";
+
+	max-frequency = <50000000>;
+	bus-width = <4>;
+	non-removable;
+	// no vmmc-supply??? /delete-property/ downstream
+	vqmmc-supply = <&pm8226_l6>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdhc3_pin_a>;
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	// BCM4343 WKUBG
+	bcrmf@1 {
+		compatible = "brcm,bcm4343-fmac", "brcm,bcm4329-fmac";
+		reg = <1>;
+
+//		brcm,drive-strength = <10>;
+
+//		pinctrl-names = "default";
+//		pinctrl-0 = <&wlan_sleep_clk_pin>;
+	};
+
+};
+
+// pm8226_chg
+&smbb {
+	// FIXME no clue if this is used
+	monitored-battery = <&bat>;
+
+	qcom,fast-charge-safe-current = <450000>;
+	qcom,fast-charge-current-limit = <410000>;
+	qcom,fast-charge-safe-voltage = <4350000>;
+	qcom,fast-charge-high-threshold-voltage = <4350000>;
+	qcom,auto-recharge-threshold-voltage = <4250000>;
+	qcom,minimum-input-voltage = <4450000>;
 };
