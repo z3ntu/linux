@@ -7,12 +7,12 @@
 #include <dt-bindings/regulator/qcom,rpm-smd-regulator.h>
 
 / {
-	model = "PostmarketOS Mainline, SDM632 + PMI632 SOC";
-	compatible = "qcom,sdm632-mtp", "qcom,sdm632", "qcom,mtp";
+	model = "PostmarketOS Fairphone 3 Mainline, SDM632 + PMI632 SOC";
+	compatible = "qcom,sdm632", "qcom,msm8953";
 
 	qcom,pmic-id = <0x010016 0x25 0x00 0x00>;
 	qcom,pmic-name = "PMI632";
-	qcom,msm-id = <349 0x00>;
+	qcom,msm-id = <349 2>;
 	qcom,board-id = <8 3>;
 
 	aliases {
@@ -44,12 +44,25 @@
 	status = "okay";
 };
 
+// eMMC : internal storage
 &sdhc_1 {
 	status = "okay";
 	pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on  &sdc1_rclk_on>;
+	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on &sdc1_rclk_on>;
 	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off &sdc1_rclk_off>;
 };
+
+// SD card
+&sdhc_2 {
+	status = "okay";
+
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on>;
+	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
+
+	non-removable; // SD card behind battery so non-removable
+};
+
 
 &usb3 {
 	status = "okay";
