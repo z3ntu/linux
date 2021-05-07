@@ -864,7 +864,7 @@ static int smbb_charger_probe(struct platform_device *pdev)
 
 	chg->revision += 1;
 	if (chg->revision != 2 && chg->revision != 3) {
-		dev_err(&pdev->dev, "v1 hardware not supported\n");
+		dev_err(&pdev->dev, "v%d hardware not supported\n", chg->revision);
 		return -ENODEV;
 	}
 	dev_info(&pdev->dev, "Initializing SMBB rev %u", chg->revision);
@@ -1015,7 +1015,8 @@ static int smbb_charger_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id smbb_charger_id_table[] = {
-	{ .compatible = "qcom,pm8941-charger" },
+	{ .compatible = "qcom,pm8226-charger" },
+	{ .compatible = "qcom,pm8941-charger" }, // FIXME v1 hardware not supported
 	{ }
 };
 MODULE_DEVICE_TABLE(of, smbb_charger_id_table);

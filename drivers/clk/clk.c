@@ -617,18 +617,28 @@ static void clk_core_get_boundaries(struct clk_core *core,
 				    unsigned long *min_rate,
 				    unsigned long *max_rate)
 {
+//	printk(KERN_ERR "%s 1\n", __func__);
 	struct clk *clk_user;
 
+//	printk(KERN_ERR "%s 2\n", __func__);
 	lockdep_assert_held(&prepare_lock);
 
+//	printk(KERN_ERR "%s 3\n", __func__);
 	*min_rate = core->min_rate;
+//	printk(KERN_ERR "%s 4\n", __func__);
 	*max_rate = core->max_rate;
 
-	hlist_for_each_entry(clk_user, &core->clks, clks_node)
+	printk(KERN_ERR "%s 5\n", __func__);
+	printk(KERN_ERR "%s 5 - %s\n", __func__, core->name);
+	hlist_for_each_entry(clk_user, &core->clks, clks_node) {
+		printk(KERN_ERR "%s 5.1 %s\n", __func__, clk_user->core->name);
 		*min_rate = max(*min_rate, clk_user->min_rate);
+	}
 
+//	printk(KERN_ERR "%s 6\n", __func__);
 	hlist_for_each_entry(clk_user, &core->clks, clks_node)
 		*max_rate = min(*max_rate, clk_user->max_rate);
+//	printk(KERN_ERR "%s 7\n", __func__);
 }
 
 void clk_hw_set_rate_range(struct clk_hw *hw, unsigned long min_rate,

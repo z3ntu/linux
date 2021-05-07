@@ -2570,6 +2570,7 @@ static const struct qcom_cc_desc mmcc_msm8974_desc = {
 
 static const struct of_device_id mmcc_msm8974_match_table[] = {
 	{ .compatible = "qcom,mmcc-msm8974" },
+//	{ .compatible = "qcom,mmcc-msm8226" }, // FIXME
 	{ }
 };
 MODULE_DEVICE_TABLE(of, mmcc_msm8974_match_table);
