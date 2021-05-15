@@ -12,7 +12,7 @@
 #include <linux/pm_wakeup.h>
 
 #include "ipa_version.h"
-#include "gsi.h"
+#include "ipa_dma.h"
 #include "ipa_mem.h"
 #include "ipa_qmi.h"
 #include "ipa_endpoint.h"
@@ -80,7 +80,7 @@ enum ipa_flag {
  * @qmi:		QMI information
  */
 struct ipa {
-	struct gsi gsi;
+	struct ipa_dma dma_subsys;
 	DECLARE_BITMAP(flags, IPA_FLAG_COUNT);
 	enum ipa_version version;
 	struct platform_device *pdev;
