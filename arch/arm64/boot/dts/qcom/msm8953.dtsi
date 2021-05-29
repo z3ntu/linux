@@ -16,6 +16,11 @@
 		enable-method = "psci";			\
 		next-level-cache = <&L2_##cluster>;	\
 		#cooling-cells = <2>;			\
+		power-domains = <&cpr 0>;		\
+		power-domain-names = "cpr";		\
+		clocks = <&apcc_pll>;		\
+		clock-names = "cpu";			\
+		operating-points-v2 = <&cpu0_opp>;	\
 		l1-icache { compatible = "cache"; };	\
 		l1-dcache { compatible = "cache"; };	\
 	}
@@ -55,6 +60,14 @@
 				cooling-device = <&CPU##c THERMAL_NO_LIMIT THERMAL_NO_LIMIT>; \
 			};				\
 		};					\
+	}
+
+#define OPP(freqKhz, req, HW, peakBW, extra)		\
+	opp-freqKhz##000 {				\
+		opp-hz = /bits/ 64 <freqKhz##000>;	\
+		opp-supported-hw = <HW>;		\
+		required-opps = <&req>;			\
+		extra; \
 	}
 
 / {
@@ -218,6 +231,65 @@
 	pmu {
 		compatible = "arm,cortex-a53-pmu";
 		interrupts = <GIC_PPI 7 (GIC_CPU_MASK_SIMPLE(8)| IRQ_TYPE_LEVEL_HIGH)>;
+	};
+
+#define BIN_425  0x40
+#define BIN_625  0x04
+#define BIN_626  0x81
+#define BIN_ALL	 0xff
+
+	cpu0_opp: cpu0-opp-table {
+		compatible = "operating-points-v2-qcom-cpu",
+			     "operating-points-v2-kryo-cpu";
+		nvmem-cells = <&cpu_speed_bin>;
+		opp-shared;
+
+		OPP( 652800, cpr_opp1, BIN_ALL, 1611000, opp-suspend);
+		OPP(1036800, cpr_opp2, BIN_ALL, 3221000, none);
+		OPP(1248000, cpr_opp3, BIN_ALL, 4550000, none);
+		OPP(1401600, cpr_opp4, BIN_ALL, 5859000, none);
+		OPP(1689600, cpr_opp5, BIN_ALL, 6445000, none);
+		OPP(1804800, cpr_opp6, BIN_ALL, 7104000, none);
+		OPP(1958400, cpr_opp7, BIN_625, 7104000, none);
+		OPP(2016000, cpr_opp8, BIN_625, 7104000, none);
+		OPP(2150400, cpr_opp9, BIN_626, 7104000, none);
+		OPP(2208000, cpr_opp10, BIN_626, 7104000, none);
+
+	};
+
+	cpr_opp_table: cpr-opp-table {
+		compatible = "operating-points-v2-qcom-level";
+
+		cpr_opp1: opp1 {
+			opp-level = <1>;
+		};
+		cpr_opp2: opp2 {
+			opp-level = <2>;
+		};
+		cpr_opp3: opp3 {
+			opp-level = <3>;
+		};
+		cpr_opp4: opp4 {
+			opp-level = <4>;
+		};
+		cpr_opp5: opp5 {
+			opp-level = <5>;
+		};
+		cpr_opp6: opp6 {
+			opp-level = <6>;
+		};
+		cpr_opp7: opp7 {
+			opp-level = <7>;
+		};
+		cpr_opp8: opp8 {
+			opp-level = <8>;
+		};
+		cpr_opp9: opp9 {
+			opp-level = <9>;
+		};
+		cpr_opp10: opp10 {
+			opp-level = <10>;
+		};
 	};
 
 	timer {
@@ -1523,6 +1595,115 @@
 			compatible = "qcom,msm8953-apcs-kpss-global", "syscon";
 			reg = <0xb011000 0x1000>;
 			#mbox-cells = <1>;
+		};
+
+		apcc_c1_mux: clock-controller@b011050 {
+			compatible = "qcom,cpu-mux-div-clock";
+			reg = <0xb011050 0x10>;
+			clocks = <&apcc_pll>, <&gcc GPLL0_EARLY>;
+			qcom,mux-values = <5>, <4>;
+			qcom,safe-div = <3>;
+			clock-output-names = "apcc-c1-mux";
+			assigned-clocks = <&apcc_c1_mux>;
+			assigned-clock-parents = <&apcc_pll>;
+			assigned-clock-rates = <883200000>;
+			#clock-cells = <0>;
+		};
+
+		cpr: power-controller@b018000 {
+			compatible = "qcom,msm8953-cpr4";
+
+			nvmem-cells = <&cpr_efuse_quot_offset3>,
+				      <&cpr_efuse_quot_offset2>,
+				      <&cpr_efuse_quot_offset1>,
+				      <&cpr_efuse_init_voltage4>,
+				      <&cpr_efuse_init_voltage3>,
+				      <&cpr_efuse_init_voltage2>,
+				      <&cpr_efuse_init_voltage1>,
+				      <&cpr_efuse_quot4>,
+				      <&cpr_efuse_quot3>,
+				      <&cpr_efuse_quot2>,
+				      <&cpr_efuse_quot1>,
+				      <&cpr_efuse_ring4>,
+				      <&cpr_efuse_ring3>,
+				      <&cpr_efuse_ring2>,
+				      <&cpr_efuse_ring1>,
+				      <&cpr_efuse_revision>,
+				      <&cpu_speed_bin>;
+			nvmem-cell-names = "cpr_thread0_quotient_offset2",
+					   "cpr_thread0_quotient_offset3",
+					   "cpr_thread0_quotient_offset4",
+					   "cpr_thread0_init_voltage1",
+					   "cpr_thread0_init_voltage2",
+					   "cpr_thread0_init_voltage3",
+					   "cpr_thread0_init_voltage4",
+					   "cpr_thread0_quotient1",
+					   "cpr_thread0_quotient2",
+					   "cpr_thread0_quotient3",
+					   "cpr_thread0_quotient4",
+					   "cpr_thread0_ring_osc1",
+					   "cpr_thread0_ring_osc2",
+					   "cpr_thread0_ring_osc3",
+					   "cpr_thread0_ring_osc4",
+					   "cpr_fuse_revision",
+					   "cpr_speed_bin";
+
+			reg = <0x0b018000 0x4000>;
+			reg-names = "cpr-iomem";
+
+			interrupts = <GIC_SPI 15 IRQ_TYPE_EDGE_RISING>;
+
+			clocks = <&xo_board>;
+			clock-names = "ref";
+
+			acc-syscon = <&apc_mem_acc>;
+			apm-syscon = <&apm>;
+
+			#power-domain-cells = <1>;
+			operating-points-v2 = <&cpr_opp_table>;
+		};
+
+		apcc_pll: clock-controller@b106000 {
+			compatible = "qcom,msm8953-apcc-alpha-pll";
+			reg = <0xb116000 0x40>;
+			qcom,vco-ranges = <0 652800000 2208000000>;
+			clocks = <&xo_board>;
+			clock-output-names = "apcc-pll";
+			assigned-clocks = <&apcc_pll>;
+			assigned-clock-rates = <883200000>;
+			#clock-cells = <0>;
+		};
+
+		apm: syscon@b111000 {
+			compatible = "syscon";
+			reg = <0xb111000 0x1000>;
+		};
+
+		apcc_c0_mux: clock-controller@b111050 {
+			compatible = "qcom,cpu-mux-div-clock";
+			reg = <0xb111050 0x10>;
+			clocks = <&apcc_pll>, <&gcc GPLL0_EARLY>;
+			qcom,mux-values = <5>, <4>;
+			qcom,safe-div = <3>;
+			clock-output-names = "apcc-c0-mux";
+			assigned-clocks = <&apcc_c0_mux>;
+			assigned-clock-parents = <&apcc_pll>;
+			assigned-clock-rates = <883200000>;
+			#clock-cells = <0>;
+		};
+
+
+		apcc_cci_mux: clock-controller@b1d1050 {
+			compatible = "qcom,cpu-mux-div-clock";
+			reg = <0xb1d1050 0x10>;
+			clocks = <&apcc_pll>, <&gcc GPLL0_EARLY>;
+			qcom,mux-values = <5>, <4>;
+			qcom,safe-div = <5>;
+			clock-output-names = "apcc-cci-mux";
+			assigned-clocks = <&apcc_cci_mux>;
+			assigned-clock-parents = <&apcc_pll>;
+			assigned-clock-rates = <(883200000 * 2 / 5)>;
+			#clock-cells = <0>;
 		};
 
 		timer@b120000 {
