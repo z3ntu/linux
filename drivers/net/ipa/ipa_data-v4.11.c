@@ -219,7 +219,7 @@ static const struct ipa_resource_data ipa_resource_data = {
 };
 
 /* IPA-resident memory region data for an SoC having IPA v4.11 */
-static const struct ipa_mem ipa_mem_local_data[] = {
+static const struct ipa_mem ipa_mem_local_data[IPA_MEM_COUNT] = {
 	[IPA_MEM_UC_SHARED] = {
 		.offset		= 0x0000,
 		.size		= 0x0080,
@@ -334,7 +334,6 @@ static const struct ipa_mem ipa_mem_local_data[] = {
 
 /* Memory configuration data for an SoC having IPA v4.11 */
 static const struct ipa_mem_data ipa_mem_data = {
-	.local_count	= ARRAY_SIZE(ipa_mem_local_data),
 	.local		= ipa_mem_local_data,
 	.imem_addr	= 0x146a8000,
 	.imem_size	= 0x00002000,

@@ -180,7 +180,7 @@ int ipa_mem_config(struct ipa *ipa)
 	 * for the region, write "canary" values in the space prior to
 	 * the region's base address.
 	 */
-	for (mem_id = 0; mem_id < ipa->mem_count; mem_id++) {
+	for (mem_id = 0; mem_id < IPA_MEM_COUNT; mem_id++) {
 		const struct ipa_mem *mem = &ipa->mem[mem_id];
 		u16 canary_count;
 		__le32 *canary;
@@ -457,12 +457,6 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 	struct resource *res;
 	int ret;
 
-	if (mem_data->local_count > IPA_MEM_COUNT) {
-		dev_err(dev, "to many memory regions (%u > %u)\n",
-			mem_data->local_count, IPA_MEM_COUNT);
-		return -EINVAL;
-	}
-
 	ret = dma_set_mask_and_coherent(&ipa->pdev->dev, DMA_BIT_MASK(64));
 	if (ret) {
 		dev_err(dev, "error %d setting DMA mask\n", ret);
@@ -487,7 +481,6 @@ int ipa_mem_init(struct ipa *ipa, const struct ipa_mem_data *mem_data)
 	ipa->mem_size = resource_size(res);
 
 	/* The ipa->mem[] array is indexed by enum ipa_mem_id values */
-	ipa->mem_count = mem_data->local_count;
 	ipa->mem = mem_data->local;
 
 	ret = ipa_imem_init(ipa, mem_data->imem_addr, mem_data->imem_size);
