@@ -144,8 +144,10 @@ static bool ipa_mem_valid(struct ipa *ipa, enum ipa_mem_id mem_id)
 int ipa_mem_config(struct ipa *ipa)
 {
 	struct device *dev = &ipa->pdev->dev;
+	const struct ipa_mem *last_mem = NULL;
 	enum ipa_mem_id mem_id;
 	dma_addr_t addr;
+	__le32 *canary;
 	u32 mem_size;
 	void *virt;
 	u32 val;
@@ -183,7 +185,6 @@ int ipa_mem_config(struct ipa *ipa)
 	for (mem_id = 0; mem_id < IPA_MEM_COUNT; mem_id++) {
 		const struct ipa_mem *mem = &ipa->mem[mem_id];
 		u16 canary_count;
-		__le32 *canary;
 
 		/* Validate all regions (even undefined ones) */
 		if (!ipa_mem_valid(ipa, mem_id))
@@ -192,6 +193,9 @@ int ipa_mem_config(struct ipa *ipa)
 		/* Skip over undefined regions */
 		if (!mem->offset && !mem->size)
 			continue;
+
+		if (!last_mem || mem->offset > last_mem->offset)
+			last_mem = mem;
 
 		canary_count = mem->canary_count;
 		if (!canary_count)
@@ -203,6 +207,11 @@ int ipa_mem_config(struct ipa *ipa)
 			*--canary = IPA_MEM_CANARY_VAL;
 		while (--canary_count);
 	}
+
+	/* Write canary values after last region */
+	canary = ipa->mem_virt + ipa->mem_offset +
+		 last_mem->offset + last_mem->size;
+	*canary = IPA_MEM_CANARY_VAL;
 
 	/* Make sure filter and route table memory regions are valid */
 	if (!ipa_table_valid(ipa))
