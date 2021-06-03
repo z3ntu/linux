@@ -16,72 +16,114 @@
 #include "smd-rpm.h"
 #include "icc-rpm.h"
 
-static int qcom_icc_set(struct icc_node *src, struct icc_node *dst)
+static int qcom_rpm_send_bw(struct device *dev, bool master,
+			    int rpm_id, u64 bandwidth)
+{
+	int ret;
+
+	if (rpm_id == -1)
+		return 0;
+
+	ret = qcom_icc_rpm_smd_send(QCOM_SMD_RPM_ACTIVE_STATE,
+				    master ?
+				    RPM_BUS_MASTER_REQ :
+				    RPM_BUS_SLAVE_REQ,
+				    rpm_id,
+				    icc_units_to_bps(bandwidth));
+	if (ret)
+		dev_err(dev, "Set bandwidth failed (%s_id=%d): error %d\n",
+			master ? "mas" : "slv", rpm_id, ret);
+
+	dev_vdbg(dev, "Set bandwidth (%s_id=%d): %llu\n",
+		master ? "mas" : "slv", rpm_id, bandwidth);
+
+	return ret;
+}
+
+static int qcom_node_update_bw(struct icc_node *node)
 {
 	struct qcom_icc_provider *qp;
 	struct qcom_icc_node *qn;
 	struct icc_provider *provider;
 	struct icc_node *n;
-	u64 sum_bw;
-	u64 max_peak_bw;
+	struct device *dev;
 	u64 rate;
 	u32 agg_avg = 0;
 	u32 agg_peak = 0;
 	int ret, i;
 
-	qn = src->data;
-	provider = src->provider;
+	qn = node->data;
+	provider = node->provider;
+	dev = provider->dev;
 	qp = to_qcom_provider(provider);
 
-	list_for_each_entry(n, &provider->nodes, node_list)
-		provider->aggregate(n, 0, n->avg_bw, n->peak_bw,
-				    &agg_avg, &agg_peak);
-
-	sum_bw = icc_units_to_bps(agg_avg);
-	max_peak_bw = icc_units_to_bps(agg_peak);
-
 	/* send bandwidth request message to the RPM processor */
-	if (qn->mas_rpm_id != -1) {
-		ret = qcom_icc_rpm_smd_send(QCOM_SMD_RPM_ACTIVE_STATE,
-					    RPM_BUS_MASTER_REQ,
-					    qn->mas_rpm_id,
-					    sum_bw);
-		if (ret) {
-			pr_err("qcom_icc_rpm_smd_send mas %d error %d\n",
-			       qn->mas_rpm_id, ret);
+	if (node->avg_bw != qn->applied_avg) {
+		ret = qcom_rpm_send_bw(dev, true, qn->mas_rpm_id,
+				       node->avg_bw);
+		if (ret)
 			return ret;
-		}
+
+		ret = qcom_rpm_send_bw(dev, false, qn->slv_rpm_id,
+				       node->avg_bw);
+		if (ret)
+			return ret;
+
+		qn->applied_avg = node->avg_bw;
 	}
 
-	if (qn->slv_rpm_id != -1) {
-		ret = qcom_icc_rpm_smd_send(QCOM_SMD_RPM_ACTIVE_STATE,
-					    RPM_BUS_SLAVE_REQ,
-					    qn->slv_rpm_id,
-					    sum_bw);
-		if (ret) {
-			pr_err("qcom_icc_rpm_smd_send slv %d error %d\n",
-			       qn->slv_rpm_id, ret);
-			return ret;
-		}
-	}
-
-	rate = max(sum_bw, max_peak_bw);
-
-	do_div(rate, qn->buswidth);
-
-	if (qn->rate == rate)
+	/* check if we already changed bus rate for this settings */
+	if (qn->applied_bus_avg == node->avg_bw &&
+	    qn->applied_bus_peak == node->peak_bw)
 		return 0;
 
-	for (i = 0; i < qp->num_clks; i++) {
-		ret = clk_set_rate(qp->bus_clks[i].clk, rate);
-		if (ret) {
-			pr_err("%s clk_set_rate error: %d\n",
-			       qp->bus_clks[i].id, ret);
-			return ret;
-		}
+	/* aggregate provider bandwidth for bus rate calculation */
+	list_for_each_entry(n, &provider->nodes, node_list) {
+		struct qcom_icc_node *qn = n->data;
+
+		agg_avg += n->avg_bw / qn->buswidth;
+		agg_peak = max(agg_peak, n->peak_bw / qn->buswidth);
 	}
 
-	qn->rate = rate;
+	rate = icc_units_to_bps(max(agg_avg, agg_peak));
+
+	if (qp->rate != rate) {
+		for (i = 0; i < qp->num_clks; i++) {
+			ret = clk_set_rate(qp->bus_clks[i].clk, rate);
+			if (ret) {
+				dev_err(dev, "Failed to set \"%s\" clk: %d\n",
+					qp->bus_clks[i].id, ret);
+				return ret;
+			}
+		}
+
+		dev_vdbg(dev, "Set rate: %lld\n", rate);
+		qp->rate = rate;
+	}
+
+	list_for_each_entry(n, &provider->nodes, node_list) {
+		struct qcom_icc_node *qn = n->data;
+
+		qn->applied_bus_avg = n->avg_bw;
+		qn->applied_bus_peak = n->peak_bw;
+	}
+
+	return 0;
+}
+
+static int qcom_icc_set(struct icc_node *src, struct icc_node *dst)
+{
+	int ret;
+
+	ret = qcom_node_update_bw(src);
+	if (ret)
+		return ret;
+
+	if (dst && src != dst) {
+		ret = qcom_node_update_bw(dst);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }

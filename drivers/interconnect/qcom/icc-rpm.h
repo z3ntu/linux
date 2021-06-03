@@ -17,11 +17,13 @@
  * @provider: generic interconnect provider
  * @bus_clks: the clk_bulk_data table of bus clocks
  * @num_clks: the total number of clk_bulk_data entries
+ * @rate: current bus clock rate in Hz
  */
 struct qcom_icc_provider {
 	struct icc_provider provider;
 	struct clk_bulk_data *bus_clks;
 	int num_clks;
+	u64 rate;
 };
 
 /**
@@ -33,7 +35,9 @@ struct qcom_icc_provider {
  * @buswidth: width of the interconnect between a node and the bus (bytes)
  * @mas_rpm_id:	RPM id for devices that are bus masters
  * @slv_rpm_id:	RPM id for devices that are bus slaves
- * @rate: current bus clock rate in Hz
+ * @applied_avg: last average BW that was applied just for this node.
+ * @applied_bus_avg: average BW that was used to calculate current bus rate
+ * @applied_bus_peak: peak BW that was used to calculate current bus rate
  */
 struct qcom_icc_node {
 	unsigned char *name;
@@ -43,7 +47,9 @@ struct qcom_icc_node {
 	u16 buswidth;
 	int mas_rpm_id;
 	int slv_rpm_id;
-	u64 rate;
+	u32 applied_avg;
+	u32 applied_bus_avg;
+	u32 applied_bus_peak;
 };
 
 struct qcom_icc_desc {
