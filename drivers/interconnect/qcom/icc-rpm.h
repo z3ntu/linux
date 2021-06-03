@@ -9,8 +9,6 @@
 #define RPM_BUS_MASTER_REQ	0x73616d62
 #define RPM_BUS_SLAVE_REQ	0x766c7362
 
-#define QCOM_MAX_LINKS 12
-
 #define to_qcom_provider(_provider) \
 	container_of(_provider, struct qcom_icc_provider, provider)
 
@@ -40,7 +38,7 @@ struct qcom_icc_provider {
 struct qcom_icc_node {
 	unsigned char *name;
 	u16 id;
-	u16 links[QCOM_MAX_LINKS];
+	u16 *links;
 	u16 num_links;
 	u16 buswidth;
 	int mas_rpm_id;
@@ -62,7 +60,7 @@ struct qcom_icc_desc {
 		.mas_rpm_id = _mas_rpm_id,				\
 		.slv_rpm_id = _slv_rpm_id,				\
 		.num_links = ARRAY_SIZE(((int[]){ __VA_ARGS__ })),	\
-		.links = { __VA_ARGS__ },				\
+		.links = (u16[]) { __VA_ARGS__ },			\
 	}
 
 
