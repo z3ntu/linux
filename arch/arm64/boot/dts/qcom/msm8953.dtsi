@@ -995,6 +995,8 @@
 
 			operating-points-v2 = <&gpu_opp_table>;
 
+			#cooling-cells = <2>;
+
 			gpu_opp_table: opp-table {
 				compatible  ="operating-points-v2";
 
@@ -1531,8 +1533,28 @@
 		CPU_THERMAL(5,  5);
 		CPU_THERMAL(6,  6);
 		CPU_THERMAL(7,  7);
-		gpu_thermal {
-			COMMON_THERMAL(gpu, 15);
+		gpu-thermal {
+			polling-delay-passive = <250>;
+			polling-delay = <1000>;
+			thermal-sensors = <&tsens0 15>;
+			trips {
+				gpu_alert: trip-point@0 {
+					temperature = <70000>;
+					hysteresis = <2000>;
+					type = "passive";
+				};
+				gpu_crit: crit {
+					temperature = <90000>;
+					hysteresis = <2000>;
+					type = "critical";
+				};
+			};
+			cooling-maps {
+				map0 {
+					trip = <&gpu_alert>;
+					cooling-device = <&gpu THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				};
+			};
 		};
 	};
 };
