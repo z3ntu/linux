@@ -45,6 +45,21 @@ static const struct clk_alpha_pll alpha_pll_types[NUM_PLL_TYPES] = {
 	}
 };
 
+static const struct alpha_pll_config *alpha_pll_conf[NUM_PLL_TYPES] = {
+	[TYPE_MSM8953_APCC] = &(struct alpha_pll_config) {
+		.config_ctl_val		= 0x200d4828,
+		.config_ctl_hi_val	= 0x6,
+		.test_ctl_val		= 0x1c000000,
+		.test_ctl_hi_val	= 0x4000,
+		.main_output_mask	= BIT(0),
+		.early_output_mask	= BIT(3),
+	},
+	[TYPE_SDM632_CCI] = &(struct alpha_pll_config) {
+		.config_ctl_val		= 0x4001055b,
+		.early_output_mask	= BIT(3),
+	}
+};
+
 static const struct of_device_id qcom_alphapll_match_table[] = {
 	{ .compatible = "qcom,alpha-pll", (void*) TYPE_DEFAULT },
 	{ .compatible = "qcom,msm8953-apcc-alpha-pll", (void*) TYPE_MSM8953_APCC },
@@ -155,6 +170,9 @@ static int qcom_alpha_pll_probe(struct platform_device *pdev)
 		dev_err(dev, "failed to parse vco ranges: %d\n", ret);
 		return ret;
 	};
+
+	if (alpha_pll_conf[type])
+		clk_alpha_pll_configure(apll, regmap, alpha_pll_conf[type]);
 
 	ret = devm_clk_register_regmap(dev, &apll->clkr);
 	if (ret) {
