@@ -65,6 +65,16 @@
 			record-size = <0x3f800>;
 		};
 
+		/delete-node/rmtfs@f2d00000;
+
+		rmtfs@0xff600000 {
+			compatible = "qcom,rmtfs-mem";
+			reg = <0x0 0xff600000 0x0 0x180000>;
+			no-map;
+
+			qcom,client-id = <1>;
+		};
+
 		tzlog_dump_mem_region {
 			no-map;
 			reg = <0x00 0xeefa2000 0x00 0x30000>;
@@ -144,6 +154,13 @@
 			linux,default-trigger = "backlight";
 		};
 	};
+};
+
+&modem {
+	compatible = "qcom,msm8953-alt-mss-pil";
+
+	power-domains = <&rpmpd MSM8953_VDDCX>, <&rpmpd MSM8953_VDDMX>, <&rpmpd MSM8953_VDDMD>;
+	power-domain-names = "cx", "mx", "mss";
 };
 
 &msmgpio {
