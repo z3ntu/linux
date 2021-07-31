@@ -1330,6 +1330,7 @@ const struct of_device_id dpu_dt_match[] = {
 	{ .compatible = "qcom,sm6350-dpu", },
 	{ .compatible = "qcom,sm8150-dpu", },
 	{ .compatible = "qcom,sm8250-dpu", },
+	{ .compatible = "qcom,dpu1" },
 	{}
 };
 MODULE_DEVICE_TABLE(of, dpu_dt_match);
