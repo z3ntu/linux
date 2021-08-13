@@ -2794,14 +2794,12 @@ static int qcom_qmp_phy_typec_switch_set(struct typec_switch_dev *sw,
 					 enum typec_orientation orientation)
 {
 	struct qcom_qmp *qmp = typec_switch_get_drvdata(sw);
+	struct qmp_phy *qphy = qmp->phys[0];
 
 	qmp->orientation = orientation;
 	if (qmp->init_count) {
-		// FIXME: is this necessary?
-		// FIXME: reset DP part ?
-		// SW_DPPHY_RESET_MUX | SW_DPPHY_RESET |
-		qcom_qmp_phy_dp_com_reset(qmp,
-					  SW_USB3PHY_RESET_MUX | SW_USB3PHY_RESET);
+		qcom_qmp_phy_disable(qphy->phy);
+		qcom_qmp_phy_enable(qphy->phy);
 	}
 
 	return 0;
