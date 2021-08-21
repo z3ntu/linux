@@ -295,6 +295,20 @@
 		dma-ranges = <0 0 0 0 0x10 0>;
 		compatible = "simple-bus";
 
+		gcc: clock-controller@100000 {
+			compatible = "qcom,gcc-sm7225";
+			reg = <0x0 0x00100000 0x0 0x1f0000>;
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+			#power-domain-cells = <1>;
+			//clock-names = "bi_tcxo",
+			//	      "bi_tcxo_ao",
+			//	      "sleep_clk";
+			//clocks = <&rpmhcc RPMH_CXO_CLK>,
+			//	 <&rpmhcc RPMH_CXO_CLK_A>,
+			//	 <&sleep_clk>;
+		};
+
 		intc: interrupt-controller@17a00000 {
 			compatible = "arm,gic-v3";
 			#interrupt-cells = <3>;
