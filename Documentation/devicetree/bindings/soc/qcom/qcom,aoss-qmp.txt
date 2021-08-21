@@ -19,6 +19,7 @@ power-domains.
 		    "qcom,sc7180-aoss-qmp"
 		    "qcom,sc7280-aoss-qmp"
 		    "qcom,sdm845-aoss-qmp"
+		    "qcom,sm7225-aoss-qmp"
 		    "qcom,sm8150-aoss-qmp"
 		    "qcom,sm8250-aoss-qmp"
 		    "qcom,sm8350-aoss-qmp"
