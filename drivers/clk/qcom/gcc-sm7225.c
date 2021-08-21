@@ -23,6 +23,7 @@
 #include "clk-regmap-divider.h"
 #include "clk-regmap-mux.h"
 #include "common.h"
+#include "gdsc.h"
 #include "reset.h"
 //#include "vdd-level-lagoon.h"
 
