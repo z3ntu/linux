@@ -331,6 +331,12 @@
 			interrupts = <GIC_PPI 8 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
+		apss_shared: mailbox@17c00000 {
+			compatible = "qcom,sm7225-apss-shared";
+			reg = <0x0 0x17c00000 0x0 0x1000>;
+			#mbox-cells = <1>;
+		};
+
 		apps_rsc: rsc@18200000 {
 			label = "apps_rsc";
 			compatible = "qcom,rpmh-rsc";
