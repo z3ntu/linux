@@ -32,6 +32,7 @@
 		};
 	};
 
+	// TODO: qcom,freq-domain
 	cpus {
 		#address-cells = <2>;
 		#size-cells = <0>;
@@ -502,7 +503,7 @@
 				//usb-core-id = <0>;
 				tx-fifo-resize;
 				phys = <&usb_1_hsphy>; //, <&usb_1_ssphy>;
-				phy-names = "usb2-phy", "usb3-phy";
+				phy-names = "usb2-phy"; //, usb3-phy;
 			};
 		};
 
