@@ -2521,6 +2521,40 @@ static struct clk_branch gcc_video_xo_clk = {
 	},
 };
 
+static struct gdsc gcc_ufs_phy_gdsc = {
+	.gdscr = 0x3a004,
+	.pd = {
+		.name = "gcc_ufs_phy",
+	},
+	.pwrsts = PWRSTS_OFF_ON,
+};
+
+static struct gdsc gcc_usb30_prim_gdsc = {
+	.gdscr = 0x1a004,
+	.pd = {
+		.name = "gcc_usb30_prim",
+	},
+	.pwrsts = PWRSTS_OFF_ON,
+};
+
+static struct gdsc hlos1_vote_mmnoc_mmu_tbu_hf0_gdsc = {
+	.gdscr = 0xb7040,
+	.pd = {
+		.name = "hlos1_vote_mmnoc_mmu_tbu_hf0",
+	},
+	.pwrsts = PWRSTS_OFF_ON,
+	.flags = VOTABLE,
+};
+
+static struct gdsc hlos1_vote_mmnoc_mmu_tbu_sf_gdsc = {
+	.gdscr = 0xb7044,
+	.pd = {
+		.name = "hlos1_vote_mmnoc_mmu_tbu_sf",
+	},
+	.pwrsts = PWRSTS_OFF_ON,
+	.flags = VOTABLE,
+};
+
 static struct clk_regmap *gcc_lagoon_clocks[] = {
 	[GCC_AGGRE_UFS_PHY_AXI_CLK] = &gcc_aggre_ufs_phy_axi_clk.clkr,
 	[GCC_AGGRE_USB3_PRIM_AXI_CLK] = &gcc_aggre_usb3_prim_axi_clk.clkr,
@@ -2670,6 +2704,13 @@ static const struct qcom_reset_map gcc_lagoon_resets[] = {
 	[GCC_USB3_DP_PHY_PRIM_BCR] = { 0x1c008 },
 };
 
+static struct gdsc *gcc_sm7225_gdscs[] = {
+	[GCC_UFS_PHY_GDSC] = &gcc_ufs_phy_gdsc,
+	[GCC_USB30_PRIM_GDSC] = &gcc_usb30_prim_gdsc,
+	[HLOS1_VOTE_MMNOC_MMU_TBU_HF0_GDSC] = &hlos1_vote_mmnoc_mmu_tbu_hf0_gdsc,
+	[HLOS1_VOTE_MMNOC_MMU_TBU_SF_GDSC] = &hlos1_vote_mmnoc_mmu_tbu_sf_gdsc,
+};
+
 static const struct clk_rcg_dfs_data gcc_dfs_clocks[] = {
 	DEFINE_RCG_DFS(gcc_qupv3_wrap0_s0_clk_src),
 	DEFINE_RCG_DFS(gcc_qupv3_wrap0_s1_clk_src),
@@ -2699,6 +2740,8 @@ static const struct qcom_cc_desc gcc_lagoon_desc = {
 	.num_clks = ARRAY_SIZE(gcc_lagoon_clocks),
 	.resets = gcc_lagoon_resets,
 	.num_resets = ARRAY_SIZE(gcc_lagoon_resets),
+	.gdscs = gcc_sm7225_gdscs,
+	.num_gdscs = ARRAY_SIZE(gcc_sm7225_gdscs),
 };
 
 static const struct of_device_id gcc_lagoon_match_table[] = {

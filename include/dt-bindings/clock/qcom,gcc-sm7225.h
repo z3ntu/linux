@@ -168,4 +168,10 @@
 #define GCC_USB3_PHY_PRIM_BCR			10
 #define GCC_USB3_DP_PHY_PRIM_BCR		11
 
+/* Indexes for GDSCs */
+#define GCC_UFS_PHY_GDSC			0
+#define GCC_USB30_PRIM_GDSC			1
+#define HLOS1_VOTE_MMNOC_MMU_TBU_HF0_GDSC	2
+#define HLOS1_VOTE_MMNOC_MMU_TBU_SF_GDSC	3
+
 #endif
