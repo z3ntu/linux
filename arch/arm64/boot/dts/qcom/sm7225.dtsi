@@ -400,6 +400,55 @@
 			// nvmem-cells = <&qusb2p_hstx_trim>; // USB tuning thing
 		};
 
+		//usb_1_qmpphy: phy@88e9000 {
+		//	compatible = "qcom,sm7225-qmp-usb3-dp-phy";
+		//	reg = <0 0x088e9000 0 0x200>,
+		//	      <0 0x088e8000 0 0x40>,
+		//	      <0 0x088ea000 0 0x200>;
+		//	reg-names = "usb", "dp_com", "dp";
+		//	status = "disabled";
+		//	#address-cells = <2>;
+		//	#size-cells = <2>;
+		//	ranges;
+
+		//	clocks = <&gcc GCC_USB3_PRIM_PHY_AUX_CLK>,
+		//		 <&rpmhcc RPMH_CXO_CLK>,
+		//		 <&gcc GCC_USB3_PRIM_PHY_COM_AUX_CLK>;
+		//	clock-names = "aux", "ref_clk_src", "com_aux";
+
+		//	resets = <&gcc GCC_USB3_DP_PHY_PRIM_BCR>,
+		//		 <&gcc GCC_USB3_PHY_PRIM_BCR>;
+		//	reset-names = "phy", "common";
+
+		//	usb_1_ssphy: usb3-phy@88e9200 {
+		//		reg = <0 0x088e9200 0 0x200>,
+		//		      <0 0x088e9400 0 0x200>,
+		//		      <0 0x088e9c00 0 0x400>,
+		//		      <0 0x088e9600 0 0x200>,
+		//		      <0 0x088e9800 0 0x200>,
+		//		      <0 0x088e9a00 0 0x100>;
+		//		#clock-cells = <0>;
+		//		#phy-cells = <0>;
+		//		clocks = <&gcc GCC_USB3_PRIM_PHY_PIPE_CLK>;
+		//		clock-names = "pipe0";
+		//		clock-output-names = "usb3_phy_pipe_clk_src";
+		//	};
+
+		//	dp_phy: dp-phy@88ea200 {
+		//		reg = <0 0x088ea200 0 0x200>,
+		//		      <0 0x088ea400 0 0x200>,
+		//		      <0 0x088eac00 0 0x400>,
+		//		      <0 0x088ea600 0 0x200>,
+		//		      <0 0x088ea800 0 0x200>,
+		//		      <0 0x088eaa00 0 0x100>;
+		//		#phy-cells = <0>;
+		//		#clock-cells = <1>;
+		//		clocks = <&gcc GCC_USB3_PRIM_PHY_PIPE_CLK>;
+		//		clock-names = "pipe0";
+		//		clock-output-names = "usb3_phy_pipe_clk_src";
+		//	};
+		//};
+
 		usb_1: usb@a6f8800 {
 			compatible = "qcom,sm7225-dwc3", "qcom,dwc3";
 			reg = <0 0x0a6f8800 0 0x400>;
