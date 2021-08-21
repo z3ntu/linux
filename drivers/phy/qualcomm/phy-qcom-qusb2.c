@@ -270,6 +270,29 @@ static const struct qusb2_phy_init_tbl qusb2_v2_init_tbl[] = {
 	QUSB2_PHY_INIT_CFG(QUSB2PHY_CHG_CTRL2, 0x0),
 };
 
+static const struct qusb2_phy_init_tbl sm7225_qusb2_v2_init_tbl[] = {
+	//QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_PWR_CTRL1, 0x23), // todo?
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_ANALOG_CONTROLS_TWO, 0x03),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_CLOCK_INVERTERS, 0x7c),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_CMODE, 0x80),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_LOCK_DELAY, 0x0a),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_DIGITAL_TIMERS_TWO, 0x19),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_BIAS_CONTROL_1, 0x40),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_BIAS_CONTROL_2, 0x1f),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_PWR_CTRL2, 0x21),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_IMP_CTRL1, 0x08),
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_IMP_CTRL2, 0x58),
+
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE1, 0x00),
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE2, 0x29),
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE3, 0xca),
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE4, 0x04),
+	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE5, 0x03),
+
+	QUSB2_PHY_INIT_CFG(QUSB2PHY_CHG_CTRL2, 0x30),
+	//QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_PWR_CTRL1, 0x22), // todo?
+};
+
 struct qusb2_phy_cfg {
 	const struct qusb2_phy_init_tbl *tbl;
 	/* number of entries in the table */
@@ -346,6 +369,20 @@ static const struct qusb2_phy_cfg qusb2_v2_phy_cfg = {
 	.update_tune1_with_efuse = true,
 };
 
+static const struct qusb2_phy_cfg sm7225_qusb2_v2_phy_cfg = {
+	.tbl		= sm7225_qusb2_v2_init_tbl,
+	.tbl_num	= ARRAY_SIZE(sm7225_qusb2_v2_init_tbl),
+	.regs		= qusb2_v2_regs_layout,
+
+	.disable_ctrl	= (PWR_CTRL1_VREF_SUPPLY_TRIM | PWR_CTRL1_CLAMP_N_EN |
+			   POWER_DOWN),
+	.mask_core_ready = CORE_READY_STATUS,
+	.has_pll_override = true,
+	.se_clk_scheme_default = true,
+	.autoresume_en	  = BIT(0),
+	.update_tune1_with_efuse = true,
+};
+
 static const struct qusb2_phy_cfg sdm660_phy_cfg = {
 	.tbl		= msm8996_init_tbl,
 	.tbl_num	= ARRAY_SIZE(msm8996_init_tbl),
@@ -368,6 +405,18 @@ static const struct qusb2_phy_cfg sm6115_phy_cfg = {
 	.disable_ctrl	= (CLAMP_N_EN | FREEZIO_N | POWER_DOWN),
 	.mask_core_ready = PLL_LOCKED,
 	.autoresume_en	 = BIT(3),
+};
+
+static const struct qusb2_phy_cfg sm7225_phy_cfg = {
+	.tbl		= sm6115_init_tbl,
+	.tbl_num	= ARRAY_SIZE(sm6115_init_tbl),
+	.regs		= msm8996_regs_layout,
+
+	.has_pll_test	= true,
+	.se_clk_scheme_default = true,
+	.disable_ctrl	= (CLAMP_N_EN | FREEZIO_N | POWER_DOWN),
+	.mask_core_ready = PLL_LOCKED,
+	.autoresume_en	 = BIT(0),
 };
 
 static const char * const qusb2_phy_vreg_names[] = {
@@ -923,6 +972,9 @@ static const struct of_device_id qusb2_phy_of_match_table[] = {
 		.compatible	= "qcom,sm6115-qusb2-phy",
 		.data		= &sm6115_phy_cfg,
 	}, {
+		.compatible	= "qcom,sm7225-qusb2-phy",
+		.data		= &sm7225_phy_cfg,
+	}, {
 		/*
 		 * Deprecated. Only here to support legacy device
 		 * trees that didn't include "qcom,qusb2-v2-phy"
@@ -962,7 +1014,7 @@ static int qusb2_phy_probe(struct platform_device *pdev)
 	if (IS_ERR(qphy->base))
 		return PTR_ERR(qphy->base);
 
-	qphy->cfg_ahb_clk = devm_clk_get(dev, "cfg_ahb");
+	qphy->cfg_ahb_clk = devm_clk_get_optional(dev, "cfg_ahb");
 	if (IS_ERR(qphy->cfg_ahb_clk)) {
 		ret = PTR_ERR(qphy->cfg_ahb_clk);
 		if (ret != -EPROBE_DEFER)

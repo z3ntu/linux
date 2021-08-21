@@ -3,6 +3,8 @@
  * Copyright (c) 2021, Luca Weiss <luca@z3ntu.xyz>
  */
 
+#include <dt-bindings/clock/qcom,gcc-sm7225.h>
+#include <dt-bindings/clock/qcom,rpmh.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 #include <dt-bindings/mailbox/qcom-ipcc.h>
 #include <dt-bindings/soc/qcom,rpmh-rsc.h>
@@ -377,6 +379,92 @@
 		tcsr_mutex_regs: syscon@1f40000 {
 			compatible = "syscon";
 			reg = <0x0 0x1f40000 0x0 0x20000>;
+		};
+
+		usb_1_hsphy: phy@88e3000 {
+			compatible = "qcom,sm7225-qusb2-phy";
+			reg = <0 0x088e3000 0 0x400>;
+			status = "disabled";
+			#phy-cells = <0>;
+
+			clocks = <&rpmhcc RPMH_CXO_CLK>;
+			clock-names = "ref";
+
+			// VDD_USBHS_0P9 = DS vdd-supply &L18A
+			// VDD_A_USBHS_1P8 = DS vdda18-supply &L2A
+			// VDD_A_USBHS_3P1 = DS vdda33-supply &L3A
+			//vdda-pll-supply = <>;
+			//vdda-phy-dpdm-supply = <>;
+
+			resets = <&gcc GCC_QUSB2PHY_PRIM_BCR>;
+			// nvmem-cells = <&qusb2p_hstx_trim>; // USB tuning thing
+		};
+
+		usb_1: usb@a6f8800 {
+			compatible = "qcom,sm7225-dwc3", "qcom,dwc3";
+			reg = <0 0x0a6f8800 0 0x400>;
+			status = "disabled";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+			dma-ranges;
+
+			clocks = <&gcc GCC_CFG_NOC_USB3_PRIM_AXI_CLK>,
+				 <&gcc GCC_USB30_PRIM_MASTER_CLK>,
+				 <&gcc GCC_AGGRE_USB3_PRIM_AXI_CLK>,
+				 <&gcc GCC_USB30_PRIM_MOCK_UTMI_CLK>,
+				 <&gcc GCC_USB30_PRIM_SLEEP_CLK>,
+				 <&gcc GCC_USB3_PRIM_CLKREF_CLK>;
+			clock-names = "cfg_noc", "core", "iface", "mock_utmi",
+				      "sleep", "xo";
+
+			assigned-clocks = <&gcc GCC_USB30_PRIM_MOCK_UTMI_CLK>,
+					  <&gcc GCC_USB30_PRIM_MASTER_CLK>;
+			assigned-clock-rates = <19200000>, <133333333>;
+
+			interrupts-extended = <&intc GIC_SPI 130 IRQ_TYPE_LEVEL_HIGH>,
+					      <&pdc 14 IRQ_TYPE_EDGE_BOTH>,
+					      <&pdc 15 IRQ_TYPE_EDGE_BOTH>,
+					      <&pdc 17 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "hs_phy_irq", "dp_hs_phy_irq",
+					  "dm_hs_phy_irq", "ss_phy_irq";
+
+			power-domains = <&gcc GCC_USB30_PRIM_GDSC>;
+
+			resets = <&gcc GCC_USB30_PRIM_BCR>;
+
+			/* High-speed USB only for now */
+			qcom,select-utmi-as-pipe-clk;
+
+			usb_1_dwc3: dwc3@a600000 {
+				compatible = "snps,dwc3";
+				reg = <0 0x0a600000 0 0xe000>;
+				interrupts = <GIC_SPI 133 IRQ_TYPE_LEVEL_HIGH>;
+				// iommus = <&apps_smmu 0x540 0x0>; // FIXME
+				// snps,disable-clk-gating;
+				snps,dis_u2_susphy_quirk;
+				snps,dis_enblslpm_quirk;
+				snps,has-lpm-erratum;
+				snps,hird-threshold = /bits/ 8 <0x10>;
+				//snps,usb3-u1u2-disable;
+				snps,dis-u1-entry-quirk;
+				snps,dis-u2-entry-quirk;
+				// ^^
+				//usb-core-id = <0>;
+				tx-fifo-resize;
+				phys = <&usb_1_hsphy>; //, <&usb_1_ssphy>;
+				phy-names = "usb2-phy", "usb3-phy";
+			};
+		};
+
+		pdc: interrupt-controller@b220000 {
+			compatible = "qcom,sm7225-pdc", "qcom,pdc";
+			reg = <0 0xb220000 0 0x30000>, <0 0x17c000f0 0 0x64>;
+			qcom,pdc-ranges = <0 480 94>, <94 609 31>, <125 63 1>,
+					  <126 655 12>, <138 139 15>;
+			#interrupt-cells = <2>;
+			interrupt-parent = <&intc>;
+			interrupt-controller;
 		};
 
 		aoss_qmp: power-controller@c300000 {
