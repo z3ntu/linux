@@ -273,6 +273,12 @@
 		};
 	};
 
+	tcsr_mutex: hwlock {
+		compatible = "qcom,tcsr-mutex";
+		syscon = <&tcsr_mutex_regs 0 0x1000>;
+		#hwlock-cells = <1>;
+	};
+
 	memory {
 		device_type = "memory";
 		/* We expect the bootloader to fill in the size */
@@ -287,6 +293,12 @@
 	psci {
 		compatible = "arm,psci-1.0";
 		method = "smc";
+	};
+
+	smem {
+		compatible = "qcom,smem";
+		memory-region = <&smem_mem>;
+		hwlocks = <&tcsr_mutex 3>;
 	};
 
 	soc: soc@0 {
@@ -346,6 +358,10 @@
 			// TODO apps_bcm_voter
 		};
 
+		tcsr_mutex_regs: syscon@1f40000 {
+			compatible = "syscon";
+			reg = <0x0 0x1f40000 0x0 0x20000>;
+		};
 	};
 
 	timer {
