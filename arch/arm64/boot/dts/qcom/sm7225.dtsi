@@ -335,6 +335,33 @@
 			#mbox-cells = <2>;
 		};
 
+		qupv3_id_0: geniqup@8c0000 {
+			compatible = "qcom,geni-se-qup";
+			reg = <0x0 0x8c0000 0x0 0x2000>;
+			clock-names = "m-ahb", "s-ahb";
+			clocks = <&gcc GCC_QUPV3_WRAP_0_M_AHB_CLK>,
+				 <&gcc GCC_QUPV3_WRAP_0_S_AHB_CLK>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			// TODO iommus
+			ranges;
+			status = "disabled";
+
+			// TODO qupv3_se0_i2c -> aw882xx_smartpa@34 & aw882xx_smartpa@35
+			qupv3_se0_i2c: i2c@880000 {
+				compatible = "qcom,geni-i2c";
+				reg = <0 0x00880000 0 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP0_S0_CLK>;
+				//pinctrl-names = "default";
+				//pinctrl-0 = <&qup_i2c0_default>;
+				interrupts = <GIC_SPI 601 IRQ_TYPE_LEVEL_HIGH>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				status = "disabled";
+			};
+		};
+
 		qupv3_id_1: geniqup@9c0000 {
 			compatible = "qcom,geni-se-qup";
 			reg = <0x0 0x9c0000 0x0 0x2000>;
@@ -347,6 +374,23 @@
 			ranges;
 			status = "disabled";
 
+			// qupv3_se6_i2c: i2c@980000
+			// qupv3_se7_i2c: i2c@984000
+
+			// TODO qupv3_se8_i2c -> himax_ts@48
+			qupv3_se8_i2c: i2c@988000 {
+				compatible = "qcom,geni-i2c";
+				reg = <0 0x00988000 0 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP1_S2_CLK>;
+				//pinctrl-names = "default";
+				//pinctrl-0 = <&qup_i2c0_default>;
+				interrupts = <GIC_SPI 355 IRQ_TYPE_LEVEL_HIGH>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				status = "disabled";
+			};
+
 			uart2: serial@98c000 {
 				compatible = "qcom,geni-debug-uart";
 				reg = <0 0x98c000 0 0x4000>;
@@ -356,6 +400,20 @@
 				//pinctrl-0 = <&qupv3_se9_2uart_active>;
 				//pinctrl-1 = <&qupv3_se9_2uart_sleep>;
 				interrupts = <GIC_SPI 356 IRQ_TYPE_LEVEL_HIGH>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				status = "disabled";
+			};
+
+			// TODO qupv3_se10_i2c -> aw8695_haptic@5A
+			qupv3_se10_i2c: i2c@990000 {
+				compatible = "qcom,geni-i2c";
+				reg = <0 0x00990000 0 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP1_S4_CLK>;
+				//pinctrl-names = "default";
+				//pinctrl-0 = <&qup_i2c0_default>;
+				interrupts = <GIC_SPI 357 IRQ_TYPE_LEVEL_HIGH>;
 				#address-cells = <1>;
 				#size-cells = <0>;
 				status = "disabled";
