@@ -15,14 +15,19 @@
 	qcom,msm-id = <0x1b2 0x10000 0x1cb 0x10000>;
 	qcom,board-id = <0x08 0x20>;
 
+	aliases {
+		serial0 = &uart2;
+	};
+
 	chosen {
-		bootargs = "earlycon=tty0 console=tty0";
+		stdout-path = "serial0:115200n8";
+		//bootargs = "earlycon=tty0 console=tty0 console=ttyMSM0,115200";
 
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
 
-		stdout-path = "framebuffer0";
+		//stdout-path = "framebuffer0";
 
 		framebuffer0: framebuffer@a000000 {
 			compatible = "simple-framebuffer";
@@ -41,5 +46,13 @@
 };
 
 &usb_1_hsphy {
+	status = "okay";
+};
+
+&qupv3_id_1 {
+	status = "okay";
+};
+
+&uart2 {
 	status = "okay";
 };
