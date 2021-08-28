@@ -56,3 +56,26 @@
 &uart2 {
 	status = "okay";
 };
+
+&qupv3_id_0 {
+	status = "okay";
+};
+
+&qupv3_se0_i2c {
+	// TODO qupv3_se0_i2c -> aw882xx_smartpa@34 & aw882xx_smartpa@35
+	status = "okay";
+};
+
+&qupv3_se8_i2c {
+	// TODO qupv3_se8_i2c -> himax_ts@48
+	status = "okay";
+};
+
+&qupv3_se10_i2c {
+	// TODO qupv3_se10_i2c -> aw8695_haptic@5A
+	status = "okay";
+};
+
+&sdhc_2 {
+	status = "okay";
+};
