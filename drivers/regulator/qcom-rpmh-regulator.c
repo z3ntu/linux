@@ -1049,7 +1049,8 @@ static const struct rpmh_vreg_init_data pm6150l_vreg_data[] = {
 
 // FIXME dummy supplies, likely not all nldo
 static const struct rpmh_vreg_init_data pm6350_vreg_data[] = {
-	//RPMH_VREG("smps1",  "smp%s1",  &pmic5
+	RPMH_VREG("smps1",  "smp%s1",  &pmic5_ftsmps510, "vdd-s1"),
+	RPMH_VREG("smps2",  "smp%s2",  &pmic5_hfsmps510, "vdd-s2"),
 	// FIXME s1, s2, s3_level, s5_level, s5_level_ao
 	RPMH_VREG("ldo1",   "ldo%s1",  &pmic5_nldo,      "vdd-l1"), // FIXME
 	RPMH_VREG("ldo2",   "ldo%s2",  &pmic5_pldo,      "vdd-l2"),

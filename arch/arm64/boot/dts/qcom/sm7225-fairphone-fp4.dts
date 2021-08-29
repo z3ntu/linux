@@ -99,6 +99,16 @@
 		// TODO supplies
 		// TODO initial-mode for all are RPMH_REGULATOR_MODE_LPM downstream
 
+		vreg_s1a: smps1 {
+			regulator-min-microvolt = <1000000>;
+			regulator-max-microvolt = <1200000>;
+		};
+
+		vreg_s2a: smps2 {
+			regulator-min-microvolt = <1503000>;
+			regulator-max-microvolt = <2048000>;
+		};
+
 		vreg_l2a: ldo2 {
 			regulator-min-microvolt = <1503000>;
 			regulator-max-microvolt = <1980000>;
