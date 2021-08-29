@@ -20,6 +20,16 @@
 #define SDX55_MX	1
 #define SDX55_CX	2
 
+/* SM7225 Power Domain Indexes */
+#define SM7225_MSS	0
+#define SM7225_LMX	1
+#define SM7225_LCX	2
+#define SM7225_GFX	3
+#define SM7225_MX	4
+#define SM7225_MX_AO	5
+#define SM7225_CX	6
+#define SM7225_CX_AO	7
+
 /* SM8150 Power Domain Indexes */
 #define SM8150_MSS	0
 #define SM8150_EBI	1
