@@ -95,7 +95,7 @@
 #define QUSB2PHY_PLL_DIGITAL_TIMERS_TWO		0xb4
 #define QUSB2PHY_PLL_BIAS_CONTROL_1		0x194
 #define QUSB2PHY_PLL_BIAS_CONTROL_2		0x198
-#define QUSB2PHY_PLL_PWR_CTRL1			0x210
+//#define QUSB2PHY_PLL_PWR_CTRL1			0x210
 #define QUSB2PHY_PWR_CTRL2			0x214
 #define QUSB2PHY_IMP_CTRL1			0x220
 #define QUSB2PHY_IMP_CTRL2			0x224
@@ -274,7 +274,7 @@ static const struct qusb2_phy_init_tbl qusb2_v2_init_tbl[] = {
 };
 
 static const struct qusb2_phy_init_tbl sm7225_qusb2_v2_init_tbl[] = {
-	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_PWR_CTRL1, 0x23), // todo?
+	//QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_PWR_CTRL1, 0x23), // todo?
 	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_ANALOG_CONTROLS_TWO, 0x03),
 	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_CLOCK_INVERTERS, 0x7c),
 	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_CMODE, 0x80),
@@ -293,7 +293,7 @@ static const struct qusb2_phy_init_tbl sm7225_qusb2_v2_init_tbl[] = {
 	QUSB2_PHY_INIT_CFG_L(QUSB2PHY_PORT_TUNE5, 0x03),
 
 	QUSB2_PHY_INIT_CFG(QUSB2PHY_CHG_CTRL2, 0x30),
-	QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_PWR_CTRL1, 0x22), // todo?
+	//QUSB2_PHY_INIT_CFG(QUSB2PHY_PLL_PWR_CTRL1, 0x22), // todo?
 };
 
 struct qusb2_phy_cfg {
@@ -372,7 +372,7 @@ static const struct qusb2_phy_cfg qusb2_v2_phy_cfg = {
 	.update_tune1_with_efuse = true,
 };
 
-static const struct qusb2_phy_cfg sm7225_qusb2_v2_phy_cfg = {
+static const struct qusb2_phy_cfg sm7225_phy_cfg = {
 	.tbl		= sm7225_qusb2_v2_init_tbl,
 	.tbl_num	= ARRAY_SIZE(sm7225_qusb2_v2_init_tbl),
 	.regs		= qusb2_v2_regs_layout,
@@ -380,7 +380,7 @@ static const struct qusb2_phy_cfg sm7225_qusb2_v2_phy_cfg = {
 	.disable_ctrl	= (PWR_CTRL1_VREF_SUPPLY_TRIM | PWR_CTRL1_CLAMP_N_EN |
 			   POWER_DOWN),
 	.mask_core_ready = CORE_READY_STATUS,
-	.has_pll_override = true,
+	//.has_pll_override = true,
 	//.se_clk_scheme_default = true,
 	.autoresume_en	  = BIT(0),
 	.update_tune1_with_efuse = true,
@@ -410,20 +410,9 @@ static const struct qusb2_phy_cfg sm6115_phy_cfg = {
 	.autoresume_en	 = BIT(3),
 };
 
-static const struct qusb2_phy_cfg sm7225_phy_cfg = {
-	.tbl		= sm6115_init_tbl,
-	.tbl_num	= ARRAY_SIZE(sm6115_init_tbl),
-	.regs		= msm8996_regs_layout,
-
-	//.has_pll_test	= true,
-	.se_clk_scheme_default = true,
-	.disable_ctrl	= (CLAMP_N_EN | FREEZIO_N | POWER_DOWN),
-	.mask_core_ready = PLL_LOCKED,
-	.autoresume_en	 = BIT(0),
-};
 
 static const char * const qusb2_phy_vreg_names[] = {
-	"vdda-pll", "vdda-phy-dpdm",
+	"refgen", "vdd", "vdda18", "vdda33",
 };
 
 #define QUSB2_NUM_VREGS		ARRAY_SIZE(qusb2_phy_vreg_names)
