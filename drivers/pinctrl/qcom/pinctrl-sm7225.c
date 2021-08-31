@@ -19,6 +19,7 @@
 
 #define REG_BASE 0x0
 #define REG_SIZE 0x1000
+// FIXME remove unused parameters (wake_off, bit)
 #define PINGROUP(id, f1, f2, f3, f4, f5, f6, f7, f8, f9, wake_off, bit)	\
 	{					        \
 		.name = "gpio" #id,			\
@@ -42,12 +43,9 @@
 		.intr_cfg_reg = REG_BASE + 0x8 + REG_SIZE * id,		\
 		.intr_status_reg = REG_BASE + 0xc + REG_SIZE * id,	\
 		.intr_target_reg = REG_BASE + 0x8 + REG_SIZE * id,	\
-		.dir_conn_reg = REG_BASE + 0xBF000,\
 		.mux_bit = 2,			\
 		.pull_bit = 0,			\
 		.drv_bit = 6,			\
-		.egpio_enable = 12,		\
-		.egpio_present = 11,		\
 		.oe_bit = 9,			\
 		.in_bit = 0,			\
 		.out_bit = 1,			\
@@ -59,9 +57,6 @@
 		.intr_polarity_bit = 1,		\
 		.intr_detection_bit = 2,	\
 		.intr_detection_width = 2,	\
-		.dir_conn_en_bit = 8,		\
-		.wake_reg = REG_BASE + wake_off,	\
-		.wake_bit = bit,		\
 	}
 
 #define SDC_QDSD_PINGROUP(pg_name, ctl, pull, drv)	\
@@ -1616,15 +1611,6 @@ static const struct msm_pingroup lagoon_groups[] = {
 	[163] = UFS_RESET(ufs_reset, 0xae000),
 };
 
-static const int lagoon_reserved_gpios[] = {
-	13, 14, 15, 16, 56, 57, -1
-};
-
-static struct msm_dir_conn lagoon_dir_conn[] = {
-	{-1, 0}, {-1, 0}, {-1, 0}, {-1, 0}, {-1, 0},
-	{-1, 0}, {-1, 0}, {-1, 0}, {-1, 0}
-};
-
 static const struct msm_pinctrl_soc_data lagoon_pinctrl = {
 	.pins = lagoon_pins,
 	.npins = ARRAY_SIZE(lagoon_pins),
@@ -1632,9 +1618,7 @@ static const struct msm_pinctrl_soc_data lagoon_pinctrl = {
 	.nfunctions = ARRAY_SIZE(lagoon_functions),
 	.groups = lagoon_groups,
 	.ngroups = ARRAY_SIZE(lagoon_groups),
-	.reserved_gpios = lagoon_reserved_gpios,
 	.ngpios = 156,
-	.dir_conn = lagoon_dir_conn,
 };
 
 static int lagoon_pinctrl_probe(struct platform_device *pdev)
