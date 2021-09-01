@@ -433,14 +433,14 @@ DECLARE_MSM_GPIO_PINS(153);
 DECLARE_MSM_GPIO_PINS(154);
 DECLARE_MSM_GPIO_PINS(155);
 
-static const unsigned int sdc1_rclk_pins[] = { 156 };
-static const unsigned int sdc1_clk_pins[] = { 157 };
-static const unsigned int sdc1_cmd_pins[] = { 158 };
-static const unsigned int sdc1_data_pins[] = { 159 };
-static const unsigned int sdc2_clk_pins[] = { 160 };
-static const unsigned int sdc2_cmd_pins[] = { 161 };
-static const unsigned int sdc2_data_pins[] = { 162 };
 static const unsigned int ufs_reset_pins[] = { 156 };
+static const unsigned int sdc1_rclk_pins[] = { 157 };
+static const unsigned int sdc1_clk_pins[] = { 158 };
+static const unsigned int sdc1_cmd_pins[] = { 159 };
+static const unsigned int sdc1_data_pins[] = { 160 };
+static const unsigned int sdc2_clk_pins[] = { 161 };
+static const unsigned int sdc2_cmd_pins[] = { 162 };
+static const unsigned int sdc2_data_pins[] = { 163 };
 
 enum lagoon_functions {
 	msm_mux_adsp_ext,
