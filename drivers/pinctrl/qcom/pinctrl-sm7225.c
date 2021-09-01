@@ -107,7 +107,7 @@
 		.intr_detection_bit = -1,		\
 		.intr_detection_width = -1,		\
 	}
-static const struct pinctrl_pin_desc lagoon_pins[] = {
+static const struct pinctrl_pin_desc sm7225_pins[] = {
 	PINCTRL_PIN(0, "GPIO_0"),
 	PINCTRL_PIN(1, "GPIO_1"),
 	PINCTRL_PIN(2, "GPIO_2"),
@@ -1141,7 +1141,7 @@ static const struct msm_function lagoon_functions[] = {
  * pin descriptor registered with pinctrl core.
  * Clients would not be able to request these dummy pin groups.
  */
-static const struct msm_pingroup lagoon_groups[] = {
+static const struct msm_pingroup sm7225_groups[] = {
 	[0] = PINGROUP(0, ibi_i3c, qup00, cri_trng, _, _, _, _, _, _),
 	[1] = PINGROUP(1, ibi_i3c, qup00, cri_trng, _, _, _, _, _, _),
 	[2] = PINGROUP(2, qup00, cci_i2c, cri_trng, qdss_cti, _, _, _, _, _),
@@ -1308,47 +1308,47 @@ static const struct msm_pingroup lagoon_groups[] = {
 	[163] = SDC_QDSD_PINGROUP(sdc2_data, 0xa2000, 9, 0),
 };
 
-static const struct msm_pinctrl_soc_data lagoon_pinctrl = {
-	.pins = lagoon_pins,
-	.npins = ARRAY_SIZE(lagoon_pins),
-	.functions = lagoon_functions,
-	.nfunctions = ARRAY_SIZE(lagoon_functions),
-	.groups = lagoon_groups,
-	.ngroups = ARRAY_SIZE(lagoon_groups),
+static const struct msm_pinctrl_soc_data sm7225_tlmm = {
+	.pins = sm7225_pins,
+	.npins = ARRAY_SIZE(sm7225_pins),
+	.functions = sm7225_functions,
+	.nfunctions = ARRAY_SIZE(sm7225_functions),
+	.groups = sm7225_groups,
+	.ngroups = ARRAY_SIZE(sm7225_groups),
 	.ngpios = 157,
 };
 
-static int lagoon_pinctrl_probe(struct platform_device *pdev)
+static int sm7225_tlmm_probe(struct platform_device *pdev)
 {
-	return msm_pinctrl_probe(pdev, &lagoon_pinctrl);
+	return msm_pinctrl_probe(pdev, &sm7225_tlmm);
 }
 
-static const struct of_device_id lagoon_pinctrl_of_match[] = {
-	{ .compatible = "qcom,lagoon-pinctrl", },
+static const struct of_device_id sm7225_tlmm_of_match[] = {
+	{ .compatible = "qcom,sm7225-tlmm", },
 	{ },
 };
 
-static struct platform_driver lagoon_pinctrl_driver = {
+static struct platform_driver sm7225_tlmm_driver = {
 	.driver = {
-		.name = "lagoon-pinctrl",
-		.of_match_table = lagoon_pinctrl_of_match,
+		.name = "sm7225-tlmm",
+		.of_match_table = sm7225_tlmm_of_match,
 	},
-	.probe = lagoon_pinctrl_probe,
+	.probe = sm7225_tlmm_probe,
 	.remove = msm_pinctrl_remove,
 };
 
-static int __init lagoon_pinctrl_init(void)
+static int __init sm7225_tlmm_init(void)
 {
-	return platform_driver_register(&lagoon_pinctrl_driver);
+	return platform_driver_register(&sm7225_tlmm_driver);
 }
-arch_initcall(lagoon_pinctrl_init);
+arch_initcall(sm7225_tlmm_init);
 
-static void __exit lagoon_pinctrl_exit(void)
+static void __exit sm7225_tlmm_exit(void)
 {
-	platform_driver_unregister(&lagoon_pinctrl_driver);
+	platform_driver_unregister(&sm7225_tlmm_driver);
 }
-module_exit(lagoon_pinctrl_exit);
+module_exit(sm7225_tlmm_exit);
 
-MODULE_DESCRIPTION("QTI lagoon pinctrl driver");
+MODULE_DESCRIPTION("QTI sm7225 pinctrl driver");
 MODULE_LICENSE("GPL v2");
-MODULE_DEVICE_TABLE(of, lagoon_pinctrl_of_match);
+MODULE_DEVICE_TABLE(of, sm7225_tlmm_of_match);
