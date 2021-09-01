@@ -442,7 +442,7 @@ static const unsigned int sdc2_clk_pins[] = { 161 };
 static const unsigned int sdc2_cmd_pins[] = { 162 };
 static const unsigned int sdc2_data_pins[] = { 163 };
 
-enum lagoon_functions {
+enum sm7225_functions {
 	msm_mux_adsp_ext,
 	msm_mux_agera_pll,
 	msm_mux_atest_char,
@@ -1002,7 +1002,7 @@ static const char * const usb_phy_groups[] = {
 	"gpio124",
 };
 
-static const struct msm_function lagoon_functions[] = {
+static const struct msm_function sm7225_functions[] = {
 	FUNCTION(adsp_ext),
 	FUNCTION(agera_pll),
 	FUNCTION(atest_char),
