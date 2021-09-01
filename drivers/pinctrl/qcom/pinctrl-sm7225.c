@@ -440,7 +440,7 @@ static const unsigned int sdc1_data_pins[] = { 159 };
 static const unsigned int sdc2_clk_pins[] = { 160 };
 static const unsigned int sdc2_cmd_pins[] = { 161 };
 static const unsigned int sdc2_data_pins[] = { 162 };
-static const unsigned int ufs_reset_pins[] = { 163 };
+static const unsigned int ufs_reset_pins[] = { 156 };
 
 enum lagoon_functions {
 	msm_mux_adsp_ext,
@@ -1298,14 +1298,14 @@ static const struct msm_pingroup lagoon_groups[] = {
 	[153] = PINGROUP(153, _, _, _, _, _, _, _, _, _),
 	[154] = PINGROUP(154, _, _, _, _, _, _, _, _, _),
 	[155] = PINGROUP(155, _, _, _, _, _, _, _, _, _),
-	[156] = SDC_QDSD_PINGROUP(sdc1_rclk, 0xa1000, 15, 0),
-	[157] = SDC_QDSD_PINGROUP(sdc1_clk, 0xa0000, 13, 6),
-	[158] = SDC_QDSD_PINGROUP(sdc1_cmd, 0xa0000, 11, 3),
-	[159] = SDC_QDSD_PINGROUP(sdc1_data, 0xa0000, 9, 0),
-	[160] = SDC_QDSD_PINGROUP(sdc2_clk, 0xa2000, 14, 6),
-	[161] = SDC_QDSD_PINGROUP(sdc2_cmd, 0xa2000, 11, 3),
-	[162] = SDC_QDSD_PINGROUP(sdc2_data, 0xa2000, 9, 0),
-	[163] = UFS_RESET(ufs_reset, 0xae000),
+	[156] = UFS_RESET(ufs_reset, 0xae000),
+	[157] = SDC_QDSD_PINGROUP(sdc1_rclk, 0xa1000, 15, 0),
+	[158] = SDC_QDSD_PINGROUP(sdc1_clk, 0xa0000, 13, 6),
+	[159] = SDC_QDSD_PINGROUP(sdc1_cmd, 0xa0000, 11, 3),
+	[160] = SDC_QDSD_PINGROUP(sdc1_data, 0xa0000, 9, 0),
+	[161] = SDC_QDSD_PINGROUP(sdc2_clk, 0xa2000, 14, 6),
+	[162] = SDC_QDSD_PINGROUP(sdc2_cmd, 0xa2000, 11, 3),
+	[163] = SDC_QDSD_PINGROUP(sdc2_data, 0xa2000, 9, 0),
 };
 
 static const struct msm_pinctrl_soc_data lagoon_pinctrl = {
@@ -1315,7 +1315,7 @@ static const struct msm_pinctrl_soc_data lagoon_pinctrl = {
 	.nfunctions = ARRAY_SIZE(lagoon_functions),
 	.groups = lagoon_groups,
 	.ngroups = ARRAY_SIZE(lagoon_groups),
-	.ngpios = 156,
+	.ngpios = 157,
 };
 
 static int lagoon_pinctrl_probe(struct platform_device *pdev)
