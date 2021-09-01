@@ -556,10 +556,7 @@ enum lagoon_functions {
 	msm_mux_sdc1_tb,
 	msm_mux_sdc2_tb,
 	msm_mux_sp_cmu,
-	msm_mux_tgu_ch0,
-	msm_mux_tgu_ch1,
-	msm_mux_tgu_ch2,
-	msm_mux_tgu_ch3,
+	msm_mux_tgu,
 	msm_mux_tsense_pwm1,
 	msm_mux_tsense_pwm2,
 	msm_mux_uim1_clk,
@@ -817,17 +814,8 @@ static const char * const mi2s_2_groups[] = {
 static const char * const qup01_groups[] = {
 	"gpio61", "gpio62", "gpio63", "gpio64",
 };
-static const char * const tgu_ch0_groups[] = {
-	"gpio61",
-};
-static const char * const tgu_ch1_groups[] = {
-	"gpio62",
-};
-static const char * const tgu_ch2_groups[] = {
-	"gpio63",
-};
-static const char * const tgu_ch3_groups[] = {
-	"gpio64",
+static const char * const tgu_groups[] = {
+	"gpio61", "gpio62", "gpio63", "gpio64",
 };
 static const char * const mss_lte_groups[] = {
 	"gpio65", "gpio66",
@@ -1128,10 +1116,7 @@ static const struct msm_function lagoon_functions[] = {
 	FUNCTION(sdc1_tb),
 	FUNCTION(sdc2_tb),
 	FUNCTION(sp_cmu),
-	FUNCTION(tgu_ch0),
-	FUNCTION(tgu_ch1),
-	FUNCTION(tgu_ch2),
-	FUNCTION(tgu_ch3),
+	FUNCTION(tgu),
 	FUNCTION(tsense_pwm1),
 	FUNCTION(tsense_pwm2),
 	FUNCTION(uim1_clk),
@@ -1218,10 +1203,10 @@ static const struct msm_pingroup lagoon_groups[] = {
 	[58] = PINGROUP(58, gcc_gp1, _, _, _, _, _, _, _, _),
 	[59] = PINGROUP(59, _, _, _, _, _, _, _, _, _),
 	[60] = PINGROUP(60, audio_ref, lpass_ext, mi2s_2, _, phase_flag, _, _, _, _),
-	[61] = PINGROUP(61, qup01, tgu_ch0, _, phase_flag, qdss_cti, _, _, _, _),
-	[62] = PINGROUP(62, qup01, tgu_ch1, _, phase_flag, qdss_cti, _, _, _, _),
-	[63] = PINGROUP(63, qup01, tgu_ch2, _, phase_flag, qdss_gpio, _, _, _, _),
-	[64] = PINGROUP(64, qup01, tgu_ch3, _, phase_flag, qdss_gpio, _, _, _, _),
+	[61] = PINGROUP(61, qup01, tgu, _, phase_flag, qdss_cti, _, _, _, _),
+	[62] = PINGROUP(62, qup01, tgu, _, phase_flag, qdss_cti, _, _, _, _),
+	[63] = PINGROUP(63, qup01, tgu, _, phase_flag, qdss_gpio, _, _, _, _),
+	[64] = PINGROUP(64, qup01, tgu, _, phase_flag, qdss_gpio, _, _, _, _),
 	[65] = PINGROUP(65, mss_lte, _, qdss_gpio0, _, _, _, _, _, _),
 	[66] = PINGROUP(66, mss_lte, _, qdss_gpio1, _, _, _, _, _, _),
 	[67] = PINGROUP(67, btfm_slimbus, mi2s_1, _, phase_flag, _, _, _, _, _),
