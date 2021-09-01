@@ -1325,7 +1325,7 @@ static int sm7225_tlmm_probe(struct platform_device *pdev)
 
 static const struct of_device_id sm7225_tlmm_of_match[] = {
 	{ .compatible = "qcom,sm7225-tlmm", },
-	{ },
+	{ /* sentinel */ }
 };
 
 static struct platform_driver sm7225_tlmm_driver = {
