@@ -41,207 +41,33 @@
 		};
 	};
 
-	reserved-memory {
-		/* The rmtfs_mem needs to be guarded due to "XPU limitations"
-		 * it is otherwise possible for an allocation adjacent to the
-		 * rmtfs_mem region to trigger an XPU violation, causing a crash.
-		 */
-		rmtfs_lower_guard: memory@efe00000 {
-			no-map;
-			reg = <0 0xefe00000 0 0x1000>;
-		};
-		/*
-		 * The rmtfs memory region in downstream is 'dynamically allocated'
-		 * but given the same address every time. Hard code it as this address is
-		 * where the modem firmware expects it to be.
-		 */
-		rmtfs_mem: memory@efe01000 {
-			compatible = "qcom,rmtfs-mem";
-			reg = <0 0xefe01000 0 0x600000>;
-			no-map;
+	//reserved-memory {
+	//	/* The rmtfs_mem needs to be guarded due to "XPU limitations"
+	//	 * it is otherwise possible for an allocation adjacent to the
+	//	 * rmtfs_mem region to trigger an XPU violation, causing a crash.
+	//	 */
+	//	rmtfs_lower_guard: memory@efe00000 {
+	//		no-map;
+	//		reg = <0 0xefe00000 0 0x1000>;
+	//	};
+	//	/*
+	//	 * The rmtfs memory region in downstream is 'dynamically allocated'
+	//	 * but given the same address every time. Hard code it as this address is
+	//	 * where the modem firmware expects it to be.
+	//	 */
+	//	rmtfs_mem: memory@efe01000 {
+	//		compatible = "qcom,rmtfs-mem";
+	//		reg = <0 0xefe01000 0 0x600000>;
+	//		no-map;
 
-			qcom,client-id = <1>;
-			//qcom,vmid = <15>;
-		};
-		rmtfs_upper_guard: memory@f0401000 {
-			no-map;
-			reg = <0 0xf0401000 0 0x1000>;
-		};
-	};
-
-	// HACKS
-	reserved-memory {
-		ranges;
-		#size-cells = <0x02>;
-		#address-cells = <0x02>;
-
-		linux,cma {
-			reusable;
-			size = <0x00 0x2000000>;
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
-			alignment = <0x00 0x400000>;
-			linux,cma-default;
-		};
-
-		wlan_fw_region@8b500000 {
-			no-map;
-			reg = <0x00 0x8b500000 0x00 0x200000>;
-			compatible = "removed-dma-pool";
-		};
-
-		hyp_region@80000000 {
-			no-map;
-			reg = <0x00 0x80000000 0x00 0x600000>;
-			compatible = "removed-dma-pool";
-		};
-
-		cdsp_regions@86f00000 {
-			no-map;
-			reg = <0x00 0x86f00000 0x00 0x1e00000>;
-			compatible = "removed-dma-pool";
-		};
-
-		secure_display_region {
-			reusable;
-			size = <0x00 0x8c00000>;
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
-			alignment = <0x00 0x400000>;
-		};
-
-		smem@80900000 {
-			no-map;
-			reg = <0x00 0x80900000 0x00 0x200000>;
-			compatible = "removed-dma-pool";
-		};
-
-		adsp_region {
-			reusable;
-			size = <0x00 0x800000>;
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
-			alignment = <0x00 0x400000>;
-		};
-
-		camera_region@86000000 {
-			no-map;
-			reg = <0x00 0x86000000 0x00 0x500000>;
-			compatible = "removed-dma-pool";
-		};
-
-		pil_adsp_region@88d00000 {
-			no-map;
-			reg = <0x00 0x88d00000 0x00 0x2800000>;
-			compatible = "removed-dma-pool";
-		};
-
-		ipa_gsi_region@8b710000 {
-			no-map;
-			reg = <0x00 0x8b710000 0x00 0x5400>;
-			compatible = "removed-dma-pool";
-		};
-
-		cont_splash_region {
-			no-map; // CUSTOM!
-			reg = <0x00 0xa0000000 0x00 0x2300000>;
-			label = "cont_splash_region";
-		};
-
-		xbl_aop_mem@80700000 {
-			no-map;
-			reg = <0x00 0x80700000 0x00 0x160000>;
-			compatible = "removed-dma-pool";
-		};
-
-		cdsp_sec_regions@80b00000 {
-			no-map;
-			reg = <0x00 0x80b00000 0x00 0x1e00000>;
-			compatible = "removed-dma-pool";
-		};
-
-		ipa_fw_region@8b700000 {
-			no-map;
-			reg = <0x00 0x8b700000 0x00 0x10000>;
-			compatible = "removed-dma-pool";
-		};
-
-		pil_video_region@86a00000 {
-			no-map;
-			reg = <0x00 0x86a00000 0x00 0x500000>;
-			compatible = "removed-dma-pool";
-		};
-
-		modem_region@8b800000 {
-			no-map;
-			reg = <0x00 0x8b800000 0x00 0xf800000>;
-			compatible = "removed-dma-pool";
-		};
-
-		dfps_data_region {
-			reg = <0x00 0xa2300000 0x00 0x100000>;
-			label = "dfps_data_region";
-		};
-
-		gpu_region@8b715400 {
-			no-map;
-			reg = <0x00 0x8b715400 0x00 0x2000>;
-			compatible = "removed-dma-pool";
-		};
-
-		qseecom_ta_region {
-			reusable;
-			size = <0x00 0x1000000>;
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
-			alignment = <0x00 0x400000>;
-		};
-
-		reserved-memory@80860000 {
-			no-map;
-			reg = <0x00 0x80860000 0x00 0x20000>;
-			compatible = "qcom,cmd-db";
-		};
-
-		removed_region@c0000000 {
-			no-map;
-			reg = <0x00 0xc0000000 0x00 0x3900000>;
-			compatible = "removed-dma-pool";
-		};
-
-		pil_npu_region@86500000 {
-			no-map;
-			reg = <0x00 0x86500000 0x00 0x500000>;
-			compatible = "removed-dma-pool";
-		};
-
-		sec_apps_region@808ff000 {
-			no-map;
-			reg = <0x00 0x808ff000 0x00 0x1000>;
-			compatible = "removed-dma-pool";
-		};
-
-		mem_dump_region {
-			reusable;
-			size = <0x00 0x2800000>;
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
-		};
-
-		qseecom_region {
-			reusable;
-			size = <0x00 0x1400000>;
-			compatible = "shared-dma-pool";
-			alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
-			alignment = <0x00 0x400000>;
-		};
-
-		disp_rdump_region@0xa0000000 {
-			reg = <0x00 0xa0000000 0x00 0x2300000>;
-			label = "disp_rdump_region";
-		};
-	};
-	// HACKS
+	//		qcom,client-id = <1>;
+	//		//qcom,vmid = <15>;
+	//	};
+	//	rmtfs_upper_guard: memory@f0401000 {
+	//		no-map;
+	//		reg = <0 0xf0401000 0 0x1000>;
+	//	};
+	//};
 };
 
 &usb_1 {
@@ -297,7 +123,6 @@
 	pm6350-rpmh-regulators {
 		compatible = "qcom,pm6350-rpmh-regulators";
 		qcom,pmic-id = "a";
-		//status = "disabled";
 
 		// TODO supplies
 		// TODO initial-mode for all are RPMH_REGULATOR_MODE_LPM downstream

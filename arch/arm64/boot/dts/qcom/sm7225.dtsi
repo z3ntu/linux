@@ -655,8 +655,7 @@
 					  <&gcc GCC_USB30_PRIM_MASTER_CLK>;
 			assigned-clock-rates = <19200000>, <133333333>;
 
-			interrupts-extended = <&intc GIC_SPI 130 IRQ_TYPE_LEVEL_HIGH>, // FIXME this is correct
-			//interrupts-extended = <&intc GIC_SPI 131 IRQ_TYPE_LEVEL_HIGH>,
+			interrupts-extended = <&intc GIC_SPI 130 IRQ_TYPE_LEVEL_HIGH>,
 					      <&pdc 14 IRQ_TYPE_EDGE_BOTH>,
 					      <&pdc 15 IRQ_TYPE_EDGE_BOTH>,
 					      <&pdc 17 IRQ_TYPE_LEVEL_HIGH>;
@@ -672,8 +671,7 @@
 
 			usb_1_dwc3: dwc3@a600000 {
 				compatible = "snps,dwc3";
-				//reg = <0 0x0a600000 0 0xe000>;
-				reg = <0 0x0a600000 0 0x10000>;
+				reg = <0 0x0a600000 0 0xe000>;
 				interrupts = <GIC_SPI 133 IRQ_TYPE_LEVEL_HIGH>;
 				iommus = <&apps_smmu 0x540 0x0>;
 				// snps,disable-clk-gating;
@@ -692,7 +690,7 @@
 				tx-fifo-resize;
 
 				phys = <&usb_1_hsphy>; //, <&usb_1_ssphy>;
-				//phy-names = "usb2-phy"; //, usb3-phy;
+				phy-names = "usb2-phy"; //, usb3-phy;
 			};
 		};
 
@@ -719,12 +717,10 @@
 		};
 
 		apps_smmu: iommu@15000000 {
-			//status = "disabled"; // FIXME
 			compatible = "qcom,sm7225-smmu-500", "arm,mmu-500";
 			reg = <0 0x15000000 0 0x100000>;
 			#iommu-cells = <2>;
 			#global-interrupts = <1>;
-			//dma-coherent; FIXME remove
 			interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 95 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 96 IRQ_TYPE_LEVEL_HIGH>,
@@ -822,7 +818,6 @@
 		#size-cells = <2>;
 		ranges;
 
-/*
 		hyp_mem: memory@80000000 {
 			reg = <0x0 0x80000000 0x0 0x600000>;
 			no-map;
@@ -843,14 +838,12 @@
 			reg = <0x0 0x808ff000 0x0 0x1000>;
 			no-map;
 		};
-*/
 
 		smem_mem: memory@80900000 {
 			reg = <0x0 0x80900000 0x0 0x200000>;
 			no-map;
 		};
 
-/*
 		cdsp_sec_mem: memory@80b00000 {
 			reg = <0x0 0x80b00000 0x0 0x1e00000>;
 			no-map;
@@ -915,6 +908,5 @@
 			reg = <0x0 0xc0000000 0x0 0x3900000>;
 			no-map;
 		};
-*/
 	};
 };
