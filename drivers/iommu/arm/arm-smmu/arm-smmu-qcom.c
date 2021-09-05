@@ -378,10 +378,8 @@ static struct arm_smmu_device *qcom_smmu_create(struct arm_smmu_device *smmu,
 	struct qcom_smmu *qsmmu;
 
 	/* Check to make sure qcom_scm has finished probing */
-	if (!qcom_scm_is_available()) {
-		printk(KERN_ERR "%s: -EPROBE_DEFER\n", __func__);
+	if (!qcom_scm_is_available())
 		return ERR_PTR(-EPROBE_DEFER);
-	}
 
 	qsmmu = devm_krealloc(smmu->dev, smmu, sizeof(*qsmmu), GFP_KERNEL);
 	if (!qsmmu)
@@ -439,6 +437,5 @@ struct arm_smmu_device *qcom_smmu_impl_init(struct arm_smmu_device *smmu)
 	if (of_match_node(qcom_smmu_impl_of_match, np))
 		return qcom_smmu_create(smmu, &qcom_smmu_impl);
 
-	printk(KERN_ERR "qcom_smmu_impl_init return smmu\n");
 	return smmu;
 }

@@ -3,7 +3,6 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
-#define DEBUG
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -436,14 +435,12 @@ static int rpmh_regulator_init_vreg(struct rpmh_vreg *vreg, struct device *dev,
 	scnprintf(rpmh_resource_name, sizeof(rpmh_resource_name),
 		rpmh_data->resource_name, pmic_id);
 
-	//dev_dbg(dev, "DBG rpmh_resource_name: %s\n", rpmh_resource_name);
 	vreg->addr = cmd_db_read_addr(rpmh_resource_name);
 	if (!vreg->addr) {
 		dev_err(dev, "%pOFn: could not find RPMh address for resource %s\n",
 			node, rpmh_resource_name);
 		return -ENODEV;
 	}
-	//dev_dbg(dev, "DBG vreg->addr: 0x%05X\n", vreg->addr);
 
 	vreg->rdesc.name = rpmh_data->name;
 	vreg->rdesc.supply_name = rpmh_data->supply_name;

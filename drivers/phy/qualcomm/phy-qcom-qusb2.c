@@ -24,13 +24,6 @@
 
 #include <dt-bindings/phy/phy-qcom-qusb2.h>
 
-#define debug_print_wait() \
-	do { \
-		/*printk(KERN_ERR "%s %d\n", __FILE__, __LINE__);*/ \
-		/*usleep_range(500000, 500000);*/ \
-		/*usleep_range(2000000, 2000000);*/ \
-	} while (0);
-
 #define QUSB2PHY_PLL			0x0
 #define QUSB2PHY_PLL_TEST		0x04
 #define CLK_REF_SEL			BIT(7)
@@ -417,17 +410,6 @@ static const struct qusb2_phy_cfg sm6115_phy_cfg = {
 	.autoresume_en	 = BIT(3),
 };
 
-//static const struct qusb2_phy_cfg sm7225_phy_cfg = {
-//	.tbl		= sm6115_init_tbl,
-//	.tbl_num	= ARRAY_SIZE(sm6115_init_tbl),
-//	.regs		= msm8996_regs_layout,
-//
-//	//.has_pll_test	= true,
-//	.se_clk_scheme_default = true,
-//	.disable_ctrl	= (CLAMP_N_EN | FREEZIO_N | POWER_DOWN),
-//	.mask_core_ready = PLL_LOCKED,
-//	.autoresume_en	 = BIT(0),
-//};
 
 static const char * const qusb2_phy_vreg_names[] = {
 	"refgen", "vdd", "vdda18", "vdda33",
@@ -567,7 +549,6 @@ static void qusb2_phy_override_phy_params(struct qusb2_phy *qphy)
 {
 	const struct qusb2_phy_cfg *cfg = qphy->cfg;
 	struct override_params *or = &qphy->overrides;
-	debug_print_wait();
 
 	if (or->imp_res_offset.override)
 		qusb2_write_mask(qphy->base, QUSB2PHY_IMP_CTRL1,
@@ -655,7 +636,6 @@ static int qusb2_phy_set_mode(struct phy *phy,
 			      enum phy_mode mode, int submode)
 {
 	struct qusb2_phy *qphy = phy_get_drvdata(phy);
-	debug_print_wait();
 
 	qphy->mode = mode;
 
@@ -667,7 +647,6 @@ static int __maybe_unused qusb2_phy_runtime_suspend(struct device *dev)
 	struct qusb2_phy *qphy = dev_get_drvdata(dev);
 	const struct qusb2_phy_cfg *cfg = qphy->cfg;
 	u32 intr_mask;
-	debug_print_wait();
 
 	dev_vdbg(dev, "Suspending QUSB2 Phy, mode:%d\n", qphy->mode);
 
@@ -734,7 +713,6 @@ static int __maybe_unused qusb2_phy_runtime_resume(struct device *dev)
 	struct qusb2_phy *qphy = dev_get_drvdata(dev);
 	const struct qusb2_phy_cfg *cfg = qphy->cfg;
 	int ret;
-	debug_print_wait();
 
 	dev_vdbg(dev, "Resuming QUSB2 phy, mode:%d\n", qphy->mode);
 
@@ -827,7 +805,6 @@ static int qusb2_phy_init(struct phy *phy)
 	}
 
 	/* Disable the PHY */
-	//dev_err(&phy->dev, "DBG disable_ctrl: %x\n", qphy->cfg->disable_ctrl);
 	qusb2_setbits(qphy->base, cfg->regs[QUSB2PHY_PORT_POWERDOWN],
 		      qphy->cfg->disable_ctrl);
 
@@ -836,27 +813,16 @@ static int qusb2_phy_init(struct phy *phy)
 		val = readl(qphy->base + QUSB2PHY_PLL_TEST);
 	}
 
-	/*printk(KERN_ERR "%s %d\n", __FILE__, __LINE__);
-	usleep_range(500000, 500000);*/
-
-	debug_print_wait();
-
 	qcom_qusb2_phy_configure(qphy->base, cfg->regs, cfg->tbl,
 				 cfg->tbl_num);
-
-	
-	debug_print_wait();
 
 	/* Override board specific PHY tuning values */
 	qusb2_phy_override_phy_params(qphy);
 
-	debug_print_wait();
 	/* Set efuse value for tuning the PHY */
 	qusb2_phy_set_tune2_param(qphy);
-	debug_print_wait();
 
 	/* Enable the PHY */
-	//dev_err(&phy->dev, "DBG clear bits: %lx\n", POWER_DOWN);
 	qusb2_clrbits(qphy->base, cfg->regs[QUSB2PHY_PORT_POWERDOWN],
 		      POWER_DOWN);
 
@@ -870,7 +836,6 @@ static int qusb2_phy_init(struct phy *phy)
 	 */
 	qphy->has_se_clk_scheme = cfg->se_clk_scheme_default;
 
-	debug_print_wait();
 	/*
 	 * read TCSR_PHY_CLK_SCHEME register to check if single-ended
 	 * clock scheme is selected. If yes, then disable differential
@@ -896,7 +861,6 @@ static int qusb2_phy_init(struct phy *phy)
 		}
 	}
 
-	debug_print_wait();
 	if (!qphy->has_se_clk_scheme) {
 		ret = clk_prepare_enable(qphy->ref_clk);
 		if (ret) {
@@ -906,7 +870,6 @@ static int qusb2_phy_init(struct phy *phy)
 		}
 	}
 
-	debug_print_wait();
 	if (cfg->has_pll_test) {
 		if (!qphy->has_se_clk_scheme)
 			val &= ~CLK_REF_SEL;
@@ -922,7 +885,6 @@ static int qusb2_phy_init(struct phy *phy)
 	/* Required to get phy pll lock successfully */
 	usleep_range(100, 110);
 
-	debug_print_wait();
 	val = readb(qphy->base + cfg->regs[QUSB2PHY_PLL_STATUS]);
 	if (!(val & cfg->mask_core_ready)) {
 		dev_err(&phy->dev,
@@ -952,7 +914,6 @@ poweroff_phy:
 static int qusb2_phy_exit(struct phy *phy)
 {
 	struct qusb2_phy *qphy = phy_get_drvdata(phy);
-	debug_print_wait();
 
 	/* Disable the PHY */
 	qusb2_setbits(qphy->base, qphy->cfg->regs[QUSB2PHY_PORT_POWERDOWN],
@@ -1160,18 +1121,15 @@ static int qusb2_phy_probe(struct platform_device *pdev)
 	}
 	qphy->phy = generic_phy;
 
-	debug_print_wait();
 	dev_set_drvdata(dev, qphy);
 	phy_set_drvdata(generic_phy, qphy);
 
-	debug_print_wait();
 	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
 	if (!IS_ERR(phy_provider))
 		dev_info(dev, "Registered Qcom-QUSB2 phy\n");
 	else
 		pm_runtime_disable(dev);
 
-	debug_print_wait();
 	return PTR_ERR_OR_ZERO(phy_provider);
 }
 

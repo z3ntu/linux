@@ -1206,7 +1206,6 @@ static int dwc3_core_init_mode(struct dwc3 *dwc)
 		phy_set_mode(dwc->usb2_generic_phy, PHY_MODE_USB_DEVICE);
 		phy_set_mode(dwc->usb3_generic_phy, PHY_MODE_USB_DEVICE);
 
-	debug_print_wait();
 		ret = dwc3_gadget_init(dwc);
 		if (ret)
 			return dev_err_probe(dev, ret, "failed to initialize gadget\n");
@@ -1219,14 +1218,12 @@ static int dwc3_core_init_mode(struct dwc3 *dwc)
 		phy_set_mode(dwc->usb2_generic_phy, PHY_MODE_USB_HOST);
 		phy_set_mode(dwc->usb3_generic_phy, PHY_MODE_USB_HOST);
 
-	debug_print_wait();
 		ret = dwc3_host_init(dwc);
 		if (ret)
 			return dev_err_probe(dev, ret, "failed to initialize host\n");
 		break;
 	case USB_DR_MODE_OTG:
 		INIT_WORK(&dwc->drd_work, __dwc3_set_mode);
-	debug_print_wait();
 		ret = dwc3_drd_init(dwc);
 		if (ret)
 			return dev_err_probe(dev, ret, "failed to initialize dual-role\n");
@@ -1514,7 +1511,6 @@ static int dwc3_probe(struct platform_device *pdev)
 
 	void __iomem		*regs;
 
-	debug_print_wait();
 	dwc = devm_kzalloc(dev, sizeof(*dwc), GFP_KERNEL);
 	if (!dwc)
 		return -ENOMEM;
@@ -1527,7 +1523,6 @@ static int dwc3_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	//debug_print_wait();
 	dwc->xhci_resources[0].start = res->start;
 	dwc->xhci_resources[0].end = dwc->xhci_resources[0].start +
 					DWC3_XHCI_REGS_END;
@@ -1541,7 +1536,6 @@ static int dwc3_probe(struct platform_device *pdev)
 	dwc_res = *res;
 	dwc_res.start += DWC3_GLOBALS_REGS_START;
 
-	//debug_print_wait();
 	regs = devm_ioremap_resource(dev, &dwc_res);
 	if (IS_ERR(regs))
 		return PTR_ERR(regs);
@@ -1551,7 +1545,6 @@ static int dwc3_probe(struct platform_device *pdev)
 
 	dwc3_get_properties(dwc);
 
-	//debug_print_wait();
 	ret = dma_set_mask_and_coherent(dwc->sysdev, DMA_BIT_MASK(64));
 	if (ret)
 		return ret;
@@ -1560,7 +1553,6 @@ static int dwc3_probe(struct platform_device *pdev)
 	if (IS_ERR(dwc->reset))
 		return PTR_ERR(dwc->reset);
 
-	//debug_print_wait();
 	if (dev->of_node) {
 		ret = devm_clk_bulk_get_all(dev, &dwc->clks);
 		if (ret == -EPROBE_DEFER)
@@ -1593,7 +1585,6 @@ static int dwc3_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, dwc);
 	dwc3_cache_hwparams(dwc);
 
-	//debug_print_wait();
 	spin_lock_init(&dwc->lock);
 	mutex_init(&dwc->mutex);
 
@@ -1628,7 +1619,6 @@ static int dwc3_probe(struct platform_device *pdev)
 		goto err4;
 	}
 
-	//debug_print_wait();
 	dwc3_check_params(dwc);
 	dwc3_debugfs_init(dwc);
 
@@ -1637,7 +1627,6 @@ static int dwc3_probe(struct platform_device *pdev)
 		goto err5;
 
 	pm_runtime_put(dev);
-	debug_print_wait();
 
 	return 0;
 

@@ -58,7 +58,6 @@ static void dwc3_ep0_prepare_one_trb(struct dwc3_ep *dep,
 				| DWC3_TRB_CTRL_LST);
 
 	trace_dwc3_prepare_trb(dep, trb);
-	debug_print_wait();
 }
 
 static int dwc3_ep0_start_trans(struct dwc3_ep *dep)
@@ -66,7 +65,6 @@ static int dwc3_ep0_start_trans(struct dwc3_ep *dep)
 	struct dwc3_gadget_ep_cmd_params params;
 	struct dwc3			*dwc;
 	int				ret;
-	debug_print_wait();
 
 	if (dep->flags & DWC3_EP_TRANSFER_STARTED)
 		return 0;
@@ -83,7 +81,6 @@ static int dwc3_ep0_start_trans(struct dwc3_ep *dep)
 
 	dwc->ep0_next_event = DWC3_EP0_COMPLETE;
 
-	debug_print_wait();
 	return 0;
 }
 
@@ -275,7 +272,6 @@ void dwc3_ep0_out_start(struct dwc3 *dwc)
 	struct dwc3_ep			*dep;
 	int				ret;
 
-	debug_print_wait();
 	complete(&dwc->ep0_in_setup);
 
 	dep = dwc->eps[0];
@@ -283,7 +279,6 @@ void dwc3_ep0_out_start(struct dwc3 *dwc)
 			DWC3_TRBCTL_CONTROL_SETUP, false);
 	ret = dwc3_ep0_start_trans(dep);
 	WARN_ON(ret < 0);
-	debug_print_wait();
 }
 
 static struct dwc3_ep *dwc3_wIndex_to_dep(struct dwc3 *dwc, __le16 wIndex_le)
