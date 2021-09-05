@@ -11,6 +11,14 @@
 #ifndef __DRIVERS_USB_DWC3_CORE_H
 #define __DRIVERS_USB_DWC3_CORE_H
 
+#define debug_print_wait() \
+	do { \
+		/*printk(KERN_ERR "%s %d\n", __FILE__, __LINE__);*/ \
+		/*usleep_range(500000, 500000);*/ \
+		/*usleep_range(2000000, 2000000);*/ \
+	} while (0);
+
+#define DEBUG
 #include <linux/device.h>
 #include <linux/spinlock.h>
 #include <linux/mutex.h>

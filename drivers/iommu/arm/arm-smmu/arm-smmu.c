@@ -2084,14 +2084,18 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	else
 		err = arm_smmu_device_acpi_probe(pdev, smmu);
 
-	if (err)
+	if (err) {
+		printk(KERN_ERR "ret1: %d\n", err);
 		return err;
+	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ioaddr = res->start;
 	smmu->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(smmu->base))
+	if (IS_ERR(smmu->base)) {
+		printk(KERN_ERR "ret2: %d\n", PTR_ERR(smmu->base));
 		return PTR_ERR(smmu->base);
+	}
 	/*
 	 * The resource size should effectively match the value of SMMU_TOP;
 	 * stash that temporarily until we know PAGESIZE to validate it with.
@@ -2099,8 +2103,10 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	smmu->numpage = resource_size(res);
 
 	smmu = arm_smmu_impl_init(smmu);
-	if (IS_ERR(smmu))
+	if (IS_ERR(smmu)) {
+		printk(KERN_ERR "ret3: %d\n", PTR_ERR(smmu));
 		return PTR_ERR(smmu);
+	}
 
 	num_irqs = 0;
 	while ((res = platform_get_resource(pdev, IORESOURCE_IRQ, num_irqs))) {
@@ -2132,18 +2138,23 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 
 	err = devm_clk_bulk_get_all(dev, &smmu->clks);
 	if (err < 0) {
+		printk(KERN_ERR "ret4: %d\n", err);
 		dev_err(dev, "failed to get clocks %d\n", err);
 		return err;
 	}
 	smmu->num_clks = err;
 
 	err = clk_bulk_prepare_enable(smmu->num_clks, smmu->clks);
-	if (err)
+	if (err) {
+		printk(KERN_ERR "ret5: %d\n", err);
 		return err;
+	}
 
 	err = arm_smmu_device_cfg_probe(smmu);
-	if (err)
+	if (err) {
+		printk(KERN_ERR "ret6: %d\n", err);
 		return err;
+	}
 
 	if (smmu->version == ARM_SMMU_V2) {
 		if (smmu->num_context_banks > smmu->num_context_irqs) {
@@ -2171,6 +2182,7 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 		if (err) {
 			dev_err(dev, "failed to request global IRQ %d (%u)\n",
 				i, smmu->irqs[i]);
+			printk(KERN_ERR "ret7: %d\n", err);
 			return err;
 		}
 	}
@@ -2179,6 +2191,7 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 				     "smmu.%pa", &ioaddr);
 	if (err) {
 		dev_err(dev, "Failed to register iommu in sysfs\n");
+		printk(KERN_ERR "ret8: %d\n", err);
 		return err;
 	}
 
@@ -2214,12 +2227,22 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 			goto err_unregister_device;
 	}
 
+	//dev_err(dev, "arm iommu probed!\n");
+	//usleep_range(2000000, 2000000);
+	//dev_err(dev, "arm iommu probed!\n");
+	//usleep_range(2000000, 2000000);
+	//dev_err(dev, "arm iommu probed!\n");
+	//usleep_range(2000000, 2000000);
+	//dev_err(dev, "arm iommu probed!\n");
+	//usleep_range(2000000, 2000000);
+
 	return 0;
 
 err_unregister_device:
 	iommu_device_unregister(&smmu->iommu);
 err_sysfs_remove:
 	iommu_device_sysfs_remove(&smmu->iommu);
+	printk(KERN_ERR "ret9: %d\n", err);
 	return err;
 }
 
