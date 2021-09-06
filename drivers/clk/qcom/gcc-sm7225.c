@@ -25,7 +25,7 @@
 #include "common.h"
 #include "gdsc.h"
 #include "reset.h"
-//#include "vdd-level-lagoon.h"
+//#include "vdd-level-sm7225.h"
 
 //static DEFINE_VDD_REGULATORS(vdd_cx, VDD_NUM, 1, vdd_corner);
 //static DEFINE_VDD_REGULATORS(vdd_cx_ao, VDD_NUM, 1, vdd_corner);
@@ -2570,7 +2570,7 @@ static struct gdsc hlos1_vote_mmnoc_mmu_tbu_sf_gdsc = {
 	.flags = VOTABLE,
 };
 
-static struct clk_regmap *gcc_lagoon_clocks[] = {
+static struct clk_regmap *gcc_sm7225_clocks[] = {
 	[GCC_AGGRE_UFS_PHY_AXI_CLK] = &gcc_aggre_ufs_phy_axi_clk.clkr,
 	[GCC_AGGRE_USB3_PRIM_AXI_CLK] = &gcc_aggre_usb3_prim_axi_clk.clkr,
 	[GCC_BOOT_ROM_AHB_CLK] = &gcc_boot_rom_ahb_clk.clkr,
@@ -2708,7 +2708,7 @@ static struct clk_regmap *gcc_lagoon_clocks[] = {
 	[GCC_NPU_PLL0_MAIN_DIV_CLK_SRC] = &gcc_npu_pll0_main_div_clk_src.clkr,
 };
 
-static const struct qcom_reset_map gcc_lagoon_resets[] = {
+static const struct qcom_reset_map gcc_sm7225_resets[] = {
 	[GCC_QUSB2PHY_PRIM_BCR] = { 0x1d000 },
 	[GCC_QUSB2PHY_SEC_BCR] = { 0x1e000 },
 	[GCC_SDCC1_BCR] = { 0x4b000 },
@@ -2741,7 +2741,7 @@ static const struct clk_rcg_dfs_data gcc_dfs_clocks[] = {
 	DEFINE_RCG_DFS(gcc_qupv3_wrap1_s5_clk_src),
 };
 
-static const struct regmap_config gcc_lagoon_regmap_config = {
+static const struct regmap_config gcc_sm7225_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
@@ -2749,28 +2749,28 @@ static const struct regmap_config gcc_lagoon_regmap_config = {
 	.fast_io = true,
 };
 
-static const struct qcom_cc_desc gcc_lagoon_desc = {
-	.config = &gcc_lagoon_regmap_config,
-	.clks = gcc_lagoon_clocks,
-	.num_clks = ARRAY_SIZE(gcc_lagoon_clocks),
-	.resets = gcc_lagoon_resets,
-	.num_resets = ARRAY_SIZE(gcc_lagoon_resets),
+static const struct qcom_cc_desc gcc_sm7225_desc = {
+	.config = &gcc_sm7225_regmap_config,
+	.clks = gcc_sm7225_clocks,
+	.num_clks = ARRAY_SIZE(gcc_sm7225_clocks),
+	.resets = gcc_sm7225_resets,
+	.num_resets = ARRAY_SIZE(gcc_sm7225_resets),
 	.gdscs = gcc_sm7225_gdscs,
 	.num_gdscs = ARRAY_SIZE(gcc_sm7225_gdscs),
 };
 
-static const struct of_device_id gcc_lagoon_match_table[] = {
+static const struct of_device_id gcc_sm7225_match_table[] = {
 	{ .compatible = "qcom,gcc-sm7225" },
 	{ }
 };
-MODULE_DEVICE_TABLE(of, gcc_lagoon_match_table);
+MODULE_DEVICE_TABLE(of, gcc_sm7225_match_table);
 
-static int gcc_lagoon_probe(struct platform_device *pdev)
+static int gcc_sm7225_probe(struct platform_device *pdev)
 {
 	struct regmap *regmap;
 	int ret;
 
-	regmap = qcom_cc_map(pdev, &gcc_lagoon_desc);
+	regmap = qcom_cc_map(pdev, &gcc_sm7225_desc);
 	if (IS_ERR(regmap))
 		return PTR_ERR(regmap);
 
@@ -2799,7 +2799,7 @@ static int gcc_lagoon_probe(struct platform_device *pdev)
 	regmap_update_bits(regmap, GCC_NPU_MISC, 0x3, 0x3);
 	regmap_update_bits(regmap, GCC_GPU_MISC, 0x3, 0x3);
 
-	ret = qcom_cc_really_probe(pdev, &gcc_lagoon_desc, regmap);
+	ret = qcom_cc_really_probe(pdev, &gcc_sm7225_desc, regmap);
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to register GCC clocks\n");
 		return ret;
@@ -2809,25 +2809,25 @@ static int gcc_lagoon_probe(struct platform_device *pdev)
 	return ret;
 }
 
-static struct platform_driver gcc_lagoon_driver = {
-	.probe = gcc_lagoon_probe,
+static struct platform_driver gcc_sm7225_driver = {
+	.probe = gcc_sm7225_probe,
 	.driver = {
-		.name = "gcc-lagoon",
-		.of_match_table = gcc_lagoon_match_table,
+		.name = "gcc-sm7225",
+		.of_match_table = gcc_sm7225_match_table,
 	},
 };
 
-static int __init gcc_lagoon_init(void)
+static int __init gcc_sm7225_init(void)
 {
-	return platform_driver_register(&gcc_lagoon_driver);
+	return platform_driver_register(&gcc_sm7225_driver);
 }
-core_initcall(gcc_lagoon_init);
+core_initcall(gcc_sm7225_init);
 
-static void __exit gcc_lagoon_exit(void)
+static void __exit gcc_sm7225_exit(void)
 {
-	platform_driver_unregister(&gcc_lagoon_driver);
+	platform_driver_unregister(&gcc_sm7225_driver);
 }
-module_exit(gcc_lagoon_exit);
+module_exit(gcc_sm7225_exit);
 
 MODULE_DESCRIPTION("QTI GCC LAGOON Driver");
 MODULE_LICENSE("GPL v2");
