@@ -343,6 +343,13 @@
 			#mbox-cells = <2>;
 		};
 
+		rng: rng@793000 {
+			compatible = "qcom,prng-ee";
+			reg = <0 0x00793000 0 0x1000>;
+			clocks = <&gcc GCC_PRNG_AHB_CLK>;
+			clock-names = "core";
+		};
+
 		qupv3_id_0: geniqup@8c0000 {
 			compatible = "qcom,geni-se-qup";
 			reg = <0x0 0x8c0000 0x0 0x2000>;
@@ -714,6 +721,24 @@
 
 			#clock-cells = <0>;
 			#power-domain-cells = <1>;
+		};
+
+		spmi_bus: spmi@c440000 {
+			compatible = "qcom,spmi-pmic-arb";
+			reg = <0x0 0xc440000 0x0 0x0001100>,
+			      <0x0 0xc600000 0x0 0x2000000>,
+			      <0x0 0xe600000 0x0 0x0100000>,
+			      <0x0 0xe700000 0x0 0x00a0000>,
+			      <0x0 0xc40a000 0x0 0x0026000>;
+			reg-names = "core", "chnls", "obsrvr", "intr", "cnfg";
+			interrupt-names = "periph_irq";
+			interrupts-extended = <&pdc 1 IRQ_TYPE_LEVEL_HIGH>;
+			qcom,ee = <0>;
+			qcom,channel = <0>;
+			#address-cells = <2>;
+			#size-cells = <0>;
+			interrupt-controller;
+			#interrupt-cells = <4>;
 		};
 
 		apps_smmu: iommu@15000000 {

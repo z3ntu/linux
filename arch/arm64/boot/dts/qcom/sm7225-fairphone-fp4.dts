@@ -5,8 +5,11 @@
 
 /dts-v1/;
 
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
 #include "sm7225.dtsi"
+#include "pm6350.dtsi"
 
 / {
 	model = "Fairphone 4";
@@ -38,6 +41,16 @@
 			stride = <(1080 * 4)>;
 			format = "a8r8g8b8";
 			status = "okay";
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		volume-up {
+			label = "volume_up";
+			linux,code = <KEY_VOLUMEUP>;
+			gpios = <&pm6350_gpios 2 GPIO_ACTIVE_LOW>;
 		};
 	};
 

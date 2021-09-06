@@ -36,6 +36,7 @@ PMIC's from Qualcomm.
 		    "qcom,pmr735b-gpio"
 		    "qcom,pm6150-gpio"
 		    "qcom,pm6150l-gpio"
+		    "qcom,pm6350-gpio"
 		    "qcom,pm8008-gpio"
 		    "qcom,pmx55-gpio"
 
