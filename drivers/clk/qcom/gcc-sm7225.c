@@ -2596,14 +2596,7 @@ static int gcc_sm7225_probe(struct platform_device *pdev)
 	regmap_update_bits(regmap, GCC_NPU_MISC, 0x3, 0x3);
 	regmap_update_bits(regmap, GCC_GPU_MISC, 0x3, 0x3);
 
-	ret = qcom_cc_really_probe(pdev, &gcc_sm7225_desc, regmap);
-	if (ret) {
-		dev_err(&pdev->dev, "Failed to register GCC clocks\n");
-		return ret;
-	}
-
-	dev_info(&pdev->dev, "Registered GCC clocks\n");
-	return ret;
+	return qcom_cc_really_probe(pdev, &gcc_sm7225_desc, regmap);
 }
 
 static struct platform_driver gcc_sm7225_driver = {
