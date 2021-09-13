@@ -101,15 +101,11 @@
 	vdd-supply = <&vreg_l18a>;
 };
 
-&qupv3_id_1 {
-	status = "okay";
-};
-
-&uart2 {
-	status = "okay";
-};
-
 &qupv3_id_0 {
+	status = "okay";
+};
+
+&qupv3_id_1 {
 	status = "okay";
 };
 
@@ -129,6 +125,60 @@
 };
 
 &sdhc_2 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
+
+	vmmc-supply = <&vreg_l9e>;
+	vqmmc-supply = <&vreg_l6e>;
+
+	bus-width = <4>;
+	cd-gpios = <&tlmm 94 GPIO_ACTIVE_LOW>;
+};
+
+&tlmm {
+	gpio-reserved-ranges = <13 4>, <56 2>;
+
+	sdc2_clk_on: sdc2_clk_on {
+		config {
+			pins = "sdc2_clk";
+			bias-disable;		/* No pull */
+			drive-strength = <16>;	/* 16 MA */
+		};
+	};
+
+	sdc2_cmd_on: sdc2_cmd_on {
+		config {
+			pins = "sdc2_cmd";
+			bias-pull-up;		/* Pull up */
+			drive-strength = <10>;	/* 10 MA */
+		};
+	};
+
+	sdc2_data_on: sdc2_data_on {
+		config {
+			pins = "sdc2_data";
+			bias-pull-up;		/* Pull up */
+			drive-strength = <10>;	/* 10 MA */
+		};
+	};
+
+	sdc2_cd_on: cd_on {
+		mux {
+			pins = "gpio94";
+			function = "gpio";
+		};
+
+		config {
+			pins = "gpio94";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+	};
+};
+
+&uart2 {
 	status = "okay";
 };
 
@@ -309,7 +359,8 @@
 
 		vreg_l6e: ldo6 {
 			regulator-min-microvolt = <1700000>;
-			regulator-max-microvolt = <3544000>;
+			//regulator-max-microvolt = <3544000>;
+			regulator-max-microvolt = <3300000>; // decreases maximum voltage for sdhc_2
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -327,7 +378,8 @@
 
 		vreg_l9e: ldo9 {
 			regulator-min-microvolt = <2700000>;
-			regulator-max-microvolt = <3544000>;
+			//regulator-max-microvolt = <3544000>;
+			regulator-max-microvolt = <3300000>; // decreases maximum voltage for sdhc_2
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
