@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
-#define DEBUG
 
 #include <linux/acpi.h>
 #include <linux/clk.h>
