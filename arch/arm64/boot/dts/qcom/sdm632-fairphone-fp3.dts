@@ -7,20 +7,28 @@
 #include <dt-bindings/regulator/qcom,rpm-smd-regulator.h>
 
 / {
-	model = "PostmarketOS Fairphone 3 Mainline, SDM632 + PMI632 SOC";
-	compatible = "qcom,sdm632", "qcom,msm8953";
+	model = "Fairphone 3";
+	compatible = "fairphone,fp3", "qcom,sdm632";
 
-	qcom,pmic-id = <0x010016 0x25 0x00 0x00>;
-	qcom,pmic-name = "PMI632";
-	qcom,msm-id = <349 2>;
-	qcom,board-id = <8 3>;
-
-	aliases {
-		serial0 = &uart_0;
-	};
+	//qcom,pmic-id = <0x010016 0x25 0x00 0x00>;
+	//qcom,pmic-name = "PMI632";
+	qcom,msm-id = <349 3>;
+	qcom,board-id = <8 0x10000>;
 
 	chosen {
-		stdout-path = "serial0";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		framebuffer0: framebuffer@83401000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0x90001000 0x0 (2160 * 1080 * 3)>;
+			width = <1080>;
+			height = <2160>;
+			stride = <(1080 * 3)>;
+			format = "r8g8b8";
+			//format = "a8r8g8b8";
+		};
 	};
 }; 
 
@@ -40,9 +48,9 @@
 	gpio-reserved-ranges = <0 4>, <135 4>;
 };
 
-&uart_0 {
-	status = "okay";
-};
+//&uart_0 {
+//	status = "okay";
+//};
 
 // eMMC : internal storage
 &sdhc_1 {
@@ -63,11 +71,9 @@
 	non-removable; // SD card behind battery so non-removable
 };
 
-
 &usb3 {
 	status = "okay";
 };
-
 
 &spmi_regulators {
 	status = "okay";
@@ -221,6 +227,7 @@
 	};
 };
 
+/*
 &framebuffer {
 	status = "okay";
 
@@ -228,3 +235,4 @@
 	height = <2160>;
 	stride = <(1080 * 3)>;
 };
+*/
