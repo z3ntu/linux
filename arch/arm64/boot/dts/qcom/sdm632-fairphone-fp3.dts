@@ -12,8 +12,6 @@
 	model = "Fairphone 3";
 	compatible = "fairphone,fp3", "qcom,sdm632";
 
-	//qcom,pmic-id = <0x010016 0x25 0x00 0x00>;
-	//qcom,pmic-name = "PMI632";
 	qcom,msm-id = <349 3>;
 	qcom,board-id = <8 0x10000>;
 
@@ -32,21 +30,30 @@
 			//format = "a8r8g8b8";
 		};
 	};
-}; 
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		volume-up {
+			label = "volume_up";
+			linux,code = <KEY_VOLUMEUP>;
+			gpios = <&msmgpio 85 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-always-on;
+		regulator-boot-on;
+	};
+};
 
 &msmgpio {
-	/* Mandatory reserved : 
-	 * 0 1
-	 * nfc_clk? 2
-	 * 3
-	 * sec_tlmm_lines : 135 136 137 138
+	/*
+	 * 0-3: ???
+	 * 135-138: fingerprint reader (SPI)
 	 */
-
-	/* Potential for annoyance :
-	 * fps_reset : 140
-	 */
-
-	// gpio-reserved-ranges = <6 3>, <16 4>,<22 2>, <48 1>, <59 1>, <96 4>, <140 1>;
 	gpio-reserved-ranges = <0 4>, <135 4>;
 };
 
@@ -54,7 +61,6 @@
 //	status = "okay";
 //};
 
-// eMMC : internal storage
 &sdhc_1 {
 	status = "okay";
 	pinctrl-names = "default", "sleep";
@@ -62,7 +68,6 @@
 	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off &sdc1_rclk_off>;
 };
 
-// SD card
 &sdhc_2 {
 	status = "okay";
 
@@ -82,140 +87,109 @@
 };
 
 &smd_rpm_regulators {
-	// from downstream sdm632-regulator.dtsi > msm8953-regulator.dtsi > pm8953-rpm-regulator.dtsi
-	/*s1 {  // Modem (cf downstream msm8953.dtsi l.1964)
-		compatible = "qcom,rpm-smd-regulator";
-		regulator-min-microvolt = <RPM_SMD_REGULATOR_LEVEL_RETENTION>;
-		regulator-max-microvolt = <RPM_SMD_REGULATOR_LEVEL_TURBO>;
-		qcom,use-voltage-level;
-		status = "okay";
-	};*/
-	
-	// s2 TODO : VDD_CX for GFX (cf sdm632-regulator.dts l.442)
+	vdd_l1-supply = <&pm8953_s3>;
+	vdd_l2_l2-supply = <&pm8953_s3>;
+	vdd_l4_l5_l6_l7_l16_l19-supply = <&pm8953_s4>;
+	vdd_l8_l11_l12_l13_l14_l15-supply = <&vph_pwr>;
+	vdd_l9_l10_l17_l18_l22-supply = <&vph_pwr>;
 
-	s3 { // CSI / Camera (cf msm8953-mdss.dtsi l.221 and msm8953-camera.dtsi)
+	s3 {
 		regulator-min-microvolt = <984000>;
 		regulator-max-microvolt = <1240000>;
-		status = "okay";
 	};
 
-	s4 { // Audio (cf msm8953-audio.dtsi l.501 and l.504)
+	s4 {
 		regulator-min-microvolt = <1036000>;
 		regulator-max-microvolt = <2040000>;
-		status = "okay";
 	};
-	
-	// s7 TODO : VDD_MX for CPU clock, MSS and WLAN (cf msm8953.dtsi l.893, l.1967 and l.2149)
 
-	l1 { // unused
+	s5 {
+		regulator-min-microvolt = <1036000>;
+		regulator-max-microvolt = <2040000>;
+	};
+
+	l1 {
 		regulator-min-microvolt = <975000>;
 		regulator-max-microvolt = <1050000>;
-		status = "okay";
 	};
 
-	l2 { // unused
+	l2 {
 		regulator-min-microvolt = <975000>;
 		regulator-max-microvolt = <1175000>;
-		status = "okay";
 	};
 
-	l3 { // USB (and ssphy => USB too) and mdss_dsi (cf msm8953.dtsi l.1800, l.1925 and msm8953-mdss.dtsi l.222)
+	l3 {
 		regulator-min-microvolt = <925000>;
 		regulator-max-microvolt = <925000>;
-		status = "okay";
 	};
 
-	l5 { // WLAN and Audio (cf msm8953.dtsi l.2151, l.2155 and msm8953-audio.dtsi l.134 and l.505)
+	l5 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
-		status = "okay";
 	};
 
-	l6 { // mdss_dsi0/1 (cf msm8953-mdss.dtsi l.310 and l.357)
+	l6 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
-		status = "okay";
 	};
 
-	l7 { // USB, ssphy, mss, pronto, WLAN (cf msm8953.dtsi l.1801, l.1926, l.1969, l.2048 and l.2152)
+	l7 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1900000>;
-		status = "okay";
 	};
 
-	l8 { // unused
+	l8 {
 		regulator-min-microvolt = <2900000>;
 		regulator-max-microvolt = <2900000>;
-		status = "okay";
 	};
 
-	l9 { // WLAN (cf msm8953.dtsi l.2154)
+	l9 {
 		regulator-min-microvolt = <3000000>;
 		regulator-max-microvolt = <3300000>;
-		status = "okay";
 	};
 
-	l10 { // unused
+	l10 {
 		regulator-min-microvolt = <2800000>;
 		regulator-max-microvolt = <3000000>;
-		status = "okay";
 	};
 
-	l11 { // unused
+	l11 {
 		regulator-min-microvolt = <2950000>;
 		regulator-max-microvolt = <2950000>;
-		status = "okay";
 	};
 
-	l12 { // unused
+	l12 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <2950000>;
-		status = "okay";
 	};
 
-	l13 { // USB and Audio (cf msm8953.dtsi l.1802 and msm8953-audio.dtsi l.436 and l.513)
+	l13 {
 		regulator-min-microvolt = <3125000>;
 		regulator-max-microvolt = <3125000>;
-		status = "okay";
 	};
 
-	l16 { // unused
+	l16 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
-		status = "okay";
 	};
 
-	l17 { // mdss_dsi0/1 (cd msm8953-mdss.dtsi l.309 and l.356)
+	l17 {
 		regulator-min-microvolt = <2850000>;
 		regulator-max-microvolt = <2850000>;
-		status = "okay";
 	};
 
-	l19 { // WLAN (cf msm8953.dtsi l.2153)
+	l19 {
 		regulator-min-microvolt = <1200000>;
 		regulator-max-microvolt = <1350000>;
-		status = "okay";
 	};
 
-	l22 { // unused
+	l22 {
 		regulator-min-microvolt = <2800000>;
 		regulator-max-microvolt = <2800000>;
-		status = "okay";
 	};
 
-	l23 { // unused
+	l23 {
 		regulator-min-microvolt = <975000>;
 		regulator-max-microvolt = <1225000>;
-		status = "okay";
 	};
 };
-
-/*
-&framebuffer {
-	status = "okay";
-
-	width = <1080>;
-	height = <2160>;
-	stride = <(1080 * 3)>;
-};
-*/
