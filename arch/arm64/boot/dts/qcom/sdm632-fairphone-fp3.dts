@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2021, Luca Weiss <luca@z3ntu.xyz>
+ */
 /dts-v1/;
-
-#include "sdm632.dtsi"
-#include "pm8953.dtsi"
 
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/regulator/qcom,rpm-smd-regulator.h>
+#include "msm8953-pm8953.dtsi"
 
 / {
 	model = "Fairphone 3";
@@ -94,14 +96,12 @@
 	s3 { // CSI / Camera (cf msm8953-mdss.dtsi l.221 and msm8953-camera.dtsi)
 		regulator-min-microvolt = <984000>;
 		regulator-max-microvolt = <1240000>;
-		qcom,init-voltage = <984000>;
 		status = "okay";
 	};
 
 	s4 { // Audio (cf msm8953-audio.dtsi l.501 and l.504)
 		regulator-min-microvolt = <1036000>;
 		regulator-max-microvolt = <2040000>;
-		qcom,init-voltage = <1036000>;
 		status = "okay";
 	};
 	
@@ -110,119 +110,102 @@
 	l1 { // unused
 		regulator-min-microvolt = <975000>;
 		regulator-max-microvolt = <1050000>;
-		qcom,init-voltage = <975000>;
 		status = "okay";
 	};
 
 	l2 { // unused
 		regulator-min-microvolt = <975000>;
 		regulator-max-microvolt = <1175000>;
-		qcom,init-voltage = <975000>;
 		status = "okay";
 	};
 
 	l3 { // USB (and ssphy => USB too) and mdss_dsi (cf msm8953.dtsi l.1800, l.1925 and msm8953-mdss.dtsi l.222)
 		regulator-min-microvolt = <925000>;
 		regulator-max-microvolt = <925000>;
-		qcom,init-voltage = <925000>;
 		status = "okay";
 	};
 
 	l5 { // WLAN and Audio (cf msm8953.dtsi l.2151, l.2155 and msm8953-audio.dtsi l.134 and l.505)
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
-		qcom,init-voltage = <1800000>;
 		status = "okay";
 	};
 
 	l6 { // mdss_dsi0/1 (cf msm8953-mdss.dtsi l.310 and l.357)
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
-		qcom,init-voltage = <1800000>;
 		status = "okay";
 	};
 
 	l7 { // USB, ssphy, mss, pronto, WLAN (cf msm8953.dtsi l.1801, l.1926, l.1969, l.2048 and l.2152)
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1900000>;
-		qcom,init-voltage = <1800000>;
 		status = "okay";
 	};
 
 	l8 { // unused
 		regulator-min-microvolt = <2900000>;
 		regulator-max-microvolt = <2900000>;
-		qcom,init-voltage = <2900000>;
 		status = "okay";
 	};
 
 	l9 { // WLAN (cf msm8953.dtsi l.2154)
 		regulator-min-microvolt = <3000000>;
 		regulator-max-microvolt = <3300000>;
-		qcom,init-voltage = <3000000>;
 		status = "okay";
 	};
 
 	l10 { // unused
 		regulator-min-microvolt = <2800000>;
 		regulator-max-microvolt = <3000000>;
-		qcom,init-voltage = <2800000>;
 		status = "okay";
 	};
 
 	l11 { // unused
 		regulator-min-microvolt = <2950000>;
 		regulator-max-microvolt = <2950000>;
-		qcom,init-voltage = <2950000>;
 		status = "okay";
 	};
 
 	l12 { // unused
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <2950000>;
-		qcom,init-voltage = <1800000>;
 		status = "okay";
 	};
 
 	l13 { // USB and Audio (cf msm8953.dtsi l.1802 and msm8953-audio.dtsi l.436 and l.513)
 		regulator-min-microvolt = <3125000>;
 		regulator-max-microvolt = <3125000>;
-		qcom,init-voltage = <3125000>;
 		status = "okay";
 	};
 
 	l16 { // unused
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
-		qcom,init-voltage = <1800000>;
 		status = "okay";
 	};
 
 	l17 { // mdss_dsi0/1 (cd msm8953-mdss.dtsi l.309 and l.356)
 		regulator-min-microvolt = <2850000>;
 		regulator-max-microvolt = <2850000>;
-		qcom,init-voltage = <2850000>;
 		status = "okay";
 	};
 
 	l19 { // WLAN (cf msm8953.dtsi l.2153)
 		regulator-min-microvolt = <1200000>;
 		regulator-max-microvolt = <1350000>;
-		qcom,init-voltage = <1200000>;
 		status = "okay";
 	};
 
 	l22 { // unused
 		regulator-min-microvolt = <2800000>;
 		regulator-max-microvolt = <2800000>;
-		qcom,init-voltage = <2800000>;
 		status = "okay";
 	};
 
 	l23 { // unused
 		regulator-min-microvolt = <975000>;
 		regulator-max-microvolt = <1225000>;
-		qcom,init-voltage = <975000>;
 		status = "okay";
 	};
 };
