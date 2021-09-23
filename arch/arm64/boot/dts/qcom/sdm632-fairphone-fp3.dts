@@ -20,10 +20,6 @@
 	};
 
 	chosen {
-		//#address-cells = <2>;
-		//#size-cells = <2>;
-		//ranges;
-
 		stdout-path = "serial0:115200n8";
 
 		framebuffer0: framebuffer@83401000 {
@@ -33,7 +29,6 @@
 			height = <2160>;
 			stride = <(1080 * 3)>;
 			format = "r8g8b8";
-			//format = "a8r8g8b8";
 		};
 	};
 
