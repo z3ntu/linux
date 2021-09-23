@@ -52,13 +52,13 @@
 
 &msmgpio {
 	/*
-	 * 0-3: ???
+	 * 0-3: unused but protected by TZ
 	 * 135-138: fingerprint reader (SPI)
 	 */
 	gpio-reserved-ranges = <0 4>, <135 4>;
 };
 
-&uart_0 {
+&pronto {
 	status = "okay";
 };
 
@@ -77,10 +77,6 @@
 	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
 
 	non-removable; // SD card behind battery so non-removable
-};
-
-&usb3 {
-	status = "okay";
 };
 
 &spmi_regulators {
@@ -193,4 +189,12 @@
 		regulator-min-microvolt = <975000>;
 		regulator-max-microvolt = <1225000>;
 	};
+};
+
+&uart_0 {
+	status = "okay";
+};
+
+&usb3 {
+	status = "okay";
 };
