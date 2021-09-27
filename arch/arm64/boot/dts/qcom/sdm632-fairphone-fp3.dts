@@ -6,6 +6,7 @@
 
 #include "sdm632.dtsi"
 #include "pm8953.dtsi"
+#include "pmi632.dtsi"
 
 / {
 	model = "Fairphone 3";
