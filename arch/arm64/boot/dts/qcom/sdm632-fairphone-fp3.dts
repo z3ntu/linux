@@ -22,6 +22,7 @@
 	chosen {
 		stdout-path = "serial0:115200n8";
 
+/*
 		framebuffer0: framebuffer@83401000 {
 			compatible = "simple-framebuffer";
 			reg = <0x0 0x90001000 0x0 (2160 * 1080 * 3)>;
@@ -30,6 +31,7 @@
 			stride = <(1080 * 3)>;
 			format = "r8g8b8";
 		};
+*/
 	};
 
 	gpio-keys {
@@ -48,6 +50,26 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
+};
+
+&dsi0 {
+	panel@0 {
+		compatible = "djn,hx83112b";
+		reg = <0>;
+
+		reset-gpios = <&msmgpio 61 GPIO_ACTIVE_LOW>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi0_out>;
+			};
+		};
+	};
+};
+
+&dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
 };
 
 &msmgpio {
