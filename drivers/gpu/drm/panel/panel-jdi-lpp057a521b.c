@@ -15,16 +15,16 @@
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>
 
-struct djn_hx83112b {
+struct jdi_lpp057a521b {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
 	struct gpio_desc *reset_gpio;
 	bool prepared;
 };
 
-static inline struct djn_hx83112b *to_djn_hx83112b(struct drm_panel *panel)
+static inline struct jdi_lpp057a521b *to_jdi_lpp057a521b(struct drm_panel *panel)
 {
-	return container_of(panel, struct djn_hx83112b, panel);
+	return container_of(panel, struct jdi_lpp057a521b, panel);
 }
 
 #define dsi_dcs_write_seq(dsi, seq...) do {				\
@@ -35,7 +35,7 @@ static inline struct djn_hx83112b *to_djn_hx83112b(struct drm_panel *panel)
 			return ret;					\
 	} while (0)
 
-static void djn_hx83112b_reset(struct djn_hx83112b *ctx)
+static void jdi_lpp057a521b_reset(struct jdi_lpp057a521b *ctx)
 {
 	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
 	usleep_range(10000, 11000);
@@ -45,7 +45,7 @@ static void djn_hx83112b_reset(struct djn_hx83112b *ctx)
 	usleep_range(10000, 11000);
 }
 
-static int djn_hx83112b_on(struct djn_hx83112b *ctx)
+static int jdi_lpp057a521b_on(struct jdi_lpp057a521b *ctx)
 {
 	struct mipi_dsi_device *dsi = ctx->dsi;
 	struct device *dev = &dsi->dev;
@@ -210,7 +210,7 @@ static int djn_hx83112b_on(struct djn_hx83112b *ctx)
 	return 0;
 }
 
-static int djn_hx83112b_off(struct djn_hx83112b *ctx)
+static int jdi_lpp057a521b_off(struct jdi_lpp057a521b *ctx)
 {
 	struct mipi_dsi_device *dsi = ctx->dsi;
 	struct device *dev = &dsi->dev;
@@ -233,18 +233,18 @@ static int djn_hx83112b_off(struct djn_hx83112b *ctx)
 	return 0;
 }
 
-static int djn_hx83112b_prepare(struct drm_panel *panel)
+static int jdi_lpp057a521b_prepare(struct drm_panel *panel)
 {
-	struct djn_hx83112b *ctx = to_djn_hx83112b(panel);
+	struct jdi_lpp057a521b *ctx = to_jdi_lpp057a521b(panel);
 	struct device *dev = &ctx->dsi->dev;
 	int ret;
 
 	if (ctx->prepared)
 		return 0;
 
-	djn_hx83112b_reset(ctx);
+	jdi_lpp057a521b_reset(ctx);
 
-	ret = djn_hx83112b_on(ctx);
+	ret = jdi_lpp057a521b_on(ctx);
 	if (ret < 0) {
 		dev_err(dev, "Failed to initialize panel: %d\n", ret);
 		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
@@ -255,16 +255,16 @@ static int djn_hx83112b_prepare(struct drm_panel *panel)
 	return 0;
 }
 
-static int djn_hx83112b_unprepare(struct drm_panel *panel)
+static int jdi_lpp057a521b_unprepare(struct drm_panel *panel)
 {
-	struct djn_hx83112b *ctx = to_djn_hx83112b(panel);
+	struct jdi_lpp057a521b *ctx = to_jdi_lpp057a521b(panel);
 	struct device *dev = &ctx->dsi->dev;
 	int ret;
 
 	if (!ctx->prepared)
 		return 0;
 
-	ret = djn_hx83112b_off(ctx);
+	ret = jdi_lpp057a521b_off(ctx);
 	if (ret < 0)
 		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
@@ -274,7 +274,7 @@ static int djn_hx83112b_unprepare(struct drm_panel *panel)
 	return 0;
 }
 
-static const struct drm_display_mode djn_hx83112b_mode = {
+static const struct drm_display_mode jdi_lpp057a521b_mode = {
 	.clock = (1080 + 40 + 4 + 12) * (2160 + 32 + 2 + 2) * 60 / 1000,
 	.hdisplay = 1080,
 	.hsync_start = 1080 + 40,
@@ -288,12 +288,12 @@ static const struct drm_display_mode djn_hx83112b_mode = {
 	.height_mm = 128,
 };
 
-static int djn_hx83112b_get_modes(struct drm_panel *panel,
+static int jdi_lpp057a521b_get_modes(struct drm_panel *panel,
 				  struct drm_connector *connector)
 {
 	struct drm_display_mode *mode;
 
-	mode = drm_mode_duplicate(connector->dev, &djn_hx83112b_mode);
+	mode = drm_mode_duplicate(connector->dev, &jdi_lpp057a521b_mode);
 	if (!mode)
 		return -ENOMEM;
 
@@ -307,13 +307,13 @@ static int djn_hx83112b_get_modes(struct drm_panel *panel,
 	return 1;
 }
 
-static const struct drm_panel_funcs djn_hx83112b_panel_funcs = {
-	.prepare = djn_hx83112b_prepare,
-	.unprepare = djn_hx83112b_unprepare,
-	.get_modes = djn_hx83112b_get_modes,
+static const struct drm_panel_funcs jdi_lpp057a521b_panel_funcs = {
+	.prepare = jdi_lpp057a521b_prepare,
+	.unprepare = jdi_lpp057a521b_unprepare,
+	.get_modes = jdi_lpp057a521b_get_modes,
 };
 
-static int djn_hx83112b_bl_update_status(struct backlight_device *bl)
+static int jdi_lpp057a521b_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
 	u16 brightness = backlight_get_brightness(bl);
@@ -332,7 +332,7 @@ static int djn_hx83112b_bl_update_status(struct backlight_device *bl)
 
 // TODO: Check if /sys/class/backlight/.../actual_brightness actually returns
 // correct values. If not, remove this function.
-static int djn_hx83112b_bl_get_brightness(struct backlight_device *bl)
+static int jdi_lpp057a521b_bl_get_brightness(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
 	u16 brightness;
@@ -349,13 +349,13 @@ static int djn_hx83112b_bl_get_brightness(struct backlight_device *bl)
 	return brightness;
 }
 
-static const struct backlight_ops djn_hx83112b_bl_ops = {
-	.update_status = djn_hx83112b_bl_update_status,
-	.get_brightness = djn_hx83112b_bl_get_brightness,
+static const struct backlight_ops jdi_lpp057a521b_bl_ops = {
+	.update_status = jdi_lpp057a521b_bl_update_status,
+	.get_brightness = jdi_lpp057a521b_bl_get_brightness,
 };
 
 static struct backlight_device *
-djn_hx83112b_create_backlight(struct mipi_dsi_device *dsi)
+jdi_lpp057a521b_create_backlight(struct mipi_dsi_device *dsi)
 {
 	struct device *dev = &dsi->dev;
 	const struct backlight_properties props = {
@@ -365,13 +365,13 @@ djn_hx83112b_create_backlight(struct mipi_dsi_device *dsi)
 	};
 
 	return devm_backlight_device_register(dev, dev_name(dev), dev, dsi,
-					      &djn_hx83112b_bl_ops, &props);
+					      &jdi_lpp057a521b_bl_ops, &props);
 }
 
-static int djn_hx83112b_probe(struct mipi_dsi_device *dsi)
+static int jdi_lpp057a521b_probe(struct mipi_dsi_device *dsi)
 {
 	struct device *dev = &dsi->dev;
-	struct djn_hx83112b *ctx;
+	struct jdi_lpp057a521b *ctx;
 	int ret;
 
 	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
@@ -391,10 +391,10 @@ static int djn_hx83112b_probe(struct mipi_dsi_device *dsi)
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO_BURST |
 			  MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_LPM;
 
-	drm_panel_init(&ctx->panel, dev, &djn_hx83112b_panel_funcs,
+	drm_panel_init(&ctx->panel, dev, &jdi_lpp057a521b_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 
-	ctx->panel.backlight = djn_hx83112b_create_backlight(dsi);
+	ctx->panel.backlight = jdi_lpp057a521b_create_backlight(dsi);
 	if (IS_ERR(ctx->panel.backlight))
 		return dev_err_probe(dev, PTR_ERR(ctx->panel.backlight),
 				     "Failed to create backlight\n");
@@ -411,9 +411,9 @@ static int djn_hx83112b_probe(struct mipi_dsi_device *dsi)
 	return 0;
 }
 
-static int djn_hx83112b_remove(struct mipi_dsi_device *dsi)
+static int jdi_lpp057a521b_remove(struct mipi_dsi_device *dsi)
 {
-	struct djn_hx83112b *ctx = mipi_dsi_get_drvdata(dsi);
+	struct jdi_lpp057a521b *ctx = mipi_dsi_get_drvdata(dsi);
 	int ret;
 
 	ret = mipi_dsi_detach(dsi);
@@ -425,22 +425,22 @@ static int djn_hx83112b_remove(struct mipi_dsi_device *dsi)
 	return 0;
 }
 
-static const struct of_device_id djn_hx83112b_of_match[] = {
-	{ .compatible = "djn,hx83112b" }, // FIXME
+static const struct of_device_id jdi_lpp057a521b_of_match[] = {
+	{ .compatible = "jdi,lpp057a521b" }, // FIXME
 	{ /* sentinel */ }
 };
-MODULE_DEVICE_TABLE(of, djn_hx83112b_of_match);
+MODULE_DEVICE_TABLE(of, jdi_lpp057a521b_of_match);
 
-static struct mipi_dsi_driver djn_hx83112b_driver = {
-	.probe = djn_hx83112b_probe,
-	.remove = djn_hx83112b_remove,
+static struct mipi_dsi_driver jdi_lpp057a521b_driver = {
+	.probe = jdi_lpp057a521b_probe,
+	.remove = jdi_lpp057a521b_remove,
 	.driver = {
-		.name = "panel-djn-hx83112b",
-		.of_match_table = djn_hx83112b_of_match,
+		.name = "panel-jdi-lpp057a521b",
+		.of_match_table = jdi_lpp057a521b_of_match,
 	},
 };
-module_mipi_dsi_driver(djn_hx83112b_driver);
+module_mipi_dsi_driver(jdi_lpp057a521b_driver);
 
 MODULE_AUTHOR("linux-mdss-dsi-panel-driver-generator <fix@me>"); // FIXME
-MODULE_DESCRIPTION("DRM driver for djn hx83112b 1080p cmd mode dsi panel");
+MODULE_DESCRIPTION("DRM driver for JDI LPP057A521B 1080p cmd mode dsi panel");
 MODULE_LICENSE("GPL v2");

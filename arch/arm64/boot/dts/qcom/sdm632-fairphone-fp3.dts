@@ -54,7 +54,7 @@
 
 &dsi0 {
 	panel@0 {
-		compatible = "djn,hx83112b";
+		compatible = "jdi,lpp057a521b";
 		reg = <0>;
 
 		reset-gpios = <&msmgpio 61 GPIO_ACTIVE_LOW>;
