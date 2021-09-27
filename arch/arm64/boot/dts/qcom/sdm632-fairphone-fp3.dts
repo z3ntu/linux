@@ -80,7 +80,19 @@
 &i2c_3 {
 	status = "okay";
 
-	/* Himax touchscreen @ 0x48 */
+	touchscreen@48 {
+		compatible = "himax,hxcommon";
+		reg = <0x48>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <65 0x2008>;
+		vcc_i2c-supply = <&pm8953_l6>;
+		vdd-ana-supply = <&pm8953_l10>;
+		himax,display-coords = <0 1080 0 2160>;
+		himax,panel-coords = <0 1080 0 2160>;
+		himax,irq-gpio = <&tlmm 65 0x2008>;
+		himax,rst-gpio = <&tlmm 64 0x00>;
+		report_type = <1>;
+	};
 };
 
 &iris {
