@@ -73,6 +73,24 @@
 	remote-endpoint = <&panel_in>;
 };
 
+&i2c_3 {
+	status = "okay";
+
+	touchscreen@48 {
+		compatible = "himax,hxcommon";
+		reg = <0x48>;
+		interrupt-parent = <&msmgpio>;
+		interrupts = <65 0x2008>;
+		vcc_i2c-supply = <&pm8953_l6>;
+		vdd-ana-supply = <&pm8953_l10>;
+		himax,display-coords = <0 1080 0 2160>;
+		himax,panel-coords = <0 1080 0 2160>;
+		himax,irq-gpio = <&msmgpio 65 0x2008>;
+		himax,rst-gpio = <&msmgpio 64 0x00>;
+		report_type = <1>;
+	};
+};
+
 &msmgpio {
 	/*
 	 * 0-3: unused but protected by TZ
