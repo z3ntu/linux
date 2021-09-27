@@ -1005,11 +1005,11 @@ mem_alloc_fail:
 void himax_read_file_func(char *pFilePath, u8 *pBuf, u16 nLength)
 {
     struct file *pFile = NULL;
-    mm_segment_t old_fs;
+    //mm_segment_t old_fs;
     ssize_t nReadBytes = 0;
 
-    old_fs = get_fs();
-    set_fs(get_ds());
+    //old_fs = get_fs();
+    //set_fs(get_ds());
 
     pFile = filp_open(pFilePath, O_RDONLY, 0);
 
@@ -1021,7 +1021,7 @@ void himax_read_file_func(char *pFilePath, u8 *pBuf, u16 nLength)
     pFile->f_op->llseek(pFile, 0, SEEK_SET);
     nReadBytes = pFile->f_op->read(pFile, pBuf, nLength, &pFile->f_pos);
 
-    set_fs(old_fs);
+    //set_fs(old_fs);
 
     filp_close(pFile, NULL);
 
