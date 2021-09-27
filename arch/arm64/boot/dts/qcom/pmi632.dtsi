@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: BSD-3-Clause
+#include <dt-bindings/spmi/spmi.h>
+
+&spmi_bus {
+	pmic@2 {
+		compatible = "qcom,pmi632", "qcom,spmi-pmic";
+		reg = <2 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+
+	pmic@3 {
+		compatible = "qcom,pmi632", "qcom,spmi-pmic";
+		reg = <3 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pmi632_vib: qcom,vibrator@5700 {
+			compatible = "qcom,qpnp-vibrator-ldo";
+			reg = <0x5700 0x100>;
+			qcom,vib-ldo-volt-uv = <3000000>;
+			qcom,disable-overdrive;
+		};
+	};
+};
