@@ -1203,6 +1203,25 @@ static const struct lpg_data pm8994_lpg_data = {
 	},
 };
 
+static const struct lpg_data pmi632_lpg_data = {
+	//.lut_base = 0xb000,
+	//.lut_size = 24, // FIXME doesn't use LUT for pattern but SDAM qcom,spmi-sdam?
+
+	.triled_base = 0xd000,
+	.triled_has_atc_ctl = false, // seems to be false?
+	.triled_has_src_sel = false, // seems to be false?
+
+	.pwm_9bit_mask = BIT(4), // TODO
+
+	.num_channels = 3,
+	.channels = (struct lpg_channel_data[]) {
+		// todo .triled_mask?
+		{ .base = 0xb300, .triled_mask = BIT(5) },
+		{ .base = 0xb400, .triled_mask = BIT(6) },
+		{ .base = 0xb500, .triled_mask = BIT(7) },
+	},
+};
+
 static const struct lpg_data pmi8994_lpg_data = {
 	.lut_base = 0xb000,
 	.lut_size = 24,
@@ -1281,6 +1300,7 @@ static const struct of_device_id lpg_of_table[] = {
 	{ .compatible = "qcom,pm8916-pwm", .data = &pm8916_pwm_data },
 	{ .compatible = "qcom,pm8941-lpg", .data = &pm8941_lpg_data },
 	{ .compatible = "qcom,pm8994-lpg", .data = &pm8994_lpg_data },
+	{ .compatible = "qcom,pmi632-lpg", .data = &pmi632_lpg_data },
 	{ .compatible = "qcom,pmi8994-lpg", .data = &pmi8994_lpg_data },
 	{ .compatible = "qcom,pmi8998-lpg", .data = &pmi8998_lpg_data },
 	{ .compatible = "qcom,pmc8180c-lpg", .data = &pm8150l_lpg_data },
