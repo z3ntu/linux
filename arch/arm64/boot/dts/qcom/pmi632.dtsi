@@ -161,5 +161,12 @@
 
 			status = "disabled";
 		};
+
+		pmi632_vib: qcom,vibrator@5700 {
+			compatible = "qcom,qpnp-vibrator-ldo";
+			reg = <0x5700>;
+			qcom,vib-ldo-volt-uv = <3000000>;
+			qcom,disable-overdrive;
+		};
 	};
 };
