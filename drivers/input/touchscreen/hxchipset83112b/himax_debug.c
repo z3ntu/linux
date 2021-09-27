@@ -53,7 +53,7 @@ int g_min_self = 255;
 int g_self_test_entered = 0;
 #endif
 
-struct timespec timeStart, timeEnd, timeDelta;
+struct timespec64 timeStart, timeEnd, timeDelta;
 int g_switch_mode = 0;
 extern void himax_idle_mode(struct i2c_client *client,int disable);
 extern int himax_switch_mode(struct i2c_client *client,int mode);
@@ -156,11 +156,10 @@ static ssize_t himax_ito_test_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_ito_test_ops =
+static struct proc_ops himax_proc_ito_test_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_ito_test_read,
-    .write = himax_ito_test_write,
+    .proc_read = himax_ito_test_read,
+    .proc_write = himax_ito_test_write,
 };
 #endif
 
@@ -194,10 +193,9 @@ static ssize_t himax_CRC_test_read(struct file *file, char *buf,
     return ret;
 }
 
-static struct file_operations himax_proc_CRC_test_ops =
+static struct proc_ops himax_proc_CRC_test_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_CRC_test_read,
+    .proc_read = himax_CRC_test_read,
 };
 
 static ssize_t himax_vendor_read(struct file *file, char *buf,
@@ -266,10 +264,9 @@ static ssize_t himax_vendor_read(struct file *file, char *buf,
     return count;
 }
 
-static struct file_operations himax_proc_vendor_ops =
+static struct proc_ops himax_proc_vendor_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_vendor_read,
+    .proc_read = himax_vendor_read,
 };
 
 static ssize_t himax_attn_read(struct file *file, char *buf,
@@ -297,10 +294,9 @@ static ssize_t himax_attn_read(struct file *file, char *buf,
 }
 
 
-static struct file_operations himax_proc_attn_ops =
+static struct proc_ops himax_proc_attn_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_attn_read,
+    .proc_read = himax_attn_read,
 };
 
 static ssize_t himax_int_en_read(struct file *file, char *buf,
@@ -369,11 +365,10 @@ static ssize_t himax_int_en_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_int_en_ops =
+static struct proc_ops himax_proc_int_en_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_int_en_read,
-    .write = himax_int_en_write,
+    .proc_read = himax_int_en_read,
+    .proc_write = himax_int_en_write,
 };
 
 static ssize_t himax_layout_read(struct file *file, char *buf,
@@ -460,11 +455,10 @@ static ssize_t himax_layout_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_layout_ops =
+static struct proc_ops himax_proc_layout_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_layout_read,
-    .write = himax_layout_write,
+    .proc_read = himax_layout_read,
+    .proc_write = himax_layout_write,
 };
 
 static ssize_t himax_debug_level_read(struct file *file, char *buf,
@@ -553,11 +547,10 @@ static ssize_t himax_debug_level_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_debug_level_ops =
+static struct proc_ops himax_proc_debug_level_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_debug_level_read,
-    .write = himax_debug_level_write,
+    .proc_read = himax_debug_level_read,
+    .proc_write = himax_debug_level_write,
 };
 
 #ifdef HX_TP_PROC_REGISTER
@@ -733,11 +726,10 @@ static ssize_t himax_proc_register_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_register_ops =
+static struct proc_ops himax_proc_register_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_proc_register_read,
-    .write = himax_proc_register_write,
+    .proc_read = himax_proc_register_read,
+    .proc_write = himax_proc_register_write,
 };
 #endif
 
@@ -923,13 +915,13 @@ void himax_log_touch_int_devation(int touched)
 
     if(touched == HX_FINGER_ON)
     {
-        getnstimeofday(&timeStart);
+        ktime_get_real_ts64(&timeStart);
         /* I(" Irq start time = %ld.%06ld s\n",
 		timeStart.tv_sec, timeStart.tv_nsec/1000); */
     }
     else if(touched == HX_FINGER_LEAVE)
     {
-        getnstimeofday(&timeEnd);
+        ktime_get_real_ts64(&timeEnd);
         timeDelta.tv_nsec = (timeEnd.tv_sec*1000000000+timeEnd.tv_nsec) - (timeStart.tv_sec*1000000000+timeStart.tv_nsec);
         /*I("Irq finish time = %ld.%06ld s\n",
 		timeEnd.tv_sec, timeEnd.tv_nsec/1000);*/
@@ -1029,10 +1021,9 @@ void himax_get_self_edge(void)
 }
 
 /* print first step which is row */
-static struct file_operations himax_proc_diag_arrange_ops =
+static struct proc_ops himax_proc_diag_arrange_ops =
 {
-    .owner = THIS_MODULE,
-    .write = himax_diag_arrange_write,
+    .proc_write = himax_diag_arrange_write,
 };
 static void print_state_info(struct seq_file *s)
 {
@@ -1695,12 +1686,11 @@ static ssize_t himax_diag_write(struct file *filp, const char __user *buff, size
     return len;
 }
 
-static struct file_operations himax_proc_diag_ops =
+static struct proc_ops himax_proc_diag_ops =
 {
-    .owner = THIS_MODULE,
-    .open = himax_diag_proc_open,
-    .read = seq_read,
-    .write = himax_diag_write,
+    .proc_open = himax_diag_proc_open,
+    .proc_read = seq_read,
+    .proc_write = himax_diag_write,
 };
 #endif
 
@@ -1734,10 +1724,9 @@ static ssize_t himax_reset_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_reset_ops =
+static struct proc_ops himax_proc_reset_ops =
 {
-    .owner = THIS_MODULE,
-    .write = himax_reset_write,
+    .proc_write = himax_reset_write,
 };
 #endif
 
@@ -1939,7 +1928,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
                                  size_t len, loff_t *pos)
 {
     struct file* filp = NULL;
-    mm_segment_t oldfs;
+    //mm_segment_t oldfs;
     int result = 0;
     char fileName[128];
     char buf[80] = {0};
@@ -2024,8 +2013,8 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
 	    inode = filp->f_inode;
 	    file_len = inode->i_size;
 /*[Arima_7947][allen_yu] 20171121 end*/
-        oldfs = get_fs();
-        set_fs(get_ds());
+        //oldfs = get_fs();
+        //set_fs(get_ds());
 
 /*[Arima_7947][allen_yu] Upgrade himax fw to CID101 and modify node of manual update 20171121 begin*/
         // read the latest firmware binary file
@@ -2038,7 +2027,7 @@ static ssize_t himax_debug_write(struct file *file, const char *buff,
         }
 /*[Arima_7947][allen_yu] 20171121 end*/
 
-        set_fs(oldfs);
+        //set_fs(oldfs);
         filp_close(filp, NULL);
 
         I("%s: FW image,len %d: %02X, %02X, %02X, %02X\n", __func__, result, upgrade_fw[0], upgrade_fw[1], upgrade_fw[2], upgrade_fw[3]);
@@ -2191,11 +2180,10 @@ firmware_upgrade_done:
     return len;
 }
 
-static struct file_operations himax_proc_debug_ops =
+static struct proc_ops himax_proc_debug_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_debug_read,
-    .write = himax_debug_write,
+    .proc_read = himax_debug_read,
+    .proc_write = himax_debug_write,
 };
 
 static ssize_t himax_proc_FW_debug_read(struct file *file, char *buf,
@@ -2245,10 +2233,9 @@ static ssize_t himax_proc_FW_debug_read(struct file *file, char *buf,
     return ret;
 }
 
-static struct file_operations himax_proc_fw_debug_ops =
+static struct proc_ops himax_proc_fw_debug_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_proc_FW_debug_read,
+    .proc_read = himax_proc_FW_debug_read,
 };
 
 static ssize_t himax_proc_DD_debug_read(struct file *file, char *buf,
@@ -2329,11 +2316,10 @@ static ssize_t himax_proc_DD_debug_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_dd_debug_ops =
+static struct proc_ops himax_proc_dd_debug_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_proc_DD_debug_read,
-    .write = himax_proc_DD_debug_write,
+    .proc_read = himax_proc_DD_debug_read,
+    .proc_write = himax_proc_DD_debug_write,
 };
 
 #endif
@@ -2635,11 +2621,10 @@ static ssize_t himax_proc_flash_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_flash_ops =
+static struct proc_ops himax_proc_flash_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_proc_flash_read,
-    .write = himax_proc_flash_write,
+    .proc_read = himax_proc_flash_read,
+    .proc_write = himax_proc_flash_write,
 };
 
 void himax_ts_flash_func(void)
@@ -2754,10 +2739,9 @@ static ssize_t himax_chip_self_test_store(struct device *dev,struct device_attri
 }
 */
 
-static struct file_operations himax_proc_self_test_ops =
+static struct proc_ops himax_proc_self_test_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_self_test_read,
+    .proc_read = himax_self_test_read,
 };
 #endif
 
@@ -2802,10 +2786,9 @@ static ssize_t himax_sense_on_off_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_sense_on_off_ops =
+static struct proc_ops himax_proc_sense_on_off_ops =
 {
-    .owner = THIS_MODULE,
-    .write = himax_sense_on_off_write,
+    .proc_write = himax_sense_on_off_write,
 };
 #endif
 
@@ -2867,11 +2850,10 @@ static ssize_t himax_HSEN_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_HSEN_ops =
+static struct proc_ops himax_proc_HSEN_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_HSEN_read,
-    .write = himax_HSEN_write,
+    .proc_read = himax_HSEN_read,
+    .proc_write = himax_HSEN_write,
 };
 #endif
 
@@ -2936,11 +2918,10 @@ static ssize_t himax_SMWP_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_SMWP_ops =
+static struct proc_ops himax_proc_SMWP_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_SMWP_read,
-    .write = himax_SMWP_write,
+    .proc_read = himax_SMWP_read,
+    .proc_write = himax_SMWP_write,
 };
 
 static ssize_t himax_GESTURE_read(struct file *file, char *buf,
@@ -3000,11 +2981,10 @@ static ssize_t himax_GESTURE_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_Gesture_ops =
+static struct proc_ops himax_proc_Gesture_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_GESTURE_read,
-    .write = himax_GESTURE_write,
+    .proc_read = himax_GESTURE_read,
+    .proc_write = himax_GESTURE_write,
 };
 #endif
 
@@ -3058,11 +3038,10 @@ static ssize_t himax_esd_cnt_write(struct file *file, const char *buff,
     return len;
 }
 
-static struct file_operations himax_proc_esd_cnt_ops =
+static struct proc_ops himax_proc_esd_cnt_ops =
 {
-    .owner = THIS_MODULE,
-    .read = himax_esd_cnt_read,
-    .write = himax_esd_cnt_write,
+    .proc_read = himax_esd_cnt_read,
+    .proc_write = himax_esd_cnt_write,
 };
 #endif
 

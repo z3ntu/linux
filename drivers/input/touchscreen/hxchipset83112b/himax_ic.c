@@ -2615,6 +2615,7 @@ int cal_data_len(int raw_cnt_rmd, int HX_MAX_PT, int raw_cnt_max)
     return RawDataLen;
 }
 
+#if defined(HX_TP_PROC_DIAG)
 bool diag_check_sum( struct himax_report_data *hx_touch_data ) //return checksum value
 {
     uint16_t check_sum_cal = 0;
@@ -2677,6 +2678,7 @@ void diag_parse_raw_data(struct himax_report_data *hx_touch_data,int mul_num, in
     }
 
 }
+#endif
 uint8_t himax_read_DD_status(uint8_t *cmd_set, uint8_t *tmp_data)
 {
     int cnt = 0;

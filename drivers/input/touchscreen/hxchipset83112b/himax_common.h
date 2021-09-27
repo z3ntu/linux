@@ -16,9 +16,9 @@
 #ifndef HIMAX_COMMON_H
 #define HIMAX_COMMON_H
 
-#include <asm/segment.h>
-#include <asm/uaccess.h>
-#include <asm/atomic.h>
+//#include <asm/segment.h>
+//#include <asm/uaccess.h>
+//#include <asm/atomic.h>
 
 #include <linux/delay.h>
 #include <linux/i2c.h>
@@ -51,6 +51,7 @@
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
 #endif
+#include <linux/ktime.h>
 
 #ifdef CONFIG_OF
 #include <linux/of_gpio.h>
@@ -258,12 +259,12 @@ struct himax_report_data
     int event_size;
     uint8_t *hx_event_buf;
 #endif
-#if defined(HX_TP_PROC_DIAG)
+//#if defined(HX_TP_PROC_DIAG)
     int rawdata_size;
     uint8_t diag_cmd;
     uint8_t *hx_rawdata_buf;
     uint8_t rawdata_frame_size;
-#endif
+//#endif
 };
 
 struct himax_ts_data
