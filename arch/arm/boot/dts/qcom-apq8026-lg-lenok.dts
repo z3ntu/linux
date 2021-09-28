@@ -21,6 +21,10 @@
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
+
+	usb_vbus: extcon-usb-dummy {
+		compatible = "linux,extcon-usb-dummy";
+	};
 };
 
 &blsp1_i2c1 {
@@ -243,4 +247,18 @@
 			output-high;
 		};
 	};
+};
+
+&usb {
+	status = "okay";
+	//extcon = <&smbb>, <&usb_id>;
+	extcon = <&usb_vbus>;
+	dr_mode = "peripheral";
+};
+
+&usb_hs_phy {
+	//extcon = <&smbb>;
+	extcon = <&usb_vbus>;
+	v1p8-supply = <&pm8226_l10>;
+	v3p3-supply = <&pm8226_l20>;
 };
