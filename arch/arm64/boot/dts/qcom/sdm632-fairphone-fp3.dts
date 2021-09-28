@@ -5,7 +5,6 @@
 /dts-v1/;
 
 #include <dt-bindings/gpio/gpio.h>
-#include <dt-bindings/regulator/qcom,rpm-smd-regulator.h>
 #include "sdm632-pm8953.dtsi"
 #include "pmi632.dtsi"
 
