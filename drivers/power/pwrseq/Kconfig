@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0-only
+menuconfig PWRSEQ
+	bool "Power Sequencer drivers"
+	help
+	  Provides support for special power sequencing drivers. Power
+	  sequencer is an entity providing abstraced power on/power off/reset
+	  operations for the connected devices. Possible usages include MMC
+	  SDIO devices, some complex WiFi/BT chips, controlled USB hubs, etc.
+
+	  Say Y here to enable support for such devices.
+
+if PWRSEQ
+
+endif
