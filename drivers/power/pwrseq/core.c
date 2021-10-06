@@ -14,6 +14,7 @@
 #include <linux/of.h>
 #include <linux/pwrseq/consumer.h>
 #include <linux/pwrseq/driver.h>
+#include <linux/pwrseq/fallback.h>
 #include <linux/slab.h>
 
 #define	to_pwrseq(a)	(container_of((a), struct pwrseq, dev))
@@ -120,6 +121,8 @@ struct pwrseq * pwrseq_get(struct device *dev, const char *id)
 	struct pwrseq *pwrseq;
 
 	pwrseq = _of_pwrseq_get(dev, id);
+	if (pwrseq == NULL)
+		pwrseq = pwrseq_fallback_get(dev, id);
 	if (IS_ERR_OR_NULL(pwrseq))
 		return pwrseq;
 
