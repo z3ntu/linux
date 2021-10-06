@@ -68,6 +68,14 @@ static struct pwrseq *_of_pwrseq_get(struct device *dev, const char *id)
 
 	snprintf(prop_name, sizeof(prop_name), "%s-pwrseq", id);
 	ret = of_parse_phandle_with_args(dev->of_node, prop_name, "#pwrseq-cells", 0, &args);
+
+	/*
+	 * Parsing failed. Try locating old bindings for mmc-pwrseq, which did
+	 * not use #pwrseq-cells.
+	 */
+	if (ret == -EINVAL && !strcmp(id, "mmc"))
+		ret = of_parse_phandle_with_args(dev->of_node, prop_name, NULL, 0, &args);
+
 	if (ret == -ENOENT)
 		return NULL;
 	else if (ret < 0)
