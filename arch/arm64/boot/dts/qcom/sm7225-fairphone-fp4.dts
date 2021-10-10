@@ -39,15 +39,6 @@
 		ranges;
 
 		stdout-path = "serial0:115200n8";
-
-		framebuffer0: framebuffer@a000000 {
-			compatible = "simple-framebuffer";
-			reg = <0 0xa0000000 0 (2340 * 1080 * 4)>;
-			width = <1080>;
-			height = <2340>;
-			stride = <(1080 * 4)>;
-			format = "a8r8g8b8";
-		};
 	};
 
 	gpio-keys {
@@ -373,11 +364,19 @@
 	status = "okay";
 };
 
+&gmu {
+	status = "okay";
+};
+
 &gpi_dma0 {
 	status = "okay";
 };
 
 &gpi_dma1 {
+	status = "okay";
+};
+
+&gpu {
 	status = "okay";
 };
 
@@ -696,4 +695,35 @@
 	vdd-3.3-ch1-supply = <&vreg_l11e>;
 
 	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&dsi0 {
+	status = "okay";
+
+	panel@0 {
+		compatible = "mdss,hx83112a-auo";
+		reg = <0>;
+
+		//backlight = <&backlight>;
+		reset-gpios = <&pm6150l_gpio 9 GPIO_ACTIVE_LOW>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi0_out>;
+			};
+		};
+	};
+};
+
+&dsi0_phy {
+	status = "okay";
+};
+
+&dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
 };
