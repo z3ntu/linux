@@ -356,12 +356,11 @@ static ssize_t himax_self_test_write(struct file *filp, const char __user *buff,
 	return len;
 }
 
-static const struct file_operations himax_proc_self_test_ops = {
-	.owner = THIS_MODULE,
-	.open = himax_self_test_proc_open,
-	.read = seq_read,
-	.write = himax_self_test_write,
-	.release = seq_release,
+static const struct proc_ops himax_proc_self_test_ops = {
+	.proc_open = himax_self_test_proc_open,
+	.proc_read = seq_read,
+	.proc_write = himax_self_test_write,
+	.proc_release = seq_release,
 };
 
 #if defined(HX_HIGH_SENSE)
@@ -700,9 +699,8 @@ static ssize_t himax_vendor_read(struct file *file, char *buf,
 
 	return ret;
 }
-static const struct file_operations himax_proc_vendor_ops = {
-	.owner = THIS_MODULE,
-	.read = himax_vendor_read,
+static const struct proc_ops himax_proc_vendor_ops = {
+	.proc_read = himax_vendor_read,
 };
 
 int himax_common_proc_init(void)
