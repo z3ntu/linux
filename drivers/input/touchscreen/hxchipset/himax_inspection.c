@@ -1352,6 +1352,7 @@ static uint32_t himax_data_campare(uint8_t checktype, int *RAW,
 	case HX_ACT_IDLE_BPN_RAWDATA:
 	case HX_ACT_IDLE_NOISE:
 		block_num = ic_data->ic_adc_num;
+		fallthrough;
 	case HX_SORTING:
 	case HX_OPEN:
 	case HX_MICRO_OPEN:
@@ -2229,7 +2230,7 @@ static int himax_chip_self_test(struct seq_file *s, void *v)
 	uint8_t tmp_data[DATA_LEN_4] = {0x01, 0x00, 0x00, 0x00};
 	struct file *raw_file = NULL;
 	struct filename *vts_name = NULL;
-	mm_segment_t fs;
+	//mm_segment_t fs;
 	loff_t pos = 0;
 	uint32_t rslt = HX_INSP_OK;
 
@@ -2271,8 +2272,8 @@ static int himax_chip_self_test(struct seq_file *s, void *v)
 		}
 	}
 
-	fs = get_fs();
-	set_fs(get_ds());
+	//fs = get_fs();
+	//set_fs(get_ds());
 
 	hx_print_ic_id();
 	if (file_w_flag) {
@@ -2345,7 +2346,7 @@ static int himax_chip_self_test(struct seq_file *s, void *v)
 	} else if(file_w_flag)
 		kp_putname_kernel(vts_name);
 
-	set_fs(fs);
+	//set_fs(fs);
 
 #if defined(HX_ZERO_FLASH)
 	private_ts->in_self_test = 0;
