@@ -507,25 +507,25 @@ static bool hx83112_chip_detect(void)
 		|| (tmp_data[1] == 0x2e)
 		|| (tmp_data[1] == 0x2f))) {
 			if (tmp_data[1] == 0x2a) {
-				strlcpy((*kp_private_ts)->chip_name,
+				strscpy((*kp_private_ts)->chip_name,
 					HX_83112A_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83112a_data_adc_num;
 				hx83112ab_func_re_init();
 			} else if (tmp_data[1] == 0x2b) {
-				strlcpy((*kp_private_ts)->chip_name,
+				strscpy((*kp_private_ts)->chip_name,
 					HX_83112B_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83112b_data_adc_num;
 				hx83112ab_func_re_init();
 			} else if (tmp_data[1] == 0x2e) {
-				strlcpy((*kp_private_ts)->chip_name,
+				strscpy((*kp_private_ts)->chip_name,
 					HX_83112E_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83112e_data_adc_num;
 				hx83112ab_func_re_init();
 			} else if (tmp_data[1] == 0x2f) {
-				strlcpy((*kp_private_ts)->chip_name,
+				strscpy((*kp_private_ts)->chip_name,
 					HX_83112F_SERIES_PWON, 30);
 				(*kp_ic_data)->ic_adc_num =
 					hx83112f_data_adc_num;
