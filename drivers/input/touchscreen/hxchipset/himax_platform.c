@@ -1137,14 +1137,12 @@ err_alloc_rw_buf_failed:
 	return ret;
 }
 
-int himax_chip_common_remove(struct i2c_client *client)
+void himax_chip_common_remove(struct i2c_client *client)
 {
 	if (g_hx_chip_inited)
 		himax_chip_common_deinit();
 
 	kfree(gp_rw_buf);
-
-	return 0;
 }
 
 static const struct i2c_device_id himax_common_ts_id[] = {
