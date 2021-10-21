@@ -39,6 +39,7 @@ description: |
         sc7180
         sc7280
         sdm630
+        sdm632
         sdm660
         sdm845
         sdx55
@@ -179,6 +180,11 @@ properties:
           - enum:
               - qcom,sc7280-idp
           - const: qcom,sc7280
+
+      - items:
+          - enum:
+              - fairphone,fp3
+          - const: qcom,sdm632
 
       - items:
           - enum:
