@@ -356,12 +356,11 @@ static ssize_t himax_self_test_write(struct file *filp, const char __user *buff,
 	return len;
 }
 
-static const struct file_operations himax_proc_self_test_ops = {
-	.owner = THIS_MODULE,
-	.open = himax_self_test_proc_open,
-	.read = seq_read,
-	.write = himax_self_test_write,
-	.release = seq_release,
+static const struct proc_ops himax_proc_self_test_ops = {
+	.proc_open = himax_self_test_proc_open,
+	.proc_read = seq_read,
+	.proc_write = himax_self_test_write,
+	.proc_release = seq_release,
 };
 
 #if defined(HX_HIGH_SENSE)
@@ -700,12 +699,11 @@ static ssize_t himax_vendor_read(struct file *file, char *buf,
 
 	return ret;
 }
-static const struct file_operations himax_proc_vendor_ops = {
-	.owner = THIS_MODULE,
-	.read = himax_vendor_read,
+static const struct proc_ops himax_proc_vendor_ops = {
+	.proc_read = himax_vendor_read,
 };
 
-int himax_common_proc_init(void)
+static int himax_common_proc_init(void)
 {
 	himax_touch_proc_dir = proc_mkdir(HIMAX_PROC_TOUCH_FOLDER, NULL);
 
@@ -791,7 +789,7 @@ fail_1:
 	return -ENOMEM;
 }
 
-void himax_common_proc_deinit(void)
+static void himax_common_proc_deinit(void)
 {
 	remove_proc_entry(HIMAX_PROC_VENDOR_FILE, himax_touch_proc_dir);
 #if defined(HX_SMART_WAKEUP)
@@ -1630,7 +1628,7 @@ mem_alloc_fail_coord_buf:
 }
 EXPORT_SYMBOL(himax_report_data_init);
 
-void himax_report_data_deinit(void)
+static void himax_report_data_deinit(void)
 {
 	if (ic_data->HX_PEN_FUNC) {
 		kfree(g_target_report_data->p_on);
@@ -2105,7 +2103,7 @@ static int himax_distribute_touch_data(uint8_t *buf,
 /* end assign_data*/
 
 /* start parse_report_data*/
-int himax_parse_report_points(struct himax_ts_data *ts,
+static int himax_parse_report_points(struct himax_ts_data *ts,
 		int ts_path, int ts_status)
 {
 	int x = 0, y = 0, w = 0;

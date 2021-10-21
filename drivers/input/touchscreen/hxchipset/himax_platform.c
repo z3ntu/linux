@@ -24,6 +24,7 @@
 int i2c_error_count;
 u8 *gp_rw_buf;
 
+#if defined(HX_CONFIG_DRM)
 struct drm_panel *active_panel;
 
 int check_dt(struct device_node *np)
@@ -50,7 +51,7 @@ int check_dt(struct device_node *np)
 	return -ENODEV;
 }
 
-int check_default_tp(struct device_node *dt, const char *prop)
+static int check_default_tp(struct device_node *dt, const char *prop)
 {
 	const char *active_tp;
 	const char *compatible;
@@ -78,6 +79,7 @@ int check_default_tp(struct device_node *dt, const char *prop)
 
 	return ret;
 }
+#endif
 
 int himax_dev_set(struct himax_ts_data *ts)
 {
@@ -114,7 +116,7 @@ int himax_input_register_device(struct input_dev *input_dev)
 	return input_register_device(input_dev);
 }
 
-void himax_vk_parser(struct device_node *dt,
+static void himax_vk_parser(struct device_node *dt,
 		struct himax_i2c_platform_data *pdata)
 {
 	u32 data = 0;
@@ -831,7 +833,7 @@ static void himax_ts_isr_func(struct himax_ts_data *ts)
 	himax_ts_work(ts);
 }
 
-irqreturn_t himax_ts_thread(int irq, void *ptr)
+static irqreturn_t himax_ts_thread(int irq, void *ptr)
 {
 	himax_ts_isr_func((struct himax_ts_data *)ptr);
 
@@ -847,7 +849,7 @@ static void himax_ts_work_func(struct work_struct *work)
 	himax_ts_work(ts);
 }
 
-int himax_int_register_trigger(void)
+static int himax_int_register_trigger(void)
 {
 	int ret = 0;
 	struct himax_ts_data *ts = private_ts;
@@ -912,8 +914,8 @@ int himax_ts_register_interrupt(void)
 	if (!ts->use_irq) {
 		ts->himax_wq = create_singlethread_workqueue("himax_touch");
 		INIT_WORK(&ts->work, himax_ts_work_func);
-		hrtimer_init(&ts->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-		ts->timer.function = himax_ts_timer_func;
+		hrtimer_setup(&ts->timer, himax_ts_timer_func,
+			      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 		hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 		I("%s: polling mode enabled\n", __func__);
 	}
@@ -1065,12 +1067,13 @@ int drm_notifier_callback(struct notifier_block *self,
 }
 #endif
 
-int himax_chip_common_probe(struct i2c_client *client,
-		const struct i2c_device_id *id)
+static int himax_chip_common_probe(struct i2c_client *client)
 {
 	int ret = 0;
 	struct himax_ts_data *ts;
+#if defined(HX_CONFIG_DRM)
 	struct device_node *dp = client->dev.of_node;
+#endif
 
 	I("%s:Enter\n", __func__);
 
@@ -1087,6 +1090,7 @@ int himax_chip_common_probe(struct i2c_client *client,
 		return -ENODEV;
 	}
 
+#if defined(HX_CONFIG_DRM)
 	if (check_dt(dp)) {
 		if (!check_default_tp(dp, "qcom,i2c-touch-active"))
 			ret = -EPROBE_DEFER;
@@ -1095,6 +1099,7 @@ int himax_chip_common_probe(struct i2c_client *client,
         	E("check_dt failed, error=%d", ret);
 		return ret;
 	}
+#endif
 
 	ts = kzalloc(sizeof(struct himax_ts_data), GFP_KERNEL);
 	if (ts == NULL) {
@@ -1137,14 +1142,12 @@ err_alloc_rw_buf_failed:
 	return ret;
 }
 
-int himax_chip_common_remove(struct i2c_client *client)
+static void himax_chip_common_remove(struct i2c_client *client)
 {
 	if (g_hx_chip_inited)
 		himax_chip_common_deinit();
 
 	kfree(gp_rw_buf);
-
-	return 0;
 }
 
 static const struct i2c_device_id himax_common_ts_id[] = {
