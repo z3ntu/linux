@@ -1642,7 +1642,7 @@ END:
 static bool himax_mcu_read_event_stack(uint8_t *buf, uint8_t length)
 {
 	uint8_t cmd[DATA_LEN_4];
-	struct timespec t_start, t_end, t_delta;
+	struct timespec64 t_start, t_end, t_delta;
 	int len = length;
 	int i2c_speed = 0;
 	int ret = 0;
@@ -1657,13 +1657,13 @@ static bool himax_mcu_read_event_stack(uint8_t *buf, uint8_t length)
 		return 0;
 	}
 	if (private_ts->debug_log_level & BIT(2))
-		getnstimeofday(&t_start);
+		ktime_get_real_ts64(&t_start);
 
 	himax_bus_read(pfw_op->addr_event_addr[0], buf, length,
 			HIMAX_I2C_RETRY_TIMES);
 
 	if (private_ts->debug_log_level & BIT(2)) {
-		getnstimeofday(&t_end);
+		ktime_get_real_ts64(&t_end);
 		t_delta.tv_nsec = (t_end.tv_sec * 1000000000 + t_end.tv_nsec)
 			- (t_start.tv_sec * 1000000000 + t_start.tv_nsec);
 
