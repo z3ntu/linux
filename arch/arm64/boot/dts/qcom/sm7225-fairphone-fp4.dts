@@ -24,8 +24,21 @@
 	qcom,msm-id = <434 0x10000>, <459 0x10000>;
 	qcom,board-id = <8 32>;
 
+	qca_pwrseq: qca-pwrseq {
+		compatible = "qcom,wcn3990-pwrseq";
+		#pwrseq-cells = <1>;
+
+		vddio-supply = <&vreg_l11a>;
+		vddxo-supply = <&vreg_l7a>;
+		vddrf-supply = <&vreg_l2e>;
+		vddch0-supply = <&vreg_l10e>;
+
+		swctrl-gpios = <&tlmm 69 GPIO_ACTIVE_HIGH>;
+	};
+
 	aliases {
 		serial0 = &uart9;
+		serial1 = &uart1;
 	};
 
 	chosen {
@@ -668,6 +681,18 @@
 	};
 };
 
+&uart1 {
+	status = "okay";
+
+	bluetooth {
+		compatible = "qcom,wcn3990-bt";
+
+		bt-pwrseq = <&qca_pwrseq 1>;
+
+		max-speed = <3200000>; // TODO correct?
+	};
+};
+
 &uart9 {
 	status = "okay";
 };
@@ -718,10 +743,9 @@
 	status = "okay";
 
 	vdd-0.8-cx-mx-supply = <&vreg_l4a>;
-	vdd-1.8-xo-supply = <&vreg_l7a>;
-	vdd-1.3-rfa-supply = <&vreg_l2e>;
-	vdd-3.3-ch0-supply = <&vreg_l10e>;
 	vdd-3.3-ch1-supply = <&vreg_l11e>;
+
+	wifi-pwrseq = <&qca_pwrseq 0>;
 };
 
 &mdss {
