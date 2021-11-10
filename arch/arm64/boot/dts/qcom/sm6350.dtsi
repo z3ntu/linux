@@ -575,6 +575,20 @@
 				required-opps = <&rpmhpd_opp_low_svs>; // TODO ?
 				status = "disabled";
 			};
+
+			qupv3_se1_4uart: serial@884000 {
+				compatible = "qcom,geni-uart";
+				reg = <0 0x00884000 0 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP0_S1_CLK>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&qupv3_se1_ctsrx>, <&qupv3_se1_rts>, <&qupv3_se1_tx>;
+				interrupts = <GIC_SPI 602 IRQ_TYPE_LEVEL_HIGH>;
+				power-domains = <&rpmhpd SM6350_CX>;
+				operating-points-v2 = <&qup_opp_table>;
+				//interconnects =
+				status = "disabled";
+			};
 		};
 
 		qupv3_id_1: geniqup@9c0000 {
@@ -1261,6 +1275,27 @@
 					bias-pull-up;
 					drive-strength = <10>;
 				};
+			};
+
+			qupv3_se1_ctsrx: qupv3_se1_ctsrx {
+				pins = "gpio61", "gpio64";
+				function = "qup01";
+				drive-strength = <2>;
+				bias-disable;
+			};
+
+			qupv3_se1_rts: qupv3_se1_rts {
+				pins = "gpio62";
+				function = "qup01";
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+
+			qupv3_se1_tx: qupv3_se1_tx {
+				pins = "gpio63";
+				function = "qup01";
+				drive-strength = <2>;
+				bias-pull-up;
 			};
 		};
 

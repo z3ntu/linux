@@ -23,6 +23,7 @@
 
 	aliases {
 		serial0 = &uart2;
+		hsuart0 = &qupv3_se1_4uart;
 	};
 
 	chosen {
@@ -454,6 +455,26 @@
 
 	vmmc-supply = <&vreg_l9e>;
 	vqmmc-supply = <&vreg_l6e>;
+};
+
+&qupv3_se1_4uart {
+	status = "okay";
+
+	/delete-property/ interrupts;
+	interrupts-extended = <&intc GIC_SPI 602 IRQ_TYPE_LEVEL_HIGH>,
+			      <&tlmm 64 IRQ_TYPE_LEVEL_HIGH>;
+
+	bluetooth {
+		compatible = "qcom,wcn3990-bt";
+
+		vddio-supply = <&vreg_l11a>;
+		vddxo-supply = <&vreg_l7a>;
+		vddrf-supply = <&vreg_l2e>;
+		vddch0-supply = <&vreg_l10e>;
+		max-speed = <3200000>; // FIXME
+
+		swctrl-gpios = <&tlmm 69 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &tlmm {
