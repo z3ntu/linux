@@ -39,6 +39,12 @@
 
 			chg_otg: otg-vbus { };
 		};
+
+		pm8226_vib: vibrator@c000 {
+			compatible = "qcom,pm8226-vib";
+			reg = <0xc000>;
+			status = "disabled";
+		};
 	};
 
 	pm8226_1: pm8226@1 {
