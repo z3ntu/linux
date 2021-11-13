@@ -503,6 +503,14 @@
 			compatible = "syscon";
 			reg = <0xfd484000 0x2000>;
 		};
+
+		mmcc: clock-controller@fd8c0000 {
+			compatible = "qcom,mmcc-msm8226";
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+			#power-domain-cells = <1>;
+			reg = <0xfd8c0000 0x6000>;
+		};
 	};
 
 	timer {
