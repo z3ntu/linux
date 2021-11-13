@@ -15,6 +15,7 @@
  *  - Misc
  *  - HF-Buck
  */
+#define DEBUG
 
 #include <linux/errno.h>
 #include <linux/interrupt.h>
