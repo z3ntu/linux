@@ -37,10 +37,6 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&vibrator_pin>;
 	};
-
-	usb_vbus: extcon-usb-dummy {
-		compatible = "linux,extcon-usb-dummy";
-	};
 };
 
 &blsp1_i2c1 {
@@ -285,14 +281,12 @@
 
 &usb {
 	status = "okay";
-	//extcon = <&smbb>, <&usb_id>;
-	extcon = <&usb_vbus>;
+	extcon = <&smbb>, <&usb_id>;
 	dr_mode = "peripheral";
 };
 
 &usb_hs_phy {
-	//extcon = <&smbb>;
-	extcon = <&usb_vbus>;
+	extcon = <&smbb>;
 	v1p8-supply = <&pm8226_l10>;
 	v3p3-supply = <&pm8226_l20>;
 };
