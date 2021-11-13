@@ -7,6 +7,7 @@
 
 #include "qcom-msm8226.dtsi"
 #include "qcom-pm8226.dtsi"
+#include <dt-bindings/clock/qcom,mmcc-msm8974.h>
 
 /delete-node/ &adsp_region;
 
@@ -55,6 +56,38 @@
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&wlan_regulator_default_state>;
+	};
+
+	pwm_vibrator: pwm-vibrator {
+		compatible = "clk-pwm";
+		#pwm-cells = <2>;
+
+		clocks = <&mmcc CAMSS_GP0_CLK>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&vibrator_clk_default>;
+	};
+
+	reg_vibrator: regulator-vibrator {
+		compatible = "regulator-fixed";
+		regulator-name = "motor_en";
+
+		gpio = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&pm8226_l28>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&vibrator_en_default>;
+	};
+
+	vibrator {
+		compatible = "pwm-vibrator";
+
+		pwms = <&pwm_vibrator 0 100000>;
+		pwm-names = "enable";
+
+		vcc-supply = <&reg_vibrator>;
 	};
 };
 
@@ -328,6 +361,23 @@
 			bias-disable;
 			output-high;
 		};
+	};
+
+	vibrator_en_default: vibrator-en-default {
+		pins = "gpio62";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	vibrator_clk_default: vibrator-clk-default {
+		pins = "gpio33";
+		//function = "gp0_clk";
+
+		drive-strength = <2>;
+		bias-disable;
+		input-enable;
 	};
 
 	wlan_hostwake_default_state: wlan-hostwake-default-state {
