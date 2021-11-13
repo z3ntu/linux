@@ -7,6 +7,7 @@
 
 #include "qcom-msm8226.dtsi"
 #include "qcom-pm8226.dtsi"
+#include <dt-bindings/clock/qcom,mmcc-msm8974.h>
 
 / {
 	model = "LG G Watch R";
@@ -20,6 +21,21 @@
 
 	chosen {
 		stdout-path = "serial0:115200n8";
+	};
+
+	vibrator {
+		compatible = "clk-vibrator";
+
+		vcc-supply = <&pm8226_l28>;
+
+		clocks = <&mmcc CAMSS_GP0_CLK>;
+		clock-names = "core";
+		clock-frequency = <24000>;
+
+		enable-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&vibrator_pin>;
 	};
 
 	usb_vbus: extcon-usb-dummy {
@@ -245,6 +261,24 @@
 			drive-strength = <8>;
 			bias-disable;
 			output-high;
+		};
+	};
+
+	vibrator_pin: vibrator {
+		core {
+			pins = "gpio33";
+			function = "gp0_clk";
+
+			drive-strength = <2>;
+			bias-disable;
+			input-enable;
+		};
+		enable {
+			pins = "gpio62";
+			function = "gpio";
+
+			drive-strength = <2>;
+			bias-disable;
 		};
 	};
 };
