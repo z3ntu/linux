@@ -15,6 +15,7 @@
  *  - Misc
  *  - HF-Buck
  */
+#define DEBUG
 
 #include <linux/errno.h>
 #include <linux/interrupt.h>
@@ -374,6 +375,7 @@ static void smbb_set_line_flag(struct smbb_charger *chg, int irq, int flag)
 static irqreturn_t smbb_usb_valid_handler(int irq, void *_data)
 {
 	struct smbb_charger *chg = _data;
+	printk(KERN_ERR "%s: here!\n", __func__);
 
 	smbb_set_line_flag(chg, irq, STATUS_USBIN_VALID);
 	extcon_set_state_sync(chg->edev, EXTCON_USB,
