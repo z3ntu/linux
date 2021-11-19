@@ -23,6 +23,36 @@
 		reg = <0x0 0x0>;
 	};
 
+	adsp-pil {
+		compatible = "qcom,msm8226-adsp-pil";
+
+		interrupts-extended = <&intc GIC_SPI 162 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 0 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 1 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 2 IRQ_TYPE_EDGE_RISING>,
+				      <&adsp_smp2p_in 3 IRQ_TYPE_EDGE_RISING>;
+		interrupt-names = "wdog", "fatal", "ready", "handover", "stop-ack";
+
+		// cx-supply = <&pm8841_s2>; // FIXME
+
+		clocks = <&xo_board>;
+		clock-names = "xo";
+
+		memory-region = <&adsp_region>;
+
+		qcom,smem-states = <&adsp_smp2p_out 0>;
+		qcom,smem-state-names = "stop";
+
+		smd-edge {
+			interrupts = <GIC_SPI 156 IRQ_TYPE_EDGE_RISING>;
+
+			qcom,ipc = <&apcs 8 8>;
+			qcom,smd-edge = <1>;
+
+			label = "lpass";
+		};
+	};
+
 	clocks {
 		xo_board: xo_board {
 			compatible = "fixed-clock";
@@ -61,6 +91,11 @@
 			reg = <0x3000000 0x100000>;
 			no-map;
 		};
+
+		adsp_region: adsp@dc00000 {
+			reg = <0x0dc00000 0x1900000>;
+			no-map;
+		};
 	};
 
 	smd {
@@ -85,6 +120,31 @@
 		qcom,rpm-msg-ram = <&rpm_msg_ram>;
 
 		hwlocks = <&tcsr_mutex 3>;
+	};
+
+	smp2p-adsp {
+		compatible = "qcom,smp2p";
+		qcom,smem = <443>, <429>;
+
+		interrupt-parent = <&intc>;
+		interrupts = <GIC_SPI 158 IRQ_TYPE_EDGE_RISING>;
+
+		qcom,ipc = <&apcs 8 10>;
+
+		qcom,local-pid = <0>;
+		qcom,remote-pid = <2>;
+
+		adsp_smp2p_out: master-kernel {
+			qcom,entry-name = "master-kernel";
+			#qcom,smem-state-cells = <1>;
+		};
+
+		adsp_smp2p_in: slave-kernel {
+			qcom,entry-name = "slave-kernel";
+
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
 	};
 
 	soc: soc {
