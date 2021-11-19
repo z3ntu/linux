@@ -13,10 +13,6 @@
 	compatible = "asus,sparrow", "qcom,apq8026";
 	qcom,msm-id = <199 0x20000>;
 	qcom,board-id = <8 3005>;
-
-	usb_vbus: extcon-usb-dummy {
-		compatible = "linux,extcon-usb-dummy";
-	};
 };
 
 &rpm_requests {
@@ -36,12 +32,12 @@
 
 &usb {
 	status = "okay";
-	extcon = <&usb_vbus>;
+	extcon = <&smbb>;
 	dr_mode = "peripheral";
 };
 
 &usb_hs_phy {
-	extcon = <&usb_vbus>;
+	extcon = <&smbb>;
 	v1p8-supply = <&pm8226_l10>;
 	v3p3-supply = <&pm8226_l20>;
 };
