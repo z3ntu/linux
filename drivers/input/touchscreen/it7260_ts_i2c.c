@@ -38,10 +38,11 @@
 #include <linux/timer.h>
 #include <linux/gpio.h>
 #include <linux/slab.h>
-#include <linux/sync.h>
+//#include <linux/sync.h>
 #include <linux/proc_fs.h>
-#include <linux/wakelock.h>
-#include <linux/sensors.h>
+//#include <linux/wakelock.h>
+//#include <linux/sensors.h>
+#include <linux/input/mt.h>
 #ifdef CONFIG_ASUS_UTILITY
 #include <linux/notifier.h>
 #include <linux/asus_utility.h>
@@ -182,7 +183,7 @@ struct IT7260_ts_data {
 	struct delayed_work touchidle_on_work;
 	struct delayed_work exit_idle_work;
 	struct input_dev *palm_dev;
-	struct sensors_classdev cdev;
+	//struct sensors_classdev cdev;
 	bool palm_en;
 };
 
@@ -217,8 +218,8 @@ static uint64_t suspend_touch_up = 0;
 static uint64_t last_time_send_palm = 0;
 static uint64_t exit_idle_event_time = 0;
 static struct IT7260_ts_data *gl_ts;
-static struct wake_lock touch_lock;
-static struct wake_lock touch_time_lock;
+//static struct wake_lock touch_lock;
+//static struct wake_lock touch_time_lock;
 static int lastTouch = TOUCH_UP;
 static unsigned long last_time_exit_low = 0;
 static char fwVersion[20];
@@ -674,7 +675,7 @@ static void chipLowPowerMode(bool low)
 			}
 			isTouchLocked = true;
 			LOGI("[%d] %s set isTouchLocked = %d.\n", __LINE__, __func__, isTouchLocked);
-			wake_unlock(&touch_lock);
+			//wake_unlock(&touch_lock);
 			queue_delayed_work(IT7260_wq, &gl_ts->touchidle_on_work, 500);
 		} else {
 			driverInLowPower = false;
@@ -709,7 +710,7 @@ static void chipLowPowerMode(bool low)
 			LOGI("[%d] %s set isTouchLocked = %d. \n", __LINE__, __func__, isTouchLocked);
 			hadPalmDown = false;
 			last_time_exit_low = jiffies;
-			wake_unlock(&touch_lock);
+			//wake_unlock(&touch_lock);
 		}
 	}
 }
@@ -1165,20 +1166,20 @@ static const struct attribute_group it7260_attr_group = {
 	.attrs = it7260_attributes,
 };
 
-static int palm_enable_set(struct sensors_classdev *sensors_cdev, unsigned int enable)
-{
-	gl_ts->palm_en = enable;
-
-	return 0;
-}
-
-static struct sensors_classdev palm_cdev = {
-	.name = "palm",
-	.vendor = "ITE",
-	.version = 1,
-	.enabled = 0,
-	.sensors_enable = NULL,
-};
+//static int palm_enable_set(struct sensors_classdev *sensors_cdev, unsigned int enable)
+//{
+//	gl_ts->palm_en = enable;
+//
+//	return 0;
+//}
+//
+//static struct sensors_classdev palm_cdev = {
+//	.name = "palm",
+//	.vendor = "ITE",
+//	.version = 1,
+//	.enabled = 0,
+//	.sensors_enable = NULL,
+//};
 
 static void chipExternalCalibration(bool autoTuneEnabled)
 {
@@ -1259,10 +1260,10 @@ static void readFingerData(uint16_t *xP1, uint16_t *yP1, uint8_t *pressureP1, ui
 
 static uint64_t getMsTime(void)
 {
-	struct timespec ts;
+	struct timespec64 ts;
 	uint64_t ret;
 
-	getnstimeofday(&ts);
+	ktime_get_real_ts64(&ts);
 
 	/* convert nsec to msec */
 	ret = ts.tv_nsec;
@@ -1311,8 +1312,8 @@ static void exitIdleEvt(struct work_struct *work) {
 			input_mt_slot(gl_ts->touch_dev,0);
 			input_mt_report_slot_state(gl_ts->touch_dev, MT_TOOL_FINGER, false);
 			input_sync(gl_ts->touch_dev);
-			wake_lock_timeout(&touch_time_lock, WAKELOCK_HOLD_MS);
-			wake_unlock(&touch_lock);
+			//wake_lock_timeout(&touch_time_lock, WAKELOCK_HOLD_MS);
+			//wake_unlock(&touch_lock);
 			last_time_exit_low = jiffies;
 			if (!ChangePalmThreshold(0xA0,0x00)) {
 				LOGI("[%d] %s change palm threshold fail.\n", __LINE__, __func__);
@@ -1496,7 +1497,7 @@ static void readTouchDataPoint_Ambient(void)
 					LOGE("[%d] %s called when no data available (0x%02X), set isTouchLocked = %d.\n",
 						__LINE__, __func__, devStatus, isTouchLocked);
 				}
-				wake_unlock(&touch_lock);
+				//wake_unlock(&touch_lock);
 				return;
 			}
 		}
@@ -1504,7 +1505,7 @@ static void readTouchDataPoint_Ambient(void)
 			isTouchLocked = true;
 			LOGE("[%d] %s failed to read point data buffer, set isTouchLocked = %d.\n",
 				__LINE__, __func__, isTouchLocked);
-			wake_unlock(&touch_lock);
+			//wake_unlock(&touch_lock);
 			return;
 		}
 		if ((pointData.flags & PD_FLAGS_DATA_TYPE_BITS) != PD_FLAGS_DATA_TYPE_TOUCH) {
@@ -1513,7 +1514,7 @@ static void readTouchDataPoint_Ambient(void)
 			} else {
 				LOGE("[%d] %s dropping non-point data of type 0x%02X\n", __LINE__, __func__, pointData.flags);
 				isTouchLocked = true;
-				wake_unlock(&touch_lock);
+				//wake_unlock(&touch_lock);
 				return;
 			}
 		}
@@ -1569,7 +1570,7 @@ static void readTouchDataPoint_Ambient(void)
 					input_mt_slot(gl_ts->touch_dev,0);
 					input_mt_report_slot_state(gl_ts->touch_dev, MT_TOOL_FINGER, false);
 					input_sync(gl_ts->touch_dev);
-					wake_lock_timeout(&touch_time_lock, WAKELOCK_HOLD_MS);
+					//wake_lock_timeout(&touch_time_lock, WAKELOCK_HOLD_MS);
 					last_time_exit_low = jiffies;
 					if (!ChangePalmThreshold(0xA0,0x00)) {
 						LOGI("[%d] %s change palm threshold fail.\n", __LINE__, __func__);
@@ -1586,7 +1587,7 @@ static void readTouchDataPoint_Ambient(void)
 				isTouchLocked = true;
 				LOGI("[%d] %s set isTouchLocked = %d. \n", __LINE__, __func__, isTouchLocked);
 			}
-			wake_unlock(&touch_lock);
+			//wake_unlock(&touch_lock);
 		} else if (pointData.flags == 16) {
 			hadFingerDown = true;
 			AMB_x1 = 0;
@@ -1597,7 +1598,7 @@ static void readTouchDataPoint_Ambient(void)
 				isTouchLocked = true;
 				LOGI("[%d] %s set isTouchLocked = %d. \n", __LINE__, __func__, isTouchLocked);
 			}
-			wake_unlock(&touch_lock);
+			//wake_unlock(&touch_lock);
 		}
 
 	} else if (isTouchLocked) {
@@ -1608,7 +1609,7 @@ static void readTouchDataPoint_Ambient(void)
 			}
 		}
 		if (isDriverAvailable) {
-			wake_lock(&touch_lock);
+			//wake_lock(&touch_lock);
 			isTouchLocked = false;
 			if (!TP_DLMODE) {
 				LOGI("[%d] %s set isTouchLocked = %d. \n", __LINE__, __func__, isTouchLocked);
@@ -1694,7 +1695,7 @@ int parse_reset_gpio(struct device *dev)
 	return value;
 }
 
-static int IT7260_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
+static int IT7260_ts_probe(struct i2c_client *client)
 {
 	struct IT7260_i2c_platform_data *pdata;
 	int ret = -1;
@@ -1807,14 +1808,14 @@ static int IT7260_ts_probe(struct i2c_client *client, const struct i2c_device_id
 	}
 
 	gl_ts->palm_en = 0;
-	gl_ts->cdev = palm_cdev;
-	gl_ts->cdev.enabled = 0;
-	gl_ts->cdev.sensors_enable = palm_enable_set;
-
-	if (sensors_classdev_register(&client->dev, &gl_ts->cdev)) {
-		LOGE(" %s: class device create failed\n", __func__);
-		goto err_out;
-	}
+//	gl_ts->cdev = palm_cdev;
+//	gl_ts->cdev.enabled = 0;
+//	gl_ts->cdev.sensors_enable = palm_enable_set;
+//
+//	if (sensors_classdev_register(&client->dev, &gl_ts->cdev)) {
+//		LOGE(" %s: class device create failed\n", __func__);
+//		goto err_out;
+//	}
 
 	touchMissed = false;
 
@@ -1839,8 +1840,8 @@ static int IT7260_ts_probe(struct i2c_client *client, const struct i2c_device_id
 		LOGE("failed to register sysfs #2\n");
 		goto err_sysfs_grp_create_2;
 	}
-	wake_lock_init(&touch_lock, WAKE_LOCK_SUSPEND, "touch-lock");
-	wake_lock_init(&touch_time_lock, WAKE_LOCK_SUSPEND, "touch-time-lock");
+	//wake_lock_init(&touch_lock, WAKE_LOCK_SUSPEND, "touch-lock");
+	//wake_lock_init(&touch_time_lock, WAKE_LOCK_SUSPEND, "touch-time-lock");
 
 	if (!TP_DLMODE) {
 		TP_DLMODE_GPIO_VALUE = gpio_get_value(TP_DLMODE_GPIO);
@@ -1890,11 +1891,10 @@ err_out:
 	return ret;
 }
 
-static int IT7260_ts_remove(struct i2c_client *client)
+static void IT7260_ts_remove(struct i2c_client *client)
 {
 	destroy_workqueue(IT7260_wq);
 	devicePresent = false;
-	return 0;
 }
 
 /*
@@ -2017,14 +2017,14 @@ static const struct of_device_id IT7260_match_table[] = {
 };
 MODULE_DEVICE_TABLE(of, IT7260_match_table);
 
-static int IT7260_ts_resume(struct i2c_client *i2cdev)
+static int IT7260_ts_resume(struct device *dev)
 {
 	LOGI("Enter ts resume!\n");
 	isDriverAvailable = true;
 	return 0;
 }
 
-static int IT7260_ts_suspend(struct i2c_client *i2cdev, pm_message_t pmesg)
+static int IT7260_ts_suspend(struct device *dev)
 {
 	static const uint8_t cmdLowPower[] = { CMD_PWR_CTL, 0x00, PWR_CTL_LOW_POWER_MODE};
 	LOGI("Enter ts suspend!\n");
@@ -2056,6 +2056,8 @@ static int IT7260_ts_suspend(struct i2c_client *i2cdev, pm_message_t pmesg)
 	return 0;
 }
 
+static SIMPLE_DEV_PM_OPS(IT7260_dev_pm_ops, IT7260_ts_suspend, IT7260_ts_resume);
+
 static struct i2c_driver IT7260_ts_driver = {
 	.driver = {
 		.owner = THIS_MODULE,
@@ -2065,8 +2067,7 @@ static struct i2c_driver IT7260_ts_driver = {
 	.probe = IT7260_ts_probe,
 	.remove = IT7260_ts_remove,
 	.id_table = IT7260_ts_id,
-	.resume   = IT7260_ts_resume,
-	.suspend = IT7260_ts_suspend,
+	.driver.pm = &IT7260_dev_pm_ops,
 };
 
 static int __init IT7260_ts_init(void)
@@ -2081,8 +2082,8 @@ static void __exit IT7260_ts_exit(void)
 #ifdef CONFIG_ASUS_UTILITY
 	unregister_mode_notifier(&display_mode_notifier);
 #endif
-	wake_lock_destroy(&touch_lock);
-	wake_lock_destroy(&touch_time_lock);
+	//wake_lock_destroy(&touch_lock);
+	//wake_lock_destroy(&touch_time_lock);
 	if (IT7260_wq)
 		destroy_workqueue(IT7260_wq);
 }
