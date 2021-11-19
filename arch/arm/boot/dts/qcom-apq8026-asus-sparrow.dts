@@ -15,6 +15,18 @@
 	qcom,board-id = <8 3005>;
 };
 
+&blsp1_i2c5 {
+	status = "okay";
+
+	IT7260@46 {
+		compatible = "ITE,IT7260_ts";
+		reg = <0x46>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <17 0x2>;
+		reset = <16>;
+	};
+};
+
 &rpm_requests {
 	pm8226-regulators {
 		compatible = "qcom,rpm-pm8226-regulators";
