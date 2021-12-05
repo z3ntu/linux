@@ -24,6 +24,29 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	pwm_vibrator: pwm-vibrator {
+		compatible = "clk-pwm";
+		#pwm-cells = <2>;
+
+		clocks = <&mmcc CAMSS_GP0_CLK>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&vibrator_clk_default>;
+	};
+
+	reg_vibrator: regulator-vibrator {
+		compatible = "regulator-fixed";
+		regulator-name = "motor_en";
+
+		gpio = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&pm8226_l28>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&vibrator_en_default>;
+	};
+
 	reserved-memory {
 		adsp_region: adsp@dc00000 {
 			reg = <0x03300000 0x1400000>;
@@ -32,19 +55,28 @@
 	};
 
 	vibrator {
-		compatible = "clk-vibrator";
+		compatible = "pwm-vibrator";
 
-		vcc-supply = <&pm8226_l28>;
+		pwms = <&pwm_vibrator 0 100000>;
+		pwm-names = "enable";
 
-		clocks = <&mmcc CAMSS_GP0_CLK>;
-		clock-names = "core";
-		clock-frequency = <24000>;
-
-		enable-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&vibrator_pin>;
+		vcc-supply = <&reg_vibrator>;
 	};
+
+	//vibrator {
+	//	compatible = "clk-vibrator";
+
+	//	vcc-supply = <&pm8226_l28>;
+
+	//	clocks = <&mmcc CAMSS_GP0_CLK>;
+	//	clock-names = "core";
+	//	clock-frequency = <24000>;
+
+	//	enable-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+
+	//	pinctrl-names = "default";
+	//	pinctrl-0 = <&vibrator_pin>;
+	//};
 };
 
 &blsp1_i2c1 {
@@ -316,22 +348,21 @@
 		};
 	};
 
-	vibrator_pin: vibrator {
-		core {
-			pins = "gpio33";
-			function = "gp0_clk";
+	vibrator_en_default: vibrator-en-default {
+		pins = "gpio62";
+		function = "gpio";
 
-			drive-strength = <2>;
-			bias-disable;
-			input-enable;
-		};
-		enable {
-			pins = "gpio62";
-			function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 
-			drive-strength = <2>;
-			bias-disable;
-		};
+	vibrator_clk_default: vibrator-clk-default {
+		pins = "gpio33";
+		//function = "gp0_clk";
+
+		drive-strength = <2>;
+		bias-disable;
+		input-enable;
 	};
 };
 

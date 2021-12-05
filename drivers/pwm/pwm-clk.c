@@ -94,7 +94,8 @@ static int pwm_clk_remove(struct platform_device *pdev)
 
 	clk_unprepare(chip->clk);
 
-	return pwmchip_remove(&chip->chip);
+	pwmchip_remove(&chip->chip);
+	return 0;
 }
 
 static const struct of_device_id pwm_clk_dt_ids[] = {
