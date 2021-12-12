@@ -114,6 +114,13 @@
 	};
 };
 
+&modem {
+	status = "okay";
+
+	mx-supply = <&pm8226_l3>;
+	pll-supply = <&pm8226_l8>;
+};
+
 &rpm_requests {
 	pm8226-regulators {
 		compatible = "qcom,rpm-pm8226-regulators";
