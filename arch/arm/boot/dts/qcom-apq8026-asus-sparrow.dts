@@ -27,6 +27,10 @@
 	};
 };
 
+&pm8226_vib {
+	status = "okay";
+};
+
 &rpm_requests {
 	pm8226-regulators {
 		compatible = "qcom,rpm-pm8226-regulators";

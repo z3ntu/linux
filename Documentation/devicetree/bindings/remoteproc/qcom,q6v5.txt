@@ -10,6 +10,7 @@ on the Qualcomm Hexagon core.
 		    "qcom,q6v5-pil",
 		    "qcom,ipq8074-wcss-pil"
 		    "qcom,qcs404-wcss-pil"
+		    "qcom,msm8226-mss-pil" // FIXME rest of file near msm8974-mss-pil
 		    "qcom,msm8916-mss-pil",
 		    "qcom,msm8974-mss-pil"
 		    "qcom,msm8996-mss-pil"
