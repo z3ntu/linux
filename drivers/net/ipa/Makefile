@@ -9,4 +9,5 @@ ipa-y			:=	ipa_main.o ipa_power.o ipa_reg.o ipa_mem.o \
 
 ipa-y			+=	ipa_data-v3.1.o ipa_data-v3.5.1.o \
 				ipa_data-v4.2.o ipa_data-v4.5.o \
-				ipa_data-v4.9.o ipa_data-v4.11.o
+				ipa_data-v4.7.o ipa_data-v4.9.o \
+				ipa_data-v4.11.o
