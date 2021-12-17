@@ -70,6 +70,31 @@
 	};
 };
 
+&blsp1_uart1 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&blsp1_uart1_pin_a>;
+
+	bluetooth {
+		compatible = "brcm,bcm43430-bt"; // no workaround atm
+		//compatible = "brcm,bcm43438-bt"; // workaround 1 <--- actually works!
+		// compatible = "brcm,bcm43540-bt"; // workaround 2
+		// todo no workaround?
+		max-speed = <3000000>; // FIXME where from?
+
+		pinctrl-names = "default";
+		//pinctrl-0 = <&bt_host_wake_pin>,
+		//	    <&bt_dev_wake_pin>,
+		//	    <&bt_reg_on_pin>;
+		pinctrl-0 = <&bluetooth_pins>;
+
+		host-wakeup-gpios = <&tlmm 48 GPIO_ACTIVE_HIGH>;
+		device-wakeup-gpios = <&tlmm 61 GPIO_ACTIVE_HIGH>;
+		shutdown-gpios = <&tlmm 34 GPIO_ACTIVE_HIGH>; // todo or GPIO_ACTIVE_LOW
+	};
+};
+
 &pm8226_vib {
 	status = "okay";
 };
@@ -200,6 +225,19 @@
 	};
 };
 
+&sdhc_1 {
+	status = "okay";
+
+	vmmc-supply = <&pm8226_l17>;
+	vqmmc-supply = <&pm8226_l6>;
+
+	bus-width = <8>;
+	non-removable;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&sdhc1_pin_a>;
+};
+
 &sdhc_3 {
 	status = "okay";
 
@@ -226,7 +264,41 @@
 	};
 };
 
+&smbb {
+	qcom,fast-charge-safe-current = <1500000>;
+	qcom,fast-charge-current-limit = <350000>;
+	qcom,fast-charge-safe-voltage = <4430000>;
+	qcom,fast-charge-high-threshold-voltage = <4400000>;
+	qcom,auto-recharge-threshold-voltage = <4300000>;
+	qcom,minimum-input-voltage = <4400000>;
+};
+
 &tlmm {
+	bluetooth_pins: bluetooth-pins {
+		hostwake {
+			pins = "gpio48";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-disable;
+			input-enable;
+		};
+
+		devicewake {
+			pins = "gpio61";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-disable;
+			input-enable;
+		};
+	};
+
+	blsp1_uart1_pin_a: blsp1-uart1-pin-a {
+		pins = "gpio0", "gpio1", "gpio2", "gpio3";
+		function = "blsp_uart1";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
 	wlan_regulator_pin: wlan-regulator-pin {
 		pins = "gpio35";
 		function = "gpio";
