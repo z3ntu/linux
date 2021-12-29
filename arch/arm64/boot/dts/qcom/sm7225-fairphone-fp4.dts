@@ -328,6 +328,33 @@
 	status = "okay";
 };
 
+&sdc2_state_off {
+	sd-cd {
+		pins = "gpio94";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+};
+
+&sdc2_state_on {
+	sd-cd {
+		pins = "gpio94";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+	};
+};
+
+&sdhc_2 {
+	status = "okay";
+
+	cd-gpios = <&tlmm 94 GPIO_ACTIVE_LOW>;
+
+	vmmc-supply = <&vreg_l9e>;
+	vqmmc-supply = <&vreg_l6e>;
+};
+
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
 };
