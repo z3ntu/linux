@@ -70,6 +70,19 @@
 			qcom,vmid = <15>;
 		};
 	};
+
+	// se8_i2c
+	touchscreen_gpio_i2c: i2c-muic {
+		compatible = "i2c-gpio";
+		sda-gpios = <&tlmm 19 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&tlmm 20 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&muic_i2c_default>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
 };
 
 &adsp {
@@ -301,7 +314,8 @@
 	clock-frequency = <400000>;
 };
 
-&i2c8 {
+//&i2c8 {
+&touchscreen_gpio_i2c {
 	status = "okay";
 	clock-frequency = <400000>;
 
@@ -426,6 +440,14 @@
 
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
+
+	muic_i2c_default: muic-i2c-default {
+		pins = "gpio19", "gpio20";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-disable;
+	};
 
 	pmx_ts_int_active {
 		ts_active: ts_active {
