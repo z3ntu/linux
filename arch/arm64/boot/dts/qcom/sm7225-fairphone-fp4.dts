@@ -69,6 +69,35 @@
 			qcom,vmid = <15>;
 		};
 	};
+
+	// haptics
+	regulator-1 {
+		compatible = "regulator-fixed";
+		regulator-name = "foobar-haptics";
+
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+
+		regulator-always-on;
+
+		gpio = <&tlmm 90 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+
+	// nfc
+	regulator-2 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "foobar-nfc";
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+
+		clocks = <&rpmhcc RPMH_LN_BB_CLK2>;
+		startup-delay-us = <70000>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+	};
 };
 
 &adsp {
