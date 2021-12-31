@@ -227,6 +227,25 @@
 		method = "smc";
 	};
 
+	qup_opp_table: qup-opp-table {
+		compatible = "operating-points-v2";
+
+		opp-75000000 {
+			opp-hz = /bits/ 64 <75000000>;
+			required-opps = <&rpmhpd_opp_low_svs>;
+		};
+
+		opp-100000000 {
+			opp-hz = /bits/ 64 <100000000>;
+			required-opps = <&rpmhpd_opp_svs>;
+		};
+
+		opp-128000000 {
+			opp-hz = /bits/ 64 <128000000>;
+			required-opps = <&rpmhpd_opp_nom>;
+		};
+	};
+
 	reserved_memory: reserved-memory {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -527,6 +546,36 @@
 			};
 		};
 
+		qupv3_id_0: geniqup@8c0000 {
+			compatible = "qcom,geni-se-qup";
+			reg = <0x0 0x8c0000 0x0 0x2000>;
+			clock-names = "m-ahb", "s-ahb";
+			clocks = <&gcc GCC_QUPV3_WRAP_0_M_AHB_CLK>,
+				 <&gcc GCC_QUPV3_WRAP_0_S_AHB_CLK>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			iommus = <&apps_smmu 0x43 0x0>;
+			ranges;
+			status = "disabled";
+
+			qupv3_se0_i2c: i2c@880000 {
+				compatible = "qcom,geni-i2c";
+				reg = <0 0x00880000 0 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP0_S0_CLK>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&qupv3_se0_i2c_active>;
+				interrupts = <GIC_SPI 601 IRQ_TYPE_LEVEL_HIGH>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				//interconnects = TODO;
+				//interconnect-names = TODO;
+				power-domains = <&rpmhpd SM6350_CX>;
+				required-opps = <&rpmhpd_opp_low_svs>; // TODO ?
+				status = "disabled";
+			};
+		};
+
 		qupv3_id_1: geniqup@9c0000 {
 			compatible = "qcom,geni-se-qup";
 			reg = <0x0 0x9c0000 0x0 0x2000>;
@@ -539,6 +588,23 @@
 			ranges;
 			status = "disabled";
 
+			qupv3_se8_i2c: i2c@988000 {
+				compatible = "qcom,geni-i2c";
+				reg = <0 0x00988000 0 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP1_S2_CLK>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&qupv3_se8_i2c_active>;
+				interrupts = <GIC_SPI 355 IRQ_TYPE_LEVEL_HIGH>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				//interconnects = TODO;
+				//interconnect-names = TODO;
+				power-domains = <&rpmhpd SM6350_CX>;
+				required-opps = <&rpmhpd_opp_low_svs>; // TODO ?
+				status = "disabled";
+			};
+
 			uart2: serial@98c000 {
 				compatible = "qcom,geni-debug-uart";
 				reg = <0 0x98c000 0 0x4000>;
@@ -549,6 +615,24 @@
 				interrupts = <GIC_SPI 356 IRQ_TYPE_LEVEL_HIGH>;
 				status = "disabled";
 			};
+
+			qupv3_se10_i2c: i2c@990000 {
+				compatible = "qcom,geni-i2c";
+				reg = <0 0x00990000 0 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP1_S4_CLK>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&qupv3_se10_i2c_active>;
+				interrupts = <GIC_SPI 357 IRQ_TYPE_LEVEL_HIGH>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				//interconnects = TODO;
+				//interconnect-names = TODO;
+				power-domains = <&rpmhpd SM6350_CX>;
+				required-opps = <&rpmhpd_opp_low_svs>; // TODO ?
+				status = "disabled";
+			};
+
 		};
 
 		// TODO downstream ipahal_get_reg_base = 0x40000, so @1e00000 becomes @1e40000
@@ -1039,6 +1123,27 @@
 				function = "qup13_f2";
 				drive-strength = <2>;
 				bias-disable;
+			};
+
+			qupv3_se0_i2c_active: qupv3_se0_i2c_active {
+				pins = "gpio0", "gpio1";
+				function = "qup00";
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+
+			qupv3_se8_i2c_active: qupv3_se8_i2c_active {
+				pins = "gpio19", "gpio20";
+				function = "qup12";
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+
+			qupv3_se10_i2c_active: qupv3_se10_i2c_active {
+				pins = "gpio4", "gpio5";
+				function = "qup14";
+				drive-strength = <2>;
+				bias-pull-up;
 			};
 
 			sdc2_state_off: sdc2-sleep-state {
