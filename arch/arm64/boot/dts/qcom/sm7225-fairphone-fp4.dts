@@ -296,6 +296,16 @@
 	firmware-name = "qcom/sm7225/fairphone4/cdsp.mdt";
 };
 
+&i2c0 {
+	status = "okay";
+	clock-frequency = <400000>;
+};
+
+&i2c8 {
+	status = "okay";
+	clock-frequency = <400000>;
+};
+
 &i2c10 {
 	status = "okay";
 	clock-frequency = <400000>;
@@ -358,6 +368,10 @@
 &pm6350_resin {
 	status = "okay";
 	linux,code = <KEY_VOLUMEDOWN>;
+};
+
+&qupv3_id_0 {
+	status = "okay";
 };
 
 &qupv3_id_1 {
