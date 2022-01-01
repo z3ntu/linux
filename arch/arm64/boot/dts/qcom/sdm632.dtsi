@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2020, The Linux Foundation. All rights reserved.
+#include "msm8953.dtsi"
+
+/ {
+	thermal-zones {
+		/delete-node/cpu0-thermal;
+		/delete-node/cpu1-thermal;
+		/delete-node/cpu2-thermal;
+		/delete-node/cpu3-thermal;
+		/delete-node/cpu4-thermal;
+		/delete-node/cpu5-thermal;
+		/delete-node/cpu6-thermal;
+		/delete-node/cpu7-thermal;
+		CPU_THERMAL(4,  5);
+		CPU_THERMAL(5,  6);
+		CPU_THERMAL(6,  7);
+		CPU_THERMAL(7,  8);
+	};
+};
+
+&CPU4 {
+	capacity-dmips-mhz = <1980>;
+};
+
+&CPU5 {
+	capacity-dmips-mhz = <1980>;
+};
+
+&CPU6 {
+	capacity-dmips-mhz = <1980>;
+};
+
+&CPU7 {
+	capacity-dmips-mhz = <1980>;
+};
