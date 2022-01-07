@@ -112,7 +112,7 @@ static struct clk_rcg2 video_cc_iris_clk_src = {
 		.parent_data = video_cc_parent_data_0,
 		.num_parents = ARRAY_SIZE(video_cc_parent_data_0),
 		.flags = CLK_SET_RATE_PARENT,
-		.ops = &clk_rcg2_ops,
+		.ops = &clk_rcg2_shared_ops,
 	},
 };
 
