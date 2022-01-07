@@ -752,6 +752,7 @@ static const struct venus_resources sc7180_res = {
 	.fwname = "qcom/venus-5.4/venus.mdt",
 };
 
+// qcom,allowed-clock-rates = <239999999 338000000 366000000 444000000>;
 static const struct freq_tbl sm8250_freq_table[] = {
 	{ 0, 444000000 },
 	{ 0, 366000000 },
@@ -759,6 +760,13 @@ static const struct freq_tbl sm8250_freq_table[] = {
 	{ 0, 240000000 },
 };
 
+// struct bw_tbl {
+// 	u32 mbs_per_sec;
+// 	u32 avg;
+// 	u32 peak;
+// 	u32 avg_10bit;
+// 	u32 peak_10bit;
+// };
 static const struct bw_tbl sm8250_bw_table_enc[] = {
 	{ 1944000, 1954000, 0, 3711000, 0 },	/* 3840x2160@60 */
 	{  972000,  996000, 0, 1905000, 0 },	/* 3840x2160@30 */
@@ -773,6 +781,7 @@ static const struct bw_tbl sm8250_bw_table_dec[] = {
 	{  244800,  416000, 0,  509000, 0 },	/* 1920x1080@30 */
 };
 
+// qcom,reg-presets = <0xB0088 0x0>;
 static const struct reg_val sm8250_reg_preset[] = {
 	{ 0xb0088, 0 },
 };
