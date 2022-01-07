@@ -1226,6 +1226,11 @@
 	remote-endpoint = <&pm7250b_ss_in>;
 };
 
+&venus {
+	firmware-name = "qcom/sm7225/fairphone4/venus.mbn";
+	status = "okay";
+};
+
 &wifi {
 	vdd-0.8-cx-mx-supply = <&vreg_l4a>;
 	vdd-1.8-xo-supply = <&vreg_l7a>;
