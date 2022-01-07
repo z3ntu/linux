@@ -559,6 +559,11 @@
 	vdda-pll-supply = <&vreg_l16a>;
 };
 
+&venus {
+	status = "okay";
+	firmware-name = "qcom/sm7225/fairphone4/venus.mdt";
+};
+
 &wifi {
 	status = "okay";
 
