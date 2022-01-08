@@ -618,6 +618,8 @@
 			qcom,smem-states = <&modem_smp2p_out 0>;
 			qcom,smem-state-names = "stop";
 
+			status = "disabled";
+
 			mba {
 				//memory-region = <&mba_region>; // FIXME
 			};
