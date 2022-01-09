@@ -18,6 +18,7 @@
 
 	aliases {
 		serial0 = &blsp1_uart3;
+		serial1 = &blsp1_uart4; // FIXME works around a kernel bug where msm_serial fails in uart_add_one_port, presumably because it tries allocating the same uart name twice
 	};
 
 	chosen {
@@ -134,6 +135,32 @@
 
 &blsp1_uart3 {
 	status = "okay";
+};
+
+&blsp1_uart4 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&blsp1_uart4_pin_a>;
+
+	bluetooth {
+		//status = "disabled";
+		compatible = "brcm,bcm43430-bt"; // no workaround atm
+		//compatible = "brcm,bcm43438-bt"; // workaround 1 <--- actually works!
+		// compatible = "brcm,bcm43540-bt"; // workaround 2
+		// todo no workaround?
+		max-speed = <3000000>; // FIXME where from?
+
+		pinctrl-names = "default";
+		//pinctrl-0 = <&bt_host_wake_pin>,
+		//	    <&bt_dev_wake_pin>,
+		//	    <&bt_reg_on_pin>;
+		pinctrl-0 = <&bluetooth_pins>;
+
+		host-wakeup-gpios = <&tlmm 48 GPIO_ACTIVE_HIGH>;
+		device-wakeup-gpios = <&tlmm 47 GPIO_ACTIVE_HIGH>;
+		shutdown-gpios = <&tlmm 45 GPIO_ACTIVE_HIGH>; // todo or GPIO_ACTIVE_LOW
+	};
 };
 
 &dsi0 {
@@ -355,6 +382,31 @@
 };
 
 &tlmm {
+	bluetooth_pins: bluetooth-pins {
+		hostwake {
+			pins = "gpio48";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+			input-enable;
+		};
+
+		devicewake {
+			pins = "gpio47";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+			input-enable;
+		};
+	};
+
+	blsp1_uart4_pin_a: blsp1-uart4-pin-a {
+		pins = "gpio12", "gpio13", "gpio14", "gpio15";
+		function = "blsp_uart4";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
 	sdhc1_pin_a: sdhc1-pin-active {
 		clk {
 			pins = "sdc1_clk";
