@@ -1038,6 +1038,36 @@
 			};
 		};
 
+		gpu_iommu: iommu@1c40000 {
+			compatible = "qcom,msm8953-gpu-iommu", "qcom,msm-iommu-v1";
+			clocks = <&gcc GCC_OXILI_AHB_CLK>,
+				 <&gcc GCC_BIMC_GFX_CLK>;
+			clock-names = "iface", "bus";
+
+			power-domains = <&gcc OXILI_CX_GDSC>;
+
+			qcom,iommu-secure-id = <18>;
+			qcom,use-aarch64-pagetables;
+
+			ranges = <0 0x01c48000 0x8000>;
+
+			#address-cells = <1>;
+			#iommu-cells = <1>;
+			#size-cells = <1>;
+
+			iommu-ctx@0 { // gfx3d user
+				compatible = "qcom,msm-iommu-v2-ns";
+				reg = <0x0000 0x1000>;
+				interrupts = <GIC_SPI 225 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			iommu-ctx@2000 { // gfx3d secure
+				compatible = "qcom,msm-iommu-v2-sec";
+				reg = <0x2000 0x1000>;
+				interrupts = <GIC_SPI 233 IRQ_TYPE_LEVEL_HIGH>;
+			};
+		};
+
 		spmi_bus: spmi@200f000 {
 			compatible = "qcom,spmi-pmic-arb";
 			reg = <0x0200f000 0x1000>,
