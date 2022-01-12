@@ -5,6 +5,7 @@
 
 #include "msm8953.dtsi"
 #include "pm8953.dtsi"
+#include <dt-bindings/leds/common.h>
 
 / {
 	model = "Samsung A6-Plus LTE Rev.4";
@@ -17,6 +18,14 @@
 		mmc0 = &sdhc_1;
 		mmc1 = &sdhc_2;
 		serial0 = &uart_0;
+	};
+
+	battery: battery {
+		compatible = "simple-battery";
+
+		constant-charge-current-max-microamp = <1800000>;
+		voltage-max-design-microvolt = <4350000>;
+		charge-term-current-microamp = <300000>;
 	};
 
 	chosen {
@@ -250,6 +259,7 @@
 	vdd-supply = <&pm8953_l3>;
 	vdda-pll-supply = <&pm8953_l7>;
 	vdda-phy-dpdm-supply = <&pm8953_l13>;
+	otg-supply = <&otg_vbus>;
 };
 
 &i2c_2 {
@@ -270,6 +280,75 @@
 	};
 };
 
+&i2c_8 {
+	status = "okay";
+
+	extcon0: extcon@25 {
+		compatible = "siliconmitus,sm5708-muic";
+		reg = <0x25>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <63 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+	pmic@49 {
+		compatible = "siliconmitus,sm5708";
+		reg = <0x49>;
+
+		charger: sm5708-charger {
+			compatible = "siliconmitus,sm5708-charger";
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&charger_int_default>;
+
+			interrupt-parent = <&tlmm>;
+			interrupts = <60 IRQ_TYPE_NONE>;
+
+			charge-enable-gpios = <&tlmm 34 GPIO_ACTIVE_HIGH>;
+			extcon = <&extcon0>;
+			monitored-battery = <&battery>;
+			input-current-max-microamp = <1500000>;
+
+			otg_vbus: otg-vbus {
+
+			};
+
+			fled_boost: flash-boost {
+
+			};
+		};
+
+		led-controller {
+			compatible = "siliconmitus,sm5708-fleds";
+
+			flash-boost-supply = <&fled_boost>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			rear_flash: led@0 {
+				reg = <0>;
+				label = "rear-flash";
+				function = LED_FUNCTION_FLASH;
+				color = <LED_COLOR_ID_WHITE>;
+				flash-max-timeout-us = <400000>;
+				flash-max-microamp = <1100000>;
+				led-max-microamp = <130000>;
+			};
+
+			front_flash: led@1 {
+				reg = <1>;
+				label = "front-flash";
+				function = LED_FUNCTION_FLASH;
+				color = <LED_COLOR_ID_WHITE>;
+				flash-max-timeout-us = <400000>;
+				flash-max-microamp = <300000>;
+				led-max-microamp = <130000>;
+			};
+		};
+	};
+};
+
 &i2c_gpio_2 {
 	expander: gpio@20 {
 		compatible = "nxp,pcal6416";
@@ -282,6 +361,18 @@
 
 		gpio-controller;
 		#gpio-cells = <2>;
+	};
+};
+
+&i2c_gpio_3 {
+	fuelgauge@71 {
+		compatible = "sm5708-battery,a6plte";
+		reg = <0x71>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <62 IRQ_TYPE_LEVEL_HIGH>;
+
+		power-supplies = <&charger>;
 	};
 };
 
@@ -456,6 +547,12 @@
 	/* Fingerprint sensor at SPI4 (BLSP1 QUP4) */
 	gpio-reserved-ranges = <12 4>;
 
+	charger_int_default: charger-int-pins {
+		pins = "gpio60";
+		function = "gpio";
+		bias-disable;
+	};
+
 	expander_reset_deasserted: expander-reset-pins {
 		pins = "gpio33";
 		function = "gpio";
@@ -485,8 +582,10 @@
 
 &usb3 {
 	status = "okay";
+	extcon = <&extcon0>, <&extcon0>;
 };
 
 &usb3_dwc3 {
-	dr_mode = "peripheral";
+	dr_mode = "otg";
+	extcon = <&extcon0>, <&extcon0>;
 };
