@@ -42,6 +42,33 @@
 	};
 };
 
+&dsi_phy0 {
+	vcca-supply = <&pm8953_l3>;
+};
+
+&dsi0 {
+	vdda-supply = <&pm8953_s3>;
+	vddio-supply = <&pm8953_l6>;
+
+	panel@0 {
+		compatible = "fairphone,fp3-hx83112b";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 61 GPIO_ACTIVE_LOW>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi0_out>;
+			};
+		};
+	};
+};
+
+&dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
 &hsusb_phy {
 	status = "okay";
 	vdd-supply = <&pm8953_l3>;
