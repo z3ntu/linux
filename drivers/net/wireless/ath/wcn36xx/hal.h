@@ -4161,6 +4161,7 @@ struct wcn36xx_hal_tx_compl_ind_msg {
 
 	/* Tx Complete Indication Success or Failure */
 	u32 status;
+	u32 dialogToken;
 };
 
 struct wcn36xx_hal_wlan_host_suspend_ind_msg {
