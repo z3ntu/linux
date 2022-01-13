@@ -22,8 +22,10 @@
 	qcom,board-id = <8 32>;
 
 	aliases {
+		bluetooth0 = &bluetooth;
 		serial0 = &uart2;
-		hsuart0 = &qupv3_se1_4uart;
+		serial1 = &qupv3_se1_4uart;
+		//hsuart0 = &qupv3_se1_4uart;
 	};
 
 	chosen {
@@ -179,8 +181,10 @@
 		};
 
 		vreg_l7a: ldo7 {
-			regulator-min-microvolt = <1620000>;
-			regulator-max-microvolt = <1980000>;
+			//regulator-min-microvolt = <1620000>;
+			regulator-min-microvolt = <1700000>;
+			regulator-max-microvolt = <1900000>;
+			//regulator-max-microvolt = <1980000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -198,7 +202,8 @@
 
 		vreg_l11a: ldo11 {
 			regulator-min-microvolt = <1800000>;
-			regulator-max-microvolt = <2000000>;
+			regulator-max-microvolt = <1900000>;
+			//regulator-max-microvolt = <2000000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -279,7 +284,8 @@
 		};
 
 		vreg_l2e: ldo2 {
-			regulator-min-microvolt = <1170000>;
+			//regulator-min-microvolt = <1170000>;
+			regulator-min-microvolt = <1304000>;
 			regulator-max-microvolt = <1305000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
@@ -328,7 +334,8 @@
 
 		vreg_l10e: ldo10 {
 			regulator-min-microvolt = <3000000>;
-			regulator-max-microvolt = <3401000>;
+			regulator-max-microvolt = <3312000>;
+			//regulator-max-microvolt = <3401000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
@@ -464,8 +471,11 @@
 	interrupts-extended = <&intc GIC_SPI 602 IRQ_TYPE_LEVEL_HIGH>,
 			      <&tlmm 64 IRQ_TYPE_LEVEL_HIGH>;
 
-	bluetooth {
+	bluetooth: bluetooth {
 		compatible = "qcom,wcn3990-bt";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&sw_ctrl>;
 
 		vddio-supply = <&vreg_l11a>;
 		vddxo-supply = <&vreg_l7a>;
@@ -477,8 +487,47 @@
 	};
 };
 
+/////////////////// copied from sc7280-idp.dtsi /////
+&qupv3_se1_cts {
+	/*
+	 * Configure a pull-down on CTS to match the pull of
+	 * the Bluetooth module.
+	 */
+	bias-pull-down;
+};
+
+&qupv3_se1_rts {
+	/* We'll drive RTS, so no pull */
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&qupv3_se1_tx {
+	/* We'll drive TX, so no pull */
+	drive-strength = <2>;
+	bias-disable;
+};
+
+&qupv3_se1_rx {
+	/*
+	 * Configure a pull-up on RX. This is needed to avoid
+	 * garbage data when the TX pin of the Bluetooth module is
+	 * in tri-state (module powered off or not driving the
+	 * signal yet).
+	 */
+	bias-pull-up;
+};
+/////////////////// copied from sc7280-idp.dtsi /////
+
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
+
+	sw_ctrl: sw-ctrl {
+		pins = "gpio69";
+		function = "gpio";
+		input-enable;
+		bias-pull-down;
+	};
 
 	muic_i2c_default: muic-i2c-default {
 		pins = "gpio19", "gpio20";

@@ -582,7 +582,7 @@
 				clock-names = "se";
 				clocks = <&gcc GCC_QUPV3_WRAP0_S1_CLK>;
 				pinctrl-names = "default";
-				pinctrl-0 = <&qupv3_se1_ctsrx>, <&qupv3_se1_rts>, <&qupv3_se1_tx>;
+				pinctrl-0 = <&qupv3_se1_cts>, <&qupv3_se1_rts>, <&qupv3_se1_tx>, <&qupv3_se1_rx>;
 				interrupts = <GIC_SPI 602 IRQ_TYPE_LEVEL_HIGH>;
 				power-domains = <&rpmhpd SM6350_CX>;
 				operating-points-v2 = <&qup_opp_table>;
@@ -1277,8 +1277,8 @@
 				};
 			};
 
-			qupv3_se1_ctsrx: qupv3_se1_ctsrx {
-				pins = "gpio61", "gpio64";
+			qupv3_se1_cts: qupv3_se1_cts {
+				pins = "gpio61";
 				function = "qup01";
 				drive-strength = <2>;
 				bias-disable;
@@ -1296,6 +1296,13 @@
 				function = "qup01";
 				drive-strength = <2>;
 				bias-pull-up;
+			};
+
+			qupv3_se1_rx: qupv3_se1_rx {
+				pins = "gpio64";
+				function = "qup01";
+				drive-strength = <2>;
+				bias-disable;
 			};
 		};
 
