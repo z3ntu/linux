@@ -453,6 +453,7 @@ static int venus_hfi_core_set_resource(struct venus_core *core, u32 id,
 	return 0;
 }
 
+// downstream: __boot_firmware_iris2
 static int venus_boot_core(struct venus_hfi_device *hdev)
 {
 	struct device *dev = hdev->core->dev;
@@ -478,6 +479,7 @@ static int venus_boot_core(struct venus_hfi_device *hdev)
 	writel(BIT(VIDC_CTRL_INIT_CTRL_SHIFT), cpu_cs_base + VIDC_CTRL_INIT);
 	while (!ctrl_status && count < max_tries) {
 		ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
+		dev_err(hdev->core->dev, "%s:%d ctrl_status=%x\n", __func__, __LINE__, ctrl_status);
 		if ((ctrl_status & CPU_CS_SCIACMDARG0_ERROR_STATUS_MASK) == 4) {
 			dev_err(dev, "invalid setting for UC_REGION\n");
 			ret = -EINVAL;
@@ -530,6 +532,7 @@ static int venus_run(struct venus_hfi_device *hdev)
 	 */
 	venus_set_registers(hdev);
 
+	// downstream: __setup_ucregion_memory_map_iris2
 	writel(hdev->ifaceq_table.da, cpu_cs_base + UC_REGION_ADDR);
 	writel(SHARED_QSIZE, cpu_cs_base + UC_REGION_SIZE);
 	writel(hdev->ifaceq_table.da, cpu_cs_base + CPU_CS_SCIACMDARG2);
@@ -539,7 +542,7 @@ static int venus_run(struct venus_hfi_device *hdev)
 
 	ret = venus_boot_core(hdev);
 	if (ret) {
-		dev_err(dev, "failed to reset venus core\n");
+		dev_err(dev, "failed to reset venus core: %d\n", ret);
 		return ret;
 	}
 
@@ -562,8 +565,12 @@ static int venus_halt_axi(struct venus_hfi_device *hdev)
 	if (IS_IRIS2(hdev->core) || IS_IRIS2_1(hdev->core)) {
 		writel(0x3, cpu_cs_base + CPU_CS_X2RPMH_V6);
 
-		if (IS_IRIS2_1(hdev->core))
+		if (IS_IRIS2_1(hdev->core)) {
+			printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 			goto skip_aon_mvp_noc;
+		}
+
+		BUG(); // sm6350 shouldn't hit this
 
 		writel(0x1, aon_base + AON_WRAPPER_MVP_NOC_LPI_CONTROL);
 		ret = readl_poll_timeout(aon_base + AON_WRAPPER_MVP_NOC_LPI_STATUS,
@@ -986,6 +993,7 @@ static void venus_flush_debug_queue(struct venus_hfi_device *hdev)
 	}
 }
 
+// __prepare_pc
 static int venus_prepare_power_collapse(struct venus_hfi_device *hdev,
 					bool wait)
 {
@@ -1010,6 +1018,7 @@ static int venus_prepare_power_collapse(struct venus_hfi_device *hdev,
 		return -ETIMEDOUT;
 	}
 
+	printk(KERN_ERR "%s:%d DBG \n", __func__, __LINE__);
 	return 0;
 }
 
@@ -1523,6 +1532,8 @@ static bool venus_cpu_and_video_core_idle(struct venus_hfi_device *hdev)
 		cpu_status = readl(wrapper_base + WRAPPER_CPU_STATUS);
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
 
+	dev_err(hdev->core->dev, "%s:%d cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", __func__, __LINE__, cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK);
+
 	if (cpu_status & WRAPPER_CPU_STATUS_WFI &&
 	    ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK)
 		return true;
@@ -1543,6 +1554,8 @@ static bool venus_cpu_idle_and_pc_ready(struct venus_hfi_device *hdev)
 		cpu_status = readl(wrapper_base + WRAPPER_CPU_STATUS);
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
 
+	dev_err(hdev->core->dev, "%s:%d cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", __func__, __LINE__, cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_PC_READY);
+
 	if (cpu_status & WRAPPER_CPU_STATUS_WFI &&
 	    ctrl_status & CPU_CS_SCIACMDARG0_PC_READY)
 		return true;
@@ -1558,10 +1571,14 @@ static int venus_suspend_3xx(struct venus_core *core)
 	u32 ctrl_status;
 	bool val;
 	int ret;
+	dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 
-	if (!hdev->power_enabled || hdev->suspended)
+	if (!hdev->power_enabled || hdev->suspended) {
+		dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 		return 0;
+	}
 
+	dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 	mutex_lock(&hdev->lock);
 	ret = venus_is_valid_state(hdev);
 	mutex_unlock(&hdev->lock);
@@ -1572,8 +1589,10 @@ static int venus_suspend_3xx(struct venus_core *core)
 	}
 
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
-	if (ctrl_status & CPU_CS_SCIACMDARG0_PC_READY)
+	if (ctrl_status & CPU_CS_SCIACMDARG0_PC_READY) {
+		dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 		goto power_off;
+	}
 
 	/*
 	 * Power collapse sequence for Venus 3xx and 4xx versions:
@@ -1583,6 +1602,7 @@ static int venus_suspend_3xx(struct venus_core *core)
 	 * 2. Send a command to prepare for power collapse.
 	 * 3. Check for WFI and PC_READY bits.
 	 */
+	// FIXME this breaks on sm6350
 	ret = readx_poll_timeout(venus_cpu_and_video_core_idle, hdev, val, val,
 				 1500, 100 * 1500);
 	if (ret) {
@@ -1598,10 +1618,13 @@ static int venus_suspend_3xx(struct venus_core *core)
 
 	ret = readx_poll_timeout(venus_cpu_idle_and_pc_ready, hdev, val, val,
 				 1500, 100 * 1500);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "wait for cpu idle and pc ready fail (%d)\n", ret);
 		return ret;
+	}
 
 power_off:
+	dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 	mutex_lock(&hdev->lock);
 
 	ret = venus_power_off(hdev);
@@ -1664,6 +1687,7 @@ void venus_hfi_destroy(struct venus_core *core)
 	venus_interface_queues_release(hdev);
 	mutex_destroy(&hdev->lock);
 	kfree(hdev);
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = NULL;
 }
 
@@ -1681,6 +1705,7 @@ int venus_hfi_create(struct venus_core *core)
 	hdev->core = core;
 	hdev->suspended = true;
 	core->priv = hdev;
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = &venus_hfi_ops;
 
 	ret = venus_interface_queues_init(hdev);
@@ -1692,6 +1717,7 @@ int venus_hfi_create(struct venus_core *core)
 err_kfree:
 	kfree(hdev);
 	core->priv = NULL;
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = NULL;
 	return ret;
 }
