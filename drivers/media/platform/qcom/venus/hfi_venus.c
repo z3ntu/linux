@@ -1663,6 +1663,7 @@ void venus_hfi_destroy(struct venus_core *core)
 	venus_interface_queues_release(hdev);
 	mutex_destroy(&hdev->lock);
 	kfree(hdev);
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = NULL;
 }
 
@@ -1680,6 +1681,7 @@ int venus_hfi_create(struct venus_core *core)
 	hdev->core = core;
 	hdev->suspended = true;
 	core->priv = hdev;
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = &venus_hfi_ops;
 
 	ret = venus_interface_queues_init(hdev);
@@ -1691,6 +1693,7 @@ int venus_hfi_create(struct venus_core *core)
 err_kfree:
 	kfree(hdev);
 	core->priv = NULL;
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = NULL;
 	return ret;
 }

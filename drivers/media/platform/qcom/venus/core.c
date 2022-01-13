@@ -374,6 +374,7 @@ static int venus_probe(struct platform_device *pdev)
 
 	ret = pm_runtime_put_sync(dev);
 	if (ret) {
+		printk(KERN_ERR "%s:%d ret=%d\n", __func__, __LINE__, ret);
 		pm_runtime_get_noresume(dev);
 		goto err_dev_unregister;
 	}
