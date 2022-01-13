@@ -4,6 +4,111 @@
 #include "msm8953.dtsi"
 
 / {
+	/delete-node/cpu0-opp-table;
+
+	cpu0_opp: cpu0-opp-table {
+		compatible = "operating-points-v2-qcom-cpu", "operating-points-v2-kryo-cpu";
+		nvmem-cells = <&cpu_speed_bin>;
+		opp-shared;
+
+		opp-614400000 {
+			opp-hz = /bits/ 64 <614400000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp1>;
+			opp-suspend;
+		};
+
+		opp-883200000 {
+			opp-hz = /bits/ 64 <883200000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp2>;
+		};
+
+		opp-1036800000 {
+			opp-hz = /bits/ 64 <1036800000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp3>;
+		};
+
+		opp-1363200000 {
+			opp-hz = /bits/ 64 <1363200000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp4>;
+		};
+
+		opp-1536000000 {
+			opp-hz = /bits/ 64 <1536000000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp5>;
+		};
+
+		opp-1670400000 {
+			opp-hz = /bits/ 64 <1670400000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp6>;
+		};
+
+		opp-1804800000 {
+			opp-hz = /bits/ 64 <1804800000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp7>;
+		};
+	};
+
+	cpu1_opp: cpu1-opp-table {
+		compatible = "operating-points-v2-qcom-cpu", "operating-points-v2-kryo-cpu";
+		opp-shared;
+
+		opp-633600000 {
+			opp-hz = /bits/ 64 <652800000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp1>;
+			opp-suspend;
+		};
+
+		opp-902400000 {
+			opp-hz = /bits/ 64 <1036800000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp2>;
+		};
+
+		opp-1094400000 {
+			opp-hz = /bits/ 64 <1248000000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp3>;
+		};
+
+		opp-1401600000 {
+			opp-hz = /bits/ 64 <1401600000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp4>;
+		};
+
+		opp-1555200000 {
+			opp-hz = /bits/ 64 <1689600000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp5>;
+		};
+
+		opp-1804800000 {
+			opp-hz = /bits/ 64 <1804800000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp6>;
+		};
+
+		opp-1996200000 {
+			opp-hz = /bits/ 64 <1958400000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp7>;
+		};
+
+		opp-2016000000 {
+			opp-hz = /bits/ 64 <2016000000>;
+			opp-supported-hw = <BIN_632>;
+			required-opps = <&cpr_opp8>;
+		};
+	};
+
 	thermal-zones {
 		/delete-node/cpu1-thermal;
 		/delete-node/cpu2-thermal;
@@ -46,36 +151,239 @@
  */
 &CPU0 {
 	compatible = "qcom,kryo250";
+	clocks = <&apcc_c0_mux>;
+	clock-names = "cpu";
 };
 
 &CPU1 {
 	compatible = "qcom,kryo250";
+	clocks = <&apcc_c0_mux>;
+	clock-names = "cpu";
 };
 
 &CPU2 {
 	compatible = "qcom,kryo250";
+	clocks = <&apcc_c0_mux>;
+	clock-names = "cpu";
 };
 
 &CPU3 {
 	compatible = "qcom,kryo250";
+	clocks = <&apcc_c0_mux>;
+	clock-names = "cpu";
+};
+
+&apcc_pll {
+	clock-output-names = "apcc-pwr-pll";
+	qcom,vco-ranges = <0 614400000 2016000000>;
+};
+
+&apcc_c0_mux {
+	assigned-clocks = <&apcc_c0_mux>;
+	assigned-clock-parents = <&apcc_pll>;
+	assigned-clock-rates = <1363200000>;
+};
+
+&apcc_c1_mux {
+	clocks = <&apcc_perf_pll>,
+		 <&gcc GPLL0_EARLY>;
+	clock-mux-indices = <5>, <4>;
+	assigned-clocks = <&apcc_c1_mux>;
+	assigned-clock-parents = <&apcc_perf_pll>;
+	assigned-clock-rates = <1401600000>;
+};
+
+&apcc_cci_mux {
+	clocks = <&apcc_cci_pll>;
+	clock-mux-indices = <5>;
+	assigned-clocks = <&apcc_cci_mux>;
+	assigned-clock-parents = <&apcc_cci_pll>;
+	assigned-clock-rates = <691200000>;
+};
+
+&gpu_opp_table {
+	opp-685000000 {
+		opp-hz = /bits/ 64 <685000000>;
+		opp-supported-hw = <BIN_ALL>;
+		opp-avg-kBps = <0>, <(7449600/4)>;
+		opp-peak-kBps = <7449600>, <(7449600/2)>;
+		required-opps = <&rpmpd_opp_turbo>;
+	};
+
+	opp-725000000 {
+		opp-hz = /bits/ 64 <725000000>;
+		opp-supported-hw = <BIN_ALL>;
+		opp-avg-kBps = <0>, <(7449600/4)>;
+		opp-peak-kBps = <7449600>, <(7449600/2)>;
+		required-opps = <&rpmpd_opp_turbo>;
+	};
 };
 
 &CPU4 {
 	compatible = "qcom,kryo250";
 	capacity-dmips-mhz = <1980>;
+	clocks = <&apcc_c1_mux>;
+	clock-names = "cpu";
+	power-domains = <&cpr 1>;
 };
 
 &CPU5 {
 	compatible = "qcom,kryo250";
 	capacity-dmips-mhz = <1980>;
+	clocks = <&apcc_c1_mux>;
+	clock-names = "cpu";
+	power-domains = <&cpr 1>;
 };
 
 &CPU6 {
 	compatible = "qcom,kryo250";
 	capacity-dmips-mhz = <1980>;
+	clocks = <&apcc_c1_mux>;
+	clock-names = "cpu";
+	power-domains = <&cpr 1>;
 };
 
 &CPU7 {
 	compatible = "qcom,kryo250";
 	capacity-dmips-mhz = <1980>;
+	clocks = <&apcc_c1_mux>;
+	clock-names = "cpu";
+	power-domains = <&cpr 1>;
+};
+
+&cpr {
+	compatible = "qcom,sdm632-cpr4";
+
+	clocks = <&apcc_cci_mux>, <&xo_board>;
+	clock-names = "cci", "ref";
+
+	nvmem-cells = <&cpr_efuse_quot_offset3>,
+		      <&cpr_efuse_quot_offset5>,
+		      <&cpr_efuse_quot_offset4>,
+		      <&cpr_efuse_init_voltage7>,
+		      <&cpr_efuse_init_voltage4>,
+		      <&cpr_efuse_init_voltage6>,
+		      <&cpr_efuse_init_voltage5>,
+		      <&cpr_efuse_quot7>,
+		      <&cpr_efuse_quot4>,
+		      <&cpr_efuse_quot6>,
+		      <&cpr_efuse_quot5>,
+		      <&cpr_efuse_ring7>,
+		      <&cpr_efuse_ring6>,
+		      <&cpr_efuse_ring5>,
+		      <&cpr_efuse_ring4>,
+		      <&cpr_efuse_quot_offset6>,
+		      <&cpr_efuse_quot_offset2>,
+		      <&cpr_efuse_quot_offset1>,
+		      <&cpr_efuse_init_voltage7>,
+		      <&cpr_efuse_init_voltage3>,
+		      <&cpr_efuse_init_voltage2>,
+		      <&cpr_efuse_init_voltage1>,
+		      <&cpr_efuse_quot7>,
+		      <&cpr_efuse_quot3>,
+		      <&cpr_efuse_quot2>,
+		      <&cpr_efuse_quot1>,
+		      <&cpr_efuse_ring4>,
+		      <&cpr_efuse_ring3>,
+		      <&cpr_efuse_ring2>,
+		      <&cpr_efuse_ring1>,
+		      <&cpr_efuse_revision>,
+		      <&cpu_speed_bin>;
+	nvmem-cell-names = "cpr_thread0_quotient_offset2",
+			   "cpr_thread0_quotient_offset3",
+			   "cpr_thread0_quotient_offset4",
+			   "cpr_thread0_init_voltage1",
+			   "cpr_thread0_init_voltage2",
+			   "cpr_thread0_init_voltage3",
+			   "cpr_thread0_init_voltage4",
+			   "cpr_thread0_quotient1",
+			   "cpr_thread0_quotient2",
+			   "cpr_thread0_quotient3",
+			   "cpr_thread0_quotient4",
+			   "cpr_thread0_ring_osc1",
+			   "cpr_thread0_ring_osc2",
+			   "cpr_thread0_ring_osc3",
+			   "cpr_thread0_ring_osc4",
+			   "cpr_thread1_quotient_offset2",
+			   "cpr_thread1_quotient_offset3",
+			   "cpr_thread1_quotient_offset4",
+			   "cpr_thread1_init_voltage1",
+			   "cpr_thread1_init_voltage2",
+			   "cpr_thread1_init_voltage3",
+			   "cpr_thread1_init_voltage4",
+			   "cpr_thread1_quotient1",
+			   "cpr_thread1_quotient2",
+			   "cpr_thread1_quotient3",
+			   "cpr_thread1_quotient4",
+			   "cpr_thread1_ring_osc1",
+			   "cpr_thread1_ring_osc2",
+			   "cpr_thread1_ring_osc3",
+			   "cpr_thread1_ring_osc4",
+			   "cpr_fuse_revision",
+			   "cpr_speed_bin";
+
+	/delete-node/cpr-opp-table;
+	cpr_opp_table: cpr-opp-table {
+		compatible = "operating-points-v2-qcom-level";
+
+		cpr_opp1: opp1 {
+			opp-level = <1>;
+			opp-hz = /bits/ 64 <307200000>;
+		};
+		cpr_opp2: opp2 {
+			opp-level = <2>;
+			opp-hz = /bits/ 64 <403200000>;
+		};
+		cpr_opp3: opp3 {
+			opp-level = <3>;
+			opp-hz = /bits/ 64 <499200000>;
+		};
+		cpr_opp4: opp4 {
+			opp-level = <4>;
+			opp-hz = /bits/ 64 <691200000>;
+		};
+		cpr_opp5: opp5 {
+			opp-level = <5>;
+			opp-hz = /bits/ 64 <768000000>;
+		};
+		cpr_opp6: opp6 {
+			opp-level = <6>;
+			opp-hz = /bits/ 64 <787200000>;
+		};
+		cpr_opp7: opp7 {
+			opp-level = <7>;
+			opp-hz = /bits/ 64 <787200000>;
+		};
+		cpr_opp8: opp8 {
+			opp-level = <8>;
+			opp-hz = /bits/ 64 <787200000>;
+		};
+	};
+
+};
+
+&soc {
+	/delete-node/syscon@19461d4;
+	apc_mem_acc: syscon@b1d1360 {
+		compatible = "syscon";
+		reg = <0xb1d1360 0x14>;
+	};
+
+	apcc_perf_pll: clock-controller@b011050 {
+		compatible = "qcom,msm8953-apcc-alpha-pll";
+		reg = <0xb016000 0x40>;
+		qcom,vco-ranges = <0 633600000 2016000000>;
+		clocks = <&xo_board>;
+		clock-output-names = "apcc-perf-pll";
+		#clock-cells = <0>;
+	};
+
+	apcc_cci_pll: clock-controller@b011050 {
+		compatible = "qcom,alpha-pll-sdm632-cci";
+		reg = <0xb1d0000 0x40>;
+		qcom,vco-ranges = <0 500000000 1000000000>;
+		clocks = <&xo_board>;
+		clock-output-names = "apcc-cci-pll";
+		#clock-cells = <0>;
+	};
 };

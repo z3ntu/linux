@@ -9,6 +9,7 @@
 
 #define BIN_625  0x04
 #define BIN_626  0x81
+#define BIN_632  0x45
 #define BIN_ALL	 0xff
 
 / {
