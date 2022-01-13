@@ -960,4 +960,12 @@ config CHARGER_QCOM_SMB2
 	  adds support for the SMB2 switch mode battery charger found
 	  in PMI8998 and related PMICs.
 
+config FUEL_GAUGE_SM5708
+	tristate "Siliconmitus SM5708 Fuel Gauge support"
+	depends on I2C
+	help
+	  SM5708 is fuel-gauge systems for lithium-ion (Li+) batteries
+	  in handheld and portable equipment. The SM5708 is configured
+	  to operate with a single lithium cell
+
 endif # POWER_SUPPLY
