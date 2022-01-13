@@ -161,6 +161,10 @@
 	};
 };
 
+&lpass {
+	status = "okay";
+};
+
 &modem {
 	status = "okay";
 

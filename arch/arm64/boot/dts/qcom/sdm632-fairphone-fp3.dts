@@ -49,6 +49,10 @@
 	vdda-phy-dpdm-supply = <&pm8953_l13>;
 };
 
+&lpass {
+	status = "okay";
+};
+
 &modem {
 	compatible = "qcom,msm8953-alt-mss-pil";
 
