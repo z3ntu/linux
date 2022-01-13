@@ -78,6 +78,13 @@
 	};
 };
 
+&iris {
+	vddxo-supply = <&pm8953_l7>;
+	vddrfa-supply = <&pm8953_l19>;
+	vddpa-supply = <&pm8953_l9>;
+	vdddig-supply = <&pm8953_l5>;
+};
+
 &lpass {
 	status = "okay";
 };
@@ -94,6 +101,12 @@
 &pm8953_resin {
 	status = "okay";
 	linux,code = <KEY_VOLUMEDOWN>;
+};
+
+&pronto {
+	status = "okay";
+
+	vddpx-supply = <&pm8953_l5>;
 };
 
 &sdhc_1 {
