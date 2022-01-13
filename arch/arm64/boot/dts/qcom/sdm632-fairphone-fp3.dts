@@ -49,6 +49,15 @@
 	vdda-phy-dpdm-supply = <&pm8953_l13>;
 };
 
+&modem {
+	compatible = "qcom,msm8953-alt-mss-pil";
+
+	power-domains = <&rpmpd MSM8953_VDDCX>, <&rpmpd MSM8953_VDDMX>, <&rpmpd MSM8953_VDDMD>;
+	power-domain-names = "cx", "mx", "mss";
+
+	pll-suplly = <&pm8953_l7>;
+};
+
 &pm8953_resin {
 	status = "okay";
 	linux,code = <KEY_VOLUMEDOWN>;
