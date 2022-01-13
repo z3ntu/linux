@@ -940,6 +940,7 @@ static int mdp5_setup_interconnect(struct platform_device *pdev)
 {
 	struct icc_path *path0 = of_icc_get(&pdev->dev, "mdp0-mem");
 	struct icc_path *path1 = of_icc_get(&pdev->dev, "mdp1-mem");
+	struct icc_path *path_cfg = of_icc_get(&pdev->dev, "cpu-cfg");
 	struct icc_path *path_rot = of_icc_get(&pdev->dev, "rotator-mem");
 
 	if (IS_ERR(path0))
@@ -962,6 +963,8 @@ static int mdp5_setup_interconnect(struct platform_device *pdev)
 		icc_set_bw(path1, 0, MBps_to_icc(6400));
 	if (!IS_ERR_OR_NULL(path_rot))
 		icc_set_bw(path_rot, 0, MBps_to_icc(6400));
+	if (!IS_ERR_OR_NULL(path_cfg))
+		icc_set_bw(path_cfg, 0, MBps_to_icc(500));
 
 	return 0;
 }
