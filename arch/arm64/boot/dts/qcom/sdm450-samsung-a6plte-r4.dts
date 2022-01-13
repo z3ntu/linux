@@ -285,6 +285,10 @@
 	};
 };
 
+&lpass {
+	status = "okay";
+};
+
 &mpss {
 	status = "okay";
 
