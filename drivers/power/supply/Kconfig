@@ -950,4 +950,11 @@ config FUEL_GAUGE_SM5708
 	  in handheld and portable equipment. The SM5708 is configured
 	  to operate with a single lithium cell
 
+config CHARGER_SM5708
+	tristate "Siliconmitus SM5708 Charger support"
+	depends on I2C && REGULATOR
+	select MFD_SIMPLE_MFD_I2C
+	help
+	  Say Y here to enable support for the Siliconmitus SM5708 charger
+
 endif # POWER_SUPPLY
