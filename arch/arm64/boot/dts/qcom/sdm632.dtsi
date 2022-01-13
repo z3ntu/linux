@@ -79,3 +79,10 @@
 	compatible = "qcom,kryo250";
 	capacity-dmips-mhz = <1980>;
 };
+
+&gpu {
+	/* SDM632 supports all operating points on all bins */
+	/delete-property/ nvmem-cells;
+	/delete-property/ nvmem-cell-names;
+	opp-default-hw = <0x100>;
+};

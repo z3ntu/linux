@@ -1085,10 +1085,108 @@
 				      "alwayson";
 
 			power-domains = <&gcc OXILI_GX_GDSC>;
+			power-domain-names = "gx";
+
+			nvmem-cells = <&cpu_speed_bin>;
+			nvmem-cell-names = "speed_bin";
 
 			iommus = <&gpu_iommu 0>;
 
+			operating-points-v2 = <&gpu_opp_table>;
+			opp-default-hw = <0x2>;
+
 			#cooling-cells = <2>;
+
+			gpu_opp_table: opp-table {
+				compatible  ="operating-points-v2";
+
+				opp-200000000 {
+					opp-hz = /bits/ 64 <200000000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(1689600/4)>;
+					opp-peak-kBps = <1689600>, <(1689600/2)>;
+					required-opps = <&rpmpd_opp_low_svs>;
+				};
+
+				opp-266670000 {
+					opp-hz = /bits/ 64 <266670000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(3072000/4)>;
+					opp-peak-kBps = <3072000>, <(3072000/2)>;
+					required-opps = <&rpmpd_opp_svs>;
+				};
+
+				opp-320000000 {
+					opp-hz = /bits/ 64 <320000000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(3379200/4)>;
+					opp-peak-kBps = <3379200>, <(3379200/2)>;
+					required-opps = <&rpmpd_opp_svs>;
+				};
+
+				opp-400000000 {
+					opp-hz = /bits/ 64 <400000000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(5376000/4)>;
+					opp-peak-kBps = <5376000>, <(5376000/2)>;
+					required-opps = <&rpmpd_opp_svs_plus>;
+				};
+
+				opp-460800000 {
+					opp-hz = /bits/ 64 <460800000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(6144000/4)>;
+					opp-peak-kBps = <6144000>, <(6144000/2)>;
+					required-opps = <&rpmpd_opp_nom>;
+				};
+				opp-510000000 {
+					opp-hz = /bits/ 64 <510000000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(6451200/4)>;
+					opp-peak-kBps = <6451200>, <(6451200/2)>;
+					required-opps = <&rpmpd_opp_nom>;
+				};
+
+				opp-560000000 {
+					opp-hz = /bits/ 64 <560000000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(6758400/4)>;
+					opp-peak-kBps = <6758400>, <(6758400/2)>;
+					required-opps = <&rpmpd_opp_nom_plus>;
+				};
+
+				opp-600000000 {
+					opp-hz = /bits/ 64 <600000000>;
+					opp-supported-hw = <0x1ff>;
+					opp-avg-kBps = <0>, <(7449600/4)>;
+					opp-peak-kBps = <7449600>, <(7449600/2)>;
+					required-opps = <&rpmpd_opp_turbo>;
+				};
+
+				opp-650000000 {
+					opp-hz = /bits/ 64 <650000000>;
+					opp-supported-hw = <0x185>;
+					opp-avg-kBps = <0>, <(7449600/4)>;
+					opp-peak-kBps = <7449600>, <(7449600/2)>;
+					required-opps = <&rpmpd_opp_turbo>;
+				};
+
+				opp-685000000 {
+					opp-hz = /bits/ 64 <685000000>;
+					opp-supported-hw = <0x100>;
+					opp-avg-kBps = <0>, <(7449600/4)>;
+					opp-peak-kBps = <7449600>, <(7449600/2)>;
+					required-opps = <&rpmpd_opp_turbo>;
+				};
+
+				opp-725000000 {
+					opp-hz = /bits/ 64 <725000000>;
+					opp-supported-hw = <0x100>;
+					opp-avg-kBps = <0>, <(7449600/4)>;
+					opp-peak-kBps = <7449600>, <(7449600/2)>;
+					required-opps = <&rpmpd_opp_turbo>;
+				};
+			};
 
 			zap-shader {
 				memory-region = <&zap_shader_region>;
