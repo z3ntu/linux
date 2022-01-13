@@ -58,6 +58,7 @@ int venus_set_hw_state(struct venus_core *core, bool resume)
 	int ret;
 
 	if (core->use_tz) {
+		// downstream: rc = __tzbsp_set_video_state(TZBSP_VIDEO_STATE_RESUME, sid);
 		ret = qcom_scm_set_remote_state(resume, 0);
 		if (resume && ret == -EINVAL)
 			ret = 0;
@@ -229,6 +230,8 @@ int venus_boot(struct venus_core *core)
 		return -EINVAL;
 	}
 
+	dev_err(dev, "loaded video firmware! %s size=%ld, phys=%lld\n", fwpath, mem_size, mem_phys);
+
 	core->fw.mem_size = mem_size;
 	core->fw.mem_phys = mem_phys;
 
@@ -253,6 +256,7 @@ int venus_boot(struct venus_core *core)
 		}
 	}
 
+	dev_err(dev, "venus_boot ok\n");
 	return 0;
 }
 

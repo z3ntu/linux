@@ -444,6 +444,7 @@ static int venus_hfi_core_set_resource(struct venus_core *core, u32 id,
 	return 0;
 }
 
+// downstream: __boot_firmware_iris2
 static int venus_boot_core(struct venus_hfi_device *hdev)
 {
 	struct device *dev = hdev->core->dev;
@@ -519,6 +520,7 @@ static int venus_run(struct venus_hfi_device *hdev)
 	 */
 	venus_set_registers(hdev);
 
+	// downstream: __setup_ucregion_memory_map_iris2
 	writel(hdev->ifaceq_table.da, cpu_cs_base + UC_REGION_ADDR);
 	writel(SHARED_QSIZE, cpu_cs_base + UC_REGION_SIZE);
 	writel(hdev->ifaceq_table.da, cpu_cs_base + CPU_CS_SCIACMDARG2);
@@ -1000,6 +1002,7 @@ static void venus_flush_debug_queue(struct venus_hfi_device *hdev)
 	}
 }
 
+// __prepare_pc
 static int venus_prepare_power_collapse(struct venus_hfi_device *hdev,
 					bool wait)
 {
@@ -1024,6 +1027,7 @@ static int venus_prepare_power_collapse(struct venus_hfi_device *hdev,
 		return -ETIMEDOUT;
 	}
 
+	printk(KERN_ERR "%s:%d DBG \n", __func__, __LINE__);
 	return 0;
 }
 
@@ -1547,6 +1551,8 @@ static bool venus_cpu_and_video_core_idle(struct venus_hfi_device *hdev)
 		cpu_status = readl(wrapper_base + WRAPPER_CPU_STATUS);
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
 
+	dev_err(hdev->core->dev, "cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK);
+
 	if (cpu_status & WRAPPER_CPU_STATUS_WFI &&
 	    ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK)
 		return true;
@@ -1566,6 +1572,8 @@ static bool venus_cpu_idle_and_pc_ready(struct venus_hfi_device *hdev)
 	else
 		cpu_status = readl(wrapper_base + WRAPPER_CPU_STATUS);
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
+
+	dev_err(hdev->core->dev, "cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_PC_READY);
 
 	if (cpu_status & WRAPPER_CPU_STATUS_WFI &&
 	    ctrl_status & CPU_CS_SCIACMDARG0_PC_READY)
@@ -1607,6 +1615,7 @@ static int venus_suspend_3xx(struct venus_core *core)
 	 * 2. Send a command to prepare for power collapse.
 	 * 3. Check for WFI and PC_READY bits.
 	 */
+	// FIXME this breaks on sm6350
 	ret = readx_poll_timeout(venus_cpu_and_video_core_idle, hdev, val, val,
 				 1500, 100 * 1500);
 	if (ret) {
@@ -1622,8 +1631,10 @@ static int venus_suspend_3xx(struct venus_core *core)
 
 	ret = readx_poll_timeout(venus_cpu_idle_and_pc_ready, hdev, val, val,
 				 1500, 100 * 1500);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "wait for cpu idle and pc ready fail (%d)\n", ret);
 		return ret;
+	}
 
 power_off:
 	mutex_lock(&hdev->lock);
@@ -1689,6 +1700,7 @@ void venus_hfi_destroy(struct venus_core *core)
 	venus_interface_queues_release(hdev);
 	mutex_destroy(&hdev->lock);
 	kfree(hdev);
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = NULL;
 }
 
@@ -1706,6 +1718,7 @@ int venus_hfi_create(struct venus_core *core)
 	hdev->core = core;
 	hdev->suspended = true;
 	core->priv = hdev;
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = &venus_hfi_ops;
 
 	ret = venus_interface_queues_init(hdev);
@@ -1717,6 +1730,7 @@ int venus_hfi_create(struct venus_core *core)
 err_kfree:
 	kfree(hdev);
 	core->priv = NULL;
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	core->ops = NULL;
 	return ret;
 }

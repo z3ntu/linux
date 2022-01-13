@@ -387,6 +387,7 @@ static int venus_probe(struct platform_device *pdev)
 
 	ret = pm_runtime_put_sync(dev);
 	if (ret) {
+		printk(KERN_ERR "%s:%d ret=%d\n", __func__, __LINE__, ret);
 		pm_runtime_get_noresume(dev);
 		goto err_dev_unregister;
 	}
@@ -806,13 +807,13 @@ static const struct venus_resources sm6350_res = {
 	.clks = {"core", "bus", "iface"},
 	.clks_num = 3,
 	.vcodec0_clks = {"vcodec_core", "vcodec_bus"},
-	.vcodec1_clks = {"vcodec_core", "vcodec_bus"},
+	//.vcodec1_clks = {"vcodec_core", "vcodec_bus"},
 	.vcodec_clks_num = 2,
 	.vcodec_pmdomains = { "venus", "vcodec0" },
 	.vcodec_pmdomains_num = 2,
 	.opp_pmdomain = (const char *[]) { "cx", NULL },
-	.vcodec_num = 2,
-	.max_load = 1224000, // or 1958400 for v0
+	.vcodec_num = 1, // FIXME 2
+	//.max_load = 1224000, // or 1958400 for v0
 	.hfi_version = HFI_VERSION_6XX,
 	.num_vpp_pipes = 1,
 	.vmem_id = VIDC_RESOURCE_NONE,
