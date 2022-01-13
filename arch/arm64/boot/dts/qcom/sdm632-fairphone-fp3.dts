@@ -78,6 +78,10 @@
 	};
 };
 
+&lpass {
+	status = "okay";
+};
+
 &modem {
 	compatible = "qcom,msm8953-alt-mss-pil";
 
