@@ -15,6 +15,7 @@ properties:
     oneOf:
       - enum:
           - qcom,msm8226-cci
+          - qcom,msm8953-cci
           - qcom,msm8974-cci
           - qcom,msm8996-cci
 
