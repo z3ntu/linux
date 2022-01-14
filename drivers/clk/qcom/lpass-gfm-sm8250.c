@@ -66,6 +66,7 @@ static const struct clk_ops clk_gfm_ops = {
 	.determine_rate = __clk_mux_determine_rate,
 };
 
+// reg = <0 0x03300000 0 0x30000>;
 static struct clk_gfm lpass_gfm_va_mclk = {
 	.mux_reg = 0x20000,
 	.mux_mask = BIT(0),
@@ -106,6 +107,8 @@ static struct clk_gfm lpass_gfm_tx_npl = {
 	},
 };
 
+// reg = <0 0x03300000 0 0x30000>;
+// qcom,wsa_mclk_mode_muxsel = <0x033220D8>;
 static struct clk_gfm lpass_gfm_wsa_mclk = {
 	.mux_reg = 0x220d8,
 	.mux_mask = BIT(0),
