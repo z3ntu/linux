@@ -99,6 +99,20 @@
 		regulator-always-on;
 	};
 
+	regulator-3 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "foobar-venus";
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+
+		clocks = <&gcc GCC_VIDEO_AHB_CLK>;
+		startup-delay-us = <70000>;
+		enable-active-high;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
 	// se8_i2c
 	touchscreen_gpio_i2c: i2c-muic {
 		compatible = "i2c-gpio";
