@@ -604,7 +604,7 @@ static int imx274_s_ctrl(struct v4l2_ctrl *ctrl)
  * Return: 0 on success
  */
 static int imx274_get_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_state *sd_state,
 			  struct v4l2_subdev_format *fmt)
 {
 	struct stimx274 *imx274 = to_imx274(sd);
@@ -628,7 +628,7 @@ static int imx274_get_fmt(struct v4l2_subdev *sd,
  * Return: 0 on success
  */
 static int imx274_set_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_state *sd_state,
 			  struct v4l2_subdev_format *format)
 {
 	struct v4l2_mbus_framefmt *fmt = &format->format;
@@ -661,7 +661,7 @@ static int imx274_set_fmt(struct v4l2_subdev *sd,
 	fmt->field = V4L2_FIELD_NONE;
 
 	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
-		cfg->try_fmt = *fmt;
+		sd_state->pads->try_fmt = *fmt;
 	else
 		imx274->format = *fmt;
 
