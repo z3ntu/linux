@@ -9,15 +9,16 @@
 #include <dt-bindings/spmi/spmi.h>
 
 &spmi_bus {
-	pmk8350: pmic@0 {
+	pmk8350: pmic@6 {
 		compatible = "qcom,pmk8350", "qcom,spmi-pmic";
-		reg = <0x0 SPMI_USID>;
+		reg = <0x6 SPMI_USID>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 
 		pmk8350_pon: pon@1300 {
 			compatible = "qcom,pm8998-pon";
 			reg = <0x1300>;
+			status = "disabled";
 
 			pon_pwrkey: pwrkey {
 				compatible = "qcom,pmk8350-pwrkey";
@@ -42,6 +43,7 @@
 			interrupt-names = "eoc-int-en-set";
 			#io-channel-cells = <1>;
 			io-channel-ranges;
+			status = "disabled";
 		};
 
 		pmk8350_adc_tm: adc-tm@3400 {
@@ -59,7 +61,7 @@
 			compatible = "qcom,pmk8350-rtc";
 			reg = <0x6100>, <0x6200>;
 			reg-names = "rtc", "alarm";
-			interrupts = <0x0 0x62 0x1 IRQ_TYPE_EDGE_RISING>;
+			interrupts = <0x6 0x62 0x1 IRQ_TYPE_EDGE_RISING>;
 			status = "disabled";
 		};
 
@@ -71,6 +73,7 @@
 			#gpio-cells = <2>;
 			interrupt-controller;
 			#interrupt-cells = <2>;
+			status = "disabled";
 		};
 	};
 };
