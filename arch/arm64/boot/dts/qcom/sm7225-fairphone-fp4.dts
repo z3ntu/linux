@@ -12,6 +12,7 @@
 #include "sm7225.dtsi"
 #include "pm6150l.dtsi"
 #include "pm6350.dtsi"
+#include "pmk8350.dtsi"
 
 / {
 	model = "Fairphone 4";
@@ -395,6 +396,10 @@
 &pm6350_resin {
 	status = "okay";
 	linux,code = <KEY_VOLUMEDOWN>;
+};
+
+&pmk8350_rtc {
+	status = "okay";
 };
 
 &qupv3_id_0 {
