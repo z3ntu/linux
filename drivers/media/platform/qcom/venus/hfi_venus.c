@@ -1521,6 +1521,8 @@ static bool venus_cpu_and_video_core_idle(struct venus_hfi_device *hdev)
 		cpu_status = readl(wrapper_base + WRAPPER_CPU_STATUS);
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
 
+	dev_err_ratelimited(hdev->core->dev, "cpu_status=%x ctrl_status=%x\n", cpu_status, ctrl_status);
+
 	if (cpu_status & WRAPPER_CPU_STATUS_WFI &&
 	    ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK)
 		return true;
