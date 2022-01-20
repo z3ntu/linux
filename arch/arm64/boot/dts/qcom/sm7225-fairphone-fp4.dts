@@ -708,7 +708,7 @@
 		compatible = "mdss,hx83112a-auo";
 		reg = <0>;
 
-		//backlight = <&backlight>;
+		backlight = <&pm6150l_wled>;
 		reset-gpios = <&pm6150l_gpio 9 GPIO_ACTIVE_LOW>;
 
 		port {
