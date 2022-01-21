@@ -1736,7 +1736,7 @@ static struct gdsc titan_top_gdsc = {
 	.pwrsts = PWRSTS_OFF_ON,
 };
 
-struct clk_hw *cam_cc_sm6350_hws[] = {
+static struct clk_hw *cam_cc_sm6350_hws[] = {
 	[CAM_CC_PLL2_OUT_EARLY] = &cam_cc_pll2_out_early.hw,
 };
 

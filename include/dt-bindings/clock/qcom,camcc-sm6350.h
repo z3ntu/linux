@@ -8,13 +8,13 @@
 #define _DT_BINDINGS_CLK_QCOM_CAM_CC_SM6350_H
 
 /* CAM_CC clocks */
-#define CAM_CC_PLL0			0
-#define CAM_CC_PLL0_OUT_EVEN		1
-#define CAM_CC_PLL1			2
-#define CAM_CC_PLL1_OUT_EVEN		3
-#define CAM_CC_PLL2			4
-#define CAM_CC_PLL2_OUT_MAIN		5
-#define CAM_CC_PLL2_OUT_EARLY		6
+#define CAM_CC_PLL2_OUT_EARLY		0
+#define CAM_CC_PLL0			1
+#define CAM_CC_PLL0_OUT_EVEN		2
+#define CAM_CC_PLL1			3
+#define CAM_CC_PLL1_OUT_EVEN		4
+#define CAM_CC_PLL2			5
+#define CAM_CC_PLL2_OUT_MAIN		6
 #define CAM_CC_PLL3			7
 #define CAM_CC_BPS_AHB_CLK		8
 #define CAM_CC_BPS_AREG_CLK		9
