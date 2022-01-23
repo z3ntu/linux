@@ -74,6 +74,11 @@
 				compatible = "qcom,rpm-msm8226";
 				qcom,smd-channels = "rpm_requests";
 
+				rpmcc: clock-controller {
+					compatible = "qcom,rpmcc-msm8226";
+					#clock-cells = <1>;
+				};
+
 				rpmpd: power-controller {
 					compatible = "qcom,msm8226-rpmpd";
 					#power-domain-cells = <1>;
