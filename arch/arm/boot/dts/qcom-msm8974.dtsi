@@ -530,80 +530,35 @@
 		compatible = "operating-points-v2-kryo-cpu";
 		nvmem-cells = <&pvs>;
 
-		opp-2112000000 {
-			opp-hz = /bits/ 64 <2112000000>;
-			opp-microvolt-speed1-pvs11-v1 = <980000>;
-			opp-microamp-speed1-pvs11-v1 = <669>;
+		// From arch/arm/boot/dts/msm8974.dtsi not from msm8974-pro.dtsi!
+		// A few semi-random values from qcom,speed1-pvs2-bin-v0 there
+		/* speed1-pvs2-v0 */
+		opp-300000000 {
+			opp-hz = /bits/ 64 <300000000>;
+			opp-supported-hw = <2>; // 1 << speed
+			opp-microvolt-speed1-pvs2-v0 = <750000>;
+			opp-microamp-speed1-pvs2-v0 = <72>;
+
+			opp-microvolt-speed1-pvs0-v0 = <775000>;
+			opp-microamp-speed1-pvs0-v0 = <72>;
+		};
+		opp-1036800000 {
+			opp-hz = /bits/ 64 <1036800000>;
+			opp-supported-hw = <2>; // 1 << speed
+			opp-microvolt-speed1-pvs2-v0 = <820000>;
+			opp-microamp-speed1-pvs2-v0 = <264>;
+
+			opp-microvolt-speed1-pvs0-v0 = <850000>;
+			opp-microamp-speed1-pvs0-v0 = <264>;
 		};
 		opp-2035200000 {
 			opp-hz = /bits/ 64 <2035200000>;
-			opp-microvolt-speed1-pvs11-v1 = <965000>;
-			opp-microamp-speed1-pvs11-v1 = <636>;
-		};
-		opp-1958400000 {
-			opp-hz = /bits/ 64 <1958400000>;
-			opp-microvolt-speed1-pvs11-v1 = <950000>;
-			opp-microamp-speed1-pvs11-v1 = <604>;
-		};
-		opp-1881600000 {
-			opp-hz = /bits/ 64 <1881600000>;
-			opp-microvolt-speed1-pvs11-v1 = <935000>;
-			opp-microamp-speed1-pvs11-v1 = <572>;
-		};
-		opp-1804800000 {
-			opp-hz = /bits/ 64 <1804800000>;
-			opp-microvolt-speed1-pvs11-v1 = <920000>;
-			opp-microamp-speed1-pvs11-v1 = <543>;
-		};
-		opp-1728000000 {
-			opp-hz = /bits/ 64 <1728000000>;
-			opp-microvolt-speed1-pvs11-v1 = <905000>;
-			opp-microamp-speed1-pvs11-v1 = <515>;
-		};
-		opp-1651200000 {
-			opp-hz = /bits/ 64 <1651200000>;
-			opp-microvolt-speed1-pvs12-v1 = <895000>;
-			opp-microamp-speed1-pvs12-v1 = <486>;
-		};
-		opp-1574400000 {
-			opp-hz = /bits/ 64 <1574400000>;
-			opp-microvolt-speed1-pvs11-v1 = <885000>;
-			opp-microamp-speed1-pvs11-v1 = <458>;
-		};
-		opp-1497600000 {
-			opp-hz = /bits/ 64 <1497600000>;
-			opp-microvolt-speed1-pvs11-v1 = <875000>;
-			opp-microamp-speed1-pvs11-v1 = <431>;
-		};
-		opp-1420800000 {
-			opp-hz = /bits/ 64 <1420800000>;
-			opp-microvolt-speed1-pvs11-v1 = <855000>;
-			opp-microamp-speed1-pvs11-v1 = <404>;
-		};
-		opp-1344000000 {
-			opp-hz = /bits/ 64 <1344000000>;
-			opp-microvolt-speed1-pvs11-v1 = <855000>;
-			opp-microamp-speed1-pvs11-v1 = <378>;
-		};
-		opp-1267200000 {
-			opp-hz = /bits/ 64 <1267200000>;
-			opp-microvolt-speed1-pvs11-v1 = <845000>;
-			opp-microamp-speed1-pvs11-v1 = <354>;
-		};
-		opp-960000000 {
-			opp-hz = /bits/ 64 <960000000>;
-			opp-microvolt-speed1-pvs11-v1 = <805000>;
-			opp-microamp-speed1-pvs11-v1 = <260>;
-		};
-		opp-576000000 {
-			opp-hz = /bits/ 64 <576000000>;
-			opp-microvolt-speed1-pvs12-v1 = <775000>;
-			opp-microamp-speed1-pvs12-v1 = <150>;
-		};
-		opp-300000000 {
-			opp-hz = /bits/ 64 <300000000>;
-			opp-microvolt-speed1-pvs12-v1 = <775000>;
-			opp-microamp-speed1-pvs12-v1 = <76>;
+			opp-supported-hw = <2>; // 1 << speed
+			opp-microvolt-speed1-pvs2-v0 = <980000>;
+			opp-microamp-speed1-pvs2-v0 = <596>;
+
+			opp-microvolt-speed1-pvs0-v0 = <1030000>;
+			opp-microamp-speed1-pvs0-v0 = <596>;
 		};
 	};
 

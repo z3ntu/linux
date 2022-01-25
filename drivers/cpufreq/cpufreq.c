@@ -189,6 +189,7 @@ EXPORT_SYMBOL_GPL(cpufreq_cpu_get_raw);
 
 unsigned int cpufreq_generic_get(unsigned int cpu)
 {
+	int ret;
 	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
 
 	if (!policy || IS_ERR(policy->clk)) {
@@ -197,7 +198,12 @@ unsigned int cpufreq_generic_get(unsigned int cpu)
 		return 0;
 	}
 
-	return clk_get_rate(policy->clk) / 1000;
+	ret = clk_get_rate(policy->clk) / 1000;
+	if (ret == 0) {
+		ret = 300000;
+		printk(KERN_ERR "%s CPU%d: HACK! ret=0, forcing to %d\n", __func__, cpu, ret);
+	}
+	return ret;
 }
 EXPORT_SYMBOL_GPL(cpufreq_generic_get);
 
