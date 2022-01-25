@@ -14,7 +14,6 @@
  * This is used to determine the voltage and frequency value for each OPP of
  * operating-points-v2 table when it is parsed by the OPP framework.
  */
-#define DEBUG
 
 #include <linux/cpu.h>
 #include <linux/err.h>
@@ -102,29 +101,22 @@ static void get_krait_bin_format_b(struct device *cpu_dev,
 {
 	u32 pte_efuse, redundant_sel;
 
-	//printk(KERN_ERR "%s: DBG buf=%x\n", __func__, buf);
-
 	pte_efuse = *((u32 *)buf);
-	// Redundant fuse select 3 bits OK
 	redundant_sel = (pte_efuse >> 24) & 0x7;
 
-	// PVS_Version 2 bits OK
 	*pvs_ver = (pte_efuse >> 4) & 0x3;
 
 	switch (redundant_sel) {
-	/* use redundant fuse for speed */
 	case 1:
 		*pvs = ((pte_efuse >> 28) & 0x8) | ((pte_efuse >> 6) & 0x7);
 		*speed = (pte_efuse >> 27) & 0xf;
 		break;
-	/* use redundant fuse for pvs */
 	case 2:
 		*pvs = (pte_efuse >> 27) & 0xf;
 		*speed = pte_efuse & 0x7;
 		break;
 	default:
 		/* 4 bits of PVS are in efuse register bits 31, 8-6. */
-		// PVS_Krait 1 + 2 bits
 		*pvs = ((pte_efuse >> 28) & 0x8) | ((pte_efuse >> 6) & 0x7);
 		*speed = pte_efuse & 0x7;
 	}
@@ -246,8 +238,6 @@ static int qcom_cpufreq_krait_name_version(struct device *cpu_dev,
 	snprintf(*pvs_name, sizeof("speedXX-pvsXX-vXX"), "speed%d-pvs%d-v%d",
 		 speed, pvs, pvs_ver);
 
-	printk(KERN_ERR "DBG CPU pvs_name=%s\n", *pvs_name);
-
 	drv->versions = (1 << speed);
 
 	kfree(speedbin);
@@ -368,8 +358,6 @@ static int qcom_cpufreq_probe(struct platform_device *pdev)
 					goto free_opp;
 				}
 			}
-
-			printk(KERN_ERR "DBG CPU drv->versions=%x\n", drv->versions);
 
 			drv->hw_opp_tables[cpu] = dev_pm_opp_set_supported_hw(
 									 cpu_dev, &drv->versions, 1);

@@ -1438,7 +1438,7 @@ static int cpufreq_online(unsigned int cpu)
 		policy->cur = cpufreq_driver->get(policy->cpu);
 		if (!policy->cur) {
 			ret = -EIO;
-			pr_err("%s: ->get() failed DBG %s val=%d\n", __func__, cpufreq_driver->name, policy->cur);
+			pr_err("%s: ->get() failed\n", __func__);
 			goto out_destroy_policy;
 		}
 	}
