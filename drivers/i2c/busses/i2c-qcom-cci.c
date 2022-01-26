@@ -686,7 +686,7 @@ static int cci_remove(struct platform_device *pdev)
 }
 
 static const struct cci_data cci_v1_data = {
-	.num_masters = 1,
+	.num_masters = 2,
 	.queue_size = { 64, 16 },
 	.quirks = {
 		.max_write_len = 10,
@@ -767,6 +767,7 @@ static const struct cci_data cci_v2_data = {
 
 static const struct of_device_id cci_dt_match[] = {
 	{ .compatible = "qcom,msm8916-cci", .data = &cci_v1_data},
+	{ .compatible = "qcom,msm8974-cci", .data = &cci_v1_data},
 	{ .compatible = "qcom,msm8996-cci", .data = &cci_v2_data},
 	{ .compatible = "qcom,sdm845-cci", .data = &cci_v2_data},
 	{ .compatible = "qcom,sm8250-cci", .data = &cci_v2_data},
