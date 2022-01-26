@@ -259,6 +259,12 @@ static const struct imx274_frmfmt imx274_formats[] = {
 		IMX179_MODE_3280X2464},
 };
 
+#define IMX179_DEFAULT_LINK_FREQ	259200000
+
+static const s64 imx179_link_freq_menu[] = {
+	IMX179_DEFAULT_LINK_FREQ,
+};
+
 /*
  * struct imx274_ctrls - imx274 ctrl structure
  * @handler: V4L2 ctrl handler structure
@@ -269,6 +275,7 @@ static const struct imx274_frmfmt imx274_formats[] = {
  */
 struct imx274_ctrls {
 	struct v4l2_ctrl_handler handler;
+	struct v4l2_ctrl *link_freq;
 	struct v4l2_ctrl *exposure;
 	struct v4l2_ctrl *gain;
 	struct v4l2_ctrl *vflip;
@@ -474,9 +481,9 @@ static int imx274_mode_regs(struct stimx274 *priv, int mode)
  */
 static int imx274_start_stream(struct stimx274 *priv)
 {
+#if 0
 	int err = 0;
 
-#if 0
 	/*
 	 * Refer to "Standby Cancel Sequence when using CSI-2" in
 	 * imx274 datasheet, it should wait 10ms or more here.
@@ -1507,7 +1514,7 @@ static int imx274_probe(struct i2c_client *client,
 	}
 
 	/* initialize controls */
-	ret = v4l2_ctrl_handler_init(&imx274->ctrls.handler, 2);
+	ret = v4l2_ctrl_handler_init(&imx274->ctrls.handler, 3);
 	if (ret < 0) {
 		dev_err(&client->dev,
 			"%s : ctrl handler init Failed\n", __func__);
@@ -1542,6 +1549,15 @@ static int imx274_probe(struct i2c_client *client,
 		&imx274->ctrls.handler,
 		&imx274_ctrl_ops,
 		V4L2_CID_VFLIP, 0, 1, 1, 0);
+
+	imx274->ctrls.link_freq = v4l2_ctrl_new_int_menu(
+		&imx274->ctrls.handler,
+		&imx274_ctrl_ops,
+		V4L2_CID_LINK_FREQ,
+		ARRAY_SIZE(imx179_link_freq_menu) - 1, 0,
+		imx179_link_freq_menu);
+	if (imx274->ctrls.link_freq)
+		imx274->ctrls.link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 
 	printk("imx179 real probe3\n");
 
