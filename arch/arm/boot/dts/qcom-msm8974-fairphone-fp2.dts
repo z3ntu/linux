@@ -124,6 +124,7 @@
 					l3 {
 						regulator-min-microvolt = <1225000>;
 						regulator-max-microvolt = <1225000>;
+						regulator-always-on; // FIXME
 					};
 
 					l4 {
@@ -203,6 +204,7 @@
 					l17 {
 						regulator-min-microvolt = <2850000>;
 						regulator-max-microvolt = <2850000>;
+						regulator-always-on; // FIXME
 					};
 
 					l18 {
@@ -252,9 +254,23 @@
 						/* CCI0 & CCI1 pull-up */
 						regulator-always-on;
 					};
+
+					lvs3 {
+						regulator-always-on; // FIXME
+					};
 				};
 			};
 		};
+	};
+
+	// FIXME
+	regulator-1 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "reg-cam-mclk";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+		clocks = <&mmcc CAMSS_MCLK0_CLK>;
 	};
 };
 
@@ -287,15 +303,16 @@
 			clk {
 				pins = "gpio15";
 				function = "cam_mclk0";
+				drive-strength = <2>;
 				bias-disable;
-				output-high;
+				//output-high;
 			};
-			gpio {
-				pins = "gpio89", "gpio90";
-				function = "gpio";
-				bias-disable;
-				output-low;
-			};
+			//gpio {
+			//	pins = "gpio89", "gpio90";
+			//	function = "gpio";
+			//	bias-disable;
+			//	output-low;
+			//};
 		};
 
 		sdhc1_pin_a: sdhc1-pin-active {

@@ -4,6 +4,7 @@
  * Copyright 2020 Bootlin
  * Author: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
  */
+#define DEBUG
 
 #include <linux/clk.h>
 #include <linux/delay.h>
@@ -1381,6 +1382,7 @@ static int ov8865_write(struct ov8865_sensor *sensor, u16 address, u8 value)
 		return ret;
 	}
 
+	dev_dbg(&client->dev, "i2c success at address %#04x\n", address);
 	return 0;
 }
 
@@ -1459,6 +1461,8 @@ static int ov8865_chip_id_check(struct ov8865_sensor *sensor)
 			return -EINVAL;
 		}
 	}
+
+	dev_err(sensor->dev, "chip id match!\n");
 
 	return 0;
 }
