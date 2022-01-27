@@ -2252,6 +2252,7 @@ static int ov8865_state_mipi_configure(struct ov8865_sensor *sensor,
 	mipi_clk_rate = ov8865_mode_mipi_clk_rate(sensor, mode);
 	if (!mipi_clk_rate)
 		return -EINVAL;
+	printk(KERN_ERR "ov8865 mipi_clk_rate=%ld\n", mipi_clk_rate);
 
 	for (i = 0; i < ARRAY_SIZE(ov8865_link_freq_menu); i++) {
 		s64 freq = ov8865_link_freq_menu[i];
@@ -2260,8 +2261,10 @@ static int ov8865_state_mipi_configure(struct ov8865_sensor *sensor,
 			break;
 	}
 
+	printk(KERN_ERR "ov8865 nr_of_link_frequencies=%d\n", sensor->endpoint.nr_of_link_frequencies);
 	for (j = 0; j < sensor->endpoint.nr_of_link_frequencies; j++) {
 		u64 freq = sensor->endpoint.link_frequencies[j];
+		printk(KERN_ERR "ov8865 found link freq %llu\n", freq);
 
 		if (freq == mipi_clk_rate)
 			break;

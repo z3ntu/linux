@@ -247,6 +247,11 @@
 
 						regulator-boot-on;
 					};
+
+					lvs2 {
+						/* CCI0 & CCI1 pull-up */
+						regulator-always-on;
+					};
 				};
 			};
 		};
@@ -278,6 +283,21 @@
 	};
 
 	pinctrl@fd510000 {
+		mclk0_pin: mclk0 {
+			clk {
+				pins = "gpio15";
+				function = "cam_mclk0";
+				bias-disable;
+				output-high;
+			};
+			gpio {
+				pins = "gpio89", "gpio90";
+				function = "gpio";
+				bias-disable;
+				output-low;
+			};
+		};
+
 		sdhc1_pin_a: sdhc1-pin-active {
 			clk {
 				pins = "sdc1_clk";
@@ -379,6 +399,58 @@
 
 				extcon = <&smbb>;
 				qcom,init-seq = /bits/ 8 <0x1 0x64>;
+			};
+		};
+	};
+
+	camss@fda00000 {
+		status = "okay";
+
+		vdda-supply = <&pm8941_l12>;
+
+		ports {
+			port@0 {
+				reg = <0>;
+				csiphy0_ep: endpoint {
+					clock-lanes = <1>;
+					data-lanes = <0 2 3 4>;
+					link-frequencies = /bits/ 64 <360000000>;
+					remote-endpoint = <&ov8865_ep>;
+				};
+			};
+		};
+	};
+
+	cci@fda0c000 {
+		status = "okay";
+
+		i2c-bus@0 {
+			ov8865: camera-sensor@10 {
+				compatible = "ovti,ov8865";
+				reg = <0x10>;
+
+				pinctrl-names = "default";
+				pinctrl-0 = <&mclk0_pin>;
+
+				clocks = <&mmcc CAMSS_MCLK0_CLK>;
+				//assigned-clocks = <&mmcc CAMSS_MCLK0_CLK>;
+				//assigned-clock-rates = <24000000>;
+
+				avdd-supply = <&pm8941_l17>; // vana
+				dovdd-supply = <&pm8941_lvs3>; // vio
+				dvdd-supply = <&pm8941_l3>; // vdig
+
+				powerdown-gpios = <&msmgpio 89 GPIO_ACTIVE_LOW>;
+				reset-gpios = <&msmgpio 90 GPIO_ACTIVE_LOW>;
+
+				port {
+					ov8865_ep: endpoint {
+						clock-lanes = <1>;
+						data-lanes = <0 2 3 4>;
+						link-frequencies = /bits/ 64 <360000000>;
+						remote-endpoint = <&csiphy0_ep>;
+					};
+				};
 			};
 		};
 	};
