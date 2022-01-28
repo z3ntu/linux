@@ -372,6 +372,7 @@ struct q6afe {
 	wait_queue_head_t wait;
 	struct list_head port_list;
 	spinlock_t port_list_lock;
+	uint32_t lpass_hw_core_client_hdl[Q6AFE_LPASS_CORE_HW_VOTE_MAX];
 };
 
 struct afe_port_cmd_device_start {
@@ -878,9 +879,17 @@ static int q6afe_callback(struct apr_device *adev, struct apr_resp_pkt *data)
 		return 0;
 
 	res = data->payload;
+	//dev_warn(afe->dev, "hdr = 0x%x cmd = 0x%x returned status = 0x%x\n",
+	//	hdr->opcode, res->opcode, res->status);
 	switch (hdr->opcode) {
 	case APR_BASIC_RSP_RESULT: {
 		if (res->status) {
+			// EOK = 0
+			// EFAILED = 1
+			// EBADPARAM = 2
+			// EUNSUPPORTED = 3
+			// EVERSION = 4
+			//
 			dev_err(afe->dev, "cmd = 0x%x returned error = 0x%x\n",
 				res->opcode, res->status);
 		}
@@ -908,6 +917,11 @@ static int q6afe_callback(struct apr_device *adev, struct apr_resp_pkt *data)
 	case AFE_CMD_RSP_REMOTE_LPASS_CORE_HW_VOTE_REQUEST:
 		afe->result.opcode = hdr->opcode;
 		afe->result.status = res->status;
+		//printk(KERN_ERR "%s: hdr->token=%d res->opcode=%d\n", __func__, hdr->token, res->opcode);
+		if (hdr->token < Q6AFE_LPASS_CORE_HW_VOTE_MAX) {
+			afe->lpass_hw_core_client_hdl[hdr->token] = res->opcode;
+		}
+		//printk(KERN_ERR "DBG need to get client_handle from here! FIXME\n");
 		wake_up(&afe->wait);
 		break;
 	default:
@@ -1659,6 +1673,11 @@ int q6afe_unvote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 	int pkt_size;
 	void *p;
 
+	if (client_handle <= 0) {
+		dev_err(afe->dev, "%s: invalid client handle\n", __func__);
+		return -EINVAL;
+	}
+
 	pkt_size = APR_HDR_SIZE + sizeof(*vote_cfg);
 	p = kzalloc(pkt_size, GFP_KERNEL);
 	if (!p)
@@ -1673,16 +1692,22 @@ int q6afe_unvote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 	pkt->hdr.pkt_size = pkt_size;
 	pkt->hdr.src_port = 0;
 	pkt->hdr.dest_port = 0;
-	pkt->hdr.token = hw_block_id;
+	pkt->hdr.token = 0; // hw_block_id;
 	pkt->hdr.opcode = AFE_CMD_REMOTE_LPASS_CORE_HW_DEVOTE_REQUEST;
 	vote_cfg->hw_block_id = hw_block_id;
 	vote_cfg->client_handle = client_handle;
+
+	//print_hex_dump(KERN_INFO, "q6afe ", DUMP_PREFIX_NONE,
+	//	       16, 1, pkt, pkt_size, 0);
+	//printk(KERN_ERR "%s: lpass core hw unvote opcode[0x%x] hw id[0x%x] client handle [0x%x]\n",
+	//	__func__, pkt->hdr.opcode, vote_cfg->hw_block_id, vote_cfg->client_handle);
 
 	ret = apr_send_pkt(afe->apr, pkt);
 	if (ret < 0)
 		dev_err(afe->dev, "AFE failed to unvote (%d)\n", hw_block_id);
 
 	kfree(pkt);
+	//printk(KERN_ERR "%s: ret=%d\n", __func__, ret);
 	return ret;
 }
 EXPORT_SYMBOL(q6afe_unvote_lpass_core_hw);
@@ -1721,6 +1746,10 @@ int q6afe_vote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 			       AFE_CMD_RSP_REMOTE_LPASS_CORE_HW_VOTE_REQUEST);
 	if (ret)
 		dev_err(afe->dev, "AFE failed to vote (%d)\n", hw_block_id);
+	else {
+		//printk(KERN_ERR "%s: client_handle_ptr=%px, hw_block_id=%d\n", __func__, client_handle, hw_block_id);
+		*client_handle = afe->lpass_hw_core_client_hdl[hw_block_id];
+	}
 
 
 	kfree(pkt);
