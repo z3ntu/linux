@@ -94,21 +94,21 @@ static const char * const i2s2_data_groups[] = { "gpio12", "gpio12" };
 
 // FIXME validate but looks ok
 static const struct lpi_pingroup sm6350_groups[] = {
-	LPI_PINGROUP(0, 0, swr_tx_clk, qua_mi2s_sclk, _, _),
-	LPI_PINGROUP(1, 2, swr_tx_data, qua_mi2s_ws, _, _),
-	LPI_PINGROUP(2, 4, swr_tx_data, qua_mi2s_data, _, _),
-	LPI_PINGROUP(3, 8, swr_rx_clk, qua_mi2s_data, _, _),
-	LPI_PINGROUP(4, 10, swr_rx_data, qua_mi2s_data, _, _),
-	LPI_PINGROUP(5, 12, swr_rx_data, _, _, _),
-	LPI_PINGROUP(6, NO_SLEW, dmic1_clk, i2s1_clk, _,  _),
-	LPI_PINGROUP(7, NO_SLEW, dmic1_data, i2s1_ws, _, _),
-	LPI_PINGROUP(8, NO_SLEW, dmic2_clk, i2s1_data, _, _),
-	LPI_PINGROUP(9, NO_SLEW, dmic2_data, i2s1_data, _, _),
-	LPI_PINGROUP(10, 16, i2s2_clk, wsa_swr_clk, _, _),
-	LPI_PINGROUP(11, 18, i2s2_ws, wsa_swr_data, _, _),
-	LPI_PINGROUP(12, NO_SLEW, dmic3_clk, i2s2_data, _, _),
-	LPI_PINGROUP(13, NO_SLEW, dmic3_data, i2s2_data, _, _),
-//	LPI_PINGROUP(14, NO_SLEW, swr_tx_data, _, _, _), // FIXME
+	LPI_PINGROUP(0, 0, swr_tx_clk, qua_mi2s_sclk, _, _),	// gpio127
+	LPI_PINGROUP(1, 2, swr_tx_data, qua_mi2s_ws, _, _),	// gpio128
+	LPI_PINGROUP(2, 4, swr_tx_data, qua_mi2s_data, _, _),	// gpio129
+	LPI_PINGROUP(3, 8, swr_rx_clk, qua_mi2s_data, _, _),	// gpio130
+	LPI_PINGROUP(4, 10, swr_rx_data, qua_mi2s_data, _, _),	// gpio131
+	LPI_PINGROUP(5, 12, swr_rx_data, _, _, _),		// gpio132
+	LPI_PINGROUP(6, NO_SLEW, dmic1_clk, i2s1_clk, _,  _),	// gpio133
+	LPI_PINGROUP(7, NO_SLEW, dmic1_data, i2s1_ws, _, _),	// gpio134
+	LPI_PINGROUP(8, NO_SLEW, dmic2_clk, i2s1_data, _, _),	// gpio135
+	LPI_PINGROUP(9, NO_SLEW, dmic2_data, i2s1_data, _, _),	// gpio136
+	LPI_PINGROUP(10, 16, i2s2_clk, wsa_swr_clk, _, _),	// gpio137
+	LPI_PINGROUP(11, 18, i2s2_ws, wsa_swr_data, _, _),	// gpio138
+	LPI_PINGROUP(12, NO_SLEW, dmic3_clk, i2s2_data, _, _),	// gpio139
+	LPI_PINGROUP(13, NO_SLEW, dmic3_data, i2s2_data, _, _),	// gpio140
+//	LPI_PINGROUP(14, NO_SLEW, swr_tx_data, _, _, _), // FIXME // gpio141
 };
 
 static const struct lpi_function sm6350_functions[] = {
