@@ -132,11 +132,13 @@
 #define Q6AFE_LPASS_CLK_ID_INT_MCLK_0                             0x305
 /* Clock ID for INT MCLK1 */
 #define Q6AFE_LPASS_CLK_ID_INT_MCLK_1                             0x306
+/* Clock ID for MCLK4 */
+#define Q6AFE_LPASS_CLK_ID_MCLK_5                                 0x308
 
 #define Q6AFE_LPASS_CLK_ID_WSA_CORE_MCLK			0x309
 #define Q6AFE_LPASS_CLK_ID_WSA_CORE_NPL_MCLK			0x30a
-#define Q6AFE_LPASS_CLK_ID_TX_CORE_MCLK				0x30c
-#define Q6AFE_LPASS_CLK_ID_TX_CORE_NPL_MCLK			0x30d
+#define Q6AFE_LPASS_CLK_ID_TX_CORE_MCLK				0x30c // DOESN'T work sm6350
+#define Q6AFE_LPASS_CLK_ID_TX_CORE_NPL_MCLK			0x30d // works sm6350
 #define Q6AFE_LPASS_CLK_ID_RX_CORE_MCLK				0x30e
 #define Q6AFE_LPASS_CLK_ID_RX_CORE_NPL_MCLK			0x30f
 #define Q6AFE_LPASS_CLK_ID_VA_CORE_MCLK				0x30b

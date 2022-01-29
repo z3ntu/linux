@@ -67,11 +67,11 @@ static const struct pinctrl_pin_desc sm6350_lpi_pins[] = {
 	PINCTRL_PIN(11, "gpio11"),
 	PINCTRL_PIN(12, "gpio12"),
 	PINCTRL_PIN(13, "gpio13"),
-//	PINCTRL_PIN(14, "gpio14"), // FIXME
+	PINCTRL_PIN(14, "gpio14"),
 };
 
 static const char * const swr_tx_clk_groups[] = { "gpio0" };
-static const char * const swr_tx_data_groups[] = { "gpio1", "gpio2" /* FIXME , "gpio14" */ };
+static const char * const swr_tx_data_groups[] = { "gpio1", "gpio2", "gpio14" };
 static const char * const swr_rx_clk_groups[] = { "gpio3" };
 static const char * const swr_rx_data_groups[] = { "gpio4", "gpio5" };
 static const char * const dmic1_clk_groups[] = { "gpio6" };
@@ -108,7 +108,7 @@ static const struct lpi_pingroup sm6350_groups[] = {
 	LPI_PINGROUP(11, 18, i2s2_ws, wsa_swr_data, _, _),	// gpio138
 	LPI_PINGROUP(12, NO_SLEW, dmic3_clk, i2s2_data, _, _),	// gpio139
 	LPI_PINGROUP(13, NO_SLEW, dmic3_data, i2s2_data, _, _),	// gpio140
-//	LPI_PINGROUP(14, NO_SLEW, swr_tx_data, _, _, _), // FIXME // gpio141
+	LPI_PINGROUP(14, NO_SLEW, swr_tx_data, _, _, _),	// gpio141
 };
 
 static const struct lpi_function sm6350_functions[] = {

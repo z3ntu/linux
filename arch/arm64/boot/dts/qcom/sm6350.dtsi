@@ -1018,13 +1018,14 @@
 		swr1: soundwire-controller@3210000 {
 			reg = <0 0x3210000 0 0x2000>;
 			compatible = "qcom,soundwire-v1.5.1";
-			interrupts = <GIC_SPI 298 IRQ_TYPE_LEVEL_HIGH>;
+			interrupts = <GIC_SPI 297 IRQ_TYPE_LEVEL_HIGH>;
+
 			clocks = <&rxmacro>;
 			clock-names = "iface";
 			label = "RX";
+
 			qcom,din-ports = <0>;
 			qcom,dout-ports = <5>;
-
 			qcom,ports-sinterval-low =	/bits/ 8 <0x03 0x1F 0x1F 0x07 0x00>;
 			qcom,ports-offset1 =		/bits/ 8 <0x00 0x00 0x0B 0x01 0x00>;
 			qcom,ports-offset2 =		/bits/ 8 <0x00 0x00 0x0B 0x00 0x00>;
@@ -1032,8 +1033,8 @@
 			qcom,ports-hstop =		/bits/ 8 <0xFF 0x06 0xFF 0xFF 0xFF>;
 			qcom,ports-word-length =	/bits/ 8 <0x01 0x07 0x04 0xFF 0xFF>;
 			qcom,ports-block-pack-mode =	/bits/ 8 <0xFF 0x00 0x01 0xFF 0xFF>;
-			qcom,ports-lane-control =	/bits/ 8 <0x01 0x00 0x00 0x00 0x00>;
 			qcom,ports-block-group-count =	/bits/ 8 <0xFF 0xFF 0xFF 0xFF 0x00>;
+			qcom,ports-lane-control =	/bits/ 8 <0x01 0x00 0x00 0x00 0x00>;
 
 			#sound-dai-cells = <1>;
 			#address-cells = <2>;
@@ -1065,8 +1066,7 @@
 		swr2: soundwire-controller@3230000 {
 			reg = <0 0x3230000 0 0x2000>;
 			compatible = "qcom,soundwire-v1.5.1";
-			interrupts-extended = <&intc GIC_SPI 297 IRQ_TYPE_LEVEL_HIGH>;
-			interrupt-names = "core";
+			interrupts = <GIC_SPI 296 IRQ_TYPE_LEVEL_HIGH>;
 
 			clocks = <&txmacro>;
 			clock-names = "iface";
@@ -1084,51 +1084,52 @@
 			qcom,ports-block-group-count =	/bits/ 8 <0xFF 0xFF 0xFF 0xFF 0xFF>;
 			qcom,ports-lane-control =	/bits/ 8 <0xFF 0x00 0x01 0x00 0x01>;
 			qcom,port-offset = <1>;
-			#sound-dai-cells = <1>;
-			#address-cells = <2>;
-			#size-cells = <0>;
-		};
-
-		wsamacro: codec@3240000 {
-			compatible = "qcom,sm8250-lpass-wsa-macro"; // FIXME
-			reg = <0 0x03240000 0 0x1000>;
-			clocks = <&audiocc LPASS_CDC_WSA_MCLK>,
-				 <&audiocc LPASS_CDC_WSA_NPL>,
-				 <&q6afecc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
-				 <&q6afecc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
-				 <&aoncc LPASS_CDC_VA_MCLK>,
-				 <&vamacro>;
-
-			clock-names = "mclk", "npl", "macro", "dcodec", "va", "fsgen";
-
-			#clock-cells = <0>;
-			clock-frequency = <9600000>;
-			clock-output-names = "mclk";
-			#sound-dai-cells = <1>;
-
-			pinctrl-names = "default";
-			pinctrl-0 = <&wsa_swr_active>;
-		};
-
-		swr0: soundwire-controller@3250000 {
-			reg = <0 0x03250000 0 0x2000>;
-			compatible = "qcom,soundwire-v1.5.1";
-			interrupts = <GIC_SPI 295 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&wsamacro>;
-			clock-names = "iface";
-
-			qcom,din-ports = <2>;
-			qcom,dout-ports = <6>;
-
-			qcom,ports-sinterval-low =	/bits/ 8 <0x07 0x1f 0x3f 0x07 0x1f 0x3f 0x0f 0x0f>;
-			qcom,ports-offset1 =		/bits/ 8 <0x01 0x02 0x0c 0x06 0x12 0x0d 0x07 0x0a>;
-			qcom,ports-offset2 =		/bits/ 8 <0xff 0x00 0x1f 0xff 0x00 0x1f 0x00 0x00>;
-			qcom,ports-block-pack-mode =	/bits/ 8 <0x0 0x0 0x1 0x0 0x0 0x1 0x0 0x0>;
 
 			#sound-dai-cells = <1>;
 			#address-cells = <2>;
 			#size-cells = <0>;
 		};
+
+		//wsamacro: codec@3240000 {
+		//	compatible = "qcom,sm8250-lpass-wsa-macro"; // FIXME
+		//	reg = <0 0x03240000 0 0x1000>;
+		//	clocks = <&audiocc LPASS_CDC_WSA_MCLK>,
+		//		 <&audiocc LPASS_CDC_WSA_NPL>,
+		//		 <&q6afecc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+		//		 <&q6afecc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+		//		 <&aoncc LPASS_CDC_VA_MCLK>,
+		//		 <&vamacro>;
+
+		//	clock-names = "mclk", "npl", "macro", "dcodec", "va", "fsgen";
+
+		//	#clock-cells = <0>;
+		//	clock-frequency = <9600000>;
+		//	clock-output-names = "mclk";
+		//	#sound-dai-cells = <1>;
+
+		//	pinctrl-names = "default";
+		//	pinctrl-0 = <&wsa_swr_active>;
+		//};
+
+		//swr0: soundwire-controller@3250000 {
+		//	reg = <0 0x03250000 0 0x2000>;
+		//	compatible = "qcom,soundwire-v1.5.1";
+		//	interrupts = <GIC_SPI 295 IRQ_TYPE_LEVEL_HIGH>;
+
+		//	clocks = <&wsamacro>;
+		//	clock-names = "iface";
+
+		//	qcom,din-ports = <2>;
+		//	qcom,dout-ports = <6>;
+		//	qcom,ports-sinterval-low =	/bits/ 8 <0x07 0x1f 0x3f 0x07 0x1f 0x3f 0x0f 0x0f>;
+		//	qcom,ports-offset1 =		/bits/ 8 <0x01 0x02 0x0c 0x06 0x12 0x0d 0x07 0x0a>;
+		//	qcom,ports-offset2 =		/bits/ 8 <0xff 0x00 0x1f 0xff 0x00 0x1f 0x00 0x00>;
+		//	qcom,ports-block-pack-mode =	/bits/ 8 <0x0 0x0 0x1 0x0 0x0 0x1 0x0 0x0>;
+
+		//	#sound-dai-cells = <1>;
+		//	#address-cells = <2>;
+		//	#size-cells = <0>;
+		//};
 
 		audiocc: clock-controller@3300000 {
 			compatible = "qcom,sm8250-lpass-audiocc"; // FIXME
@@ -1171,8 +1172,7 @@
 			      <0 0x03550000 0x0 0x10000>;
 			gpio-controller;
 			#gpio-cells = <2>;
-			//gpio-ranges = <&lpass_tlmm 0 0 15>; FIXME
-			gpio-ranges = <&lpass_tlmm 0 0 14>;
+			gpio-ranges = <&lpass_tlmm 0 0 15>;
 
 			clocks = <&q6afecc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
 				<&q6afecc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
@@ -1199,39 +1199,6 @@
 					drive-strength = <8>;
 					bias-disable;
 					output-high;
-				};
-			};
-
-			dmic01_active: dmic01-active-pins {
-				clk {
-					pins = "gpio6";
-					function = "dmic1_clk";
-					drive-strength = <8>;
-					output-high;
-				};
-				data {
-					pins = "gpio7";
-					function = "dmic1_data";
-					drive-strength = <8>;
-					input-enable;
-				};
-			};
-
-			dmic01_sleep: dmic01-sleep-pins {
-				clk {
-					pins = "gpio6";
-					function = "dmic1_clk";
-					drive-strength = <2>;
-					bias-disable;
-					output-low;
-				};
-
-				data {
-					pins = "gpio7";
-					function = "dmic1_data";
-					drive-strength = <2>;
-					pull-down;
-					input-enable;
 				};
 			};
 
@@ -1263,28 +1230,10 @@
 				};
 
 				data {
-					pins = "gpio1", "gpio2";
+					pins = "gpio1", "gpio2", "gpio14";
 					function = "swr_tx_data";
 					drive-strength = <2>;
 					slew-rate = <1>;
-					bias-bus-hold;
-				};
-			};
-
-			wsa_swr_active: wsa-swr-active-pins {
-				clk {
-					pins = "gpio10";
-					function = "wsa_swr_clk";
-					drive-strength = <10>;
-					slew-rate = <3>;
-					bias-disable;
-				};
-
-				data {
-					pins = "gpio11";
-					function = "wsa_swr_data";
-					drive-strength = <10>;
-					slew-rate = <3>;
 					bias-bus-hold;
 				};
 			};

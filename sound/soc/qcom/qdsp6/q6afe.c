@@ -1029,6 +1029,9 @@ static int q6afe_set_param(struct q6afe *afe, struct q6afe_port *port,
 	pdata->param_id = param_id;
 	pdata->param_size = psize;
 
+	//printk(KERN_INFO "%s DBG\n", __func__);
+	//print_hex_dump(KERN_INFO, "q6afe ", DUMP_PREFIX_NONE,
+	//	       16, 1, p, pkt_size, 0);
 	ret = afe_apr_send_pkt(afe, pkt, port, AFE_SVC_CMD_SET_PARAM);
 	if (ret)
 		dev_err(afe->dev, "AFE set params failed %d\n", ret);
@@ -1131,6 +1134,7 @@ int q6afe_set_lpass_clock(struct device *dev, int clk_id, int attri,
 	cset.clk_root = clk_root;
 	cset.enable = !!freq;
 
+	printk(KERN_INFO "%s: clk_id=%d, attri=%d, clk_root=%d, freq=%d\n", __func__, clk_id, attri, clk_root, freq);
 	return q6afe_set_param(afe, NULL, &cset, AFE_PARAM_ID_CLOCK_SET,
 			       AFE_MODULE_CLOCK_SET, sizeof(cset),
 			       AFE_CLK_TOKEN);
@@ -1692,7 +1696,7 @@ int q6afe_unvote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 	pkt->hdr.pkt_size = pkt_size;
 	pkt->hdr.src_port = 0;
 	pkt->hdr.dest_port = 0;
-	pkt->hdr.token = 0; // hw_block_id;
+	pkt->hdr.token = hw_block_id; // 0
 	pkt->hdr.opcode = AFE_CMD_REMOTE_LPASS_CORE_HW_DEVOTE_REQUEST;
 	vote_cfg->hw_block_id = hw_block_id;
 	vote_cfg->client_handle = client_handle;

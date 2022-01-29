@@ -53,6 +53,9 @@
 		qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
 		qcom,rx-device = <&wcd_rx>;
 		qcom,tx-device = <&wcd_tx>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&wcd9380_reset_default>;
 	};
 
 	gpio-keys {
@@ -465,8 +468,8 @@
 &sound {
 	// FIXME all of this is copy-pasta
 	compatible = "qcom,sm8250-sndcard"; // FIXME
-	pinctrl-0 = <&i2s1_active>;
-	pinctrl-names = "default";
+	//pinctrl-0 = <&i2s1_active>;
+	//pinctrl-names = "default";
 	model = "Fairphone 4";
 	audio-routing =
 		"SpkrLeft IN", "WSA_SPK1 OUT",
@@ -491,55 +494,55 @@
 		"TX SWR_DMIC6", "DMIC7_OUTPUT",
 		"TX SWR_DMIC7", "DMIC8_OUTPUT";
 
-	mm1-dai-link {
-		link-name = "MultiMedia1";
-		cpu {
-			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
-		};
-	};
+	//mm1-dai-link {
+	//	link-name = "MultiMedia1";
+	//	cpu {
+	//		sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+	//	};
+	//};
 
-	mm2-dai-link {
-		link-name = "MultiMedia2";
-		cpu {
-			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
-		};
-	};
+	//mm2-dai-link {
+	//	link-name = "MultiMedia2";
+	//	cpu {
+	//		sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
+	//	};
+	//};
 
-	mm3-dai-link {
-		link-name = "MultiMedia3";
-		cpu {
-			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA3>;
-		};
-	};
+	//mm3-dai-link {
+	//	link-name = "MultiMedia3";
+	//	cpu {
+	//		sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA3>;
+	//	};
+	//};
 
-	wcd-capture-dai-link {
-		link-name = "WCD Capture";
-		cpu {
-			sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
-		};
+	//wcd-capture-dai-link {
+	//	link-name = "WCD Capture";
+	//	cpu {
+	//		sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
+	//	};
 
-		codec {
-			sound-dai = <&wcd9380 1>, <&swr2 0>, <&txmacro 0>;
-		};
-		platform {
-			sound-dai = <&q6routing>;
-		};
-	};
+	//	codec {
+	//		sound-dai = <&wcd9380 1>, <&swr2 0>, <&txmacro 0>;
+	//	};
+	//	platform {
+	//		sound-dai = <&q6routing>;
+	//	};
+	//};
 
-	va-dai-link {
-		link-name = "VA Capture";
-		cpu {
-			sound-dai = <&q6afedai VA_CODEC_DMA_TX_0>;
-		};
+	//va-dai-link {
+	//	link-name = "VA Capture";
+	//	cpu {
+	//		sound-dai = <&q6afedai VA_CODEC_DMA_TX_0>;
+	//	};
 
-		platform {
-			sound-dai = <&q6routing>;
-		};
+	//	platform {
+	//		sound-dai = <&q6routing>;
+	//	};
 
-		codec {
-			sound-dai = <&vamacro 0>;
-		};
-	};
+	//	codec {
+	//		sound-dai = <&vamacro 0>;
+	//	};
+	//};
 };
 
 &swr1 {
@@ -645,6 +648,13 @@
 			};
 		};
 	};
+
+	wcd9380_reset_default: wcd9380-reset-default {
+		pins = "gpio83";
+		function = "gpio";
+		drive-strength = <16>;
+		output-high;
+	};
 };
 
 &uart9 {
@@ -694,8 +704,8 @@
 };
 
 &vamacro {
-	pinctrl-0 = <&dmic01_active>;
-	pinctrl-names = "default";
+	//pinctrl-0 = <&dmic01_active>;
+	//pinctrl-names = "default";
 	qcom,dmic-sample-rate = <600000>;
 };
 

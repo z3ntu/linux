@@ -755,6 +755,11 @@
 &swr0 {
 	left_spkr: wsa8810-right@0,3{
 		compatible = "sdw10217211000";
+		//sdw
+		//1 = version ID
+		//0217 = MFD
+		//2110 = PID
+		//00 = CID
 		reg = <0 3>;
 		powerdown-gpios = <&tlmm 26 GPIO_ACTIVE_HIGH>;
 		#thermal-sensor-cells = <0>;
