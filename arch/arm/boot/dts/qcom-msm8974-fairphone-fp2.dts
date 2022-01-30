@@ -460,6 +460,9 @@
 				powerdown-gpios = <&msmgpio 89 GPIO_ACTIVE_LOW>;
 				reset-gpios = <&msmgpio 90 GPIO_ACTIVE_LOW>;
 
+				/* Rear camera */
+				orientation = <1>;
+
 				port {
 					ov8865_ep: endpoint {
 						clock-lanes = <1>;
