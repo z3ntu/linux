@@ -435,6 +435,7 @@
 
 				/* Rear camera */
 				orientation = <1>;
+				// rotation = <90>; // FIXME
 
 				port {
 					ov8865_ep: endpoint {
