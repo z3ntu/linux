@@ -6,6 +6,16 @@
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 
+/* Old front camera - OV2685 */
+#define FRONT_CAM_2MP 0
+/* Old rear camera - OV8865 */
+#define REAR_CAM_8MP  0
+
+/* New front camera - OV5670 */
+#define FRONT_CAM_5MP 0
+/* New rear camera - OV12870 */
+#define REAR_CAM_12MP 0
+
 / {
 	model = "Fairphone 2";
 	compatible = "fairphone,fp2", "qcom,msm8974";
@@ -49,6 +59,26 @@
 			wakeup-source;
 			debounce-interval = <15>;
 		};
+	};
+
+	/*
+	 * This models two fixed regulators, one providing 2.8V (AVDD_2P8) and
+	 * one providing 1.8V (DVDD_1P8). Both have the same vin-supply and
+	 * gpio and therefore modelled as one.
+	 */
+	reg_front_cam: regulator-front-camera {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_front_cam";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 18 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&pm8941_l22>;
+
+		pinctrl-0 = <&vdd_front_cam_en_default>;
+		pinctrl-names = "default";
 	};
 
 	vibrator {
@@ -108,6 +138,170 @@
 
 &blsp1_uart2 {
 	status = "okay";
+};
+
+&camss {
+	status = "okay";
+
+	vdda-supply = <&pm8941_l12>;
+
+	ports {
+		#if REAR_CAM_8MP || REAR_CAM_12MP
+		port@0 {
+			reg = <0>;
+			csiphy0_ep: endpoint {
+				clock-lanes = <1>;
+				data-lanes = <0 2 3 4>;
+				#if REAR_CAM_8MP
+				link-frequencies = /bits/ 64 <360000000>;
+				remote-endpoint = <&ov8865_ep>;
+				#endif
+				#if REAR_CAM_12MP
+				#error "TODO: OV12870 not implemented yet"
+				#endif
+			};
+		};
+		#endif
+
+		#if FRONT_CAM_2MP || FRONT_CAM_5MP
+		port@2 {
+			reg = <2>;
+			csiphy2_ep: endpoint {
+				clock-lanes = <1>;
+				data-lanes = <0>;
+				#if FRONT_CAM_2MP
+				link-frequencies = /bits/ 64 <330000000>;
+				remote-endpoint = <&ov2685_ep>;
+				#endif
+				#if FRONT_CAM_5MP
+				link-frequencies = /bits/ 64 <422400000>;
+				remote-endpoint = <&ov5670_ep>;
+				#endif
+			};
+		};
+		#endif
+	};
+};
+
+&cci {
+	// See lvs3 comment below
+	// vbus-supply = <&pm8941_lvs3>;
+
+	status = "okay";
+};
+
+&cci_i2c0 {
+	#if REAR_CAM_8MP
+	// ad5823: coil@c {
+	// 	compatible = "adi,ad5823";
+	// 	reg = <0x0c>;
+
+	// 	VANA-supply = <&pm8941_l23>;
+	// 	/* enable-gpios is shared with OV8865 powerdown-gpios */
+	// };
+
+	ov8865: camera-sensor@10 {
+		compatible = "ovti,ov8865";
+		reg = <0x10>;
+
+		pinctrl-0 = <&mclk0_pin_a>;
+		pinctrl-names = "default";
+
+		clocks = <&mmcc CAMSS_MCLK0_CLK>;
+
+		avdd-supply = <&pm8941_l17>;
+		dovdd-supply = <&pm8941_lvs3>;
+		dvdd-supply = <&pm8941_l3>;
+
+		powerdown-gpios = <&tlmm 89 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&tlmm 90 GPIO_ACTIVE_LOW>;
+
+		/* Rear camera */
+		orientation = <1>;
+		rotation = <90>; // TODO validate
+
+		// lens-focus = <&ad5823>;
+		// flash-leds = <&...>;
+
+		port {
+			ov8865_ep: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <360000000>;
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+	#endif
+	#if REAR_CAM_12MP
+	ov12870: camera-sensor@36 {
+		compatible = "ovti,ov12870";
+		reg = <0x36>;
+
+		#error "TODO: OV12870 not implemented yet (no driver)"
+	};
+	#endif
+};
+
+&cci_i2c1 {
+	#if FRONT_CAM_2MP
+	ov2685: camera-sensor@10 {
+		compatible = "ovti,ov2685";
+		reg = <0x10>;
+
+		pinctrl-0 = <&mclk2_pin_a>;
+		pinctrl-names = "default";
+
+		clocks = <&mmcc CAMSS_MCLK2_CLK>;
+		clock-names = "xvclk";
+
+		avdd-supply = <&reg_front_cam>; /* AVDD_2P8 */
+		dovdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+		dvdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+
+		/* XSHUTDOWN pin unused, connected to DOVDD */
+
+		/* Front camera */
+		orientation = <0>;
+		rotation = <270>; // TODO validate
+
+		port {
+			ov2685_ep: endpoint {
+				data-lanes = <1>;
+				link-frequencies = /bits/ 64 <330000000>;
+				remote-endpoint = <&csiphy2_ep>;
+			};
+		};
+	};
+	#endif
+	#if FRONT_CAM_5MP
+	ov5670: camera-sensor@10 {
+		compatible = "ovti,ov5670";
+		reg = <0x10>;
+
+		pinctrl-0 = <&mclk2_pin_a>;
+		pinctrl-names = "default";
+
+		clocks = <&mmcc CAMSS_MCLK2_CLK>;
+
+		avdd-supply = <&reg_front_cam>; /* AVDD_2P8 */
+		dovdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+		dvdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+
+		/* XSHUTDOWN pin unused, connected to DOVDD */
+
+		/* Front camera */
+		orientation = <0>;
+		rotation = <90>; // TODO validate
+
+		port {
+			ov5670_ep: endpoint {
+				data-lanes = <1>;
+				link-frequencies = /bits/ 64 <422400000>;
+				remote-endpoint = <&csiphy2_ep>;
+			};
+		};
+	};
+	#endif
 };
 
 &dsi0 {
@@ -448,6 +642,17 @@
 			regulator-max-microvolt = <3075000>;
 			regulator-boot-on;
 		};
+
+		pm8941_lvs3: lvs3 {
+			/*
+			 * TODO: Used as CCI0 and CCI1 pull-up.
+			 * Replace with vbus-supply or similar once this lands
+			 * upstream!
+			 * https://lore.kernel.org/all/20220203164711.1712090-1-vladimir.zapolskiy@linaro.org/
+			 * https://lore.kernel.org/all/?q=%22support+bus+regulator+controlling+in+adapter%22
+			 */
+			regulator-always-on;
+		};
 	};
 };
 
@@ -484,6 +689,27 @@
 };
 
 &tlmm {
+	vdd_front_cam_en_default: vdd-front-cam-default-state {
+		pins = "gpio18";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	mclk0_pin_a: mclk0-pin-active-state {
+		pins = "gpio15";
+		function = "cam_mclk0";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	mclk2_pin_a: mclk2-pin-active-state {
+		pins = "gpio17";
+		function = "cam_mclk2";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
 	sdc1_on: sdc1-on {
 		clk {
 			pins = "sdc1_clk";
