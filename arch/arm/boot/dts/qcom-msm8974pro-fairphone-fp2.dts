@@ -133,6 +133,14 @@
 };
 
 &cci_i2c0 {
+	// ad5823: coil@c {
+	// 	compatible = "adi,ad5823";
+	// 	reg = <0x0c>;
+
+	// 	VANA-supply = <&pm8941_l23>;
+	// 	/* enable-gpios is shared with OV8865 powerdown-gpios */
+	// };
+
 	ov8865: camera-sensor@10 {
 		compatible = "ovti,ov8865";
 		reg = <0x10>;
@@ -152,6 +160,9 @@
 		/* Rear camera */
 		orientation = <1>;
 		rotation = <90>;
+
+		// lens-focus = <&ad5823>;
+		// flash-leds = <&...>;
 
 		port {
 			ov8865_ep: endpoint {
