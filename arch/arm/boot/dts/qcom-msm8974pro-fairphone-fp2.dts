@@ -110,6 +110,60 @@
 	status = "okay";
 };
 
+&camss {
+	status = "okay";
+
+	vdda-supply = <&pm8941_l12>;
+
+	ports {
+		port@0 {
+			reg = <0>;
+			csiphy0_ep: endpoint {
+				clock-lanes = <1>;
+				data-lanes = <0 2 3 4>;
+				link-frequencies = /bits/ 64 <360000000>;
+				remote-endpoint = <&ov8865_ep>;
+			};
+		};
+	};
+};
+
+&cci {
+	status = "okay";
+};
+
+&cci_i2c0 {
+	ov8865: camera-sensor@10 {
+		compatible = "ovti,ov8865";
+		reg = <0x10>;
+
+		pinctrl-0 = <&mclk0_pin_a>;
+		pinctrl-names = "default";
+
+		clocks = <&mmcc CAMSS_MCLK0_CLK>;
+
+		avdd-supply = <&pm8941_l17>;
+		dovdd-supply = <&pm8941_lvs3>;
+		dvdd-supply = <&pm8941_l3>;
+
+		powerdown-gpios = <&tlmm 89 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&tlmm 90 GPIO_ACTIVE_LOW>;
+
+		/* Rear camera */
+		orientation = <1>;
+		rotation = <90>;
+
+		port {
+			ov8865_ep: endpoint {
+				clock-lanes = <1>;
+				data-lanes = <0 2 3 4>;
+				link-frequencies = /bits/ 64 <360000000>;
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+};
+
 &dsi0 {
 	status = "okay";
 
@@ -448,6 +502,15 @@
 			regulator-max-microvolt = <3075000>;
 			regulator-boot-on;
 		};
+
+		pm8941_lvs3: lvs3 {
+			/*
+			 * TODO: Used as CCI0 and CCI1 pull-up.
+			 * Replace with vbus-supply or similar once this lands
+			 * upstream!
+			 */
+			regulator-always-on;
+		};
 	};
 };
 
@@ -484,6 +547,13 @@
 };
 
 &tlmm {
+	mclk0_pin_a: mclk0-pin-active-state {
+		pins = "gpio15";
+		function = "cam_mclk0";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
 	sdc1_on: sdc1-on {
 		clk {
 			pins = "sdc1_clk";
