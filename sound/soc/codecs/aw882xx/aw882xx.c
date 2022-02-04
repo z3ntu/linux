@@ -774,7 +774,7 @@ static int aw882xx_load_reg(struct aw882xx *aw882xx)
 {
 	aw_dev_info(aw882xx->dev, "%s: enter\n", __func__);
 
-	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
 		aw882xx->chan_info.bin_cfg_name[aw882xx->cfg_num],
 		aw882xx->dev, GFP_KERNEL,
 		aw882xx, aw882xx_reg_loaded);
@@ -1531,7 +1531,7 @@ static struct snd_soc_dai_driver aw882xx_dai[] = {
 			.formats = AW882XX_FORMATS,
 		 },
 		.ops = &aw882xx_dai_ops,
-		.symmetric_rates = 1,
+		.symmetric_rate = 1,
 	},
 };
 
@@ -2030,7 +2030,7 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
     aw882xx->aw_pinctrl = devm_pinctrl_get(aw882xx->dev);
     if (IS_ERR(aw882xx->aw_pinctrl)) {
         ret = PTR_ERR(aw882xx->aw_pinctrl);
-        aw_dev_err(aw882xx->dev,  "Cannot get pinctrl\n", ret);
+        aw_dev_err(aw882xx->dev,  "Cannot get pinctrl: %d\n", ret);
         return ret;
     }
 

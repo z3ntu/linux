@@ -783,7 +783,7 @@ int aw882xx_load_monitor_profile(struct aw882xx_monitor *monitor)
 			__func__, monitor->is_enable);
 		ret = 0;
 	} else {
-		ret = request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+		ret = request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
 				AW_MONITOR_FILE,
 				aw882xx->dev, GFP_KERNEL, aw882xx,
 				aw_monitor_profile_loaded);
