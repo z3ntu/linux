@@ -721,3 +721,5 @@ obj-$(CONFIG_SND_SOC_LPASS_TX_MACRO)	+= snd-soc-lpass-tx-macro.o
 
 # Mux
 obj-$(CONFIG_SND_SOC_SIMPLE_MUX)	+= snd-soc-simple-mux.o
+
+obj-$(CONFIG_SND_SMARTPA_AW882XX) += aw882xx/aw882xx.o aw882xx/awinic_monitor.o aw882xx/awinic_cali.o aw882xx/awinic_dsp.o
