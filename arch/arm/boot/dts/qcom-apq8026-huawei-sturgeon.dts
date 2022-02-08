@@ -13,10 +13,6 @@
 	compatible = "huawei,sturgeon", "qcom,apq8026";
 	qcom,msm-id = <199 0x20000>;
 	qcom,board-id = <8 4>;
-
-	usb_vbus: extcon-usb-dummy {
-		compatible = "linux,extcon-usb-dummy";
-	};
 };
 
 &blsp1_i2c5 {
@@ -192,6 +188,15 @@
 	pinctrl-0 = <&sdhc1_pin_a>;
 };
 
+&smbb {
+	qcom,fast-charge-safe-voltage = <4370000>;
+	qcom,fast-charge-high-threshold-voltage = <4350000>;
+	qcom,minimum-input-voltage = <4350000>;
+	qcom,fast-charge-current-limit = <300000>;
+	qcom,fast-charge-safe-current = <600000>;
+	qcom,auto-recharge-threshold-voltage = <4240000>;
+};
+
 &tlmm {
 	sdhc1_pin_a: sdhc1-pin-active {
 		clk {
@@ -230,12 +235,12 @@
 
 &usb {
 	status = "okay";
-	extcon = <&usb_vbus>;
+	extcon = <&smbb>;
 	dr_mode = "peripheral";
 };
 
 &usb_hs_phy {
-	extcon = <&usb_vbus>;
+	extcon = <&smbb>;
 	v1p8-supply = <&pm8226_l10>;
 	v3p3-supply = <&pm8226_l20>;
 };
