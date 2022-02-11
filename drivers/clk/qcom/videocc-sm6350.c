@@ -249,20 +249,6 @@ static struct clk_branch video_cc_venus_ahb_clk = {
 	},
 };
 
-static struct clk_branch video_cc_xo_clk = {
-	.halt_reg = 0x7018,
-	.halt_check = BRANCH_HALT,
-	.clkr = {
-		.enable_reg = 0x7018,
-		.enable_mask = BIT(0),
-		.hw.init = &(struct clk_init_data){
-			.name = "video_cc_xo_clk",
-			.flags = CLK_IS_CRITICAL,
-			.ops = &clk_branch2_ops,
-		},
-	},
-};
-
 static struct gdsc mvsc_gdsc = {
 	.gdscr = 0x2004,
 	.pd = {
@@ -294,7 +280,6 @@ static struct clk_regmap *video_cc_sm6350_clocks[] = {
 	[VIDEO_CC_SLEEP_CLK] = &video_cc_sleep_clk.clkr,
 	[VIDEO_CC_SLEEP_CLK_SRC] = &video_cc_sleep_clk_src.clkr,
 	[VIDEO_CC_VENUS_AHB_CLK] = &video_cc_venus_ahb_clk.clkr,
-	[VIDEO_CC_XO_CLK] = &video_cc_xo_clk.clkr,
 	[VIDEO_PLL0] = &video_pll0.clkr,
 	[VIDEO_PLL0_OUT_EVEN] = &video_pll0_out_even.clkr,
 };
@@ -330,6 +315,9 @@ static int video_cc_sm6350_probe(struct platform_device *pdev)
 		return PTR_ERR(regmap);
 
 	clk_fabia_pll_configure(&video_pll0, regmap, &video_pll0_config);
+
+	/* Keep VIDEO_CC_XO_CLK ALWAYS-ON */
+	regmap_update_bits(regmap, 0x7018, 0x1, 0x1);
 
 	return qcom_cc_really_probe(pdev, &video_cc_sm6350_desc, regmap);
 }
