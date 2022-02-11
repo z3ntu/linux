@@ -4,6 +4,7 @@
 /*
  *  stream.c - SoundWire Bus stream operations.
  */
+#define DEBUG
 
 #include <linux/delay.h>
 #include <linux/device.h>
