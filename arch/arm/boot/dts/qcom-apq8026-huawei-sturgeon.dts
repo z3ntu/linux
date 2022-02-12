@@ -30,6 +30,8 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&touch_pins>;
 
+		syna,startup-delay-ms = <160>;
+
 		#address-cells = <1>;
 		#size-cells = <0>;
 
