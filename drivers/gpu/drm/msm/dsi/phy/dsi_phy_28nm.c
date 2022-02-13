@@ -378,8 +378,9 @@ static int dsi_pll_28nm_vco_prepare_hpm(struct clk_hw *hw)
 }
 
 // Based on dsi_pll_enable_seq_m downstream
-static int dsi_pll_28nm_vco_prepare_hpm_8226(struct dsi_pll_28nm *pll_28nm)
+static int dsi_pll_28nm_vco_prepare_hpm_8226(struct clk_hw *hw)
 {
+	struct dsi_pll_28nm *pll_28nm = to_pll_28nm(hw);
 	struct device *dev = &pll_28nm->phy->pdev->dev;
 	void __iomem *base = pll_28nm->phy->pll_base;
 	u32 max_reads = 5, timeout_us = 100;
