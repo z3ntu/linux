@@ -335,6 +335,14 @@
 	firmware-name = "qcom/sm7225/fairphone4/cdsp.mdt";
 };
 
+&gpi_dma0 {
+	status = "okay";
+};
+
+&gpi_dma1 {
+	status = "okay";
+};
+
 &i2c0 {
 	status = "okay";
 	clock-frequency = <400000>;
@@ -343,6 +351,25 @@
 &i2c8 {
 	status = "okay";
 	clock-frequency = <400000>;
+
+	himax_ts@48 {
+		compatible = "himax,hxcommon";
+		reg = <0x48>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <22 0x2>;
+		pinctrl-names = "pmx_ts_active","pmx_ts_suspend",
+			"pmx_ts_release";
+		pinctrl-0 = <&ts_active &ts_rst_active>;
+		pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
+		pinctrl-2 = <&pmx_ts_release>;
+		himax,panel-coords = <0 1080 0 2340>;
+		himax,display-coords = <0 1080 0 2340>;
+		himax,irq-gpio = <&tlmm 22 0x00>;
+		himax,rst-gpio = <&tlmm 21 0x00>;
+		report_type = <1>;
+
+		//panel = <&dsi_hx83112a_auo_1080_video>;
+	};
 };
 
 &i2c10 {
@@ -482,6 +509,43 @@
 
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
+
+	ts_active: ts-irq-active-state {
+		pins = "gpio22";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-up;
+	};
+
+	ts_rst_active: ts-reset-active-state {
+		pins = "gpio21";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-up;
+		output-high;
+	};
+
+	ts_int_suspend: ts-irq-suspend-state {
+		pins = "gpio22";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	ts_reset_suspend: ts-reset-suspend-state {
+		pins = "gpio21";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+		output-low;
+	};
+
+	pmx_ts_release: ts-release-state {
+		pins = "gpio21", "gpio22";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 };
 
 &uart9 {
