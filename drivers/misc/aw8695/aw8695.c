@@ -28,9 +28,9 @@
 #include <linux/syscalls.h>
 #include <linux/power_supply.h>
 #include <linux/pm_qos.h>
-#include <aw8695_config.h>
-#include <aw8695_reg.h>
-#include <aw8695.h>
+#include "aw8695_config.h"
+#include "aw8695_reg.h"
+#include "aw8695.h"
 
 #define AW_UEFI_CAL_F0
 /******************************************************
@@ -80,7 +80,7 @@ unsigned int aw8695_test_index = 0;
  ******************************************************/
 static void aw8695_interrupt_clear(struct aw8695 *aw8695);
 static int aw8695_haptic_trig_enable_config(struct aw8695 *aw8695);
-extern int i2c_check_status_create(char *name,int value);
+//extern int i2c_check_status_create(char *name,int value);
 
 static bool aw_debug = false;
 module_param(aw_debug, bool, S_IRUGO | S_IWUSR);
@@ -226,7 +226,7 @@ static int aw8695_rtp_update(struct aw8695 *aw8695)
 {
     pr_info("%s enter\n", __func__);
 
-    return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+    return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
                        aw8695_rtp_name[aw8695->rtp_file_num],
                        aw8695->dev, GFP_KERNEL, aw8695,
                        aw8695_rtp_loaded);
@@ -398,7 +398,7 @@ static int aw8695_ram_update(struct aw8695 *aw8695)
 {
     aw8695->ram_init = 0;
     aw8695->rtp_init = 0;
-    return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+    return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
                        aw8695_ram_name, aw8695->dev, GFP_KERNEL,
                        aw8695, aw8695_ram_loaded);
 }
@@ -631,16 +631,16 @@ static int aw8695_haptic_play_go(struct aw8695 *aw8695, bool flag)
     if (flag) {
         aw8695_i2c_write_bits(aw8695, AW8695_REG_GO,
                       AW8695_BIT_GO_MASK, AW8695_BIT_GO_ENABLE);
-        do_gettimeofday(&aw8695->pre_enter_time);
+        ktime_get_real_ts64(&aw8695->pre_enter_time);
     } else {
         aw8695_i2c_write_bits(aw8695, AW8695_REG_GO,
                       AW8695_BIT_GO_MASK,
                       AW8695_BIT_GO_DISABLE);
-        do_gettimeofday(&aw8695->current_time);
+        ktime_get_real_ts64(&aw8695->current_time);
 
         aw8695->interval_us = (aw8695->current_time.tv_sec - aw8695->pre_enter_time.tv_sec) * 1000000
 
-        + (aw8695->current_time.tv_usec-aw8695->pre_enter_time.tv_usec);
+        + (aw8695->current_time.tv_nsec/1000 - aw8695->pre_enter_time.tv_nsec/1000);
 
         if (aw8695->interval_us < 2000) {
 
@@ -1322,7 +1322,7 @@ static int aw8695_haptic_rtp_init(struct aw8695 *aw8695)
 
     //Daniel 20201105 modify start 
     pr_info("%s enter\n", __func__);
-    pm_qos_add_request(&pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY, PM_QOS_VALUE_VB);
+    cpu_latency_qos_add_request(&pm_qos_req_vb, PM_QOS_VALUE_VB);
     aw8695->rtp_cnt = 0;
     mutex_lock(&aw8695->rtp_lock);
     while ((!aw8695_haptic_rtp_get_fifo_afi(aw8695)) &&
@@ -1357,7 +1357,7 @@ static int aw8695_haptic_rtp_init(struct aw8695 *aw8695)
             aw8695->rtp_cnt = 0;
 			atomic_set(&aw8695->is_rtp, 0);
             mutex_unlock(&aw8695->rtp_lock);
-            pm_qos_remove_request(&pm_qos_req_vb);
+            cpu_latency_qos_remove_request(&pm_qos_req_vb);
             return 0;
         }
     }
@@ -1367,7 +1367,7 @@ static int aw8695_haptic_rtp_init(struct aw8695 *aw8695)
         aw8695_haptic_set_rtp_aei(aw8695, true);
 
     pr_info("%s exit\n", __func__);
-    pm_qos_remove_request(&pm_qos_req_vb);//Daniel 20201105 modify end
+    cpu_latency_qos_remove_request(&pm_qos_req_vb);//Daniel 20201105 modify end
     return 0;
 }
 
@@ -1490,7 +1490,7 @@ static int aw8695_rtp_osc_calibration(struct aw8695 *aw8695)
     /* haptic start */
     aw8695_haptic_start(aw8695);
     //Daniel 20201105 modify start
-    pm_qos_add_request(&pm_qos_req_vb, PM_QOS_CPU_DMA_LATENCY, PM_QOS_VALUE_VB);
+    cpu_latency_qos_add_request(&pm_qos_req_vb, PM_QOS_VALUE_VB);
     aw8695_i2c_read(aw8695, AW8695_REG_PWMDBG, &reg_val);
     fre_val = (reg_val & 0x006f) >> 5;
 
@@ -1517,7 +1517,7 @@ static int aw8695_rtp_osc_calibration(struct aw8695 *aw8695)
 
             if (aw8695->rtp_cnt != aw8695_rtp->len) {
                 if (aw8695->timeval_flags == 1) {
-                    do_gettimeofday(&aw8695->start);
+                    ktime_get_real_ts64(&aw8695->start);
                     aw8695->timeval_flags = 0;
                 }
                 aw8695->rtpupdate_flag =
@@ -1533,17 +1533,17 @@ static int aw8695_rtp_osc_calibration(struct aw8695 *aw8695)
         osc_int_state = aw8695_haptic_osc_read_int(aw8695);
         /* if(osc_int_state&AW8695_BIT_SYSINT_DONEI) { */
         if (aw8695->rtp_cnt == aw8695_rtp->len) {
-            do_gettimeofday(&aw8695->end);
+            ktime_get_real_ts64(&aw8695->end);
             pr_info("%s playback done aw8695->rtp_cnt= %d\n",
                 __func__, aw8695->rtp_cnt);
             break;
         } else {
-            do_gettimeofday(&aw8695->end);
+            ktime_get_real_ts64(&aw8695->end);
         }
 
         aw8695->microsecond =
             (aw8695->end.tv_sec - aw8695->start.tv_sec) * 1000000 +
-            (aw8695->end.tv_usec - aw8695->start.tv_usec);
+            (aw8695->end.tv_nsec/1000 - aw8695->start.tv_nsec/1000);
         if (aw8695->microsecond >
             (aw8695->theory_time + (aw8695->theory_time / 20))) {
             pr_info
@@ -1552,13 +1552,13 @@ static int aw8695_rtp_osc_calibration(struct aw8695 *aw8695)
             break;
         }
     }
-    pm_qos_remove_request(&pm_qos_req_vb);
+    cpu_latency_qos_remove_request(&pm_qos_req_vb);
     enable_irq(gpio_to_irq(aw8695->irq_gpio));
 
     aw8695->osc_cali_flag = 0;
     aw8695->microsecond =
         (aw8695->end.tv_sec - aw8695->start.tv_sec) * 1000000 +
-        (aw8695->end.tv_usec - aw8695->start.tv_usec);
+        (aw8695->end.tv_nsec/1000 - aw8695->start.tv_nsec/1000);
     /*calibration osc */
     pr_info("%s awinic_microsecond:%ld\n", __func__, aw8695->microsecond);
     pr_info("%s exit\n", __func__);
@@ -2416,7 +2416,7 @@ static int aw8695_haptic_init(struct aw8695 *aw8695)
     unsigned char reg_val = 0;
     unsigned char bemf_config = 0;
 #ifdef AW_UEFI_CAL_F0
-    double f0_pre_low,f0_pre_high;
+    //double f0_pre_low,f0_pre_high;
 #endif
     pr_info("%s enter\n", __func__);
 
@@ -2496,9 +2496,9 @@ static int aw8695_haptic_init(struct aw8695 *aw8695)
     pr_info("%s pre_f0 = %d \n", __func__,aw8695->info.f0_pre);;
     pr_info("%s aw8695_f0_cal = %d \n", __func__,aw8695_f0_cal);
 
-    f0_pre_low = aw8695->info.f0_pre*0.93;
-    f0_pre_high = aw8695->info.f0_pre * 1.07;
-       if(aw8695_f0_cal > (aw8695->info.f0_pre * 1.07) || aw8695_f0_cal < (aw8695->info.f0_pre*0.93)){ //dtsi 里定义的校准偏差值 7%
+    //f0_pre_low = aw8695->info.f0_pre*0.93;
+    //f0_pre_high = aw8695->info.f0_pre * 1.07;
+       if(aw8695_f0_cal > (aw8695->info.f0_pre * 107 / 100) || aw8695_f0_cal < (aw8695->info.f0_pre * 93 / 100)){ //dtsi 里定义的校准偏差值 7%
          mutex_lock(&aw8695->lock);
          aw8695_haptic_f0_calibration(aw8695); //调用 1 次振动对 f0 值完成重新检测及校准
          mutex_unlock(&aw8695->lock);
@@ -4627,7 +4627,7 @@ static int aw8695_i2c_probe(struct i2c_client *i2c,
     if (ret < 0) {
         dev_err(&i2c->dev, "%s: aw8695_read_chipid failed ret=%d\n",
             __func__, ret);
-		i2c_check_status_create("viber_aw8695",0);
+		//i2c_check_status_create("viber_aw8695",0);
         goto err_id;
     }
 
@@ -4670,7 +4670,7 @@ static int aw8695_i2c_probe(struct i2c_client *i2c,
     aw8695_ram_init(aw8695);
 
     pr_info("%s probe completed successfully!\n", __func__);
-    i2c_check_status_create("viber_aw8695",1);
+    //i2c_check_status_create("viber_aw8695",1);
     return 0;
 
  err_sysfs:
@@ -4739,7 +4739,7 @@ static int __init aw8695_get_f0_cmd(char *str)
         pr_err("invalid f0 : %s. \n",
             str);
     }
-    pr_info("cmdline_f0=%ld \n", aw8695_f0_cal);
+    pr_info("cmdline_f0=%d \n", aw8695_f0_cal);
 
     return 0;
 }

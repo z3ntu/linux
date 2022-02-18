@@ -307,9 +307,9 @@ struct aw8695 {
 	bool haptic_ready;
 	bool audio_ready;
 	int pre_haptic_number;
-	struct timeval current_time;
-	struct timeval pre_enter_time;
-	struct timeval start, end;
+	struct timespec64 current_time;
+	struct timespec64 pre_enter_time;
+	struct timespec64 start, end;
 	unsigned int timeval_flags;
 	unsigned int osc_cali_flag;
 	unsigned long int microsecond;
