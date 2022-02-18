@@ -286,6 +286,9 @@ static int msm_mdss_enable(struct msm_mdss *msm_mdss)
 		/* UBWC_2_0 */
 		msm_mdss_setup_ubwc_dec_20(msm_mdss, 0x11f);
 		break;
+	case DPU_HW_VER_640:
+		writel_relaxed(0x1e, msm_mdss->mmio + UBWC_STATIC);
+		break;
 	case DPU_HW_VER_720:
 		msm_mdss_setup_ubwc_dec_40(msm_mdss, UBWC_3_0, 6, 1, 1, 1);
 		break;
