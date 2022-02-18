@@ -327,7 +327,7 @@ static void aw8695_ram_loaded(const struct firmware *cont, void *context)
 
 #ifdef AWINIC_READ_BIN_FLEXBALLY
     static unsigned char load_cont;
-    int ram_timer_val = 1000;
+    int ram_timer_val = 5000;
 
     load_cont++;
 #endif
