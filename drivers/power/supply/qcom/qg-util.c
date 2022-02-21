@@ -218,7 +218,7 @@ int get_rtc_time(unsigned long *rtc_time)
 				CONFIG_RTC_HCTOSYS_DEVICE, rc);
 		goto close_time;
 	}
-	rtc_tm_to_time(&tm, rtc_time);
+	rtc_time = rtc_tm_to_time64(&tm);
 
 close_time:
 	rtc_class_close(rtc);
