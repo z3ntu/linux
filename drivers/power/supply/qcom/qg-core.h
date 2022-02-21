@@ -6,6 +6,8 @@
 #ifndef __QG_CORE_H__
 #define __QG_CORE_H__
 
+#include <linux/cdev.h>
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include "fg-alg.h"
 #include "qg-defs.h"

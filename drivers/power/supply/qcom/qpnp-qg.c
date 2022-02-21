@@ -18,6 +18,7 @@
 #include <linux/of_batterydata.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
+#include <linux/poll.h>
 #include <linux/power_supply.h>
 #include <linux/regmap.h>
 #include <linux/slab.h>
@@ -4131,8 +4132,6 @@ static int qg_alg_init(struct qpnp_qg *chip)
 #ifdef CONFIG_DEBUG_FS
 static void qg_create_debugfs(struct qpnp_qg *chip)
 {
-	struct dentry *entry;
-
 	chip->dfs_root = debugfs_create_dir("qgauge", NULL);
 	if (IS_ERR_OR_NULL(chip->dfs_root)) {
 		pr_err("Failed to create debugfs directory rc=%ld\n",
@@ -4140,12 +4139,8 @@ static void qg_create_debugfs(struct qpnp_qg *chip)
 		return;
 	}
 
-	entry = debugfs_create_u32("debug_mask", 0600, chip->dfs_root,
+	debugfs_create_u32("debug_mask", 0600, chip->dfs_root,
 			&qg_debug_mask);
-	if (IS_ERR_OR_NULL(entry)) {
-		pr_err("Failed to create debug_mask rc=%ld\n", (long)entry);
-		debugfs_remove_recursive(chip->dfs_root);
-	}
 }
 #else
 static void qg_create_debugfs(struct qpnp_qg *chip)
