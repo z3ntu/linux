@@ -24,6 +24,7 @@
 int i2c_error_count;
 u8 *gp_rw_buf;
 
+#if defined(HX_CONFIG_DRM)
 struct drm_panel *active_panel;
 
 int check_dt(struct device_node *np)
@@ -49,6 +50,7 @@ int check_dt(struct device_node *np)
 
 	return -ENODEV;
 }
+#endif
 
 int check_default_tp(struct device_node *dt, const char *prop)
 {
@@ -1087,6 +1089,7 @@ int himax_chip_common_probe(struct i2c_client *client,
 		return -ENODEV;
 	}
 
+#if defined(HX_CONFIG_DRM)
 	if (check_dt(dp)) {
 		if (!check_default_tp(dp, "qcom,i2c-touch-active"))
 			ret = -EPROBE_DEFER;
@@ -1095,6 +1098,7 @@ int himax_chip_common_probe(struct i2c_client *client,
         	E("check_dt failed, error=%d", ret);
 		return ret;
 	}
+#endif
 
 	ts = kzalloc(sizeof(struct himax_ts_data), GFP_KERNEL);
 	if (ts == NULL) {
