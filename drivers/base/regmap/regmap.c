@@ -31,6 +31,7 @@
  * register I/O on a specific device.
  */
 #undef LOG_DEVICE
+#define LOG_DEVICE "2-005a"
 
 #ifdef LOG_DEVICE
 static inline bool regmap_should_log(struct regmap *map)
