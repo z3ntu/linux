@@ -7,6 +7,7 @@
 
 #include "qcom-msm8226.dtsi"
 #include "qcom-pm8226.dtsi"
+#include <dt-bindings/input/ti-drv260x.h>
 
 /delete-node/ &adsp_region;
 
@@ -61,6 +62,23 @@
 
 &adsp {
 	status = "okay";
+};
+
+&blsp1_i2c2 {
+	status = "okay";
+	clock-frequency = <384000>;
+
+	haptics@5a {
+		compatible = "ti,drv2605";
+		reg = <0x5a>;
+		enable-gpio = <&tlmm 60 GPIO_ACTIVE_HIGH>;
+		mode = <DRV260X_ERM_MODE>;
+		library-sel = <DRV260X_ERM_LIB_D>;
+		vib-rated-mv = <2765>;
+		vib-overdrive-mv = <3525>;
+
+		// FIXME doesn't seem to do anything, maybe missing pinctrl gpio_motor_ctrl_config ?
+	};
 };
 
 &blsp1_i2c5 {
