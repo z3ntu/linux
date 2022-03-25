@@ -888,9 +888,10 @@ static inline int security_inode_removexattr(struct user_namespace *mnt_userns,
 	return cap_inode_removexattr(mnt_userns, dentry, name);
 }
 
-static inline int security_inode_need_killpriv(struct dentry *dentry)
+static inline int security_inode_need_killpriv(struct user_namespace *mnt_userns,
+					       struct dentry *dentry)
 {
-	return cap_inode_need_killpriv(dentry);
+	return cap_inode_need_killpriv(mnt_userns, dentry);
 }
 
 static inline int security_inode_killpriv(struct user_namespace *mnt_userns,
