@@ -649,7 +649,7 @@ static struct clk_rcg2 byte0_clk_src = {
 		.parent_data = gcc_byte_data,
 		.num_parents = ARRAY_SIZE(gcc_byte_data),
 		.ops = &clk_byte2_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 	}
 };
 
@@ -662,7 +662,7 @@ static struct clk_rcg2 byte1_clk_src = {
 		.parent_data = gcc_byte_data,
 		.num_parents = ARRAY_SIZE(gcc_byte_data),
 		.ops = &clk_byte2_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 	}
 };
 
@@ -1342,7 +1342,7 @@ static struct clk_rcg2 pclk0_clk_src = {
 		.parent_data = gcc_pclk_data,
 		.num_parents = ARRAY_SIZE(gcc_pclk_data),
 		.ops = &clk_pixel_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 	}
 };
 
@@ -1356,7 +1356,7 @@ static struct clk_rcg2 pclk1_clk_src = {
 		.parent_data = gcc_pclk_data,
 		.num_parents = ARRAY_SIZE(gcc_pclk_data),
 		.ops = &clk_pixel_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 	}
 };
 
@@ -3220,7 +3220,7 @@ static struct clk_branch gcc_mdss_byte0_clk = {
 			},
 			.num_parents = 1,
 			.ops = &clk_branch2_ops,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		}
 	}
 };
@@ -3238,7 +3238,7 @@ static struct clk_branch gcc_mdss_byte1_clk = {
 			},
 			.num_parents = 1,
 			.ops = &clk_branch2_ops,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		}
 	}
 };
@@ -3310,7 +3310,7 @@ static struct clk_branch gcc_mdss_pclk0_clk = {
 			},
 			.num_parents = 1,
 			.ops = &clk_branch2_ops,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		}
 	}
 };
@@ -3328,7 +3328,7 @@ static struct clk_branch gcc_mdss_pclk1_clk = {
 			},
 			.num_parents = 1,
 			.ops = &clk_branch2_ops,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		}
 	}
 };
