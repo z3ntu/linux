@@ -1206,6 +1206,8 @@
 	opp-##freq_khz##000 {				\
 		opp-hz = /bits/ 64 <freq_khz##000>;	\
 		opp-supported-hw = <supp>;		\
+		opp-avg-kBps = <0>, <(peakBW/4)>;	\
+		opp-peak-kBps = <peakBW>, <(peakBW/2)>;	\
 		required-opps = <&lvl>;			\
 	}
 
