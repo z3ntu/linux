@@ -304,7 +304,7 @@ struct wcd_slim_codec_dai_data {
 struct wcd9335_codec {
 	struct device *dev;
 	struct clk *mclk;
-	struct clk *native_clk;
+	//struct clk *native_clk;
 	u32 mclk_rate;
 	u8 version;
 
@@ -5048,11 +5048,11 @@ static int wcd9335_parse_dt(struct wcd9335_codec *wcd)
 		return PTR_ERR(wcd->mclk);
 	}
 
-	wcd->native_clk = devm_clk_get(dev, "slimbus");
-	if (IS_ERR(wcd->native_clk)) {
-		dev_err(dev, "slimbus clock not found\n");
-		return PTR_ERR(wcd->native_clk);
-	}
+	//wcd->native_clk = devm_clk_get(dev, "slimbus");
+	//if (IS_ERR(wcd->native_clk)) {
+	//	dev_err(dev, "slimbus clock not found\n");
+	//	return PTR_ERR(wcd->native_clk);
+	//}
 
 	wcd->supplies[0].supply = "vdd-buck";
 	wcd->supplies[1].supply = "vdd-buck-sido";

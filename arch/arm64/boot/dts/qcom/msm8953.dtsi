@@ -1179,6 +1179,30 @@
 					drive-strength = <2>;
 					bias-disable;
 			};
+
+			cdc_reset_active: cdc-reset-active {
+				pins = "gpio67";
+				function = "gpio";
+				drive-strength = <16>;
+				bias-pull-down;
+				output-high;
+			};
+
+			cdc_reset_sleep: cdc-reset-sleep {
+				pins = "gpio67";
+				function = "gpio";
+				drive-strength = <16>;
+				bias-disable;
+				output-low;
+			};
+
+			wcd_intr_default: wcd-intr-default{
+				pins = "gpio73";
+				function = "gpio";
+				drive-strength = <2>;
+				bias-pull-down;
+				input-enable;
+			};
 		};
 
 		gcc: clock-controller@1800000 {
@@ -2783,6 +2807,59 @@
 						compatible = "qcom,q6cvp";
 						reg = <APR_SVC_ADSP_CVP>;
 					};
+				};
+			};
+		};
+
+		// FIXME move to correct location
+		slimbam: dma-controller@c104000 {
+			compatible = "qcom,bam-v1.7.0";
+			qcom,controlled-remotely;
+			reg = <0xc104000 0x2a000>;
+			num-channels  = <31>;
+			interrupts = <GIC_SPI 180 IRQ_TYPE_LEVEL_HIGH>;
+			#dma-cells = <1>;
+			qcom,ee = <1>;
+			qcom,num-ees = <2>;
+		};
+
+		slim@c140000 {
+			compatible = "qcom,slim-ngd-v1.5.0";
+			reg = <0xc140000 0x2c0000>;
+			reg-names = "ctrl";
+			interrupts = <GIC_SPI 163 IRQ_TYPE_LEVEL_HIGH>;
+			dmas =	<&slimbam 3>, <&slimbam 4>;
+			dma-names = "rx", "tx";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			ngd@1 {
+				reg = <1>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				tasha_ifd: tas-ifd {
+					compatible = "slim217,1a0";
+					reg  = <0 0>;
+				};
+
+				wcd9335: codec@1{
+					pinctrl-0 = <&cdc_reset_active &wcd_intr_default>;
+					pinctrl-names = "default";
+
+					compatible = "slim217,1a0";
+					reg  = <1 0>;
+
+					interrupt-parent = <&tlmm>;
+					interrupts = <73 IRQ_TYPE_LEVEL_HIGH>,
+						     <74 IRQ_TYPE_LEVEL_HIGH>;
+					interrupt-names  = "intr1", "intr2";
+					interrupt-controller;
+					#interrupt-cells = <1>;
+					reset-gpios = <&tlmm 67 0>;
+
+					slim-ifc-dev  = <&tasha_ifd>;
+
+					#sound-dai-cells = <1>;
 				};
 			};
 		};

@@ -102,6 +102,7 @@
 		};
 
 		wcd_codec: codec@f000 {
+			status = "disabled";
 			compatible = "qcom,pm8916-wcd-analog-codec";
 			reg = <0xf000 0x200>;
 			reg-names = "pmic-codec-core";
