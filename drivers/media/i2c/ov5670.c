@@ -2,6 +2,7 @@
 // Copyright (c) 2017 Intel Corporation.
 
 #include <linux/acpi.h>
+#include <linux/clk.h>
 #include <linux/i2c.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
@@ -2475,12 +2476,9 @@ static int ov5670_probe(struct i2c_client *client)
 	struct ov5670 *ov5670;
 	const char *err_msg;
 	u32 input_clk = 0;
+	struct clk *clk;
 	bool full_power;
 	int ret;
-
-	device_property_read_u32(&client->dev, "clock-frequency", &input_clk);
-	if (input_clk != 19200000)
-		return -EINVAL;
 
 	ov5670 = devm_kzalloc(&client->dev, sizeof(*ov5670), GFP_KERNEL);
 	if (!ov5670) {
@@ -2488,6 +2486,22 @@ static int ov5670_probe(struct i2c_client *client)
 		err_msg = "devm_kzalloc() error";
 		goto error_print;
 	}
+
+	/* OF uses the common clock framework, ACPI uses "clock-frequency". */
+	if (is_of_node(dev_fwnode(&client->dev))) {
+		clk = devm_clk_get(&client->dev, NULL);
+		if (IS_ERR(clk))
+			return dev_err_probe(&client->dev, PTR_ERR(clk),
+					     "error getting clock\n");
+
+		input_clk = clk_get_rate(clk);
+	} else {
+		device_property_read_u32(&client->dev, "clock-frequency",
+					 &input_clk);
+	}
+
+	if (input_clk != 19200000)
+		return -EINVAL;
 
 	/* Initialize subdev */
 	v4l2_i2c_subdev_init(&ov5670->sd, client, &ov5670_subdev_ops);
