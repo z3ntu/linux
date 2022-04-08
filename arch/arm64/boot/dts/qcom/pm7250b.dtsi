@@ -115,29 +115,29 @@
 				label = "chg_mid";
 			};
 
-			// adc-chan@2a {
-			// 	reg = <ADC5_BAT_THERM_30K_PU>;
-			// 	qcom,ratiometric;
-			// 	qcom,hw-settle-time = <200>;
-			// 	qcom,pre-scaling = <1 1>;
-			// 	label = "bat_therm_30k";
-			// };
+			adc-chan@2a {
+				reg = <ADC5_BAT_THERM_30K_PU>;
+				qcom,ratiometric;
+				qcom,hw-settle-time = <200>;
+				qcom,pre-scaling = <1 1>;
+				label = "bat_therm_30k";
+			};
 
-			// adc-chan@4a {
-			// 	reg = <ADC5_BAT_THERM_100K_PU>;
-			// 	qcom,ratiometric;
-			// 	qcom,hw-settle-time = <200>;
-			// 	qcom,pre-scaling = <1 1>;
-			// 	label = "bat_therm";
-			// };
+			adc-chan@4a {
+				reg = <ADC5_BAT_THERM_100K_PU>;
+				qcom,ratiometric;
+				qcom,hw-settle-time = <200>;
+				qcom,pre-scaling = <1 1>;
+				label = "bat_therm";
+			};
 
-			// adc-chan@4b {
-			// 	reg = <ADC5_BAT_ID_100K_PU>;
-			// 	qcom,ratiometric;
-			// 	qcom,hw-settle-time = <200>;
-			// 	qcom,pre-scaling = <1 1>;
-			// 	label = "bat_id";
-			// };
+			adc-chan@4b {
+				reg = <ADC5_BAT_ID_100K_PU>;
+				qcom,ratiometric;
+				qcom,hw-settle-time = <200>;
+				qcom,pre-scaling = <1 1>;
+				label = "bat_id";
+			};
 
 			// adc-chan@6a {
 			// 	reg = <ADC5_BAT_THERM_400K_PU>;

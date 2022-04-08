@@ -63,6 +63,11 @@
 			qcom,vmid = <15>;
 		};
 	};
+
+	mtp_batterydata: qcom,battery-data {
+		qcom,batt-id-range-pct = <15>;
+		#include "qg-batterydata-fp4-veken-4360mah.dtsi"
+	};
 };
 
 &adsp {
@@ -687,4 +692,30 @@
 &dsi0_out {
 	data-lanes = <0 1 2 3>;
 	remote-endpoint = <&panel_in>;
+};
+
+&pm7250b_qg {
+	status = "ok";
+	io-channels = <&pm7250b_vadc ADC5_BAT_THERM_30K_PU>,
+		      <&pm7250b_vadc ADC5_BAT_ID_100K_PU>;
+	io-channel-names = "batt-therm",
+			   "batt-id";
+	qcom,battery-data = <&mtp_batterydata>;
+	qcom,vbatt-empty-mv = <3200>;
+	qcom,vbatt-low-mv = <3500>;
+	qcom,vbatt-cutoff-mv = <3400>;
+	qcom,cl-feedback-on;
+	qcom,tcss-enable;
+	qcom,fvss-enable;
+	qcom,fvss-vbatt-mv = <3500>;
+	qcom,bass-enable;
+	qcom,use-cp-iin-sns;
+	qcom,qg-iterm-ma = <350>;
+	qcom,ignore-shutdown-soc-secs = <604800>;
+	qcom,shutdown-temp-diff = <150>;
+	qcom,shutdown_soc_threshold = <50>;
+	qcom,hold-soc-while-full;
+	qcom,linearize-soc;
+	//qcom,rbat-conn-mohm = <35>;
+	qcom,use-cp-iin-sns;
 };

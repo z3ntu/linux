@@ -100,6 +100,82 @@ static const struct vadc_map_pt adcmap_100k_104ef_104fb_1875_vref[] = {
 	{ 46,	125000 },
 };
 
+/* FIXME */
+//static const struct vadc_map_pt adcmap_batt_therm_30k[] = {
+//#if defined(CONFIG_TCT_PM7250_COMMON)
+static const struct vadc_map_pt adcmap_30k_vref[] = {
+	{ 1673,	-40000 },
+	{ 1649,	-38000 },
+	{ 1623,	-36000 },
+	{ 1596,	-34000 },
+	{ 1566,	-32000 },
+	{ 1535,	-30000 },
+	{ 1502,	-28000 },
+	{ 1467,	-26000 },
+	{ 1430,	-24000 },
+	{ 1392,	-22000 },
+	{ 1352,	-20000 },
+	{ 1311,	-18000 },
+	{ 1269,	-16000 },
+	{ 1226,	-14000 },
+	{ 1182,	-12000 },
+	{ 1138,	-10000 },
+	{ 1093,	-8000 },
+	{ 1049,	-6000 },
+	{ 1004,	-4000 },
+	{ 960,	-2000 },
+	{ 917,	0 },
+	{ 874,	2000 },
+	{ 832,	4000 },
+	{ 791,	6000 },
+	{ 752,	8000 },
+	{ 713,	10000 },
+	{ 676,	12000 },
+	{ 640,	14000 },
+	{ 606,	16000 },
+	{ 573,	18000 },
+	{ 541,	20000 },
+	{ 511,	22000 },
+	{ 483,	24000 },
+	{ 455,	26000 },
+	{ 430,	28000 },
+	{ 405,	30000 },
+	{ 382,	32000 },
+	{ 360,	34000 },
+	{ 340,	36000 },
+	{ 320,	38000 },
+	{ 302,	40000 },
+	{ 285,	42000 },
+	{ 269,	44000 },
+	{ 253,	46000 },
+	{ 239,	48000 },
+	{ 225,	50000 },
+	{ 213,	52000 },
+	{ 201,	54000 },
+	{ 190,	56000 },
+	{ 179,	58000 },
+	{ 169,	60000 },
+	{ 160,	62000 },
+	{ 152,	64000 },
+	{ 143,	66000 },
+	{ 136,	68000 },
+	{ 128,	70000 },
+	{ 122,	72000 },
+	{ 115,	74000 },
+	{ 109,	76000 },
+	{ 104,	78000 },
+	{ 98,	80000 },
+	{ 93,	82000 },
+	{ 89,	84000 },
+	{ 84,	86000 },
+	{ 80,	88000 },
+	{ 76,	90000 },
+	{ 73,	92000 },
+	{ 69,	94000 },
+	{ 66,	96000 },
+	{ 63,	98000 }
+};
+
 static const struct vadc_map_pt adcmap7_die_temp[] = {
 	{ 857300, 160000 },
 	{ 820100, 140000 },
@@ -309,6 +385,10 @@ static int qcom_vadc_scale_hw_calib_therm(
 				const struct u32_fract *prescale,
 				const struct adc5_data *data,
 				u16 adc_code, int *result_mdec);
+static int qcom_vadc_scale_hw_calib_therm_30k(
+				const struct u32_fract *prescale,
+				const struct adc5_data *data,
+				u16 adc_code, int *result_mdec);
 static int qcom_vadc7_scale_hw_calib_therm(
 				const struct u32_fract *prescale,
 				const struct adc5_data *data,
@@ -333,6 +413,8 @@ static int qcom_vadc7_scale_hw_calib_die_temp(
 static struct qcom_adc5_scale_type scale_adc5_fn[] = {
 	[SCALE_HW_CALIB_DEFAULT] = {qcom_vadc_scale_hw_calib_volt},
 	[SCALE_HW_CALIB_THERM_100K_PULLUP] = {qcom_vadc_scale_hw_calib_therm},
+	[SCALE_HW_CALIB_THERM_30K_PULLUP] = {qcom_vadc_scale_hw_calib_therm_30k},
+	// [SCALE_HW_CALIB_THERM_400K_PULLUP] = {FIXME},
 	[SCALE_HW_CALIB_XOTHERM] = {qcom_vadc_scale_hw_calib_therm},
 	[SCALE_HW_CALIB_THERM_100K_PU_PM7] = {
 					qcom_vadc7_scale_hw_calib_therm},
@@ -580,6 +662,22 @@ static int qcom_vadc_scale_hw_calib_therm(
 	/* Map voltage to temperature from look-up table */
 	return qcom_vadc_map_voltage_temp(adcmap_100k_104ef_104fb_1875_vref,
 				 ARRAY_SIZE(adcmap_100k_104ef_104fb_1875_vref),
+				 voltage, result_mdec);
+}
+
+static int qcom_vadc_scale_hw_calib_therm_30k(
+				const struct u32_fract *prescale,
+				const struct adc5_data *data,
+				u16 adc_code, int *result_mdec)
+{
+	int voltage;
+
+	voltage = qcom_vadc_scale_code_voltage_factor(adc_code,
+				prescale, data, 1000);
+
+	/* Map voltage to temperature from look-up table */
+	return qcom_vadc_map_voltage_temp(adcmap_30k_vref,
+				 ARRAY_SIZE(adcmap_30k_vref),
 				 voltage, result_mdec);
 }
 
