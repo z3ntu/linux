@@ -26,9 +26,9 @@
 #include <linux/uaccess.h>
 #include <linux/pmic-voter.h>
 #include <linux/iio/consumer.h>
-#include <linux/qpnp/qpnp-revid.h>
 #include <uapi/linux/qg.h>
 #include <uapi/linux/qg-profile.h>
+#include <soc/qcom/qcom-spmi-pmic.h>
 #include "fg-alg.h"
 #include "qg-sdam.h"
 #include "qg-core.h"
@@ -3603,12 +3603,12 @@ done:
 
 static int qg_set_wa_flags(struct qpnp_qg *chip)
 {
-	switch (chip->pmic_rev_id->pmic_subtype) {
+	switch (chip->pmic_rev_id->subtype) {
 	case PMI632_SUBTYPE:
 		chip->wa_flags |= QG_RECHARGE_SOC_WA;
 		if (!chip->dt.use_s7_ocv)
 			chip->wa_flags |= QG_PON_OCV_WA;
-		if (chip->pmic_rev_id->rev4 == PMI632_V1P0_REV4)
+		if (chip->pmic_rev_id->major == PMI632_V1P0_REV4)
 			chip->wa_flags |= QG_VBAT_LOW_WA;
 		break;
 	case PM6150_SUBTYPE:
@@ -3626,7 +3626,7 @@ static int qg_set_wa_flags(struct qpnp_qg *chip)
 		break;
 	default:
 		pr_err("Unsupported PMIC subtype %d\n",
-			chip->pmic_rev_id->pmic_subtype);
+			chip->pmic_rev_id->subtype);
 		return -EINVAL;
 	}
 
@@ -4370,7 +4370,7 @@ static int qg_parse_cl_dt(struct qpnp_qg *chip)
 static int qg_parse_dt(struct qpnp_qg *chip)
 {
 	int rc = 0;
-	struct device_node *revid_node, *child, *node = chip->dev->of_node;
+	struct device_node /* *revid_node,*/ *child, *node = chip->dev->of_node;
 	u32 base, temp;
 	u8 type;
 
@@ -4379,14 +4379,14 @@ static int qg_parse_dt(struct qpnp_qg *chip)
 		return -ENXIO;
 	}
 
-	revid_node = of_parse_phandle(node, "qcom,pmic-revid", 0);
-	if (!revid_node) {
-		pr_err("Missing qcom,pmic-revid property - driver failed\n");
-		return -EINVAL;
-	}
+	//revid_node = of_parse_phandle(node, "qcom,pmic-revid", 0);
+	//if (!revid_node) {
+	//	pr_err("Missing qcom,pmic-revid property - driver failed\n");
+	//	return -EINVAL;
+	//}
 
-	chip->pmic_rev_id = get_revid_data(revid_node);
-	of_node_put(revid_node);
+	chip->pmic_rev_id = qcom_pmic_get(chip->dev);
+	//of_node_put(revid_node);
 	if (IS_ERR_OR_NULL(chip->pmic_rev_id)) {
 		pr_err("Failed to get pmic_revid, rc=%ld\n",
 			PTR_ERR(chip->pmic_rev_id));
@@ -4399,7 +4399,7 @@ static int qg_parse_dt(struct qpnp_qg *chip)
 	}
 
 	qg_dbg(chip, QG_DEBUG_PON, "PMIC subtype %d Digital major %d\n",
-		chip->pmic_rev_id->pmic_subtype, chip->pmic_rev_id->rev4);
+		chip->pmic_rev_id->subtype, chip->pmic_rev_id->major);
 
 	for_each_available_child_of_node(node, child) {
 		rc = of_property_read_u32(child, "reg", &base);

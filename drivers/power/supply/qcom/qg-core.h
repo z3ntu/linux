@@ -93,7 +93,7 @@ struct qg_esr_data {
 
 struct qpnp_qg {
 	struct device		*dev;
-	struct pmic_revid_data	*pmic_rev_id;
+	struct qcom_spmi_pmic	*pmic_rev_id;
 	struct regmap		*regmap;
 	struct qpnp_vadc_chip	*vadc_dev;
 	struct soh_profile      *sp;
