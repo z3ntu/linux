@@ -44,11 +44,6 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		pm7250b_revid: qcom,revid@100 {
-			compatible = "qcom,qpnp-revid";
-			reg = <0x100>;
-		};
-
 		pm7250b_temp: temp-alarm@2400 {
 			compatible = "qcom,spmi-temp-alarm";
 			reg = <0x2400>;
@@ -199,8 +194,6 @@
 			qcom,vbatt-empty-mv = <3000>;
 			qcom,vbatt-empty-cold-mv = <3000>;
 			qcom,s3-entry-fifo-length = <2>;
-
-			qcom,pmic-revid = <&pm7250b_revid>;
 
 			qcom,qgauge@4800 {
 				status = "okay";
