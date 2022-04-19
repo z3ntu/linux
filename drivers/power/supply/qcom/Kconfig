@@ -3,7 +3,7 @@
 menu "Qualcomm Technologies, Inc. Charger and Fuel Gauge support"
 
 config QPNP_QG
-	bool "QPNP Qgauge driver"
+	tristate "QPNP Qgauge driver"
 	depends on MFD_SPMI_PMIC
 	help
 	  Say Y here to enable the Qualcomm Technologies, Inc. QGauge driver
