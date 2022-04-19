@@ -497,6 +497,7 @@ out:
 	unlock_votable(votable);
 	return rc;
 }
+EXPORT_SYMBOL_GPL(vote);
 
 /**
  * vote_override() -
@@ -598,6 +599,7 @@ out:
 	else
 		return NULL;
 }
+EXPORT_SYMBOL_GPL(find_votable);
 
 static int force_active_get(void *data, u64 *val)
 {
@@ -801,6 +803,7 @@ struct votable *create_votable(const char *name,
 
 	return votable;
 }
+EXPORT_SYMBOL_GPL(create_votable);
 
 void destroy_votable(struct votable *votable)
 {
@@ -822,3 +825,4 @@ void destroy_votable(struct votable *votable)
 	kfree(votable->name);
 	kfree(votable);
 }
+EXPORT_SYMBOL_GPL(destroy_votable);
