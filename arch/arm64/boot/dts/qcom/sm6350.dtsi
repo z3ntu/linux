@@ -843,6 +843,13 @@
 				 <&rpmhcc RPMH_CXO_CLK>;
 			clock-names = "iface", "core", "xo";
 			resets = <&gcc GCC_SDCC1_BCR>;
+			//<150 10073 0 0>,
+			//<135 512 0 0>,
+			//<1 825 0 0>,
+			// FIXME opp table needs bw properties
+			interconnects = <&aggre1_noc MASTER_EMMC 0 &clk_virt SLAVE_EBI_CH0 0>,
+					<&gem_noc MASTER_AMPSS_M0 0 &config_noc SLAVE_EMMC_CFG 0>;
+			interconnect-names = "sdhc-ddr", "cpu-sdhc";
 			qcom,dll-config = <0x000f642c>;
 			qcom,ddr-config = <0x80040868>;
 			power-domains = <&rpmhpd SM6350_CX>;
