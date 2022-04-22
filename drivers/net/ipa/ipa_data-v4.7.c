@@ -438,11 +438,6 @@ static const struct ipa_interconnect_data ipa_interconnect_data[] = {
 		.peak_bandwidth		= 55000,	/* 55 MBps */
 		.average_bandwidth	= 0,		/* unused */
 	},
-	{
-		.name			= "core",
-		.peak_bandwidth		= 100,		/* 100 KBps */
-		.average_bandwidth	= 0,		/* unused */
-	},
 };
 
 /* Clock and interconnect configuration data for an SoC having IPA v4.7 */
