@@ -72,6 +72,14 @@ properties:
       - qcom,sdx55-mc-virt
       - qcom,sdx55-mem-noc
       - qcom,sdx55-system-noc
+      - qcom,sm6350-aggre1-noc
+      - qcom,sm6350-aggre2-noc
+      - qcom,sm6350-config-noc
+      - qcom,sm6350-dc-noc
+      - qcom,sm6350-gem-noc
+      - qcom,sm6350-mmss-noc
+      - qcom,sm6350-npu-noc
+      - qcom,sm6350-system-noc
       - qcom,sm8150-aggre1-noc
       - qcom,sm8150-aggre2-noc
       - qcom,sm8150-camnoc-noc
@@ -130,6 +138,42 @@ properties:
   qcom,bcm-voter-names:
     description: |
       Names for each of the qcom,bcm-voters specified.
+
+# Child node's properties
+patternProperties:
+  '^interconnect-[a-z0-9\-]+$':
+    type: object
+    description:
+      The interconnect providers do not have a separate QoS register space,
+      but share parent's space.
+
+    properties:
+      compatible:
+        enum:
+          - qcom,sm6350-clk-virt
+          - qcom,sm6350-compute-noc
+
+      '#interconnect-cells':
+        const: 1
+
+      qcom,bcm-voters:
+        $ref: /schemas/types.yaml#/definitions/phandle-array
+        items:
+          maxItems: 1
+        description: |
+          List of phandles to qcom,bcm-voter nodes that are required by
+          this interconnect to send RPMh commands.
+
+      qcom,bcm-voter-names:
+        description: |
+          Names for each of the qcom,bcm-voters specified.
+
+    required:
+      - compatible
+      - '#interconnect-cells'
+      - qcom,bcm-voters
+
+    additionalProperties: false
 
 required:
   - compatible
