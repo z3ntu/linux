@@ -5,6 +5,8 @@
 
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/spmi/spmi.h>
+#include <dt-bindings/usb/typec/qcom,pmic-pdphy.h>
+#include <dt-bindings/usb/typec/qcom,pmic-typec.h>
 
 / {
 	thermal-zones {
@@ -35,6 +37,14 @@
 			};
 		};
 	};
+
+	pm7250b_tcpm: pm7250b-tcpm {
+		compatible = "qcom,pmic-virt-tcpm";
+		qcom,pmic-typec = <&pm7250b_typec>;
+		qcom,pmic-pdphy = <&pm7250b_pdphy>;
+
+		status = "disabled";
+	};
 };
 
 &spmi_bus {
@@ -48,6 +58,66 @@
 			compatible = "qcom,pm8150b-vbus-reg";
 			status = "disabled";
 			reg = <0x1100>;
+		};
+
+		pm7250b_typec: typec@1500 {
+			compatible = "qcom,pm8150b-typec";
+			reg = <0x1500>;
+			interrupts = <0x2 0x15 PMIC_TYPEC_OR_RID_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x15 PMIC_TYPEC_VPD_IRQ
+				      IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x15 PMIC_TYPEC_CC_STATE_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x15 PMIC_TYPEC_VCONN_OC_IRQ
+				      IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x15 PMIC_TYPEC_VBUS_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x15 PMIC_TYPEC_ATTACH_DETACH_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x15 PMIC_TYPEC_LEGACY_CABLE_IRQ
+				      IRQ_TYPE_EDGE_BOTH>,
+				     <0x2 0x15 PMIC_TYPEC_TRY_SNK_SRC_IRQ
+				      IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "or-rid-detect-change",
+					  "vpd-detect",
+					  "cc-state-change",
+					  "vconn-oc",
+					  "vbus-change",
+					  "attach-detach",
+					  "legacy-cable-detect",
+					  "try-snk-src-detect";
+			//status = "disabled";
+		};
+
+		pm7250b_pdphy: pdphy@1700 {
+			compatible = "qcom,pm8150b-pdphy";
+			reg = <0x1700>;
+			interrupts = <0x2 0x17 PMIC_PDPHY_SIG_TX_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x17 PMIC_PDPHY_SIG_RX_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x17 PMIC_PDPHY_MSG_TX_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x17 PMIC_PDPHY_MSG_RX_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x17 PMIC_PDPHY_MSG_TX_FAIL_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x17 PMIC_PDPHY_MSG_TX_DISCARD_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x17 PMIC_PDPHY_MSG_RX_DISCARD_IRQ
+				      IRQ_TYPE_EDGE_RISING>,
+				     <0x2 0x17 PMIC_PDPHY_FR_SWAP_IRQ
+				      IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "sig-tx",
+					  "sig-rx",
+					  "msg-tx",
+					  "msg-rx",
+					  "msg-tx-failed",
+					  "msg-tx-discarded",
+					  "msg-rx-discarded",
+					  "fr-swap";
+			//status = "disabled";
 		};
 
 		pm7250b_temp: temp-alarm@2400 {
