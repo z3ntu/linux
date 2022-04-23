@@ -541,6 +541,12 @@
 	};
 };
 
+&pm7250b_vbus {
+	regulator-min-microamp = <500000>;
+	regulator-max-microamp = <1500000>; // qcom,otg-cl-ua = <1500000>;
+	status = "okay";
+};
+
 &pm8008_chip {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pm8008_active>;
