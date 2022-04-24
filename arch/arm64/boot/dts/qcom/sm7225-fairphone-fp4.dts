@@ -36,7 +36,6 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	/*
 	wcd9380: codec {
 		compatible = "qcom,wcd9380-codec";
 		#sound-dai-cells = <1>;
@@ -58,7 +57,6 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&wcd9380_reset_default>;
 	};
-	*/
 
 	gpio-keys {
 		compatible = "gpio-keys";
@@ -386,6 +384,7 @@
 	status = "okay";
 	clock-frequency = <400000>;
 
+#if 0
 	himax_ts@48 {
 		compatible = "himax,hxcommon";
 		reg = <0x48>;
@@ -404,6 +403,7 @@
 
 		//panel = <&dsi_hx83112a_auo_1080_video>;
 	};
+#endif
 };
 
 &i2c10 {
@@ -618,23 +618,19 @@
 };
 
 &swr1 {
-	/*
 	wcd_rx: wcd9380-rx@0,4 {
 		compatible = "sdw20217010d00";
 		reg = <0 4>;
 		qcom,rx-port-mapping = <1 2 3 4 5>;
 	};
-	*/
 };
 
 &swr2 {
-	/*
 	wcd_tx: wcd9380-tx@0,3 {
 		compatible = "sdw20217010d00";
 		reg = <0 3>;
 		qcom,tx-port-mapping = <2 3 4 5>;
 	};
-	*/
 };
 
 &tlmm {

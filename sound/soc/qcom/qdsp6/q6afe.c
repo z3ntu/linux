@@ -908,6 +908,9 @@ static int q6afe_callback(struct apr_device *adev, struct apr_resp_pkt *data)
 				wake_up(&afe->wait);
 			}
 			break;
+		case AFE_CMD_REMOTE_LPASS_CORE_HW_DEVOTE_REQUEST:
+			dev_err(afe->dev, "AFE_CMD_REMOTE_LPASS_CORE_HW_DEVOTE_REQUEST clk_state=%d\n", res->status);
+			break;
 		default:
 			dev_err(afe->dev, "Unknown cmd 0x%x\n",	res->opcode);
 			break;
@@ -1135,9 +1138,11 @@ int q6afe_set_lpass_clock(struct device *dev, int clk_id, int attri,
 	cset.enable = !!freq;
 
 	printk(KERN_INFO "%s: clk_id=%d, attri=%d, clk_root=%d, freq=%d\n", __func__, clk_id, attri, clk_root, freq);
-	return q6afe_set_param(afe, NULL, &cset, AFE_PARAM_ID_CLOCK_SET,
+	int ret = q6afe_set_param(afe, NULL, &cset, AFE_PARAM_ID_CLOCK_SET,
 			       AFE_MODULE_CLOCK_SET, sizeof(cset),
 			       AFE_CLK_TOKEN);
+	usleep_range(1000000, 1000500);
+	return ret;
 }
 EXPORT_SYMBOL_GPL(q6afe_set_lpass_clock);
 
