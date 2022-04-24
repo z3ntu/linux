@@ -35,21 +35,21 @@ enum lpass_lpi_functions {
 	LPI_MUX__,
 };
 
-static const unsigned int gpio0_pins[] = { 0 };
-static const unsigned int gpio1_pins[] = { 1 };
-static const unsigned int gpio2_pins[] = { 2 };
-static const unsigned int gpio3_pins[] = { 3 };
-static const unsigned int gpio4_pins[] = { 4 };
-static const unsigned int gpio5_pins[] = { 5 };
-static const unsigned int gpio6_pins[] = { 6 };
-static const unsigned int gpio7_pins[] = { 7 };
-static const unsigned int gpio8_pins[] = { 8 };
-static const unsigned int gpio9_pins[] = { 9 };
-static const unsigned int gpio10_pins[] = { 10 };
-static const unsigned int gpio11_pins[] = { 11 };
-static const unsigned int gpio12_pins[] = { 12 };
-static const unsigned int gpio13_pins[] = { 13 };
-static const unsigned int gpio14_pins[] = { 14 };
+static int gpio0_pins[] = { 0 };
+static int gpio1_pins[] = { 1 };
+static int gpio2_pins[] = { 2 };
+static int gpio3_pins[] = { 3 };
+static int gpio4_pins[] = { 4 };
+static int gpio5_pins[] = { 5 };
+static int gpio6_pins[] = { 6 };
+static int gpio7_pins[] = { 7 };
+static int gpio8_pins[] = { 8 };
+static int gpio9_pins[] = { 9 };
+static int gpio10_pins[] = { 10 };
+static int gpio11_pins[] = { 11 };
+static int gpio12_pins[] = { 12 };
+static int gpio13_pins[] = { 13 };
+static int gpio14_pins[] = { 14 };
 
 // FIXME arch/arm64/boot/dts/vendor/qcom/lagoon-lpi.dtsi
 static const struct pinctrl_pin_desc sm6350_lpi_pins[] = {
@@ -100,15 +100,15 @@ static const struct lpi_pingroup sm6350_groups[] = {
 	LPI_PINGROUP(3, 8, swr_rx_clk, qua_mi2s_data, _, _),	// gpio130
 	LPI_PINGROUP(4, 10, swr_rx_data, qua_mi2s_data, _, _),	// gpio131
 	LPI_PINGROUP(5, 12, swr_rx_data, _, _, _),		// gpio132
-	LPI_PINGROUP(6, NO_SLEW, dmic1_clk, i2s1_clk, _,  _),	// gpio133
-	LPI_PINGROUP(7, NO_SLEW, dmic1_data, i2s1_ws, _, _),	// gpio134
-	LPI_PINGROUP(8, NO_SLEW, dmic2_clk, i2s1_data, _, _),	// gpio135
-	LPI_PINGROUP(9, NO_SLEW, dmic2_data, i2s1_data, _, _),	// gpio136
+	LPI_PINGROUP(6, LPI_NO_SLEW, dmic1_clk, i2s1_clk, _,  _),	// gpio133
+	LPI_PINGROUP(7, LPI_NO_SLEW, dmic1_data, i2s1_ws, _, _),	// gpio134
+	LPI_PINGROUP(8, LPI_NO_SLEW, dmic2_clk, i2s1_data, _, _),	// gpio135
+	LPI_PINGROUP(9, LPI_NO_SLEW, dmic2_data, i2s1_data, _, _),	// gpio136
 	LPI_PINGROUP(10, 16, i2s2_clk, wsa_swr_clk, _, _),	// gpio137
 	LPI_PINGROUP(11, 18, i2s2_ws, wsa_swr_data, _, _),	// gpio138
-	LPI_PINGROUP(12, NO_SLEW, dmic3_clk, i2s2_data, _, _),	// gpio139
-	LPI_PINGROUP(13, NO_SLEW, dmic3_data, i2s2_data, _, _),	// gpio140
-	LPI_PINGROUP(14, NO_SLEW, swr_tx_data, _, _, _),	// gpio141
+	LPI_PINGROUP(12, LPI_NO_SLEW, dmic3_clk, i2s2_data, _, _),	// gpio139
+	LPI_PINGROUP(13, LPI_NO_SLEW, dmic3_data, i2s2_data, _, _),	// gpio140
+	LPI_PINGROUP(14, LPI_NO_SLEW, swr_tx_data, _, _, _),	// gpio141
 };
 
 static const struct lpi_function sm6350_functions[] = {
