@@ -10,7 +10,6 @@
 #include <dt-bindings/clock/qcom,rpmh.h>
 #include <dt-bindings/clock/qcom,sm8250-lpass-aoncc.h> // FIXME
 #include <dt-bindings/clock/qcom,sm8250-lpass-audiocc.h> // FIXME
-#include <dt-bindings/clock/qcom,videocc-sm6350.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interconnect/qcom,sm6350.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
