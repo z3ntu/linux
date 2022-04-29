@@ -108,7 +108,9 @@ static const struct lpi_pingroup sm6350_groups[] = {
 	LPI_PINGROUP(11, 18, i2s2_ws, wsa_swr_data, _, _),	// gpio138
 	LPI_PINGROUP(12, LPI_NO_SLEW, dmic3_clk, i2s2_data, _, _),	// gpio139
 	LPI_PINGROUP(13, LPI_NO_SLEW, dmic3_data, i2s2_data, _, _),	// gpio140
-	LPI_PINGROUP(14, LPI_NO_SLEW, swr_tx_data, _, _, _),	// gpio141
+	// FIXME pin has SLEW: qcom,lpi-slew-base-tbl 0x0355C000 (offset 0)
+	// should be handled in the struct somehow...
+	LPI_PINGROUP(14, 0, swr_tx_data, _, _, _),	// gpio141
 };
 
 static const struct lpi_function sm6350_functions[] = {

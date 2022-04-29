@@ -526,12 +526,15 @@
 &sound {
 	// FIXME all of this is copy-pasta
 	compatible = "qcom,sm8250-sndcard"; // FIXME
-	pinctrl-0 = <&i2s1_active>;
-	pinctrl-names = "default";
+	//pinctrl-0 = <&i2s1_active>;
+	//pinctrl-names = "default";
 	model = "Fairphone 4";
 	audio-routing =
-		"IN1_HPHL", "HPHL_OUT",
-		"IN2_HPHR", "HPHR_OUT",
+		// from sm8250-mtp.dts
+		//"SpkrLeft IN", "WSA_SPK1 OUT",
+		//"SpkrRight IN", "WSA_SPK2 OUT",
+		//"IN1_HPHL", "HPHL_OUT",
+		//"IN2_HPHR", "HPHR_OUT",
 		"AMIC1", "MIC BIAS1",
 		"AMIC2", "MIC BIAS2",
 		"AMIC3", "MIC BIAS3",
@@ -738,7 +741,7 @@
 		pins = "gpio83";
 		function = "gpio";
 		drive-strength = <16>;
-		output-high;
+		//output-high;
 	};
 
 	aw_reset_int1 {
