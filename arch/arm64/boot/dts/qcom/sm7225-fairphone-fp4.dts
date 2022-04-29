@@ -48,9 +48,9 @@
 		qcom,micbias2-microvolt = <2700000>;
 		qcom,micbias3-microvolt = <2700000>;
 		qcom,micbias4-microvolt = <2700000>;
-		qcom,mbhc-buttons-vthreshold-microvolt = <75000 150000 237000 500000 500000 500000 500000 500000>;
-		qcom,mbhc-headset-vthreshold-microvolt = <1700000>;
-		qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
+		//qcom,mbhc-buttons-vthreshold-microvolt = <75000 150000 237000 500000 500000 500000 500000 500000>;
+		//qcom,mbhc-headset-vthreshold-microvolt = <1700000>;
+		//qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
 		qcom,rx-device = <&wcd_rx>;
 		qcom,tx-device = <&wcd_tx>;
 

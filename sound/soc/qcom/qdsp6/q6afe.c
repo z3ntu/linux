@@ -1141,7 +1141,7 @@ int q6afe_set_lpass_clock(struct device *dev, int clk_id, int attri,
 	int ret = q6afe_set_param(afe, NULL, &cset, AFE_PARAM_ID_CLOCK_SET,
 			       AFE_MODULE_CLOCK_SET, sizeof(cset),
 			       AFE_CLK_TOKEN);
-	usleep_range(1000000, 1000500);
+	//usleep_range(1000000, 1000500);
 	return ret;
 }
 EXPORT_SYMBOL_GPL(q6afe_set_lpass_clock);
