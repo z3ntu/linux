@@ -514,6 +514,7 @@
 		reg = <0>;
 	};
 
+#if 0
 	dai@1 {
 		reg = <1>;
 	};
@@ -521,6 +522,7 @@
 	dai@2 {
 		reg = <2>;
 	};
+#endif
 };
 
 &sound {
@@ -535,23 +537,30 @@
 		//"SpkrRight IN", "WSA_SPK2 OUT",
 		//"IN1_HPHL", "HPHL_OUT",
 		//"IN2_HPHR", "HPHR_OUT",
-		"AMIC1", "MIC BIAS1",
-		"AMIC2", "MIC BIAS2",
-		"AMIC3", "MIC BIAS3",
-		"AMIC4", "MIC BIAS3",
-		"AMIC5", "MIC BIAS4",
-		"TX SWR_ADC0", "ADC1_OUTPUT",
-		"TX SWR_ADC1", "ADC2_OUTPUT",
-		"TX SWR_ADC2", "ADC3_OUTPUT",
-		"TX SWR_ADC3", "ADC4_OUTPUT",
-		"TX SWR_DMIC0", "DMIC1_OUTPUT",
-		"TX SWR_DMIC1", "DMIC2_OUTPUT",
-		"TX SWR_DMIC2", "DMIC3_OUTPUT",
-		"TX SWR_DMIC3", "DMIC4_OUTPUT",
-		"TX SWR_DMIC4", "DMIC5_OUTPUT",
-		"TX SWR_DMIC5", "DMIC6_OUTPUT",
-		"TX SWR_DMIC6", "DMIC7_OUTPUT",
-		"TX SWR_DMIC7", "DMIC8_OUTPUT";
+	//	"AMIC1", "MIC BIAS1",
+	//	"AMIC2", "MIC BIAS2",
+	//	"AMIC3", "MIC BIAS3",
+	//	"AMIC4", "MIC BIAS3",
+	//	"AMIC5", "MIC BIAS4",
+	//	"TX SWR_ADC0", "ADC1_OUTPUT",
+	//	"TX SWR_ADC1", "ADC2_OUTPUT",
+	//	"TX SWR_ADC2", "ADC3_OUTPUT",
+	//	"TX SWR_ADC3", "ADC4_OUTPUT",
+	//	"TX SWR_DMIC0", "DMIC1_OUTPUT",
+	//	"TX SWR_DMIC1", "DMIC2_OUTPUT",
+	//	"TX SWR_DMIC2", "DMIC3_OUTPUT",
+	//	"TX SWR_DMIC3", "DMIC4_OUTPUT",
+	//	"TX SWR_DMIC4", "DMIC5_OUTPUT",
+	//	"TX SWR_DMIC5", "DMIC6_OUTPUT",
+	//	"TX SWR_DMIC6", "DMIC7_OUTPUT",
+	//	"TX SWR_DMIC7", "DMIC8_OUTPUT",
+	//	// from qrb5165-rb5.dts
+	//	"VA DMIC0", "vdd-micb",
+	//	"VA DMIC1", "vdd-micb",
+		//"MM_DL1",  "MultiMedia1 Playback",
+		//"MM_DL2",  "MultiMedia2 Playback",
+		//"MultiMedia3 Capture", "MM_UL3";
+		"MultiMedia1 Capture", "MM_UL1";
 
 	mm1-dai-link {
 		link-name = "MultiMedia1";
@@ -560,6 +569,7 @@
 		};
 	};
 
+#if 0
 	mm2-dai-link {
 		link-name = "MultiMedia2";
 		cpu {
@@ -573,7 +583,9 @@
 			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA3>;
 		};
 	};
+#endif
 
+#if 0
 	wcd-playback-dai-link {
 		link-name = "WCD Playback";
 		cpu {
@@ -586,6 +598,7 @@
 			sound-dai = <&q6routing>;
 		};
 	};
+#endif
 
 	wcd-capture-dai-link {
 		link-name = "WCD Capture";
@@ -617,6 +630,7 @@
 	};
 #endif
 
+#if 0
 	va-dai-link {
 		link-name = "VA Capture";
 		cpu {
@@ -631,6 +645,7 @@
 			sound-dai = <&vamacro 0>;
 		};
 	};
+#endif
 };
 
 &swr1 {

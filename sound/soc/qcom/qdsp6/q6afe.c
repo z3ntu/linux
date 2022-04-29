@@ -1771,6 +1771,8 @@ static int q6afe_probe(struct apr_device *adev)
 	struct q6afe *afe;
 	struct device *dev = &adev->dev;
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
+
 	afe = devm_kzalloc(dev, sizeof(*afe), GFP_KERNEL);
 	if (!afe)
 		return -ENOMEM;
@@ -1785,6 +1787,7 @@ static int q6afe_probe(struct apr_device *adev)
 
 	dev_set_drvdata(dev, afe);
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return devm_of_platform_populate(dev);
 }
 
