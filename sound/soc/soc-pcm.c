@@ -2420,6 +2420,7 @@ static int dpcm_fe_dai_prepare(struct snd_pcm_substream *substream)
 		ret = -EINVAL;
 		goto out;
 	}
+	dev_err(fe->dev, "ASoC DBG: some backend dai is enabled for %s\n", fe->dai_link->name);
 
 	ret = dpcm_be_dai_prepare(fe, stream);
 	if (ret < 0)

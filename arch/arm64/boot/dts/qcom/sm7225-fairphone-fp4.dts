@@ -514,7 +514,7 @@
 		reg = <0>;
 	};
 
-#if 0
+#if 1
 	dai@1 {
 		reg = <1>;
 	};
@@ -531,7 +531,7 @@
 	//pinctrl-0 = <&i2s1_active>;
 	//pinctrl-names = "default";
 	model = "Fairphone 4";
-	audio-routing =
+//	audio-routing =
 		// from sm8250-mtp.dts
 		//"SpkrLeft IN", "WSA_SPK1 OUT",
 		//"SpkrRight IN", "WSA_SPK2 OUT",
@@ -560,7 +560,10 @@
 		//"MM_DL1",  "MultiMedia1 Playback",
 		//"MM_DL2",  "MultiMedia2 Playback",
 		//"MultiMedia3 Capture", "MM_UL3";
-		"MultiMedia1 Capture", "MM_UL1";
+//		"MultiMedia1 Capture", "MM_UL1",
+//		"MM_DL1",  "MultiMedia1 Playback",
+//		"MM_DL2",  "MultiMedia2 Playback",
+//		"MultiMedia3 Capture", "MM_UL3";
 
 	mm1-dai-link {
 		link-name = "MultiMedia1";
@@ -569,7 +572,7 @@
 		};
 	};
 
-#if 0
+#if 1
 	mm2-dai-link {
 		link-name = "MultiMedia2";
 		cpu {
@@ -585,7 +588,8 @@
 	};
 #endif
 
-#if 0
+#if 1
+	// TODO Only used by HAC?
 	wcd-playback-dai-link {
 		link-name = "WCD Playback";
 		cpu {
