@@ -512,8 +512,13 @@
 &q6afedai {
 	qi2s@127 {
 		reg = <127>; // QUINARY_MI2S_RX
-		qcom,sd-lines = <1>;
+		qcom,sd-lines = <0>; // dai_mi2s4: qcom,msm-mi2s-rx-lines = <1>;
 	};
+
+	//qi2s@128 {
+	//	reg = <128>; // QUINARY_MI2S_TX
+	//	qcom,sd-lines = <0>; // FIXME
+	//};
 };
 
 &q6asmdai {

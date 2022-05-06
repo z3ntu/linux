@@ -1363,6 +1363,7 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 		break;
 	}
 
+	// FINDME this is pretty close to downstream msm_dai_q6_mi2s_get_lineconfig
 	num_sd_lines = hweight_long(cfg->sd_line_mask);
 
 	switch (num_sd_lines) {
@@ -1472,6 +1473,7 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 		break;
 	}
 
+	printk(KERN_ERR "%s:%d DBG num_sd_lines=0x%x mono_stereo=0x%x channel_mode=0x%x\n", __func__, __LINE__, num_sd_lines, pcfg->i2s_cfg.mono_stereo, pcfg->i2s_cfg.channel_mode);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(q6afe_i2s_port_prepare);
