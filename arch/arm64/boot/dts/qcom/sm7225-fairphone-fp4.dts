@@ -509,6 +509,13 @@
 	vqmmc-supply = <&vreg_l6e>;
 };
 
+&q6afedai {
+	qi2s@127 {
+		reg = <127>; // QUINARY_MI2S_RX
+		qcom,sd-lines = <1>;
+	};
+};
+
 &q6asmdai {
 	dai@0 {
 		reg = <0>;
@@ -528,8 +535,8 @@
 &sound {
 	// FIXME all of this is copy-pasta
 	compatible = "qcom,sm8250-sndcard"; // FIXME
-	//pinctrl-0 = <&i2s1_active>;
-	//pinctrl-names = "default";
+	pinctrl-0 = <&i2s1_active>;
+	pinctrl-names = "default";
 	model = "Fairphone 4";
 //	audio-routing =
 		// from sm8250-mtp.dts
@@ -615,6 +622,24 @@
 		};
 		platform {
 			sound-dai = <&q6routing>;
+		};
+	};
+
+	i2s-dai-link {
+		link-name = "I2S Playback";
+		cpu {
+			// From my understanding, the playback path to the amplifier is via GPIO135 / QUINARY_MI2S_RX.
+			// The amplifier also returns the audio (I2STXEN) via GPIO136 / QUINARY_MI2S_TX for echo-reference.
+			sound-dai = <&q6afedai QUINARY_MI2S_RX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			//sound-dai = <&aw882xx_l>, <&aw882xx_r>; // TODO how to get both amps connected?
+			sound-dai = <&aw882xx_l>;
 		};
 	};
 

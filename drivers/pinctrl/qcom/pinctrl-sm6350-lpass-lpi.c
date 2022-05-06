@@ -84,7 +84,7 @@ static const char * const dmic3_clk_groups[] = { "gpio12" };
 static const char * const dmic3_data_groups[] = { "gpio13" };
 static const char * const qua_mi2s_sclk_groups[] = { "gpio0" };
 static const char * const qua_mi2s_ws_groups[] = { "gpio1" };
-static const char * const qua_mi2s_data_groups[] = { "gpio2", "gpio3", "gpio4" };
+static const char * const qua_mi2s_data_groups[] = { "gpio2", "gpio3", "gpio4", "gpio5" };
 static const char * const i2s1_clk_groups[] = { "gpio6" };
 static const char * const i2s1_ws_groups[] = { "gpio7" };
 static const char * const i2s1_data_groups[] = { "gpio8", "gpio9" };
@@ -99,7 +99,7 @@ static const struct lpi_pingroup sm6350_groups[] = {
 	LPI_PINGROUP(2, 4, swr_tx_data, qua_mi2s_data, _, _),	// gpio129
 	LPI_PINGROUP(3, 8, swr_rx_clk, qua_mi2s_data, _, _),	// gpio130
 	LPI_PINGROUP(4, 10, swr_rx_data, qua_mi2s_data, _, _),	// gpio131
-	LPI_PINGROUP(5, 12, swr_rx_data, _, _, _),		// gpio132
+	LPI_PINGROUP(5, 12, swr_rx_data, _, qua_mi2s_data, _),		// gpio132
 	LPI_PINGROUP(6, LPI_NO_SLEW, dmic1_clk, i2s1_clk, _,  _),	// gpio133
 	LPI_PINGROUP(7, LPI_NO_SLEW, dmic1_data, i2s1_ws, _, _),	// gpio134
 	LPI_PINGROUP(8, LPI_NO_SLEW, dmic2_clk, i2s1_data, _, _),	// gpio135
