@@ -90,4 +90,11 @@ config LEDS_SGM3140
 	  This option enables support for the SGM3140 500mA Buck/Boost Charge
 	  Pump LED Driver.
 
+config LEDS_SM5708_FLED
+	tristate "LED support for the SM5708 Flash LED controller"
+	depends on MFD_SIMPLE_MFD_I2C
+	depends on V4L2_FLASH_LED_CLASS || !V4L2_FLASH_LED_CLASS
+	help
+	  This option enables support for the SM5708 Dual Flash LED controller.
+
 endif # LEDS_CLASS_FLASH
