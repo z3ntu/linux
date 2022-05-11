@@ -72,9 +72,20 @@ static const struct simple_mfd_data silergy_sy7636a = {
 	.mfd_cell_size = ARRAY_SIZE(sy7636a_cells),
 };
 
+static const struct mfd_cell sm5708_cells[] = {
+	{ .name = "sm5808-charger", .of_compatible = "siliconmitus,sm5708-charger" },
+	{ .name = "sm5808-fled", .of_compatible = "siliconmitus,sm5708-fled" },
+};
+
+static const struct simple_mfd_data siliconmitus_sm5708 = {
+	.mfd_cell = sm5708_cells,
+	.mfd_cell_size = ARRAY_SIZE(sm5708_cells),
+};
+
 static const struct of_device_id simple_mfd_i2c_of_match[] = {
 	{ .compatible = "kontron,sl28cpld" },
 	{ .compatible = "silergy,sy7636a", .data = &silergy_sy7636a},
+	{ .compatible = "siliconmitus,sm5708", .data = &siliconmitus_sm5708 },
 	{}
 };
 MODULE_DEVICE_TABLE(of, simple_mfd_i2c_of_match);
