@@ -15,6 +15,7 @@
 /delete-node/ &mba_region;
 /delete-node/ &mpss_region;
 /delete-node/ &smem_region;
+/delete-node/ &wcnss_region;
 
 / {
 	aliases {
@@ -166,7 +167,7 @@
 			no-map;
 		};
 
-		wcnss@d200000 {
+		wcnss_region: wcnss@d200000 {
 			reg = <0x0d200000 0x700000>;
 			no-map;
 		};
@@ -234,6 +235,29 @@
 	pll-supply = <&pm8226_l8>;
 
 	status = "okay";
+};
+
+&pronto {
+	status = "okay";
+
+	vddmx-supply = <&pm8226_l3>;
+	vddpx-supply = <&pm8226_l6>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&wcnss_pin_a>;
+
+	iris {
+		vddxo-supply = <&pm8226_l10>;
+		vddrfa-supply = <&pm8226_l24>;
+		vddpa-supply = <&pm8226_l16>;
+		vdddig-supply = <&pm8226_l24>;
+	};
+
+	smd-edge {
+		wcnss {
+			status = "okay";
+		};
+	};
 };
 
 &rpm_requests {
@@ -455,6 +479,13 @@
 		function = "gpio";
 		drive-strength = <10>;
 		bias-pull-up;
+	};
+
+	wcnss_pin_a: wcnss-pin-active-state {
+		pins =  "gpio40", "gpio41", "gpio42", "gpio43", "gpio44";
+		function = "wlan";
+		drive-strength = <6>;
+		bias-pull-down;
 	};
 };
 
