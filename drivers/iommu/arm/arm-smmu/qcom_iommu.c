@@ -240,7 +240,7 @@ static irqreturn_t qcom_iommu_fault2(int irq, void *dev)
 
 	val = readl(qcom_iommu->local_base + ARM_SMMU_GR0_sGFSR);
 
-	printk(KERN_ERR "%s() %X\n", __func__, val);
+	// printk(KERN_ERR "%s() %X\n", __func__, val);
 
 	return IRQ_HANDLED;
 }
@@ -374,24 +374,24 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 	for (i = 0; i < fwspec->num_ids; i++) {
 		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
 
-		printk(KERN_ERR "%s() reset\n", __func__);
+		// printk(KERN_ERR "%s() reset\n", __func__);
 
 /*
-		printk("ARM_SMMU_CB_ACTLR %X\n", iommu_readl(ctx, ARM_SMMU_CB_ACTLR));
-		printk("ARM_SMMU_CB_TTBCR2 %X\n", iommu_readl(ctx, ARM_SMMU_CB_TTBCR2));
-		printk("ARM_SMMU_CB_TTBCR %X\n", iommu_readl(ctx, ARM_SMMU_CB_TTBCR));
+		// printk("ARM_SMMU_CB_ACTLR %X\n", iommu_readl(ctx, ARM_SMMU_CB_ACTLR));
+		// printk("ARM_SMMU_CB_TTBCR2 %X\n", iommu_readl(ctx, ARM_SMMU_CB_TTBCR2));
+		// printk("ARM_SMMU_CB_TTBCR %X\n", iommu_readl(ctx, ARM_SMMU_CB_TTBCR));
 		//printk("ARM_SMMU_CB_ACTLR %X\n", iommu_readl(ctx, ARM_SMMU_CB_ACTLR));
-		printk("ARM_SMMU_CB_CONTEXTIDR %X\n", iommu_readl(ctx, ARM_SMMU_CB_CONTEXTIDR));
+		// printk("ARM_SMMU_CB_CONTEXTIDR %X\n", iommu_readl(ctx, ARM_SMMU_CB_CONTEXTIDR));
 
-		printk("ARM_SMMU_GR1_CBAR(0) %X\n", iommu_readl(ctx, ARM_SMMU_GR1_CBAR(0)));
-		printk("ARM_SMMU_GR1_CBAR(1) %X\n", iommu_readl(ctx, ARM_SMMU_GR1_CBAR(1)));
-		printk("ARM_SMMU_GR1_CBAR(2) %X\n", iommu_readl(ctx, ARM_SMMU_GR1_CBAR(2)));
+		// printk("ARM_SMMU_GR1_CBAR(0) %X\n", iommu_readl(ctx, ARM_SMMU_GR1_CBAR(0)));
+		// printk("ARM_SMMU_GR1_CBAR(1) %X\n", iommu_readl(ctx, ARM_SMMU_GR1_CBAR(1)));
+		// printk("ARM_SMMU_GR1_CBAR(2) %X\n", iommu_readl(ctx, ARM_SMMU_GR1_CBAR(2)));
 */
 
 		/* Reset context */
 		qcom_iommu_reset_context(ctx);
 
-		printk(KERN_ERR "%s() actlr\n", __func__);
+		// printk(KERN_ERR "%s() actlr\n", __func__);
 
 		iommu_writel(ctx, ARM_SMMU_CB_ACTLR,
                      ARM_SMMU_CB_ACTLR_BPRCOSH |
@@ -399,7 +399,7 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
                      ARM_SMMU_CB_ACTLR_BPRCNSH);
 
 
-		printk(KERN_ERR "%s() ttbr\n", __func__);
+		// printk(KERN_ERR "%s() ttbr\n", __func__);
 
 #ifndef CONFIG_IOMMU_IO_PGTABLE_ARMV7S
 		/* TTBRs */
@@ -424,16 +424,16 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 		iommu_writel(ctx, ARM_SMMU_CB_TTBR0,
 			     pgtbl_cfg.arm_v7s_cfg.ttbr);
 
-		printk(KERN_ERR "%s() ttbcr %X\n", __func__, pgtbl_cfg.arm_v7s_cfg.tcr);
+		// printk(KERN_ERR "%s() ttbcr %X\n", __func__, pgtbl_cfg.arm_v7s_cfg.tcr);
 
-		printk(KERN_ERR "%s() mair\n", __func__);
+		// printk(KERN_ERR "%s() mair\n", __func__);
 
 		iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR0, pgtbl_cfg.arm_v7s_cfg.prrr);
 		iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR1, pgtbl_cfg.arm_v7s_cfg.nmrr);
 #endif
 
 		if (!qcom_iommu->sec_id) {
-			printk(KERN_ERR "%s() cbar\n", __func__);
+			// printk(KERN_ERR "%s() cbar\n", __func__);
 
 			/* Stage 1 Context with Stage 2 bypass */
 			reg = FIELD_PREP(ARM_SMMU_CBAR_TYPE, CBAR_TYPE_S1_TRANS_S2_BYPASS);
@@ -453,7 +453,7 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 			writel(reg, qcom_iommu->local_base + 0x1000 + ARM_SMMU_GR1_CBAR(i));
 		}
 
-		printk(KERN_ERR "%s() contextidr\n", __func__);
+		// printk(KERN_ERR "%s() contextidr\n", __func__);
 
 		iommu_writel(ctx, ARM_SMMU_CB_CONTEXTIDR, ctx->asid);
 
@@ -469,7 +469,7 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 		if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 			reg |= ARM_SMMU_SCTLR_E;
 
-		printk(KERN_ERR "%s() sctlr\n", __func__);
+		// printk(KERN_ERR "%s() sctlr\n", __func__);
 
 		iommu_writel(ctx, ARM_SMMU_CB_SCTLR, reg);
 
@@ -483,7 +483,7 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 	/* Publish page table ops for map/unmap */
 	qcom_domain->pgtbl_ops = pgtbl_ops;
 
-	printk(KERN_ERR "%s() done\n", __func__);
+	// printk(KERN_ERR "%s() done\n", __func__);
 
 	return 0;
 
@@ -631,7 +631,7 @@ static size_t qcom_iommu_unmap(struct iommu_domain *domain, unsigned long iova,
 	if (!ops)
 		return 0;
 
-	printk(KERN_ERR "%s()\n", __func__);
+	// printk(KERN_ERR "%s()\n", __func__);
 
 	/* NOTE: unmap can be called after client device is powered off,
 	 * for example, with GPUs or anything involving dma-buf.  So we
@@ -654,7 +654,7 @@ static void qcom_iommu_flush_iotlb_all(struct iommu_domain *domain)
 						  struct io_pgtable, ops);
 	if (!qcom_domain->pgtbl_ops)
 		return;
-	printk(KERN_ERR "%s()\n", __func__);
+	// printk(KERN_ERR "%s()\n", __func__);
 
 	pm_runtime_get_sync(qcom_domain->iommu->dev);
 	qcom_iommu_tlb_sync(pgtable->cookie);
@@ -677,7 +677,7 @@ static phys_addr_t qcom_iommu_iova_to_phys(struct iommu_domain *domain,
 
 	if (!ops)
 		return 0;
-	printk(KERN_ERR "%s()\n", __func__);
+	// printk(KERN_ERR "%s()\n", __func__);
 
 	spin_lock_irqsave(&qcom_domain->pgtbl_lock, flags);
 	ret = ops->iova_to_phys(ops, iova);
@@ -955,12 +955,12 @@ static int qcom_iommu_non_secure_init(struct qcom_iommu_dev *qcom_iommu)
 	u32 reg;
 	int i;
 
-	printk("ARM_SMMU_GR0_S2CR %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_S2CR(0)));
-	printk("ARM_SMMU_GR0_SMR %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_SMR(0)));
-	printk("ARM_SMMU_GR0_sCR0 %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_sCR0));
-	printk("ARM_SMMU_GR0_ID0 %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_ID0));
-	printk("ARM_SMMU_GR0_ID1 %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_ID1));
-	printk("ARM_SMMU_GR0_sGFSR %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_sGFSR));
+	// printk("ARM_SMMU_GR0_S2CR %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_S2CR(0)));
+	// printk("ARM_SMMU_GR0_SMR %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_SMR(0)));
+	// printk("ARM_SMMU_GR0_sCR0 %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_sCR0));
+	// printk("ARM_SMMU_GR0_ID0 %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_ID0));
+	// printk("ARM_SMMU_GR0_ID1 %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_ID1));
+	// printk("ARM_SMMU_GR0_sGFSR %X\n", readl(qcom_iommu->local_base + ARM_SMMU_GR0_sGFSR));
 
 	writel(0, qcom_iommu->local_base + ARM_SMMU_GR0_sACR);
 	writel(0, qcom_iommu->local_base + ARM_SMMU_GR0_CR2);
@@ -1145,7 +1145,7 @@ static int __maybe_unused qcom_iommu_resume(struct device *dev)
 {
 	struct qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev);
 
-	printk("qcom_iommu_resume\n");
+	// printk("qcom_iommu_resume\n");
 
 	return clk_bulk_prepare_enable(CLK_NUM, qcom_iommu->clks);
 }
@@ -1154,7 +1154,7 @@ static int __maybe_unused qcom_iommu_suspend(struct device *dev)
 {
 	struct qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev);
 
-	printk("qcom_iommu_suspend\n");
+	// printk("qcom_iommu_suspend\n");
 
 	clk_bulk_disable_unprepare(CLK_NUM, qcom_iommu->clks);
 
