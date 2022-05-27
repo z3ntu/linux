@@ -110,6 +110,7 @@ static int sm8250_snd_startup(struct snd_pcm_substream *substream)
 
 	switch (cpu_dai->id) {
 	case TERTIARY_MI2S_RX:
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		codec_dai_fmt |= SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_I2S;
 		snd_soc_dai_set_sysclk(cpu_dai,
 			Q6AFE_LPASS_CLK_ID_TER_MI2S_IBIT,
@@ -117,7 +118,17 @@ static int sm8250_snd_startup(struct snd_pcm_substream *substream)
 		snd_soc_dai_set_fmt(cpu_dai, fmt);
 		snd_soc_dai_set_fmt(codec_dai, codec_dai_fmt);
 		break;
+	case QUINARY_MI2S_RX:
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
+		codec_dai_fmt |= SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_I2S;
+		snd_soc_dai_set_sysclk(cpu_dai,
+			Q6AFE_LPASS_CLK_ID_QUI_MI2S_IBIT,
+			MI2S_BCLK_RATE, SNDRV_PCM_STREAM_PLAYBACK);
+		snd_soc_dai_set_fmt(cpu_dai, fmt);
+		snd_soc_dai_set_fmt(codec_dai, codec_dai_fmt);
+		break;
 	default:
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		break;
 	}
 	return 0;
