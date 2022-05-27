@@ -1365,6 +1365,7 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 
 	// FINDME this is pretty close to downstream msm_dai_q6_mi2s_get_lineconfig
 	num_sd_lines = hweight_long(cfg->sd_line_mask);
+	printk(KERN_ERR "%s:%d num_sd_lines=0x%x cfg->sd_line_mask=0x%x\n", __func__, __LINE__, num_sd_lines, cfg->sd_line_mask);
 
 	switch (num_sd_lines) {
 	case 0:

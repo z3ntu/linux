@@ -510,15 +510,18 @@
 };
 
 &q6afedai {
+	// RX = playback?
 	qi2s@127 {
 		reg = <127>; // QUINARY_MI2S_RX
+		// gpio135 & gpio136 seem to be data0 and data1 lines
 		qcom,sd-lines = <0>; // dai_mi2s4: qcom,msm-mi2s-rx-lines = <1>;
 	};
 
-	//qi2s@128 {
-	//	reg = <128>; // QUINARY_MI2S_TX
-	//	qcom,sd-lines = <0>; // FIXME
-	//};
+	// TX = record?
+	qi2s@128 {
+		reg = <128>; // QUINARY_MI2S_TX
+		qcom,sd-lines = <1>; // qcom,msm-mi2s-tx-lines = <2>;
+	};
 };
 
 &q6asmdai {
