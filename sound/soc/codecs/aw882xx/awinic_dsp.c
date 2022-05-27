@@ -75,19 +75,27 @@ extern int aw_send_afe_tx_module_enable(void *buf, int size);
 #else
 static int afe_get_topology(int port_id)
 {
+	if (!aw_afe_fn)
+		return -ENODEV;
 	return aw_afe_fn->afe_get_topology(port_id);
 }
 static int aw_send_afe_cal_apr(uint32_t param_id,
 	void *buf, int cmd_size, bool write)
 {
+	if (!aw_afe_fn)
+		return -ENODEV;
 	return aw_afe_fn->aw_send_afe_cal_apr(param_id,buf,cmd_size,write);
 }
 static int aw_send_afe_rx_module_enable(void *buf, int size)
 {
+	if (!aw_afe_fn)
+		return -ENODEV;
 	return aw_afe_fn->aw_send_afe_rx_module_enable(buf,size);
 }
 static int aw_send_afe_tx_module_enable(void *buf, int size)
 {
+	if (!aw_afe_fn)
+		return -ENODEV;
 	return aw_afe_fn->aw_send_afe_tx_module_enable(buf,size);
 }
 #endif
