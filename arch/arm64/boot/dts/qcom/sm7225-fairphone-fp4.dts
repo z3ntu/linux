@@ -357,6 +357,7 @@
 		#sound-dai-cells = <0>; // FIXME
 	};
 
+#if 0
 	aw882xx_r: aw882xx_smartpa@35 {
 		compatible = "awinic,aw882xx_smartpa";
 		reg = <0x35>;
@@ -377,6 +378,7 @@
 		pinctrl-2 = <&aw_int2_low>;
 		#sound-dai-cells = <0>; // FIXME
 	};
+#endif
 };
 
 //&i2c8 {

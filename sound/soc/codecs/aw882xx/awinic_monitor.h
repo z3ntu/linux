@@ -1,7 +1,7 @@
 #ifndef __AWINIC_MONITOR_H__
 #define __AWINIC_MONITOR_H__
 
-/*#define AW_DEBUG*/
+#define AW_DEBUG
 
 struct aw_table;
 
