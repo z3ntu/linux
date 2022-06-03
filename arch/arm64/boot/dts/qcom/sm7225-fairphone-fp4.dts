@@ -354,10 +354,9 @@
 		pinctrl-0 = <&aw_reset1_low>;
 		pinctrl-1 = <&aw_reset1_high>;
 		pinctrl-2 = <&aw_int1_low>;
-		#sound-dai-cells = <0>; // FIXME
+		#sound-dai-cells = <0>;
 	};
 
-#if 1
 	aw882xx_r: aw882xx_smartpa@35 {
 		compatible = "awinic,aw882xx_smartpa";
 		reg = <0x35>;
@@ -376,9 +375,8 @@
 		pinctrl-0 = <&aw_reset2_low>;
 		pinctrl-1 = <&aw_reset2_high>;
 		pinctrl-2 = <&aw_int2_low>;
-		#sound-dai-cells = <0>; // FIXME
+		#sound-dai-cells = <0>;
 	};
-#endif
 };
 
 //&i2c8 {
@@ -515,13 +513,14 @@
 	// RX = playback?
 	qi2s@127 {
 		reg = <127>; // QUINARY_MI2S_RX
-		// gpio135 & gpio136 seem to be data0 and data1 lines
+		// gpio135 is used (first data line of quinary i2s)
 		qcom,sd-lines = <0>; // dai_mi2s4: qcom,msm-mi2s-rx-lines = <1>;
 	};
 
 	// TX = record?
 	qi2s@128 {
 		reg = <128>; // QUINARY_MI2S_TX
+		// gpio136 is used (second data line of quinary i2s)
 		qcom,sd-lines = <1>; // qcom,msm-mi2s-tx-lines = <2>;
 	};
 };
@@ -543,44 +542,10 @@
 };
 
 &sound {
-	// FIXME all of this is copy-pasta
 	compatible = "qcom,sm8250-sndcard"; // FIXME
 	pinctrl-0 = <&i2s1_active>;
 	pinctrl-names = "default";
 	model = "Fairphone 4";
-//	audio-routing =
-		// from sm8250-mtp.dts
-		//"SpkrLeft IN", "WSA_SPK1 OUT",
-		//"SpkrRight IN", "WSA_SPK2 OUT",
-		//"IN1_HPHL", "HPHL_OUT",
-		//"IN2_HPHR", "HPHR_OUT",
-	//	"AMIC1", "MIC BIAS1",
-	//	"AMIC2", "MIC BIAS2",
-	//	"AMIC3", "MIC BIAS3",
-	//	"AMIC4", "MIC BIAS3",
-	//	"AMIC5", "MIC BIAS4",
-	//	"TX SWR_ADC0", "ADC1_OUTPUT",
-	//	"TX SWR_ADC1", "ADC2_OUTPUT",
-	//	"TX SWR_ADC2", "ADC3_OUTPUT",
-	//	"TX SWR_ADC3", "ADC4_OUTPUT",
-	//	"TX SWR_DMIC0", "DMIC1_OUTPUT",
-	//	"TX SWR_DMIC1", "DMIC2_OUTPUT",
-	//	"TX SWR_DMIC2", "DMIC3_OUTPUT",
-	//	"TX SWR_DMIC3", "DMIC4_OUTPUT",
-	//	"TX SWR_DMIC4", "DMIC5_OUTPUT",
-	//	"TX SWR_DMIC5", "DMIC6_OUTPUT",
-	//	"TX SWR_DMIC6", "DMIC7_OUTPUT",
-	//	"TX SWR_DMIC7", "DMIC8_OUTPUT",
-	//	// from qrb5165-rb5.dts
-	//	"VA DMIC0", "vdd-micb",
-	//	"VA DMIC1", "vdd-micb",
-		//"MM_DL1",  "MultiMedia1 Playback",
-		//"MM_DL2",  "MultiMedia2 Playback",
-		//"MultiMedia3 Capture", "MM_UL3";
-//		"MultiMedia1 Capture", "MM_UL1",
-//		"MM_DL1",  "MultiMedia1 Playback",
-//		"MM_DL2",  "MultiMedia2 Playback",
-//		"MultiMedia3 Capture", "MM_UL3";
 
 	mm1-dai-link {
 		link-name = "MultiMedia1";
@@ -648,9 +613,7 @@
 		};
 
 		codec {
-			//sound-dai = <&aw882xx_l>, <&aw882xx_r>; // TODO how to get both amps connected?
-			//sound-dai = <&aw882xx_l>;
-			sound-dai = <&aw882xx_r>;
+			sound-dai = <&aw882xx_l>, <&aw882xx_r>;
 		};
 	};
 
