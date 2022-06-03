@@ -315,7 +315,7 @@
 /* QUAT I2S Uses 1 I2S SD Line for audio on TAS2559/60 amplifiers */
 &q6afedai {
 	qi2s@22 {
-		reg = <22>; // QUATERNARY_MI2S_RX
+		reg = <22>;
 		qcom,sd-lines = <0>;
 	};
 };

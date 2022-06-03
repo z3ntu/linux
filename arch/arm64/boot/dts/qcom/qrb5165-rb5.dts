@@ -830,7 +830,7 @@
 
 &q6afedai {
 	qi2s@16 {
-		reg = <16>; // PRIMARY_MI2S_RX
+		reg = <16>;
 		qcom,sd-lines = <0 1 2 3>;
 	};
 };
@@ -838,7 +838,7 @@
 /* TERT I2S Uses 1 I2S SD Lines for audio on LT9611 HDMI Bridge */
 &q6afedai {
 	qi2s@20 {
-		reg = <20>; // TERTIARY_MI2S_RX
+		reg = <20>;
 		qcom,sd-lines = <0>;
 	};
 };
