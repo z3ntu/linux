@@ -357,7 +357,7 @@
 		#sound-dai-cells = <0>; // FIXME
 	};
 
-#if 0
+#if 1
 	aw882xx_r: aw882xx_smartpa@35 {
 		compatible = "awinic,aw882xx_smartpa";
 		reg = <0x35>;
@@ -649,9 +649,31 @@
 
 		codec {
 			//sound-dai = <&aw882xx_l>, <&aw882xx_r>; // TODO how to get both amps connected?
-			sound-dai = <&aw882xx_l>;
+			//sound-dai = <&aw882xx_l>;
+			sound-dai = <&aw882xx_r>;
 		};
 	};
+
+#if 0
+	i2s-dai-link {
+		link-name = "I2S Capture"; // just echo reference?
+		cpu {
+			// From my understanding, the playback path to the amplifier is via GPIO135 / QUINARY_MI2S_RX.
+			// The amplifier also returns the audio (I2STXEN) via GPIO136 / QUINARY_MI2S_TX for echo-reference.
+			sound-dai = <&q6afedai QUINARY_MI2S_TX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			//sound-dai = <&aw882xx_l>, <&aw882xx_r>; // TODO how to get both amps connected?
+			//sound-dai = <&aw882xx_l>;
+			sound-dai = <&aw882xx_r>;
+		};
+	};
+#endif
 
 #if 0
 	wsa-dai-link {
