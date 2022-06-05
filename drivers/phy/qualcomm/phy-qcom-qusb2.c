@@ -435,6 +435,8 @@ struct qusb2_phy {
 	struct clk *iface_clk;
 	struct reset_control *phy_reset;
 	struct regulator_bulk_data vregs[QUSB2_NUM_VREGS];
+	struct regulator* otg_vreg;
+	bool otg_enabled;
 
 	struct regmap *tcsr;
 	struct nvmem_cell *cell;
@@ -601,6 +603,21 @@ static int qusb2_phy_set_mode(struct phy *phy,
 	struct qusb2_phy *qphy = phy_get_drvdata(phy);
 
 	qphy->mode = mode;
+
+	if (mode >= PHY_MODE_USB_HOST && mode <= PHY_MODE_USB_HOST_SS) {
+		if (qphy->otg_vreg && !qphy->otg_enabled) {
+			int ret;
+
+			ret = regulator_enable(qphy->otg_vreg);
+			if (ret)
+				return ret;
+		}
+			
+		qphy->otg_enabled = true;
+	} else if (qphy->otg_vreg && qphy->otg_enabled) {
+		regulator_disable(qphy->otg_vreg);
+		qphy->otg_enabled = false;
+	}
 
 	return 0;
 }
@@ -871,6 +888,11 @@ disable_iface_clk:
 poweroff_phy:
 	regulator_bulk_disable(ARRAY_SIZE(qphy->vregs), qphy->vregs);
 
+	if (qphy->otg_vreg && qphy->otg_enabled) {
+		regulator_disable(qphy->otg_vreg);
+		qphy->otg_enabled = false;
+	}
+
 	return ret;
 }
 
@@ -891,6 +913,11 @@ static int qusb2_phy_exit(struct phy *phy)
 	clk_disable_unprepare(qphy->iface_clk);
 
 	regulator_bulk_disable(ARRAY_SIZE(qphy->vregs), qphy->vregs);
+
+	if (qphy->otg_enabled) {
+		regulator_disable(qphy->otg_vreg);
+		qphy->otg_enabled = false;
+	}
 
 	qphy->phy_initialized = false;
 
@@ -1000,6 +1027,15 @@ static int qusb2_phy_probe(struct platform_device *pdev)
 	if (ret)
 		return dev_err_probe(dev, ret,
 				     "failed to get regulator supplies\n");
+
+	qphy->otg_vreg = devm_regulator_get_optional(dev, "otg");
+	if (IS_ERR(qphy->otg_vreg)) {
+		if (PTR_ERR(qphy->otg_vreg) == -EPROBE_DEFER)
+			return dev_err_probe(dev, PTR_ERR(qphy->otg_vreg),
+				"failed to get otg supply\n");
+		qphy->otg_vreg = NULL;
+	}
+
 
 	/* Get the specific init parameters of QMP phy */
 	qphy->cfg = of_device_get_match_data(dev);
