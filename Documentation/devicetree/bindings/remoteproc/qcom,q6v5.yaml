@@ -10,8 +10,8 @@ maintainers:
   - FIXME <todo@todo.com>
 
 description:
-  This document defines the binding for a component that loads and boots firmware on the Qualcomm Hexagon
-  core.
+  This document defines the binding for a component that loads and boots
+  firmware on the Qualcomm Hexagon core.
 
 properties:
   compatible:
@@ -37,12 +37,12 @@ properties:
       - const: rmb
 
   clocks:
-    minItems: 1
-    maxItems: 8
+    minItems: 4
+    maxItems: 11
 
   clock-names:
-    minItems: 1
-    maxItems: 8
+    minItems: 4
+    maxItems: 11
 
   interrupts:
     minItems: 5
@@ -60,25 +60,41 @@ properties:
     minItems: 1
     maxItems: 3
 
+  # TODO Mostly deprecated
   cx-supply: true
   mss-supply: true
   mx-supply: true
   pll-supply: true
   px-supply: true
 
+  iommus:
+    minItems: 2
+    maxItems: 2
+
   power-domains:
-    minItems: 1
+    minItems: 2
     maxItems: 3
 
   power-domain-names:
-    minItems: 1
+    minItems: 2
     maxItems: 3
 
   firmware-name:
-    $ref: /schemas/types.yaml#/definitions/string
+    $ref: /schemas/types.yaml#/definitions/string-array
+    minItems: 2
+    maxItems: 2
     description:
-      Relative firmware image paths for mba and modem. They are used for booting and authenticating the
-      Hexagon core.
+      Relative firmware image paths for mba and modem. They are used for
+      booting and authenticating the Hexagon core.
+
+  memory-region:
+    minItems: 2
+    maxItems: 2
+    description: Reference to the reserved-memory for the region
+
+  qcom,qmp:
+    $ref: /schemas/types.yaml#/definitions/phandle
+    description: Reference to the AOSS side-channel message RAM.
 
   qcom,smem-states:
     $ref: /schemas/types.yaml#/definitions/phandle-array
@@ -101,8 +117,48 @@ properties:
           - description: offsets within syscon for modem halt registers
           - description: offsets within syscon for nc halt registers
     description:
+      Phandle reference to a syscon representing TCSR followed by the three
+      offsets within syscon for q6, modem and nc halt registers.
+
+  qcom,spare-regs:
+    $ref: /schemas/types.yaml#/definitions/phandle-array
+    items:
+      - items:
+          - description: Phandle reference to a syscon representing TCSR
+          - description: offsets within syscon for conn_box_spare0 register
+    description:
       Phandle reference to a syscon representing TCSR followed by the
-      three offsets within syscon for q6, modem and nc halt registers.
+      offset within syscon for conn_box_spare0 register used by the modem
+      sub-system running on SC7180 SoC.
+
+  qcom,ext-regs:
+    $ref: /schemas/types.yaml#/definitions/phandle-array
+    items:
+      - items:
+          - description: Phandle reference to a syscon representing TCSR_REG
+          - description: offsets within syscon for force_clk_en register
+          - description: offsets within syscon for axim1_clk_off register
+      - items:
+          - description: Phandle reference to a syscon representing TCSR
+          - description: offsets within syscon for rscc_disable register
+          - description: offsets within syscon for crypto_clk_off register
+    description:
+      Two phandle references to syscons representing TCSR_REG and TCSR register
+      space followed by the two offsets within the syscon to force_clk_en/
+      rscc_disable and axim1_clk_off/crypto_clk_off registers respectively.
+
+  qcom,qaccept-regs:
+    $ref: /schemas/types.yaml#/definitions/phandle-array
+    items:
+      - items:
+          - description: Phandle reference to a syscon representing TCSR
+          - description: offsets within syscon for mdm registers
+          - description: offsets within syscon for cx registers
+          - description: offsets within syscon for axi qaccept registers
+    description:
+      Phandle reference to a syscon representing TCSR followed by the three
+      offsets within syscon for mdm, cx and axi qaccept registers used by the
+      modem sub-system running on SC7280 SoC.
 
   smd-edge:
     type: object
@@ -110,10 +166,16 @@ properties:
       Qualcomm Shared Memory subnode which represents communication edge,
       channels and devices related to the Hexagon core.
 
+  glink-edge:
+    type: object
+    description:
+      Qualcomm G-Link subnode which represents communication edge, channels
+      and devices related to the ADSP.
+
   mba:
     type: object
     description: |
-      Subnode representing the memory regions used by the Hexagon firmware.
+      Subnode representing the memory region used by the Hexagon firmware.
 
     properties:
       memory-region:
@@ -128,7 +190,7 @@ properties:
   mpss:
     type: object
     description: |
-      Subnode representing the memory regions used by the Hexagon firmware.
+      Subnode representing the memory region used by the Hexagon firmware.
 
     properties:
       memory-region:
@@ -140,39 +202,325 @@ properties:
 
     additionalProperties: false
 
+  bam-dmux:
+    type: object
+    $ref: /schemas/net/qcom,bam-dmux.yaml#
+
 required:
   - compatible
   - clocks
   - clock-names
   - interrupts
   - interrupt-names
-  #- memory-region
   - qcom,smem-states
   - qcom,smem-state-names
 
 additionalProperties: false
 
 allOf:
-  # FIXME
+  # FIXME qcom,ipq8074-wcss-pil
+  # FIXME qcom,qcs404-wcss-pil
   - if:
       properties:
         compatible:
           contains:
             enum:
-              - qcom,msm8226-adsp-pil
+              - qcom,q6v5-pil
+              - qcom,msm8916-mss-pil
+              - qcom,msm8974-mss-pil
     then:
       properties:
         clocks:
           items:
+            - description: IFACE clock
+            - description: BUS clock
+            - description: MEM clock
             - description: XO clock
         clock-names:
           items:
+            - const: iface
+            - const: bus
+            - const: mem
             - const: xo
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,msm8996-mss-pil
+    then:
+      properties:
+        clocks:
+          items:
+            - description: IFACE clock
+            - description: BUS clock
+            - description: MEM clock
+            - description: XO clock
+            - description: GPLL0_MSS clock
+            - description: SNOC_AXI clock
+            - description: MNOC_AXI clock
+            - description: PNOC clock
+            - description: QDSS clock
+        clock-names:
+          items:
+            - const: iface
+            - const: bus
+            - const: mem
+            - const: xo
+            - const: gpll0_mss
+            - const: snoc_axi
+            - const: mnoc_axi
+            - const: pnoc
+            - const: qdss
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,msm8998-mss-pil
+    then:
+      properties:
+        clocks:
+          items:
+            - description: IFACE clock
+            - description: BUS clock
+            - description: MEM clock
+            - description: GPLL0_MSS clock
+            - description: SNOC_AXI clock
+            - description: MNOC_AXI clock
+            - description: QDSS clock
+            - description: XO clock
+        clock-names:
+          items:
+            - const: iface
+            - const: bus
+            - const: mem
+            - const: gpll0_mss
+            - const: snoc_axi
+            - const: mnoc_axi
+            - const: qdss
+            - const: xo
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,sc7180-mss-pil
+    then:
+      properties:
+        clocks:
+          items:
+            - description: IFACE clock
+            - description: BUS clock
+            - description: NAV clock
+            - description: SNOC_AXI clock
+            - description: MNOC_AXI clock
+            - description: XO clock
+
+        clock-names:
+          items:
+            - const: iface
+            - const: bus
+            - const: nav
+            - const: snoc_axi
+            - const: mnoc_axi
+            - const: xo
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,sc7280-mss-pil
+    then:
+      properties:
+        clocks:
+          items:
+            - description: IFACE clock
+            - description: OFFLINE clock
+            - description: SNOC_AXI clock
+            - description: PKA clock
+            - description: XO clock
+        clock-names:
+          items:
+            - const: iface
+            - const: offline
+            - const: snoc_axi
+            - const: pka
+            - const: xo
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,sdm845-mss-pil
+    then:
+      properties:
+        clocks:
+          items:
+            - description: IFACE clock
+            - description: BUS clock
+            - description: MEM clock
+            - description: GPLL0_MSS clock
+            - description: SNOC_AXI clock
+            - description: MNOC_AXI clock
+            - description: PRNG clock
+            - description: XO clock
+        clock-names:
+          items:
+            - const: iface
+            - const: bus
+            - const: mem
+            - const: gpll0_mss
+            - const: snoc_axi
+            - const: mnoc_axi
+            - const: prng
+            - const: xo
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,ipq8074-wcss-pil
+              - qcom,msm8916-mss-pil
+              - qcom,msm8974-mss-pil
+              - qcom,q6v5-pil
+              - qcom,qcs404-wcss-pil
+    then:
+      properties:
+        interrupts:
+          items:
+            - description: Watchdog interrupt
+            - description: Fatal interrupt
+            - description: Ready interrupt
+            - description: Handover interrupt
+            - description: Stop acknowledge interrupt
+        interrupt-names:
+          items:
+            - const: wdog
+            - const: fatal
+            - const: ready
+            - const: handover
+            - const: stop-ack
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,msm8996-mss-pil
+              - qcom,msm8998-mss-pil
+              - qcom,sc7180-mss-pil
+              - qcom,sc7280-mss-pil
+              - qcom,sdm845-mss-pil
+    then:
+      properties:
+        interrupts:
+          items:
+            - description: Watchdog interrupt
+            - description: Fatal interrupt
+            - description: Ready interrupt
+            - description: Handover interrupt
+            - description: Stop acknowledge interrupt
+            - description: Shutdown acknowledge interrupt
+        interrupt-names:
+          items:
+            - const: wdog
+            - const: fatal
+            - const: ready
+            - const: handover
+            - const: stop-ack
+            - const: shutdown-ack
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,q6v5-pil
+              - qcom,msm8916-mss-pil
+              - qcom,msm8974-mss-pil
+              - qcom,msm8996-mss-pil
+              - qcom,msm8998-mss-pil
+    then:
+      properties:
+        resets:
+          items:
+            - description: MSS restart
+        reset-names:
+          items:
+            - const: mss_restart
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,ipq8074-wcss-pil
+              - qcom,qcs404-wcss-pil
+    then:
+      properties:
+        resets:
+          items:
+            - description: WCSS_AON reset
+            - description: WCSS reset
+            - description: WCSS_Q6 reset
+        reset-names:
+          items:
+            - const: wcss_aon_reset
+            - const: wcss_reset
+            - const: wcss_q6_reset
+
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,sc7180-mss-pil
+              - qcom,sc7280-mss-pil
+              - qcom,sdm845-mss-pil
+    then:
+      properties:
+        resets:
+          items:
+            - description: MSS restart
+            - description: PDC reset
+        reset-names:
+          items:
+            - const: mss_restart
+            - const: pdc_reset
+
+  # FIXME doesn't work
+  - if:
+      properties:
+        compatible:
+          contains:
+            enum:
+              - qcom,sc7280-mss-pil
+    then:
+      properties:
+        qcom,halt-regs:
+          minItems: 1
+          maxItems: 1
+          items:
+            - items:
+                - description: Phandle reference to a syscon representing TCSR
+                - description: offsets within syscon for q6 halt registers
+                - description: offsets within syscon for modem halt registers
+                - description: offsets within syscon for nc halt registers
+                - description: offsets within syscon for vq6 halt registers
+          description:
+            Phandle reference to a syscon representing TCSR followed by the four
+            offsets within syscon for q6, modem, nc and vq6 halt registers.
 
 examples:
   - |
     #include <dt-bindings/clock/qcom,gcc-msm8974.h>
-    #include <dt-bindings/interrupt-controller/irq.h>
     #include <dt-bindings/interrupt-controller/arm-gic.h>
     #include <dt-bindings/reset/qcom,gcc-msm8974.h>
     remoteproc@fc880000 {
