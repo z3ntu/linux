@@ -5,19 +5,14 @@
  */
 
 #include <linux/adreno-smmu-priv.h>
-#include <linux/dma-mapping.h>
 #include <linux/io-pgtable.h>
 #include "msm_drv.h"
 #include "msm_mmu.h"
 
-struct msm_iommu_pagetable;
 struct msm_iommu {
 	struct msm_mmu base;
 	struct iommu_domain *domain;
 	atomic_t pagetables;
-
-	struct msm_iommu_pagetable *removed_last_pagetable;
-	struct msm_iommu_pagetable *last_pagetable;
 };
 
 #define to_msm_iommu(x) container_of(x, struct msm_iommu, base)
@@ -26,7 +21,6 @@ struct msm_iommu_pagetable {
 	struct msm_mmu base;
 	struct msm_mmu *parent;
 	struct io_pgtable_ops *pgtbl_ops;
-	bool no_ttbr1;
 	phys_addr_t ttbr;
 	u32 asid;
 };
@@ -94,35 +88,10 @@ static void msm_iommu_pagetable_destroy(struct msm_mmu *mmu)
 
 	/*
 	 * If this is the last attached pagetable for the parent,
-	 * disable TTBR0 in the arm-smmu driver (or switch to kernel PT
-	 * if TTBR1 is not supported)
+	 * disable TTBR0 in the arm-smmu driver
 	 */
 	if (atomic_dec_return(&iommu->pagetables) == 0)
 		adreno_smmu->set_ttbr0_cfg(adreno_smmu->cookie, NULL);
-	else if (pagetable->no_ttbr1 && iommu->last_pagetable == pagetable) {
-		iommu->last_pagetable = NULL;
-
-		if (iommu->removed_last_pagetable) {
-			struct msm_iommu_pagetable *removed = iommu->removed_last_pagetable;
-			iommu->removed_last_pagetable = NULL;
-			msm_iommu_pagetable_destroy(&removed->base);
-		}
-
-		iommu->removed_last_pagetable = pagetable;
-		return;
-	}
-
-	if (pagetable->no_ttbr1) {
-		struct io_pgtable *pgtable =
-			io_pgtable_ops_to_pgtable(pagetable->pgtbl_ops);
-		u64 *proc_pgd = phys_to_virt(pagetable->ttbr);
-
-		proc_pgd[0] = 0;
-
-		dma_sync_single_for_device(pgtable->cfg.iommu_dev,
-					   pagetable->ttbr, sizeof(u64),
-					   DMA_TO_DEVICE);
-	}
 
 	free_io_pgtable_ops(pagetable->pgtbl_ops);
 	kfree(pagetable);
@@ -132,21 +101,17 @@ int msm_iommu_pagetable_params(struct msm_mmu *mmu,
 		phys_addr_t *ttbr, int *asid)
 {
 	struct msm_iommu_pagetable *pagetable;
-	struct msm_iommu *iommu;
 
 	if (mmu->type != MSM_MMU_IOMMU_PAGETABLE)
 		return -EINVAL;
 
 	pagetable = to_pagetable(mmu);
-	iommu = to_msm_iommu(pagetable->parent);
 
 	if (ttbr)
 		*ttbr = pagetable->ttbr;
 
 	if (asid)
 		*asid = pagetable->asid;
-
-	iommu->last_pagetable = pagetable;
 
 	return 0;
 }
@@ -180,38 +145,6 @@ static const struct iommu_flush_ops null_tlb_ops = {
 static int msm_fault_handler(struct iommu_domain *domain, struct device *dev,
 		unsigned long iova, int flags, void *arg);
 
-/*
- *   |  Kernel (1GiB)             |  Userspace (4GiB)
- * VA|  0x00000000 - 0x3fffffff   |  0x100000000-0x1ffffffff
- *
- *                      +-----------+
- *  +------------+  +-->| PMD Table |<--+   +-------------+
- *  | Kernel PGD |  |   |    ...    |   |   | Process PGD |
- *  |   PGD[0]   +--+   |   Kernel  |   +---+    PGD[0]   |
- *  |  Unused    |      |  Mappings |       | (Overriden) |
- *  |  Entries   |      |    ...    |       |    PGD[1]   |
- *  |            |      +-----------+       |     ...     |
- *  +------------+                          +-------------+
- *
- */
-
-static void msm_iommu_setup_mirrored_ptbl(struct device *dev,
-					  u64 kern_ttbr,
-					  u64 proc_ttbr)
-{
-	u64 *kern_pgd = phys_to_virt(kern_ttbr);
-	u64 *proc_pgd = phys_to_virt(proc_ttbr);
-
-	dma_sync_single_for_cpu(dev, kern_ttbr,
-			sizeof(u64), DMA_FROM_DEVICE);
-
-	WARN_ON(proc_pgd[0] || !kern_pgd[0]);
-	proc_pgd[0] = kern_pgd[0];
-
-	dma_sync_single_for_device(dev, proc_ttbr,
-			sizeof(u64), DMA_TO_DEVICE);
-}
-
 struct msm_mmu *msm_iommu_pagetable_create(struct msm_mmu *parent)
 {
 	struct adreno_smmu_priv *adreno_smmu = dev_get_drvdata(parent->dev);
@@ -244,10 +177,7 @@ struct msm_mmu *msm_iommu_pagetable_create(struct msm_mmu *parent)
 	/* Clone the TTBR1 cfg as starting point for TTBR0 cfg: */
 	ttbr0_cfg = *ttbr1_cfg;
 
-	/*
-	 * The incoming cfg will have the TTBR1 quirk enabled if
-	 * iommu supports TTBR1 translation
-	 * */
+	/* The incoming cfg will have the TTBR1 quirk enabled */
 	ttbr0_cfg.quirks &= ~IO_PGTABLE_QUIRK_ARM_TTBR1;
 	ttbr0_cfg.tlb = &null_tlb_ops;
 
@@ -286,13 +216,6 @@ struct msm_mmu *msm_iommu_pagetable_create(struct msm_mmu *parent)
 	 * what we want.  So for now just use the same ASID as TTBR1.
 	 */
 	pagetable->asid = 0;
-
-	if ((~ttbr1_cfg->quirks) & IO_PGTABLE_QUIRK_ARM_TTBR1) {
-		pagetable->no_ttbr1 = true;
-		msm_iommu_setup_mirrored_ptbl(ttbr1_cfg->iommu_dev,
-					      ttbr1_cfg->arm_lpae_s1_cfg.ttbr,
-					      ttbr0_cfg.arm_lpae_s1_cfg.ttbr);
-	}
 
 	return &pagetable->base;
 }
@@ -361,13 +284,6 @@ static int msm_iommu_unmap(struct msm_mmu *mmu, uint64_t iova, size_t len)
 static void msm_iommu_destroy(struct msm_mmu *mmu)
 {
 	struct msm_iommu *iommu = to_msm_iommu(mmu);
-
-	if (iommu->removed_last_pagetable) {
-		struct msm_iommu_pagetable *removed = iommu->removed_last_pagetable;
-		iommu->last_pagetable = iommu->removed_last_pagetable = NULL;
-		msm_iommu_pagetable_destroy(&removed->base);
-	}
-
 	iommu_domain_free(iommu->domain);
 	kfree(iommu);
 }
