@@ -2855,6 +2855,9 @@
 		};
 	};
 
+	sound: sound {
+	};
+
 	thermal-zones {
 		aoss0-thermal {
 			polling-delay-passive = <0>;
