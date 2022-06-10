@@ -2479,6 +2479,9 @@
 		};
 	};
 
+	sound: sound {
+	};
+
 	timer {
 		compatible = "arm,armv8-timer";
 		clock-frequency = <19200000>;
