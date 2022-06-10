@@ -10,6 +10,8 @@
 #include <dt-bindings/clock/qcom,mmcc-msm8974.h>
 
 /delete-node/ &adsp_region;
+/delete-node/ &mba_region;
+/delete-node/ &mpss_region;
 
 / {
 	model = "LG G Watch R";
@@ -147,6 +149,11 @@
 		device-wakeup-gpios = <&tlmm 47 GPIO_ACTIVE_HIGH>;
 		shutdown-gpios = <&tlmm 45 GPIO_ACTIVE_HIGH>;
 	};
+};
+
+/* No (useful) modem on this device */
+&modem {
+	/delete-property/ memory-region;
 };
 
 &rpm_requests {

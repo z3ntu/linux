@@ -10,6 +10,8 @@
 #include <dt-bindings/input/ti-drv260x.h>
 
 /delete-node/ &adsp_region;
+/delete-node/ &mba_region;
+/delete-node/ &mpss_region;
 
 / {
 	model = "Huawei Watch";
@@ -139,6 +141,11 @@
 		device-wakeup-gpios = <&tlmm 63 GPIO_ACTIVE_HIGH>;
 		shutdown-gpios = <&tlmm 67 GPIO_ACTIVE_HIGH>;
 	};
+};
+
+/* No (useful) modem on this device */
+&modem {
+	/delete-property/ memory-region;
 };
 
 &rpm_requests {

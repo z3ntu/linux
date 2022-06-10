@@ -9,6 +9,8 @@
 #include "pm8226.dtsi"
 
 /delete-node/ &adsp_region;
+/delete-node/ &mba_region;
+/delete-node/ &mpss_region;
 
 / {
 	model = "ASUS ZenWatch 2";
@@ -80,6 +82,11 @@
 		device-wakeup-gpios = <&tlmm 61 GPIO_ACTIVE_HIGH>;
 		shutdown-gpios = <&tlmm 34 GPIO_ACTIVE_HIGH>;
 	};
+};
+
+/* No (useful) modem on this device */
+&modem {
+	/delete-property/ memory-region;
 };
 
 &pm8226_vib {
