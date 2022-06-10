@@ -8,7 +8,9 @@
 #include <sound/soc-dapm.h>
 #include <sound/pcm.h>
 #include <linux/soundwire/sdw.h>
+#if 0
 #include <sound/jack.h>
+#endif
 #include <linux/input-event-codes.h>
 #include "qdsp6/q6afe.h"
 #include "common.h"
@@ -20,12 +22,15 @@ struct sm8250_snd_data {
 	bool stream_prepared[AFE_PORT_MAX];
 	struct snd_soc_card *card;
 	struct sdw_stream_runtime *sruntime[AFE_PORT_MAX];
+#if 0
 	struct snd_soc_jack jack;
 	bool jack_setup;
+#endif
 };
 
 static int sm8250_snd_init(struct snd_soc_pcm_runtime *rtd)
 {
+#if 0
 	struct sm8250_snd_data *data = snd_soc_card_get_drvdata(rtd->card);
 	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
@@ -75,6 +80,7 @@ static int sm8250_snd_init(struct snd_soc_pcm_runtime *rtd)
 	default:
 		break;
 	}
+#endif
 
 
 	return 0;
