@@ -9,6 +9,7 @@
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
 #include "sm7225.dtsi"
 #include "pm6150l.dtsi"
 #include "pm6350.dtsi"
@@ -358,6 +359,48 @@
 &i2c0 {
 	status = "okay";
 	clock-frequency = <400000>;
+
+	aw882xx_l: aw882xx_smartpa@34 {
+		compatible = "awinic,aw882xx_smartpa";
+		reg = <0x34>;
+		reset-gpio = <&tlmm 12 0>;
+		irq-gpio = <&tlmm 48 0x2008>;
+		monitor-flag = <1>;
+		sync-flag = <0>;
+		monitor-timer-val = <3000>;
+		aw-cali-mode = "aw_misc";
+		sound-channel = "left";
+		aw-stereo-cali;
+		status = "okay";
+		pinctrl-names = "aw_reset_low",
+			"aw_reset_high",
+			"aw_irq_active";
+		pinctrl-0 = <&aw_reset1_low>;
+		pinctrl-1 = <&aw_reset1_high>;
+		pinctrl-2 = <&aw_int1_low>;
+		#sound-dai-cells = <0>;
+	};
+
+	aw882xx_r: aw882xx_smartpa@35 {
+		compatible = "awinic,aw882xx_smartpa";
+		reg = <0x35>;
+		reset-gpio = <&tlmm 47 0>;
+		irq-gpio = <&tlmm 11 0x2008>;
+		monitor-flag = <1>;
+		sync-flag = <0>;
+		monitor-timer-val = <3000>;
+		aw-cali-mode = "aw_misc";
+		sound-channel = "right";
+		aw-stereo-cali;
+		status = "okay";
+		pinctrl-names = "aw_reset_low",
+			"aw_reset_high",
+			"aw_irq_active";
+		pinctrl-0 = <&aw_reset2_low>;
+		pinctrl-1 = <&aw_reset2_high>;
+		pinctrl-2 = <&aw_int2_low>;
+		#sound-dai-cells = <0>;
+	};
 };
 
 &i2c8 {
@@ -580,6 +623,99 @@
 	vqmmc-supply = <&vreg_l6e>;
 };
 
+#define ENABLE_ECHO_REFERENCE 0
+
+&q6afedai {
+	// RX = playback?
+	dai@127 {
+		reg = <QUINARY_MI2S_RX>;
+		// gpio135 is used (first data line of quinary i2s)
+		qcom,sd-lines = <0>; // dai_mi2s4: qcom,msm-mi2s-rx-lines = <1>;
+	};
+
+#if ENABLE_ECHO_REFERENCE
+	// TX = record?
+	dai@128 {
+		reg = <QUINARY_MI2S_TX>;
+		// gpio136 is used (second data line of quinary i2s)
+		qcom,sd-lines = <1>; // qcom,msm-mi2s-tx-lines = <2>;
+	};
+#endif
+};
+
+&q6asmdai {
+	dai@0 {
+		reg = <0>;
+	};
+
+#if ENABLE_ECHO_REFERENCE
+	dai@1 {
+		reg = <1>;
+	};
+#endif
+};
+
+&sound {
+	compatible = "qcom,sm8250-sndcard"; // FIXME
+	pinctrl-0 = <&i2s1_active>;
+	pinctrl-names = "default";
+	model = "Fairphone 4";
+
+	mm1-dai-link {
+		link-name = "MultiMedia1";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+		};
+	};
+
+#if ENABLE_ECHO_REFERENCE
+	mm2-dai-link {
+		link-name = "MultiMedia2";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
+		};
+	};
+#endif
+
+	i2s-dai-link {
+		link-name = "I2S Playback";
+		cpu {
+			// From my understanding, the playback path to the amplifier is via GPIO135 / QUINARY_MI2S_RX.
+			// The amplifier also returns the audio (I2STXEN) via GPIO136 / QUINARY_MI2S_TX for echo-reference.
+			sound-dai = <&q6afedai QUINARY_MI2S_RX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&aw882xx_l>, <&aw882xx_r>;
+		};
+	};
+
+#if ENABLE_ECHO_REFERENCE
+	i2s-dai-link {
+		link-name = "I2S Capture"; // just echo reference?
+		cpu {
+			// From my understanding, the playback path to the amplifier is via GPIO135 / QUINARY_MI2S_RX.
+			// The amplifier also returns the audio (I2STXEN) via GPIO136 / QUINARY_MI2S_TX for echo-reference.
+			sound-dai = <&q6afedai QUINARY_MI2S_TX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			//sound-dai = <&aw882xx_l>, <&aw882xx_r>; // TODO how to get both amps connected?
+			//sound-dai = <&aw882xx_l>;
+			sound-dai = <&aw882xx_r>;
+		};
+	};
+#endif
+};
+
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
 
@@ -663,6 +799,84 @@
 				pins = "gpio21", "gpio22";
 				drive-strength = <2>;
 				bias-disable;
+			};
+		};
+	};
+
+	aw_reset_int1 {
+		aw_reset1_low: reset_low {
+			mux {
+				pins = "gpio12";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio12";
+				drive-strength = <2>;
+				bias-disable;
+				output-low;
+			};
+		};
+		aw_reset1_high: reset_high {
+			mux {
+				pins = "gpio12";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio12";
+				drive-strength = <2>;
+				bias-disable;
+				output-high;
+			};
+		};
+		aw_int1_low: int_low {
+			mux {
+				pins = "gpio48";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio48";
+				drive-strength = <2>;
+				bias-pull-down;
+				input-enable;
+			};
+		};
+	};
+
+	aw_reset_int2 {
+		aw_reset2_low: reset_low {
+			mux {
+				pins = "gpio47";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio47";
+				drive-strength = <2>;
+				bias-disable;
+				output-low;
+			};
+		};
+		aw_reset2_high: reset_high {
+			mux {
+				pins = "gpio47";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio47";
+				drive-strength = <2>;
+				bias-disable;
+				output-high;
+			};
+		};
+		aw_int2_low: int_low {
+			mux {
+				pins = "gpio11";
+				function = "gpio";
+			};
+			config {
+				pins = "gpio11";
+				drive-strength = <2>;
+				bias-pull-down;
+				input-enable;
 			};
 		};
 	};
