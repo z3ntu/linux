@@ -135,7 +135,7 @@ static const struct snd_pcm_hardware q6asm_dai_hardware_playback = {
 				  SNDRV_PCM_RATE_96000 |		\
 				  SNDRV_PCM_RATE_176400 |		\
 				  SNDRV_PCM_RATE_192000),		\
-			.formats = (SNDRV_PCM_FMTBIT_S16_LE |		\
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |	/* S16_LE doesn't work?? */	\
 					SNDRV_PCM_FMTBIT_S24_LE),	\
 			.channels_min = 1,				\
 			.channels_max = 8,				\
