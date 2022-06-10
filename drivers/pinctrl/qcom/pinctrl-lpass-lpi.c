@@ -201,19 +201,30 @@ static int lpi_config_set_slew_rate(struct lpi_pinctrl *pctrl,
 	}
 
 	slew_offset = g->slew_offset;
-	if (slew_offset == LPI_NO_SLEW)
+	if (slew_offset == LPI_NO_SLEW) {
+		printk(KERN_ERR "%s:%d DBG slew == NO_SLEW pin=%d\n", __func__, __LINE__, g->pin);
 		return 0;
+	}
 
 	if (pctrl->data->flags & LPI_FLAG_SLEW_RATE_SAME_REG)
 		reg = pctrl->tlmm_base + LPI_TLMM_REG_OFFSET * group + LPI_GPIO_CFG_REG;
 	else
 		reg = pctrl->slew_base + LPI_SLEW_RATE_CTL_REG;
 
+	if (g->pin == 14) {
+		printk(KERN_ERR "%s:%d DBG set slew=%d offset=%d pin=%d\n", __func__, __LINE__, slew, slew_offset, g->pin);
+		reg = pctrl->slew_base + LPI_SLEW_RATE_CTL_REG2;
+	}
+
+	// FINDME
+
 	mutex_lock(&pctrl->lock);
 
 	sval = ioread32(reg);
+	printk(KERN_ERR "%s:%d DBG sval read=%px - %lx\n", __func__, __LINE__, reg, sval);
 	sval &= ~(LPI_SLEW_RATE_MASK << slew_offset);
 	sval |= slew << slew_offset;
+	printk(KERN_ERR "%s:%d DBG sval write=%px - %lx\n", __func__, __LINE__, reg, sval);
 	iowrite32(sval, reg);
 
 	mutex_unlock(&pctrl->lock);
