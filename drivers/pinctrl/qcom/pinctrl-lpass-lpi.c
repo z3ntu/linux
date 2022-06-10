@@ -199,15 +199,25 @@ static int lpi_config_set(struct pinctrl_dev *pctldev, unsigned int group,
 			}
 
 			slew_offset = g->slew_offset;
-			if (slew_offset == LPI_NO_SLEW)
+			if (slew_offset == LPI_NO_SLEW) {
+				printk(KERN_ERR "%s:%d DBG slew == NO_SLEW pin=%d\n", __func__, __LINE__, g->pin);
 				break;
+			}
 
 			mutex_lock(&pctrl->slew_access_lock);
 
-			sval = ioread32(pctrl->slew_base + LPI_SLEW_RATE_CTL_REG);
+			int ctl_reg = LPI_SLEW_RATE_CTL_REG;
+			if (g->pin == 14) {
+				printk(KERN_ERR "%s:%d DBG set slew=%d offset=%d pin=%d\n", __func__, __LINE__, arg, slew_offset, g->pin);
+				ctl_reg = LPI_SLEW_RATE_CTL_REG2;
+			}
+
+			sval = ioread32(pctrl->slew_base + ctl_reg);
+			printk(KERN_ERR "%s:%d DBG sval read=%px - %lx\n", __func__, __LINE__, pctrl->slew_base + ctl_reg, sval);
 			sval &= ~(LPI_SLEW_RATE_MASK << slew_offset);
 			sval |= arg << slew_offset;
-			iowrite32(sval, pctrl->slew_base + LPI_SLEW_RATE_CTL_REG);
+			printk(KERN_ERR "%s:%d DBG sval write=%px - %lx\n", __func__, __LINE__, pctrl->slew_base + ctl_reg, sval);
+			iowrite32(sval, pctrl->slew_base + ctl_reg);
 
 			mutex_unlock(&pctrl->slew_access_lock);
 			break;
