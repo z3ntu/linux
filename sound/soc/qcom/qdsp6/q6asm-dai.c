@@ -129,7 +129,7 @@ static struct snd_pcm_hardware q6asm_dai_hardware_playback = {
 			.stream_name = "MultiMedia"#num" Playback",	\
 			.rates = (SNDRV_PCM_RATE_8000_192000|		\
 					SNDRV_PCM_RATE_KNOT),		\
-			.formats = (SNDRV_PCM_FMTBIT_S16_LE |		\
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |	/* S16_LE doesn't work?? */	\
 					SNDRV_PCM_FMTBIT_S24_LE),	\
 			.channels_min = 1,				\
 			.channels_max = 8,				\
