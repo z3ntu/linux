@@ -432,6 +432,7 @@ static int aw882xx_sysst_check(struct aw882xx *aw882xx)
 		aw882xx_i2c_read(aw882xx, AW882XX_SYSST_REG, &reg_val);
 		if ((((reg_val & (~AW882XX_SYSST_CHECK_MASK))) & AW882XX_SYSST_CHECK)
 				== AW882XX_SYSST_CHECK) {
+			aw_dev_info(aw882xx->dev, "%s: check success reg_val=0x%04x\n", __func__, reg_val);
 			ret = 0;
 			break;
 		} else {
