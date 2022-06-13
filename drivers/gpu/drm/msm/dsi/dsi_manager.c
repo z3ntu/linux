@@ -39,6 +39,12 @@ static bool dsi_mgr_power_on_early(struct drm_bridge *bridge)
 {
 	struct drm_bridge *next_bridge = drm_bridge_get_next_bridge(bridge);
 
+	/* For panels we want to power on in pre_enable because mode_set is
+	 * called only once during boot
+	 */
+	if (!next_bridge)
+		return false;
+
 	/*
 	 * If the next bridge in the chain is the Parade ps8640 bridge chip
 	 * then don't power on early since it seems to violate the expectations
