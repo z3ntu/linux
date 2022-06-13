@@ -157,6 +157,7 @@ properties:
           - enum:
               - fairphone,fp2
               - lge,hammerhead
+              - oneplus,bacon
               - samsung,klte
               - sony,xperia-amami
               - sony,xperia-castor
