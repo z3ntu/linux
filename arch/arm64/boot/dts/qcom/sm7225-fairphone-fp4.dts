@@ -112,6 +112,33 @@
 			};
 		};
 	};
+
+	fake-reg-mclk0 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk0";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk0_default>;
+		clocks = <&camcc CAM_CC_MCLK0_CLK>;
+		regulator-always-on;
+	};
+
+	fake-reg-mclk1 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk1";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk1_default>;
+		clocks = <&camcc CAM_CC_MCLK1_CLK>;
+		regulator-always-on;
+	};
+
+	fake-reg-mclk2 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk2";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk2_default>;
+		clocks = <&camcc CAM_CC_MCLK2_CLK>;
+		regulator-always-on;
+	};
 };
 
 &adsp {
@@ -558,42 +585,49 @@
 	regulator-min-microvolt = <528000>;
 	regulator-max-microvolt = <1200000>;
 	regulator-min-dropout-voltage-microvolt = <110000>;
+	regulator-always-on; // FIXME ultra-wide cam
 };
 
 &pm8008_l2 {
 	regulator-min-microvolt = <528000>;
 	regulator-max-microvolt = <1200000>;
 	regulator-min-dropout-voltage-microvolt = <110000>;
+	regulator-always-on; // FIXME main cam DVDD
 };
 
 &pm8008_l3 {
 	regulator-min-microvolt = <1500000>;
 	regulator-max-microvolt = <2800000>;
 	regulator-min-dropout-voltage-microvolt = <128000>;
+	regulator-always-on; // FIXME front cam
 };
 
 &pm8008_l4 {
 	regulator-min-microvolt = <1500000>;
 	regulator-max-microvolt = <2904000>;
 	regulator-min-dropout-voltage-microvolt = <96000>;
+	regulator-always-on; // FIXME ultra-wide cam
 };
 
 &pm8008_l5 {
 	regulator-min-microvolt = <1500000>;
 	regulator-max-microvolt = <2900000>;
 	regulator-min-dropout-voltage-microvolt = <128000>;
+	regulator-always-on; // FIXME main cam AVDD
 };
 
 &pm8008_l6 {
 	regulator-min-microvolt = <1500000>;
 	regulator-max-microvolt = <1800000>;
 	regulator-min-dropout-voltage-microvolt = <56000>;
+	regulator-always-on; // FIXME CCI bus pull-up & ultra-wide cam & main cam DOVDD & front cam
 };
 
 &pm8008_l7 {
 	regulator-min-microvolt = <1500000>;
 	regulator-max-microvolt = <3140000>;
 	regulator-min-dropout-voltage-microvolt = <120000>;
+	regulator-always-on; // FIXME main cam OIS power
 };
 
 &pmk8350_adc_tm {
@@ -658,6 +692,27 @@
 
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
+
+	cam_mclk0_default: cam-mclk0-default {
+		pins = "gpio29";
+		function = "cam_mclk0";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cam_mclk1_default: cam-mclk1-default {
+		pins = "gpio30";
+		function = "cam_mclk1";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cam_mclk2_default: cam-mclk2-default {
+		pins = "gpio31";
+		function = "cam_mclk2";
+		drive-strength = <2>;
+		bias-disable;
+	};
 
 	pm8008_active: pm8008-active-state {
 		pins = "gpio58";
