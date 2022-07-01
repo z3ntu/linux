@@ -175,6 +175,9 @@ static int aw882xx_i2c_writes(struct aw882xx *aw882xx,
 		return -ENOMEM;
 	}
 
+	aw_dev_info(aw882xx->dev, "%s: %x <= ...\n", __func__, reg_addr);
+	print_hex_dump(KERN_WARNING, " <= ", DUMP_PREFIX_NONE, 16, 1, buf, len, false);
+
 	data[0] = reg_addr;
 	memcpy(&data[1], buf, len);
 
@@ -217,6 +220,9 @@ static int aw882xx_i2c_reads(struct aw882xx *aw882xx,
 				__func__);
 		return -ENXIO;
 	}
+
+	aw_dev_info(aw882xx->dev, "%s: %x => ...\n", __func__, reg_addr);
+	print_hex_dump(KERN_WARNING, " => ", DUMP_PREFIX_NONE, 16, 1, data_buf, data_len, false);
 
 	return 0;
 }
