@@ -18,6 +18,7 @@ properties:
       - qcom,msm8974-cci
       - qcom,msm8996-cci
       - qcom,sdm845-cci
+      - qcom,sm6350-cci
       - qcom,sm8250-cci
       - qcom,sm8450-cci
 
@@ -126,6 +127,7 @@ allOf:
           contains:
             enum:
               - qcom,sdm845-cci
+              - qcom,sm6350-cci
     then:
       properties:
         clocks:
