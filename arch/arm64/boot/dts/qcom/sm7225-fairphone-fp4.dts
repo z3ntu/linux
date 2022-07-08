@@ -485,6 +485,8 @@
 	vqmmc-supply = <&vreg_l6e>;
 };
 
+#define ENABLE_ECHO_REFERENCE 0
+
 &q6afedai {
 	// RX = playback?
 	qi2s@127 {
@@ -493,15 +495,15 @@
 		qcom,sd-lines = <0>; // dai_mi2s4: qcom,msm-mi2s-rx-lines = <1>;
 	};
 
+#if ENABLE_ECHO_REFERENCE
 	// TX = record?
 	qi2s@128 {
 		reg = <QUINARY_MI2S_TX>;
 		// gpio136 is used (second data line of quinary i2s)
 		qcom,sd-lines = <1>; // qcom,msm-mi2s-tx-lines = <2>;
 	};
+#endif
 };
-
-#define ENABLE_ECHO_REFERENCE 0
 
 &q6asmdai {
 	dai@0 {
