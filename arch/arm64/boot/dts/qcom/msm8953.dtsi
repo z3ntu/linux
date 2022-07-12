@@ -498,7 +498,7 @@
 				rpmpd: power-controller {
 					compatible = "qcom,msm8953-rpmpd";
 					#power-domain-cells = <1>;
-					operating-points-v2 = <&rpmpd_opp_table>;
+					//operating-points-v2 = <&rpmpd_opp_table>;
 
 					clocks = <&xo_board>;
 					clock-names = "ref";
@@ -1345,7 +1345,7 @@
 				phys = <&dsi_phy0>;
 				phy-names = "dsi-phy";
 
-				operating-points-v2 = <&dsi0_opp_table>;
+				//operating-points-v2 = <&dsi0_opp_table>;
 				power-domains = <&rpmpd MSM8953_VDDCX>;
 
 				#address-cells = <1>;
@@ -1417,7 +1417,7 @@
 				phys = <&dsi_phy1>;
 				phy-names = "dsi-phy";
 
-				operating-points-v2 = <&dsi1_opp_table>;
+				//operating-points-v2 = <&dsi1_opp_table>;
 				power-domains = <&rpmpd MSM8953_VDDCX>;
 
 				status = "disabled";
@@ -1695,33 +1695,33 @@
 
 			iommus = <&gpu_iommu 0>;
 
-			operating-points-v2 = <&gpu_opp_table>;
+			//operating-points-v2 = <&gpu_opp_table>;
 
 			#cooling-cells = <2>;
 
-			gpu_opp_table: opp-table {
-				compatible  ="operating-points-v2";
-
-// TODO expand this
-#define GPU_OPP(freq_khz, peakBW, lvl, supp)		\
-	opp-##freq_khz##000 {				\
-		opp-hz = /bits/ 64 <freq_khz##000>;	\
-		opp-supported-hw = <supp>;		\
-		opp-avg-kBps = <0>, <(peakBW/4)>;	\
-		opp-peak-kBps = <peakBW>, <(peakBW/2)>;	\
-		required-opps = <&lvl>;			\
-	}
-
-				GPU_OPP(200000, 1689600, rpmpd_opp_low_svs, 0xff);
-				GPU_OPP(266670, 3072000, rpmpd_opp_svs, 0xff);
-				GPU_OPP(320000, 3379200, rpmpd_opp_svs, 0xff);
-				GPU_OPP(400000, 5376000, rpmpd_opp_svs_plus, 0xff);
-				GPU_OPP(460800, 6144000, rpmpd_opp_nom, 0xff);
-				GPU_OPP(510000, 6451200, rpmpd_opp_nom, 0xff);
-				GPU_OPP(560000, 6758400, rpmpd_opp_nom_plus, 0xff);
-				GPU_OPP(600000, 7449600, rpmpd_opp_turbo, 0xff);
-				GPU_OPP(650000, 7449600, rpmpd_opp_turbo, 0xff);
-			};
+//			gpu_opp_table: opp-table {
+//				compatible  ="operating-points-v2";
+//
+//// TODO expand this
+//#define GPU_OPP(freq_khz, peakBW, lvl, supp)		\
+//	opp-##freq_khz##000 {				\
+//		opp-hz = /bits/ 64 <freq_khz##000>;	\
+//		opp-supported-hw = <supp>;		\
+//		opp-avg-kBps = <0>, <(peakBW/4)>;	\
+//		opp-peak-kBps = <peakBW>, <(peakBW/2)>;	\
+//		required-opps = <&lvl>;			\
+//	}
+//
+//				GPU_OPP(200000, 1689600, rpmpd_opp_low_svs, 0xff);
+//				GPU_OPP(266670, 3072000, rpmpd_opp_svs, 0xff);
+//				GPU_OPP(320000, 3379200, rpmpd_opp_svs, 0xff);
+//				GPU_OPP(400000, 5376000, rpmpd_opp_svs_plus, 0xff);
+//				GPU_OPP(460800, 6144000, rpmpd_opp_nom, 0xff);
+//				GPU_OPP(510000, 6451200, rpmpd_opp_nom, 0xff);
+//				GPU_OPP(560000, 6758400, rpmpd_opp_nom_plus, 0xff);
+//				GPU_OPP(600000, 7449600, rpmpd_opp_turbo, 0xff);
+//				GPU_OPP(650000, 7449600, rpmpd_opp_turbo, 0xff);
+//			};
 
 			zap-shader {
 				memory-region = <&zap_shader_region>;
@@ -1771,7 +1771,7 @@
 				 <&gcc GCC_VENUS0_CORE0_VCODEC0_CLK>;
 			clock-names = "core", "iface", "bus", "vcodec0";
 
-			operating-points-v2 = <&venus_opp_table>;
+			//operating-points-v2 = <&venus_opp_table>;
 
 			power-domains = <&gcc VENUS_GDSC>,
 					<&rpmpd MSM8953_VDDCX>;
@@ -2011,7 +2011,7 @@
 					<&bimc MAS_APPS_PROC &pcnoc SLV_SDCC_1>;
 
 			power-domains = <&rpmpd MSM8953_VDDCX>;
-			operating-points-v2 = <&sdhc1_opp_table>;
+			//operating-points-v2 = <&sdhc1_opp_table>;
 
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on &sdc1_rclk_on>;
@@ -2084,7 +2084,7 @@
 					<&bimc MAS_APPS_PROC &pcnoc SLV_SDCC_2>;
 
 			power-domains = <&rpmpd MSM8953_VDDCX>;
-			operating-points-v2 = <&sdhc2_opp_table>;
+			//operating-points-v2 = <&sdhc2_opp_table>;
 
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on>;
@@ -2427,7 +2427,7 @@
 			apm-syscon = <&apm>;
 
 			#power-domain-cells = <1>;
-			operating-points-v2 = <&cpr_opp_table>;
+			//operating-points-v2 = <&cpr_opp_table>;
 
 			cpr_opp_table: cpr-opp-table {
 				compatible = "operating-points-v2-qcom-level";

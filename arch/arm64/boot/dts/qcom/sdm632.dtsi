@@ -126,10 +126,10 @@
 	assigned-clock-rates = <691200000>;
 };
 
-&gpu_opp_table {
-	GPU_OPP(685000, 7449600, rpmpd_opp_turbo, 0xff);
-	GPU_OPP(725000, 7449600, rpmpd_opp_turbo, 0xff);
-};
+//&gpu_opp_table {
+//	GPU_OPP(685000, 7449600, rpmpd_opp_turbo, 0xff);
+//	GPU_OPP(725000, 7449600, rpmpd_opp_turbo, 0xff);
+//};
 
 &CPU4 {
 	compatible = "qcom,kryo250";
