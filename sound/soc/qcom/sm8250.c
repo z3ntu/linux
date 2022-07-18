@@ -7,6 +7,7 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/pcm.h>
+#include <sound/pcm_params.h>
 #include <linux/soundwire/sdw.h>
 #if 0
 #include <sound/jack.h>
@@ -17,7 +18,7 @@
 
 #define DRIVER_NAME		"sm8250"
 //#define MI2S_BCLK_RATE		1536000
-#define MI2S_BCLK_RATE		3072000 // 48000 kHz * 32 bits/sample * 2 channels
+#define MI2S_BCLK_RATE		3072000 // 48000 kHz * 32 bits/sample * 2 channels == 24-bit & 32-bit playback works with this
 //#define MI2S_BCLK_RATE		2304000 // 48000*24*2
 
 struct sm8250_snd_data {
@@ -95,9 +96,12 @@ static int sm8250_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 					SNDRV_PCM_HW_PARAM_RATE);
 	struct snd_interval *channels = hw_param_interval(params,
 					SNDRV_PCM_HW_PARAM_CHANNELS);
+	struct snd_mask *fmt = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
 
-	rate->min = rate->max = 48000;
-	channels->min = channels->max = 2;
+	rate->min = rate->max = 48000; // default: [QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	channels->min = channels->max = 2; // <ctl name="QUIN_MI2S_RX Channels" value="Two" />
+	snd_mask_none(fmt); // clear fmt mask?
+	snd_mask_set_format(fmt, SNDRV_PCM_FORMAT_S32_LE); // <ctl name="QUIN_MI2S_RX Format" value="S32_LE" />
 
 	return 0;
 }
