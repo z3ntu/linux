@@ -8784,6 +8784,7 @@ M:	Job Noorman <job@noorman.info>
 L:	linux-input@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/input/touchscreen/himax.yaml
+F:	drivers/input/touchscreen/himax.c
 
 HIPPI
 M:	Jes Sorensen <jes@trained-monkey.org>
