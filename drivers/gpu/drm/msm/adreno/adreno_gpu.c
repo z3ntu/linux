@@ -12,8 +12,6 @@
 #include <linux/kernel.h>
 #include <linux/of_address.h>
 #include <linux/pm_opp.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm_domain.h>
 #include <linux/slab.h>
 #include <linux/soc/qcom/mdt_loader.h>
 #include <linux/nvmem-consumer.h>
@@ -870,74 +868,7 @@ static int adreno_get_legacy_pwrlevels(struct device *dev)
 	return 0;
 }
 
-static int adreno_setup_pm_domains(struct device *dev, struct msm_gpu *gpu)
-{
-	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
-	const char *opp_pd_names[] = { "pstate", NULL };
-	int ret, i, count;
-
-	gpu->opp_table = dev_pm_opp_set_clkname(dev, "core");
-	if (IS_ERR(gpu->opp_table))
-		return PTR_ERR(gpu->opp_table);
-
-	ret = dev_pm_opp_of_add_table(dev);
-	if (ret) {
-		DRM_DEV_ERROR(dev, "Unable to set the OPP table\n");
-		return ret;
-	}
-
-	if (dev->pm_domain)
-		return 0;
-
-	count = of_property_count_strings(dev->of_node, "power-domain-names");
-	if (count < 0)
-		return count;
-
-	if (count > ARRAY_SIZE(adreno_gpu->pm_domains))
-		return -EINVAL;
-
-	for (i = 0; i < count; i ++) {
-		struct device_link *pm_link;
-		struct device *pm_domain;
-		const char *pd_name;
-
-		ret = of_property_read_string_index(dev->of_node,
-				"power-domain-names", i, &pd_name);
-
-		if (ret)
-			return ret;
-
-		if (!strcmp(pd_name, opp_pd_names[0])) {
-			struct opp_table *opp_table;
-
-			opp_table = dev_pm_opp_attach_genpd(dev, opp_pd_names,
-					&adreno_gpu->opp_pm_domains);
-			if (IS_ERR(opp_table))
-				return PTR_ERR(opp_table);
-
-			pm_domain = adreno_gpu->opp_pm_domains[0];
-		} else {
-			pm_domain = dev_pm_domain_attach_by_name(dev, pd_name);
-			if (IS_ERR(pm_domain))
-				return PTR_ERR(pm_domain);
-
-			adreno_gpu->pm_domains[i] = pm_domain;
-		}
-
-		pm_link = device_link_add(dev, pm_domain,
-					      DL_FLAG_RPM_ACTIVE |
-					      DL_FLAG_PM_RUNTIME |
-					      DL_FLAG_STATELESS);
-		if (IS_ERR(pm_link))
-			return PTR_ERR(pm_link);
-
-		adreno_gpu->pm_links[i] = pm_link;
-	}
-
-	return 0;
-}
-
-static int adreno_get_pwrlevels(struct device *dev,
+static void adreno_get_pwrlevels(struct device *dev,
 		struct msm_gpu *gpu)
 {
 	unsigned long freq = ULONG_MAX;
@@ -950,7 +881,9 @@ static int adreno_get_pwrlevels(struct device *dev,
 	if (!of_find_property(dev->of_node, "operating-points-v2", NULL))
 		ret = adreno_get_legacy_pwrlevels(dev);
 	else {
-		ret = adreno_setup_pm_domains(dev, gpu);
+		ret = devm_pm_opp_of_add_table(dev);
+		if (ret)
+			DRM_DEV_ERROR(dev, "Unable to set the OPP table\n");
 	}
 
 	if (!ret) {
@@ -970,8 +903,6 @@ static int adreno_get_pwrlevels(struct device *dev,
 	}
 
 	DBG("fast_rate=%u, slow_rate=27000000", gpu->fast_rate);
-
-	return ret;
 }
 
 int adreno_gpu_ocmem_init(struct device *dev, struct adreno_gpu *adreno_gpu,
@@ -1025,10 +956,10 @@ int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	struct device *dev = &pdev->dev;
 	struct adreno_platform_config *config = dev->platform_data;
 	struct msm_gpu_config adreno_gpu_config  = { 0 };
+	struct msm_gpu *gpu = &adreno_gpu->base;
 	struct adreno_rev *rev = &config->rev;
 	const char *gpu_name;
 	u32 speedbin;
-	int ret;
 
 	adreno_gpu->funcs = funcs;
 	adreno_gpu->info = adreno_info(config->rev);
@@ -1053,20 +984,12 @@ int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 
 	adreno_gpu_config.nr_rings = nr_rings;
 
-	ret = adreno_get_pwrlevels(dev, &adreno_gpu->base);
-	if (ret < 0)
-		return ret;
+	adreno_get_pwrlevels(dev, gpu);
 
 	pm_runtime_set_autosuspend_delay(dev,
 		adreno_gpu->info->inactive_period);
 	pm_runtime_use_autosuspend(dev);
 	pm_runtime_enable(dev);
-
-	if (adreno_gpu->base.opp_table) {
-		ret = dev_pm_opp_of_find_icc_paths(dev, adreno_gpu->base.opp_table);
-		if (ret < 0)
-			return ret;
-	}
 
 	return msm_gpu_init(drm, pdev, &adreno_gpu->base, &funcs->base,
 			gpu_name, &adreno_gpu_config);
@@ -1082,19 +1005,6 @@ void adreno_gpu_cleanup(struct adreno_gpu *adreno_gpu)
 		release_firmware(adreno_gpu->fw[i]);
 
 	pm_runtime_disable(&priv->gpu_pdev->dev);
-
-	for (i = 0; i < ARRAY_SIZE(adreno_gpu->pm_domains); i ++) {
-		if (!IS_ERR_OR_NULL(adreno_gpu->pm_links[i]))
-			device_link_del(adreno_gpu->pm_links[i]);
-
-		if (!IS_ERR_OR_NULL(adreno_gpu->pm_domains[i]))
-			dev_pm_domain_detach(adreno_gpu->pm_domains[i], true);
-	}
-
-	if (!IS_ERR_OR_NULL(gpu->opp_table)) {
-		dev_pm_opp_put_clkname(gpu->opp_table);
-		dev_pm_opp_detach_genpd(gpu->opp_table);
-	}
 
 	msm_gpu_cleanup(&adreno_gpu->base);
 }
