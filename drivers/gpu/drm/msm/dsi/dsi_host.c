@@ -1870,6 +1870,7 @@ int msm_dsi_host_init(struct msm_dsi *msm_dsi)
 	if (ret)
 		return ret;
 	/* OPP table is optional */
+	printk(KERN_ERR "DBG %s:%d &pdev->dev=%px\n", __func__, __LINE__, &pdev->dev);
 	ret = devm_pm_opp_of_add_table(&pdev->dev);
 	if (ret && ret != -ENODEV) {
 		dev_err(&pdev->dev, "invalid OPP table in device tree\n");

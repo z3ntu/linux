@@ -974,6 +974,7 @@ static int _of_add_opp_table_v2(struct device *dev, struct opp_table *opp_table)
 	int ret, count = 0;
 	struct dev_pm_opp *opp;
 
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	/* OPP table is already initialized for the device */
 	mutex_lock(&opp_table->lock);
 	if (opp_table->parsed_static_opps) {
@@ -986,6 +987,7 @@ static int _of_add_opp_table_v2(struct device *dev, struct opp_table *opp_table)
 	mutex_unlock(&opp_table->lock);
 
 	/* We have opp-table node now, iterate over it and add OPPs */
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	for_each_available_child_of_node(opp_table->np, np) {
 		opp = _opp_add_static_v2(opp_table, dev, np);
 		if (IS_ERR(opp)) {
@@ -999,6 +1001,7 @@ static int _of_add_opp_table_v2(struct device *dev, struct opp_table *opp_table)
 		}
 	}
 
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	/* There should be one or more OPPs defined */
 	if (!count) {
 		dev_err(dev, "%s: no supported OPPs", __func__);
@@ -1006,19 +1009,24 @@ static int _of_add_opp_table_v2(struct device *dev, struct opp_table *opp_table)
 		goto remove_static_opp;
 	}
 
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	list_for_each_entry(opp, &opp_table->opp_list, node) {
 		/* Any non-zero performance state would enable the feature */
+		printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 		if (opp->pstate) {
 			opp_table->genpd_performance_state = true;
 			break;
 		}
 	}
 
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	lazy_link_required_opp_table(opp_table);
 
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	return 0;
 
 remove_static_opp:
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	_opp_remove_all_static(opp_table);
 
 	return ret;
@@ -1090,6 +1098,7 @@ static int _of_add_table_indexed(struct device *dev, int index, bool getclk)
 	int ret, count;
 
 	if (index) {
+		printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 		/*
 		 * If only one phandle is present, then the same OPP table
 		 * applies for all index requests.
@@ -1100,6 +1109,7 @@ static int _of_add_table_indexed(struct device *dev, int index, bool getclk)
 			index = 0;
 	}
 
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	opp_table = _add_opp_table_indexed(dev, index, getclk);
 	if (IS_ERR(opp_table))
 		return PTR_ERR(opp_table);
@@ -1108,6 +1118,7 @@ static int _of_add_table_indexed(struct device *dev, int index, bool getclk)
 	 * OPPs have two version of bindings now. Also try the old (v1)
 	 * bindings for backward compatibility with older dtbs.
 	 */
+	printk(KERN_ERR "DBG %s:%d\n", __func__, __LINE__);
 	if (opp_table->np)
 		ret = _of_add_opp_table_v2(dev, opp_table);
 	else
