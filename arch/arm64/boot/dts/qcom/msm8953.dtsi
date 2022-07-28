@@ -1417,7 +1417,7 @@
 				phys = <&dsi_phy1>;
 				phy-names = "dsi-phy";
 
-				//operating-points-v2 = <&dsi1_opp_table>;
+				operating-points-v2 = <&dsi1_opp_table>;
 				power-domains = <&rpmpd MSM8953_VDDCX>;
 
 				status = "disabled";
