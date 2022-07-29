@@ -431,7 +431,7 @@ static int cci_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
 	int i, ret;
 
 	ret = pm_runtime_get_sync(cci->dev);
-	if (ret < 0)
+	if (ret < 0 && ret != -EACCES) // https://lists.freedesktop.org/archives/dri-devel/2014-February/053495.html
 		goto err;
 
 	for (i = 0; i < num; i++) {
