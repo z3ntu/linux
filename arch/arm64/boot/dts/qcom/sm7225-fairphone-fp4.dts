@@ -70,19 +70,6 @@
 			qcom,vmid = <15>;
 		};
 	};
-
-	// se8_i2c
-	touchscreen_gpio_i2c: i2c-muic {
-		compatible = "i2c-gpio";
-		sda-gpios = <&tlmm 19 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-		scl-gpios = <&tlmm 20 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&muic_i2c_default>;
-
-		#address-cells = <1>;
-		#size-cells = <0>;
-	};
 };
 
 &adsp {
@@ -309,13 +296,20 @@
 	firmware-name = "qcom/sm7225/fairphone4/cdsp.mdt";
 };
 
+&gpi_dma0 {
+	status = "okay";
+};
+
+&gpi_dma1 {
+	status = "okay";
+};
+
 &i2c0 {
 	status = "okay";
 	clock-frequency = <400000>;
 };
 
-//&i2c8 {
-&touchscreen_gpio_i2c {
+&i2c8 {
 	status = "okay";
 	clock-frequency = <400000>;
 
@@ -440,14 +434,6 @@
 
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
-
-	muic_i2c_default: muic-i2c-default {
-		pins = "gpio19", "gpio20";
-		function = "gpio";
-
-		drive-strength = <2>;
-		bias-disable;
-	};
 
 	pmx_ts_int_active {
 		ts_active: ts_active {
