@@ -63,19 +63,6 @@
 		};
 	};
 
-	// se8_i2c
-	touchscreen_gpio_i2c: i2c-muic {
-		compatible = "i2c-gpio";
-		sda-gpios = <&tlmm 19 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-		scl-gpios = <&tlmm 20 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&muic_i2c_default>;
-
-		#address-cells = <1>;
-		#size-cells = <0>;
-	};
-
 	fake-reg-mclk0 {
 		compatible = "regulator-fixed-clock";
 		regulator-name = "fake-reg-mclk0";
@@ -352,6 +339,14 @@
 	status = "okay";
 };
 
+&gpi_dma0 {
+	status = "okay";
+};
+
+&gpi_dma1 {
+	status = "okay";
+};
+
 &gpu {
 	status = "okay";
 };
@@ -361,8 +356,7 @@
 	clock-frequency = <400000>;
 };
 
-//&i2c8 {
-&touchscreen_gpio_i2c {
+&i2c8 {
 	status = "okay";
 	clock-frequency = <400000>;
 
@@ -573,14 +567,6 @@
 	cam_mclk2_default: cam-mclk2-default {
 		pins = "gpio31";
 		function = "cam_mclk2";
-		drive-strength = <2>;
-		bias-disable;
-	};
-
-	muic_i2c_default: muic-i2c-default {
-		pins = "gpio19", "gpio20";
-		function = "gpio";
-
 		drive-strength = <2>;
 		bias-disable;
 	};
