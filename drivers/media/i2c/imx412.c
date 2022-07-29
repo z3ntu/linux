@@ -419,6 +419,7 @@ static int imx412_read_reg(struct imx412 *imx412, u16 reg, u32 len, u32 *val)
 	if (WARN_ON(len > 4))
 		return -EINVAL;
 
+	dev_err(imx412->dev, "client->addr=0x%x reg=0x%x len=0x%x\n", client->addr, reg, len);
 	put_unaligned_be16(reg, addr_buf);
 
 	/* Write register address */
@@ -434,8 +435,10 @@ static int imx412_read_reg(struct imx412 *imx412, u16 reg, u32 len, u32 *val)
 	msgs[1].buf = &data_buf[4 - len];
 
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret != ARRAY_SIZE(msgs))
+	if (ret != ARRAY_SIZE(msgs)) {
+		dev_err(imx412->dev, "i2c transfer size mismatch %d != %ld", ret, ARRAY_SIZE(msgs));
 		return -EIO;
+	}
 
 	*val = get_unaligned_be32(data_buf);
 
@@ -881,8 +884,10 @@ static int imx412_detect(struct imx412 *imx412)
 	u32 val;
 
 	ret = imx412_read_reg(imx412, IMX412_REG_ID, 2, &val);
-	if (ret)
+	if (ret) {
+		dev_err(imx412->dev, "read reg failed: %d\n", ret);
 		return ret;
+	}
 
 	if (val != IMX412_ID) {
 		dev_err(imx412->dev, "chip id mismatch: %x!=%x",
