@@ -7,7 +7,8 @@
 	/delete-node/cpu0-opp-table;
 
 	cpu0_opp: cpu0-opp-table {
-		compatible = "operating-points-v2-qcom-cpu", "operating-points-v2-kryo-cpu";
+		//FIXME: qcom-cpufreq-nvmem might be broken
+		//compatible = "operating-points-v2-qcom-cpu", "operating-points-v2-kryo-cpu";
 		nvmem-cells = <&cpu_speed_bin>;
 		opp-shared;
 
@@ -21,7 +22,8 @@
 	};
 
 	cpu1_opp: cpu1-opp-table {
-		compatible = "operating-points-v2-qcom-cpu", "operating-points-v2-kryo-cpu";
+		//FIXME: qcom-cpufreq-nvmem might be broken
+		//compatible = "operating-points-v2-qcom-cpu", "operating-points-v2-kryo-cpu";
 		opp-shared;
 
 		OPP( 633600, cpr_opp1, 0x45, 1611000, opp-suspend);
