@@ -208,7 +208,7 @@
 			qcom,switching-freq = <800>;		// qcom,switch-freq-khz
 			qcom,num-strings = <4>;			// length of qcom,enabled-strings
 			// qcom,cabc;				// qcom,en-cabc
-			// qcom,eternal-pfet;			// qcom,en-ext-pfet-sc-pro;
+			// qcom,external-pfet;			// qcom,en-ext-pfet-sc-pro;
 
 			status = "disabled";
 
