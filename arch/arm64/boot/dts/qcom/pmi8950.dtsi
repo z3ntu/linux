@@ -206,10 +206,9 @@
 			qcom,current-limit-microamp = <20000>;	// qcom,fs-curr-ua
 			qcom,ovp-millivolt = <29600>;		// qcom,ovp-mv
 			qcom,switching-freq = <800>;		// qcom,switch-freq-khz
-			qcom,enabled-strings = <0 1 2 3>;	// qcom,led-strings-list
 			qcom,num-strings = <4>;			// length of qcom,enabled-strings
 			// qcom,cabc;				// qcom,en-cabc
-			// qcom,eternal-pfet;			// qcom,en-ext-pfet-sc-pro;
+			// qcom,external-pfet;			// qcom,en-ext-pfet-sc-pro;
 
 			status = "disabled";
 

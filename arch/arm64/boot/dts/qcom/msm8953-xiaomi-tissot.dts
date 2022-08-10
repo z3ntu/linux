@@ -256,7 +256,7 @@
 
 	qcom,cabc;
 	qcom,enabled-strings = <0 1>;
-	qcom,eternal-pfet;
+	qcom,external-pfet;
 	qcom,num-strings = <2>;
 };
 

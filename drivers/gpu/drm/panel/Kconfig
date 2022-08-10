@@ -745,6 +745,14 @@ config DRM_PANELS_XIAOMI_MIDO
 	help
 	  Say Y here if you want to enable support for the dsi videomode panels found in Xiaomi Redmi Note 4X smartphone.
 
+config DRM_PANEL_TD4310_FHDPLUS_E7
+        tristate "Driver for a panel found in Xiaomi Redmi 5 Plus"
+        depends on OF
+        depends on DRM_MIPI_DSI
+        depends on BACKLIGHT_CLASS_DEVICE
+        help
+          Say Y here if you want to enable support for the dsi videomode panels found in Xiaomi Redmi 5 Plus smartphone.
+
 config DRM_PANEL_ILI7807_FHD
 	tristate "EBBG ili7807(ilitek) panel driver"
 	depends on OF

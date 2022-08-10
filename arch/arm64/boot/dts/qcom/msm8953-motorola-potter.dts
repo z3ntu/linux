@@ -286,7 +286,7 @@
 	qcom,num-strings = <3>;
 
 	qcom,cabc;
-	qcom,eternal-pfet;
+	qcom,external-pfet;
 };
 
 &pronto {
