@@ -696,8 +696,8 @@
 
 &pm7250b_qg {
 	status = "ok";
-	io-channels = <&pm7250b_vadc ADC5_BAT_THERM_30K_PU>,
-		      <&pm7250b_vadc ADC5_BAT_ID_100K_PU>;
+	io-channels = <&pm7250b_adc ADC5_BAT_THERM_30K_PU>,
+		      <&pm7250b_adc ADC5_BAT_ID_100K_PU>;
 	io-channel-names = "batt-therm",
 			   "batt-id";
 	qcom,battery-data = <&mtp_batterydata>;
