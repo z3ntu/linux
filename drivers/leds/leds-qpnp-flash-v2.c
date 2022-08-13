@@ -22,8 +22,8 @@
 #include <linux/regulator/consumer.h>
 #include <linux/leds-qpnp-flash.h>
 #include <linux/leds-qpnp-flash-v2.h>
-#include <linux/qpnp/qpnp-revid.h>
 #include <linux/log2.h>
+#include <soc/qcom/qcom-spmi-pmic.h>
 #include "leds.h"
 
 #define	FLASH_LED_REG_LED_STATUS1(base)		(base + 0x08)
@@ -269,7 +269,7 @@ struct flash_switch_data {
  * Flash LED configuration read from device tree
  */
 struct flash_led_platform_data {
-	struct pmic_revid_data	*pmic_rev_id;
+	const struct qcom_spmi_pmic	*pmic_rev_id;
 	int			*thermal_derate_current;
 	int			all_ramp_up_done_irq;
 	int			all_ramp_down_done_irq;
@@ -845,7 +845,7 @@ static int get_property_from_fg(struct qpnp_flash_led *led,
 static int qpnp_flash_led_get_voltage_headroom(struct qpnp_flash_led *led)
 {
 	int i, voltage_hdrm_mv = 0, voltage_hdrm_max = 0;
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 
 	for (i = 0; i < led->num_fnodes; i++) {
 		if (led->fnode[i].led_on) {
@@ -1257,7 +1257,7 @@ static int qpnp_flash_led_get_max_avail_current(struct qpnp_flash_led *led,
 						int *max_avail_current)
 {
 	int thermal_current_lim = 0, rc;
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 
 	led->trigger_lmh = false;
 
@@ -1308,7 +1308,7 @@ static void qpnp_flash_led_node_set(struct flash_node_data *fnode, int value)
 	int prgm_current_ma = value;
 	int min_ma = fnode->ires_ua / 1000;
 	struct qpnp_flash_led *led = dev_get_drvdata(&fnode->pdev->dev);
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 
 	if (value <= 0)
 		prgm_current_ma = 0;
@@ -1549,7 +1549,7 @@ static int qpnp_flash_poll_vreg_ok(struct qpnp_flash_led *led)
 static int qpnp_flash_led_module_enable(struct flash_switch_data *snode)
 {
 	struct qpnp_flash_led *led = dev_get_drvdata(&snode->pdev->dev);
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 	int rc = 0;
 
 	if (led->enable == 0) {
@@ -1717,7 +1717,7 @@ static int qpnp_flash_led_regulator_control(struct led_classdev *led_cdev,
 
 	snode = container_of(led_cdev, struct flash_switch_data, cdev);
 	led = dev_get_drvdata(&snode->pdev->dev);
-	pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	pmic_subtype = led->pdata->pmic_rev_id->subtype;
 
 	if (pmic_subtype == PMI632_SUBTYPE) {
 		rc = is_main_psy_available(led);
@@ -2105,7 +2105,7 @@ static int qpnp_flash_led_parse_each_led_dt(struct qpnp_flash_led *led,
 {
 	int rc, min_ma;
 	u32 val;
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 
 	fnode->pdev = led->pdev;
 	fnode->cdev.brightness_set = qpnp_flash_led_brightness_set;
@@ -2362,7 +2362,7 @@ static int qpnp_flash_led_parse_thermal_config_dt(struct qpnp_flash_led *led,
 {
 	int rc;
 	u32 val;
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 
 	led->pdata->thermal_derate_en =
 		of_property_read_bool(node, "qcom,thermal-derate-en");
@@ -2498,7 +2498,7 @@ static int qpnp_flash_led_parse_vph_droop_config_dt(struct qpnp_flash_led *led,
 {
 	int rc;
 	u32 val;
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 
 	led->pdata->vph_droop_debounce = FLASH_LED_VPH_DROOP_DEBOUNCE_DEFAULT;
 	rc = of_property_read_u32(node, "qcom,vph-droop-debounce-us", &val);
@@ -2675,7 +2675,7 @@ static int qpnp_flash_led_parse_iled_threshold_dt(struct qpnp_flash_led *led,
 static int qpnp_flash_led_parse_chgr_mitigation_dt(struct qpnp_flash_led *led,
 						    struct device_node *node)
 {
-	u8 pmic_subtype = led->pdata->pmic_rev_id->pmic_subtype;
+	u8 pmic_subtype = led->pdata->pmic_rev_id->subtype;
 	int rc;
 	u32 val;
 
@@ -2803,15 +2803,15 @@ static int qpnp_flash_led_isc_delay_dt(struct qpnp_flash_led *led,
 static int qpnp_flash_led_parse_revid_dt(struct qpnp_flash_led *led,
 					 struct device_node *node)
 {
-	struct device_node *revid_node;
+	//struct device_node *revid_node;
 
-	revid_node = of_parse_phandle(node, "qcom,pmic-revid", 0);
-	if (!revid_node) {
-		pr_err("Missing qcom,pmic-revid property - driver failed\n");
-		return -EINVAL;
-	}
+	//revid_node = of_parse_phandle(node, "qcom,pmic-revid", 0);
+	//if (!revid_node) {
+	//	pr_err("Missing qcom,pmic-revid property - driver failed\n");
+	//	return -EINVAL;
+	//}
 
-	led->pdata->pmic_rev_id = get_revid_data(revid_node);
+	led->pdata->pmic_rev_id = qcom_pmic_get(&led->pdev->dev);
 	if (IS_ERR_OR_NULL(led->pdata->pmic_rev_id)) {
 		pr_err("Unable to get pmic_revid rc=%ld\n",
 			PTR_ERR(led->pdata->pmic_rev_id));
@@ -2822,13 +2822,13 @@ static int qpnp_flash_led_parse_revid_dt(struct qpnp_flash_led *led,
 		 */
 		return -EPROBE_DEFER;
 	}
-	of_node_put(revid_node);
+	//of_node_put(revid_node);
 
 	pr_debug("PMIC subtype %d Digital major %d\n",
-		led->pdata->pmic_rev_id->pmic_subtype,
-		led->pdata->pmic_rev_id->rev4);
+		led->pdata->pmic_rev_id->subtype,
+		led->pdata->pmic_rev_id->major);
 
-	if (led->pdata->pmic_rev_id->pmic_subtype == PM8150L_SUBTYPE)
+	if (led->pdata->pmic_rev_id->subtype == PM8150L_SUBTYPE)
 		led->wa_flags |= PM8150L_IRES_WA;
 
 	return 0;
