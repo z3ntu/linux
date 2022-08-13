@@ -110,6 +110,38 @@
 				label = "chg_mid";
 			};
 
+			// adc-chan@2a {
+			// 	reg = <ADC5_BAT_THERM_30K_PU>;
+			// 	qcom,ratiometric;
+			// 	qcom,hw-settle-time = <200>;
+			// 	qcom,pre-scaling = <1 1>;
+			// 	label = "bat_therm_30k";
+			// };
+
+			// adc-chan@4a {
+			// 	reg = <ADC5_BAT_THERM_100K_PU>;
+			// 	qcom,ratiometric;
+			// 	qcom,hw-settle-time = <200>;
+			// 	qcom,pre-scaling = <1 1>;
+			// 	label = "bat_therm";
+			// };
+
+			// adc-chan@4b {
+			// 	reg = <ADC5_BAT_ID_100K_PU>;
+			// 	qcom,ratiometric;
+			// 	qcom,hw-settle-time = <200>;
+			// 	qcom,pre-scaling = <1 1>;
+			// 	label = "bat_id";
+			// };
+
+			// adc-chan@6a {
+			// 	reg = <ADC5_BAT_THERM_400K_PU>;
+			// 	qcom,ratiometric;
+			// 	qcom,hw-settle-time = <200>;
+			// 	qcom,pre-scaling = <1 1>;
+			// 	label = "bat_therm_400k";
+			// };
+
 			adc-chan@83 {
 				reg = <ADC5_VPH_PWR>;
 				qcom,pre-scaling = <1 3>;
@@ -127,6 +159,18 @@
 				qcom,pre-scaling = <1 3>;
 				label = "chg_sbux";
 			};
+
+			// adc-chan@b0 {
+			// 	reg = <ADC5_INT_EXT_ISENSE_VBAT_VDATA>;
+			// 	qcom,pre-scaling = <1 1>;
+			// 	label = "v_i_int_vbat_vdata";
+			// };
+
+			// adc-chan@b4 {
+			// 	reg = <ADC5_PARALLEL_ISENSE_VBAT_VDATA>;
+			// 	qcom,pre-scaling = <1 1>;
+			// 	label = "v_i_parallel_vbat_vdata";
+			// };
 		};
 
 		pm7250b_adc_tm: adc-tm@3500 {
