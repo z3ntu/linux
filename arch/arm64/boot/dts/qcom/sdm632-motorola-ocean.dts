@@ -194,7 +194,7 @@
 	power-domains = <&rpmpd MSM8953_VDDCX>, <&rpmpd MSM8953_VDDMX>, <&rpmpd MSM8953_VDDMD>;
 	power-domain-names = "cx", "mx", "mss";
 
-	pll-suplly = <&pm8953_l7>;
+	pll-supply = <&pm8953_l7>;
 };
 
 &pm8953_resin {

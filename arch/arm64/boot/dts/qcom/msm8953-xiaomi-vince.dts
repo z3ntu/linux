@@ -302,7 +302,7 @@
 	status = "okay";
 
 	mss-supply = <&pm8953_s1>;
-	pll-suplly = <&pm8953_l7>;
+	pll-supply = <&pm8953_l7>;
 };
 
 &pmi8950_fg {
