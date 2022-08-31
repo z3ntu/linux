@@ -25,6 +25,20 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	clocks {
+		compatible = "simple-bus";
+
+		divclk1_cdc: divclk1 {
+			compatible = "gpio-gate-clock";
+			clocks = <&rpmcc RPM_SMD_DIV_CLK2>;
+			#clock-cells = <0>;
+			enable-gpios = <&pm8953_gpios 1 GPIO_ACTIVE_HIGH>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&divclk1_default_state>;
+		};
+	};
+
 	gpio-keys {
 		compatible = "gpio-keys";
 
@@ -84,7 +98,7 @@
 };
 
 &pm8953_gpios {
-	tasha_mclk_default: tasha-mclk-default {
+	divclk1_default_state: divclk1-default-state {
 		pins = "gpio1";
 		function = "func1";
 		qcom,drive-strength = <PMIC_GPIO_STRENGTH_MED>;
@@ -237,20 +251,17 @@
 };
 
 &wcd9335 {
-	clock-names = "mclk"; //, "slimbus";
+	clock-names = "mclk"; //, slimbus;
 	// FIXME
-	clocks = <&rpmcc RPM_SMD_DIV_CLK2>; //, // pm8953 gpio1 cdc_pm_mclk1
+	clocks = <&divclk1_cdc>; //, // pm8953 gpio1 cdc_pm_mclk1
 		 //<&rpmcc RPM_SMD_BB_CLK1>; // gpio70 SLIMBUS_CLK
 	// mclk2 would be gpio66 function pri_mi2s
-
-	pinctrl-names = "default";
-	pinctrl-0 = <&tasha_mclk_default>;
 
 	vdd-buck-supply = <&wcd_vout_1p8>;
 	vdd-buck-sido-supply = <&wcd_vout_1p8>; // VDD_SIDO ?
 	vdd-rx-supply = <&wcd_vout_1p8>;
 	vdd-tx-supply = <&wcd_vout_1p8>;
-	//vdd-vbat-supply = <&>;
+	//vdd-vbat-supply = <&>; // VBAT_ADC_IN?
 	vdd-micbias-supply = <&vph_pwr>;
 	vdd-io-supply = <&wcd_vout_1p8>;
 };
