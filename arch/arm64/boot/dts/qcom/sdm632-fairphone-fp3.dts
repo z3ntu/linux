@@ -4,6 +4,7 @@
  */
 /dts-v1/;
 
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include "msm8953-pm8953.dtsi"
 #include "sdm632.dtsi"
 
@@ -80,6 +81,17 @@
 	status = "okay";
 
 	/* Himax touchscreen @ 0x48 */
+};
+
+&pm8953_gpios {
+	tasha_mclk_default: tasha-mclk-default {
+		pins = "gpio1";
+		function = "func1";
+		qcom,drive-strength = <PMIC_GPIO_STRENGTH_MED>;
+		power-source = <0>;
+		bias-disable;
+		output-low;
+	};
 };
 
 &pm8953_resin {
@@ -230,6 +242,9 @@
 	clocks = <&rpmcc RPM_SMD_DIV_CLK2>; //, // pm8953 gpio1 cdc_pm_mclk1
 		 //<&rpmcc RPM_SMD_BB_CLK1>; // gpio70 SLIMBUS_CLK
 	// mclk2 would be gpio66 function pri_mi2s
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&tasha_mclk_default>;
 
 	vdd-buck-supply = <&wcd_vout_1p8>;
 	vdd-buck-sido-supply = <&wcd_vout_1p8>; // VDD_SIDO ?

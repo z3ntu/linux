@@ -79,6 +79,15 @@
 				reg = <VADC_VDD_VADC>;
 			};
 		};
+
+		pm8953_gpios: gpios@c000 {
+			compatible = "qcom,pm8953-gpio";
+			reg = <0xc000>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
 	};
 
 	pmic@1 {
