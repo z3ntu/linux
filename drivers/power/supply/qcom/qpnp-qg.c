@@ -2486,7 +2486,7 @@ static enum power_supply_property qg_psy_props[] = {
 
 static const struct power_supply_desc qg_psy_desc = {
 	.name = "bms",
-	.type = POWER_SUPPLY_TYPE_BMS,
+	.type = POWER_SUPPLY_TYPE_BATTERY, /* XXX: Downstream makes qpnp-smb5 provide 'Battery' device */
 	.properties = qg_psy_props,
 	.num_properties = ARRAY_SIZE(qg_psy_props),
 	.get_property = qg_psy_get_property,

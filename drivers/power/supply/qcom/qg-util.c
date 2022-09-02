@@ -375,12 +375,13 @@ int qg_get_battery_temp(struct qpnp_qg *chip, int *temp)
 		return rc;
 	}
 
-#if defined(CONFIG_TCT_PM7250_COMMON)
-#if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
+	/* XXX: ADC config seems to be somewhat wrong on mainline, getting 300 degC */
+// #if defined(CONFIG_TCT_PM7250_COMMON)
+// #if defined(DISABLE_TEMPERATURE_DETECTION_AND_THERMAL_POLICY)
 	pr_debug("temperature fixed at 25 degree! The real temp is=%d\n", *temp);
 	*temp = 250;
-#endif
-#endif
+// #endif
+// #endif
 
 	return 0;
 }
