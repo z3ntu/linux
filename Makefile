@@ -1376,20 +1376,15 @@ endif
 
 ifneq ($(dtstree),)
 
-%.dtb: dtbs_prepare
+%.dtb: include/config/kernel.release scripts_dtc
 	$(Q)$(MAKE) $(build)=$(dtstree) $(dtstree)/$@
 
-%.dtbo: dtbs_prepare
+%.dtbo: include/config/kernel.release scripts_dtc
 	$(Q)$(MAKE) $(build)=$(dtstree) $(dtstree)/$@
 
-PHONY += dtbs dtbs_prepare dtbs_install dtbs_check
-dtbs: dtbs_prepare
+PHONY += dtbs dtbs_install dtbs_check
+dtbs: include/config/kernel.release scripts_dtc
 	$(Q)$(MAKE) $(build)=$(dtstree)
-
-# include/config/kernel.release is actually needed when installing DTBs because
-# INSTALL_DTBS_PATH contains $(KERNELRELEASE). However, we do not want to make
-# dtbs_install depend on it as dtbs_install may run as root.
-dtbs_prepare: include/config/kernel.release scripts_dtc
 
 ifneq ($(filter dtbs_check, $(MAKECMDGOALS)),)
 export CHECK_DTBS=y
