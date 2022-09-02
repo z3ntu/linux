@@ -1390,12 +1390,15 @@ PHONY += dtbs dtbs_install dtbs_check
 dtbs: include/config/kernel.release scripts_dtc $(DT_TMP_BINDING)
 	$(Q)$(MAKE) $(build)=$(dtstree)
 
+# 'make dtbs_check' is a shorthand of 'make CHECK_DTBS=y dtbs'
 ifneq ($(filter dtbs_check, $(MAKECMDGOALS)),)
 export CHECK_DTBS=y
-dtbs: dt_binding_check
 endif
-
 dtbs_check: dtbs
+
+ifneq ($(CHECK_DTBS),)
+dtbs_prepare: dt_binding_check
+endif
 
 dtbs_install:
 	$(Q)$(MAKE) $(dtbinst)=$(dtstree) dst=$(INSTALL_DTBS_PATH)
