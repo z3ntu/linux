@@ -1465,7 +1465,8 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
 		DMERR("can't replace immutable target type %s",
 		      immutable_target_type->name);
 		r = -EINVAL;
-		ti_error = "can't replace immutable target";
+		ti_error = kasprintf(GFP_NOIO, "can't replace immutable target type %s",
+				     immutable_target_type->name);
 		goto err_unlock_md_type;
 	}
 
@@ -1481,6 +1482,8 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
 		DMERR("can't change device type (old=%u vs new=%u) after initial table load.",
 		      dm_get_md_type(md), dm_table_get_type(t));
 		r = -EINVAL;
+		ti_error = kasprintf(GFP_NOIO, "can't change device type (old=%u vs new=%u) after initial table load.",
+				     dm_get_md_type(md), dm_table_get_type(t));
 		goto err_unlock_md_type;
 	}
 
@@ -1521,11 +1524,16 @@ err_destroy_table:
 err:
 	dm_put(md);
 err0:
+	if (!ti_error)
+		ti_error = "can't allocate error string";
 	if (param->flags & DM_RETURN_ERROR_FLAG) {
 		param->flags &= ~DM_RETURN_ERROR_FLAG;
 		strlcpy(param->name, ti_error, sizeof param->name);
 		param->error = r;
+		dm_free_error(ti_error);
 		return 0;
+	} else {
+		dm_free_error(ti_error);
 	}
 	return r;
 }

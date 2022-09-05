@@ -656,32 +656,32 @@ int dm_table_add_target(struct dm_table *t, const char *type,
 
 	ti->type = dm_get_target_type(type);
 	if (!ti->type) {
-		ti->error = "unknown target type";
+		ti->error = kasprintf(GFP_NOIO, "unknown target type %s", type);
 		r = -EINVAL;
 		goto bad0;
 	}
 
 	if (dm_target_needs_singleton(ti->type)) {
 		if (t->num_targets) {
-			ti->error = "singleton target type must appear alone in table";
+			ti->error = kasprintf(GFP_NOIO, "singleton target type %s must appear alone in table", type);
 			goto bad1;
 		}
 		t->singleton = true;
 	}
 
 	if (dm_target_always_writeable(ti->type) && !(t->mode & FMODE_WRITE)) {
-		ti->error = "target type may not be included in a read-only table";
+		ti->error = kasprintf(GFP_NOIO, "target type %s may not be included in a read-only table", type);
 		goto bad1;
 	}
 
 	if (t->immutable_target_type) {
 		if (t->immutable_target_type != ti->type) {
-			ti->error = "immutable target type cannot be mixed with other target types";
+			ti->error = kasprintf(GFP_NOIO, "immutable target type %s cannot be mixed with other target types", type);
 			goto bad1;
 		}
 	} else if (dm_target_is_immutable(ti->type)) {
 		if (t->num_targets) {
-			ti->error = "immutable target type cannot be mixed with other target types";
+			ti->error = kasprintf(GFP_NOIO, "immutable target type %s cannot be mixed with other target types", type);
 			goto bad1;
 		}
 		t->immutable_target_type = ti->type;
@@ -705,7 +705,7 @@ int dm_table_add_target(struct dm_table *t, const char *type,
 
 	r = dm_split_args(&argc, &argv, params);
 	if (r) {
-		ti->error = "couldn't split parameters";
+		ti->error = kasprintf(GFP_NOIO, "couldn't split parameters for target %s", type);
 		goto bad1;
 	}
 
@@ -728,9 +728,13 @@ int dm_table_add_target(struct dm_table *t, const char *type,
 bad1:
 	dm_put_target_type(ti->type);
 bad0:
+	if (!ti->error)
+		ti->error = "can't allocate error string";
 	DMERR("%s: %s: %s (%pe)", dm_device_name(t->md), type, ti->error, ERR_PTR(r));
 	if (ti_error)
 		*ti_error = ti->error;
+	else
+		dm_free_error(ti->error);
 	return r;
 }
 

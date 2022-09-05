@@ -342,7 +342,12 @@ struct dm_target {
 	/* target specific data */
 	void *private;
 
-	/* Used to provide an error string from the ctr */
+	/*
+	 * Used to provide an error string from the ctr. It may point to a
+	 * statically allocated string in the kernel's or module's .rodata
+	 * section, or to a dynamically allocated string using kmalloc (for
+	 * example, using kasprintf). It must not point to vmalloc'd memory.
+	 */
 	char *error;
 
 	/*
@@ -677,6 +682,14 @@ static inline sector_t to_sector(unsigned long long n)
 static inline unsigned long to_bytes(sector_t n)
 {
 	return (n << SECTOR_SHIFT);
+}
+
+#include <asm/sections.h>
+
+static inline void dm_free_error(char *ti_error)
+{
+	if (!is_vmalloc_or_module_addr(ti_error))
+		kfree_const(ti_error);
 }
 
 #endif	/* _LINUX_DEVICE_MAPPER_H */
