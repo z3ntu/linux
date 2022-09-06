@@ -676,11 +676,8 @@ endif
 
 ifeq ($(KBUILD_EXTMOD),)
 # Objects we will link into vmlinux / subdirs we need to visit
-core-y		:= init/ usr/ arch/$(SRCARCH)/
-drivers-y	:= drivers/ sound/
-drivers-$(CONFIG_SAMPLES) += samples/
-drivers-$(CONFIG_NET) += net/
-drivers-y	+= virt/
+core-y		:=
+drivers-y	:=
 libs-y		:= lib/
 endif # KBUILD_EXTMOD
 
@@ -1101,23 +1098,20 @@ export MODORDER := $(extmod_prefix)modules.order
 export MODULES_NSDEPS := $(extmod_prefix)modules.nsdeps
 
 ifeq ($(KBUILD_EXTMOD),)
-core-y			+= kernel/ certs/ mm/ fs/ ipc/ security/ crypto/
-core-$(CONFIG_BLOCK)	+= block/
-core-$(CONFIG_IO_URING)	+= io_uring/
 
-vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, \
-		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
-		     $(libs-y) $(libs-m)))
+vmlinux-dirs	:= . $(patsubst %/,%,$(filter %/, $(libs-y) $(libs-m)))
 
-vmlinux-alldirs	:= $(sort $(vmlinux-dirs) Documentation . \
+vmlinux-alldirs	:= $(sort $(vmlinux-dirs) Documentation \
 		     $(patsubst %/,%,$(filter %/, $(core-) \
 			$(drivers-) $(libs-))))
 
 build-dirs	:= $(vmlinux-dirs)
 clean-dirs	:= $(vmlinux-alldirs)
 
+export ARCH_CORE	:= $(core-y)
+export ARCH_DRIVERS	:= $(drivers-y) $(drivers-m)
 # Externally visible symbols (used by link-vmlinux.sh)
-KBUILD_VMLINUX_OBJS := $(head-y) $(patsubst %/,%/built-in.a, $(core-y))
+KBUILD_VMLINUX_OBJS := $(head-y) ./built-in.a
 KBUILD_VMLINUX_OBJS += $(addsuffix built-in.a, $(filter %/, $(libs-y)))
 ifdef CONFIG_MODULES
 KBUILD_VMLINUX_OBJS += $(patsubst %/, %/lib.a, $(filter %/, $(libs-y)))
@@ -1125,7 +1119,6 @@ KBUILD_VMLINUX_LIBS := $(filter-out %/, $(libs-y))
 else
 KBUILD_VMLINUX_LIBS := $(patsubst %/,%/lib.a, $(libs-y))
 endif
-KBUILD_VMLINUX_OBJS += $(patsubst %/,%/built-in.a, $(drivers-y))
 
 export KBUILD_VMLINUX_OBJS KBUILD_VMLINUX_LIBS
 export KBUILD_LDS          := arch/$(SRCARCH)/kernel/vmlinux.lds
@@ -1751,7 +1744,10 @@ ifdef CONFIG_MODULES
 
 subdir-modorder := $(addsuffix /.modules.order, $(build-dirs))
 
-$(sort $(subdir-modorder)): %/.modules.order: % ;
+# Split ./.modules.order into a dedicate target to avoid
+# "doesn't match the target pattern" warning
+./.modules.order: . ;
+$(sort $(filter-out ./.modules.order, $(subdir-modorder))): %/.modules.order: % ;
 
 cmd_modules_order = cat $(real-prereqs) > $@
 
@@ -1822,7 +1818,8 @@ single_modpost: $(single-no-ko) modules_prepare
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
 	$(Q)rm -f $(MODORDER)
 
-single-goals := $(addprefix $(extmod_prefix), $(single-no-ko))
+single-goals := $(foreach x, $(addprefix $(extmod_prefix), $(single-no-ko)), \
+		$(if $(filter $(addsuffix /%, $(build-dirs)), $x),,./)$x)
 
 # trim unrelated directories
 build-dirs := $(foreach d, $(build-dirs), \
