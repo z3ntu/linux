@@ -1116,8 +1116,6 @@ vmlinux-alldirs	:= $(sort $(vmlinux-dirs) Documentation . \
 build-dirs	:= $(vmlinux-dirs)
 clean-dirs	:= $(vmlinux-alldirs)
 
-subdir-modorder := $(addsuffix /modules.order, $(build-dirs))
-
 # Externally visible symbols (used by link-vmlinux.sh)
 KBUILD_VMLINUX_OBJS := $(head-y) $(patsubst %/,%/built-in.a, $(core-y))
 KBUILD_VMLINUX_OBJS += $(addsuffix built-in.a, $(filter %/, $(libs-y)))
@@ -1172,7 +1170,7 @@ targets := vmlinux
 
 # The actual objects are generated when descending,
 # make sure no implicit rule kicks in
-$(sort $(vmlinux-deps) $(subdir-modorder)): descend ;
+$(sort $(vmlinux-deps)): descend ;
 
 filechk_kernel.release = \
 	echo "$(KERNELVERSION)$$($(CONFIG_SHELL) $(srctree)/scripts/setlocalversion $(srctree))"
@@ -1442,13 +1440,6 @@ endif
 #
 
 modules: $(if $(KBUILD_BUILTIN),vmlinux) modules_prepare
-
-cmd_modules_order = cat $(real-prereqs) > $@
-
-modules.order: $(subdir-modorder) FORCE
-	$(call if_changed,modules_order)
-
-targets += modules.order
 
 # Target to prepare building external modules
 modules_prepare: prepare
@@ -1721,8 +1712,6 @@ KBUILD_BUILTIN :=
 KBUILD_MODULES := 1
 
 build-dirs := $(KBUILD_EXTMOD)
-$(MODORDER): descend
-	@:
 
 compile_commands.json: $(extmod_prefix)compile_commands.json
 PHONY += compile_commands.json
@@ -1754,11 +1743,21 @@ help:
 endif # KBUILD_EXTMOD
 
 # ---------------------------------------------------------------------------
-# Modules
+# Modules (common for in-tree modules and external modules)
 
 PHONY += modules modules_install modules_prepare
 
 ifdef CONFIG_MODULES
+
+subdir-modorder := $(addsuffix /.modules.order, $(build-dirs))
+
+$(sort $(subdir-modorder)): %/.modules.order: % ;
+
+cmd_modules_order = cat $(real-prereqs) > $@
+
+targets += $(MODORDER)
+$(MODORDER): $(subdir-modorder) FORCE
+	$(call if_changed,modules_order)
 
 modules: modules_check
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
@@ -1858,7 +1857,7 @@ clean: $(clean-dirs)
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
 		-o -name '*.lex.c' -o -name '*.tab.[ch]' \
 		-o -name '*.asn1.[ch]' \
-		-o -name '*.symtypes' -o -name 'modules.order' \
+		-o -name '*.symtypes' -o -name '*modules.order' \
 		-o -name '.tmp_*' \
 		-o -name '*.c.[012]*.*' \
 		-o -name '*.ll' \
