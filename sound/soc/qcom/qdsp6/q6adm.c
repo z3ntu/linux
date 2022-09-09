@@ -351,9 +351,6 @@ static int q6adm_device_open(struct q6adm *adm, struct q6copp *copp,
 	open->bit_width = bit_width;
 	open->sample_rate = rate;
 
-	printk(KERN_ERR "%s: ADM_CMD_DEVICE_OPEN_V5 flags=%x mode_of_operation=%x endpoint_id_1=%x endpoint_id_2=%x topology_id=%x dev_num_channel=%x bit_width=%x sample_rate=%x\n",
-			__func__, open->flags, open->mode_of_operation, open->endpoint_id_1, open->endpoint_id_2, open->topology_id, open->dev_num_channel, open->bit_width, open->sample_rate);
-
 	ret = q6dsp_map_channels(&open->dev_channel_mapping[0],
 				 channel_mode);
 	if (ret)
