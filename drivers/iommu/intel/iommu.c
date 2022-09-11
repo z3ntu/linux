@@ -15,7 +15,6 @@
 
 #include <linux/crash_dump.h>
 #include <linux/dma-direct.h>
-#include <linux/dma-iommu.h>
 #include <linux/dmi.h>
 #include <linux/intel-svm.h>
 #include <linux/memory.h>
@@ -26,6 +25,7 @@
 #include <linux/tboot.h>
 
 #include "iommu.h"
+#include "../dma-iommu.h"
 #include "../irq_remapping.h"
 #include "../iommu-sva-lib.h"
 #include "pasid.h"
@@ -3890,7 +3890,6 @@ static int __init probe_acpi_namespace_devices(void)
 					continue;
 				}
 
-				pn->dev->bus->iommu_ops = &intel_iommu_ops;
 				ret = iommu_probe_device(pn->dev);
 				if (ret)
 					break;
@@ -4009,7 +4008,6 @@ int __init intel_iommu_init(void)
 		iommu_device_register(&iommu->iommu, &intel_iommu_ops, NULL);
 	}
 
-	bus_set_iommu(&pci_bus_type, &intel_iommu_ops);
 	if (si_domain && !hw_pass_through)
 		register_memory_notifier(&intel_iommu_memory_nb);
 
@@ -4414,7 +4412,7 @@ static bool intel_iommu_enforce_cache_coherency(struct iommu_domain *domain)
 	return true;
 }
 
-static bool intel_iommu_capable(enum iommu_cap cap)
+static bool intel_iommu_capable(struct device *dev, enum iommu_cap cap)
 {
 	if (cap == IOMMU_CAP_CACHE_COHERENCY)
 		return true;
@@ -4434,7 +4432,7 @@ static struct iommu_device *intel_iommu_probe_device(struct device *dev)
 	u8 bus, devfn;
 
 	iommu = device_to_iommu(dev, &bus, &devfn);
-	if (!iommu)
+	if (!iommu || !iommu->iommu.ops)
 		return ERR_PTR(-ENODEV);
 
 	info = kzalloc(sizeof(*info), GFP_KERNEL);
