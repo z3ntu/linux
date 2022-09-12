@@ -2105,13 +2105,13 @@ ssize_t btrfs_do_write_iter(struct kiocb *iocb, struct iov_iter *from,
 	if (BTRFS_FS_ERROR(inode->root->fs_info))
 		return -EROFS;
 
-	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
-		return -EOPNOTSUPP;
-
 	if (sync)
 		atomic_inc(&inode->sync_writers);
 
 	if (encoded) {
+		if (iocb->ki_flags & IOCB_NOWAIT)
+			return -EOPNOTSUPP;
+
 		num_written = btrfs_encoded_write(iocb, from, encoded);
 		num_sync = encoded->len;
 	} else if (iocb->ki_flags & IOCB_DIRECT) {
@@ -4132,7 +4132,7 @@ static int btrfs_file_open(struct inode *inode, struct file *filp)
 {
 	int ret;
 
-	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
+	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC | FMODE_BUF_WASYNC;
 
 	ret = fsverity_file_open(inode, filp);
 	if (ret)
