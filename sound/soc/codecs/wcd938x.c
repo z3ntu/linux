@@ -4081,9 +4081,12 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 
 	snd_soc_component_init_regmap(component, wcd938x->regmap);
 
+	printk(KERN_ERR "%s:%d DBG before read variant=0x%x\n", __func__, __LINE__, wcd938x->variant);
 	wcd938x->variant = snd_soc_component_read_field(component,
 						 WCD938X_DIGITAL_EFUSE_REG_0,
 						 WCD938X_ID_MASK);
+	printk(KERN_ERR "%s:%d DBG variant=0x%x\n", __func__, __LINE__, wcd938x->variant);
+
 
 	wcd938x->clsh_info = wcd_clsh_ctrl_alloc(component, WCD938X);
 
@@ -4364,6 +4367,14 @@ static int wcd938x_bind(struct device *dev)
 {
 	struct wcd938x_priv *wcd938x = dev_get_drvdata(dev);
 	int ret;
+
+	// FIXME copied from downstream asoc/codecs/wcd938x/wcd938x.c
+	/*
+	 * Add 5msec delay to provide sufficient time for
+	 * soundwire auto enumeration of slave devices as
+	 * as per HW requirement.
+	 */
+	usleep_range(5000, 5010);
 
 	ret = component_bind_all(dev, wcd938x);
 	if (ret) {

@@ -366,7 +366,8 @@
 #define CDC_RX_DSD1_CFG2			(0x0F8C)
 #define RX_MAX_OFFSET				(0x0F8C)
 
-#define MCLK_FREQ		9600000
+#define MCLK_FREQ		19200000 // FIXME 9600000
+//#define MCLK_FREQ		22579200 // qcom,codec-lpass-ext-clk-freq = <22579200>; ???
 
 #define RX_MACRO_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
@@ -3584,7 +3585,10 @@ static int rx_macro_probe(struct platform_device *pdev)
 
 	/* set MCLK and NPL rates */
 	clk_set_rate(rx->mclk, MCLK_FREQ);
-	clk_set_rate(rx->npl, 2 * MCLK_FREQ);
+	//clk_set_rate(rx->npl, /* FIXME 2 * */ MCLK_FREQ);
+	//clk_set_rate(rx->npl, 2 * MCLK_FREQ);
+	clk_set_rate(rx->npl, MCLK_FREQ);
+	// should be ? 22579200
 
 	ret = clk_prepare_enable(rx->macro);
 	if (ret)

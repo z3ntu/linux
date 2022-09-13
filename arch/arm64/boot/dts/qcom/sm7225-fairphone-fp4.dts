@@ -37,6 +37,30 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+#if 0
+	wcd9380: codec {
+		compatible = "qcom,wcd9380-codec";
+		#sound-dai-cells = <1>;
+		reset-gpios = <&tlmm 83 GPIO_ACTIVE_HIGH>;
+		vdd-buck-supply = <&vreg_l14a>;
+		vdd-rxtx-supply = <&vreg_l11a>;
+		vdd-io-supply = <&vreg_l11a>;
+		vdd-mic-bias-supply = <&vreg_bob>;
+		qcom,micbias1-microvolt = <2700000>;
+		qcom,micbias2-microvolt = <2700000>;
+		qcom,micbias3-microvolt = <2700000>;
+		qcom,micbias4-microvolt = <2700000>;
+		//qcom,mbhc-buttons-vthreshold-microvolt = <75000 150000 237000 500000 500000 500000 500000 500000>;
+		//qcom,mbhc-headset-vthreshold-microvolt = <1700000>;
+		//qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
+		qcom,rx-device = <&wcd_rx>;
+		qcom,tx-device = <&wcd_tx>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&wcd9380_reset_default>;
+	};
+#endif
+
 	gpio-keys {
 		compatible = "gpio-keys";
 		pinctrl-names = "default";
@@ -168,6 +192,7 @@
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <2000000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on;
 		};
 
 		vreg_l12a: ldo12 {
@@ -675,6 +700,46 @@
 			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
 		};
 	};
+
+	mm3-dai-link {
+		link-name = "MultiMedia3";
+		cpu {
+			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA3>;
+		};
+	};
+#endif
+
+#if 0
+	// TODO Only used by HAC?
+	wcd-playback-dai-link {
+		link-name = "WCD Playback";
+		cpu {
+			sound-dai = <&q6afedai RX_CODEC_DMA_RX_0>;
+		};
+		codec {
+			sound-dai = <&wcd9380 0>, <&swr1 0>, <&rxmacro 0>;
+		};
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
+#endif
+
+#if 0
+	// Microphone
+	wcd-capture-dai-link {
+		link-name = "WCD Capture";
+		cpu {
+			sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
+		};
+
+		codec {
+			sound-dai = <&wcd9380 1>, <&swr2 0>, <&txmacro 0>;
+		};
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
 #endif
 
 	i2s-dai-link {
@@ -714,7 +779,58 @@
 		};
 	};
 #endif
+
+#if 0
+	wsa-dai-link {
+		link-name = "WSA Playback";
+		cpu {
+			sound-dai = <&q6afedai WSA_CODEC_DMA_RX_0>;
+		};
+
+		codec {
+			sound-dai = <&left_spkr>, <&right_spkr>, <&swr0 0>, <&wsamacro 0>;
+		};
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
+#endif
+
+#if 0
+	va-dai-link {
+		link-name = "VA Capture";
+		cpu {
+			sound-dai = <&q6afedai VA_CODEC_DMA_TX_0>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&vamacro 0>;
+		};
+	};
+#endif
 };
+
+#if 0
+&swr1 {
+	wcd_rx: wcd9380-rx@0,4 {
+		compatible = "sdw20217010d00";
+		reg = <0 4>;
+		qcom,rx-port-mapping = <1 2 3 4 5>;
+	};
+};
+
+&swr2 {
+	wcd_tx: wcd9380-tx@0,3 {
+		compatible = "sdw20217010d00";
+		reg = <0 3>;
+		qcom,tx-port-mapping = <2 3 4 5>;
+	};
+};
+#endif
 
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
@@ -801,6 +917,13 @@
 				bias-disable;
 			};
 		};
+	};
+
+	wcd9380_reset_default: wcd9380-reset-default {
+		pins = "gpio83";
+		function = "gpio";
+		drive-strength = <16>;
+		//output-high;
 	};
 
 	aw_reset_int1 {
@@ -926,6 +1049,12 @@
 
 	vdda-phy-supply = <&vreg_l22a>;
 	vdda-pll-supply = <&vreg_l16a>;
+};
+
+&vamacro {
+	//pinctrl-0 = <&dmic01_active>;
+	//pinctrl-names = "default";
+	qcom,dmic-sample-rate = <600000>;
 };
 
 &wifi {

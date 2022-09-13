@@ -1127,6 +1127,8 @@ static int q6pcm_routing_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
+
 	routing_data = kzalloc(sizeof(*routing_data), GFP_KERNEL);
 	if (!routing_data)
 		return -ENOMEM;
@@ -1136,6 +1138,7 @@ static int q6pcm_routing_probe(struct platform_device *pdev)
 	mutex_init(&routing_data->lock);
 	dev_set_drvdata(dev, routing_data);
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return devm_snd_soc_register_component(dev, &msm_soc_routing_component,
 					  NULL, 0);
 }
