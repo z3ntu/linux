@@ -37,9 +37,9 @@ static void hx83112a_auo_reset(struct hx83112a_auo *ctx)
 	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
 	msleep(20);
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-	msleep(20);
-	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
 	msleep(50);
+	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
+	msleep(100);
 }
 
 static int hx83112a_auo_on(struct hx83112a_auo *ctx)

@@ -829,7 +829,8 @@
 	wcd_tx: wcd9380-tx@0,3 {
 		compatible = "sdw20217010d00";
 		reg = <0 3>;
-		qcom,tx-port-mapping = <2 3 4 5>;
+		//qcom,tx-port-mapping = <2 3 4 5>;
+		qcom,tx-port-mapping = <1 2 3 4>;
 	};
 };
 #endif
@@ -925,7 +926,7 @@
 		pins = "gpio83";
 		function = "gpio";
 		drive-strength = <16>;
-		//output-high;
+		output-high;
 	};
 
 	aw_reset_int1 {
