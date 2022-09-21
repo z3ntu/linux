@@ -1339,26 +1339,54 @@ static int prepare_uptodate_page(struct inode *inode,
 	return 0;
 }
 
+static unsigned int get_prepare_fgp_flags(bool nowait)
+{
+	unsigned int fgp_flags = FGP_LOCK | FGP_ACCESSED | FGP_CREAT;
+
+	if (nowait)
+		fgp_flags |= FGP_NOWAIT;
+
+	return fgp_flags;
+}
+
+static gfp_t get_prepare_gfp_flags(struct inode *inode, bool nowait)
+{
+	gfp_t gfp;
+
+	gfp = btrfs_alloc_write_mask(inode->i_mapping);
+	if (nowait) {
+		gfp &= ~__GFP_DIRECT_RECLAIM;
+		gfp |= GFP_NOWAIT;
+	}
+
+	return gfp;
+}
+
 /*
  * this just gets pages into the page cache and locks them down.
  */
 static noinline int prepare_pages(struct inode *inode, struct page **pages,
 				  size_t num_pages, loff_t pos,
-				  size_t write_bytes, bool force_uptodate)
+				  size_t write_bytes, bool force_uptodate,
+				  bool nowait)
 {
 	int i;
 	unsigned long index = pos >> PAGE_SHIFT;
-	gfp_t mask = btrfs_alloc_write_mask(inode->i_mapping);
+	gfp_t mask = get_prepare_gfp_flags(inode, nowait);
+	unsigned int fgp_flags = get_prepare_fgp_flags(nowait);
 	int err = 0;
 	int faili;
 
 	for (i = 0; i < num_pages; i++) {
 again:
-		pages[i] = find_or_create_page(inode->i_mapping, index + i,
-					       mask | __GFP_WRITE);
+		pages[i] = pagecache_get_page(inode->i_mapping, index + i,
+					      fgp_flags, mask | __GFP_WRITE);
 		if (!pages[i]) {
 			faili = i - 1;
-			err = -ENOMEM;
+			if (nowait)
+				err = -EAGAIN;
+			else
+				err = -ENOMEM;
 			goto fail;
 		}
 
@@ -1376,7 +1404,7 @@ again:
 						    pos + write_bytes, false);
 		if (err) {
 			put_page(pages[i]);
-			if (err == -EAGAIN) {
+			if (!nowait && err == -EAGAIN) {
 				err = 0;
 				goto again;
 			}
@@ -1411,7 +1439,7 @@ static noinline int
 lock_and_cleanup_extent_if_need(struct btrfs_inode *inode, struct page **pages,
 				size_t num_pages, loff_t pos,
 				size_t write_bytes,
-				u64 *lockstart, u64 *lockend,
+				u64 *lockstart, u64 *lockend, bool nowait,
 				struct extent_state **cached_state)
 {
 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
@@ -1426,7 +1454,20 @@ lock_and_cleanup_extent_if_need(struct btrfs_inode *inode, struct page **pages,
 	if (start_pos < inode->vfs_inode.i_size) {
 		struct btrfs_ordered_extent *ordered;
 
-		lock_extent(&inode->io_tree, start_pos, last_pos, cached_state);
+		if (nowait) {
+			if (!try_lock_extent(&inode->io_tree, start_pos, last_pos)) {
+				for (i = 0; i < num_pages; i++) {
+					unlock_page(pages[i]);
+					put_page(pages[i]);
+					pages[i] = NULL;
+				}
+
+				return -EAGAIN;
+			}
+		} else {
+			lock_extent(&inode->io_tree, start_pos, last_pos, cached_state);
+		}
+
 		ordered = btrfs_lookup_ordered_range(inode, start_pos,
 						     last_pos - start_pos + 1);
 		if (ordered &&
@@ -1480,7 +1521,7 @@ lock_and_cleanup_extent_if_need(struct btrfs_inode *inode, struct page **pages,
  * NOTE: Callers need to call btrfs_check_nocow_unlock() if we return > 0.
  */
 int btrfs_check_nocow_lock(struct btrfs_inode *inode, loff_t pos,
-			   size_t *write_bytes)
+			   size_t *write_bytes, bool nowait)
 {
 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
 	struct btrfs_root *root = inode->root;
@@ -1499,16 +1540,21 @@ int btrfs_check_nocow_lock(struct btrfs_inode *inode, loff_t pos,
 			   fs_info->sectorsize) - 1;
 	num_bytes = lockend - lockstart + 1;
 
-	btrfs_lock_and_flush_ordered_range(inode, lockstart, lockend, NULL);
-	ret = can_nocow_extent(&inode->vfs_inode, lockstart, &num_bytes,
-			NULL, NULL, NULL, false);
-	if (ret <= 0) {
-		ret = 0;
-		btrfs_drew_write_unlock(&root->snapshot_lock);
+	if (nowait) {
+		if (!btrfs_try_lock_ordered_range(inode, lockstart, lockend)) {
+			btrfs_drew_write_unlock(&root->snapshot_lock);
+			return -EAGAIN;
+		}
 	} else {
+		btrfs_lock_and_flush_ordered_range(inode, lockstart, lockend, NULL);
+	}
+	ret = can_nocow_extent(&inode->vfs_inode, lockstart, &num_bytes,
+			NULL, NULL, NULL, nowait, false);
+	if (ret <= 0)
+		btrfs_drew_write_unlock(&root->snapshot_lock);
+	else
 		*write_bytes = min_t(size_t, *write_bytes ,
 				     num_bytes - pos + lockstart);
-	}
 	unlock_extent(&inode->io_tree, lockstart, lockend, NULL);
 
 	return ret;
@@ -1606,8 +1652,10 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
 	bool force_page_uptodate = false;
 	loff_t old_isize = i_size_read(inode);
 	unsigned int ilock_flags = 0;
+	const bool nowait = (iocb->ki_flags & IOCB_NOWAIT);
+	unsigned int bdp_flags = (nowait ? BDP_ASYNC : 0);
 
-	if (iocb->ki_flags & IOCB_NOWAIT)
+	if (nowait)
 		ilock_flags |= BTRFS_ILOCK_TRY;
 
 	ret = btrfs_inode_lock(inode, ilock_flags);
@@ -1663,18 +1711,29 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
 		extent_changeset_release(data_reserved);
 		ret = btrfs_check_data_free_space(BTRFS_I(inode),
 						  &data_reserved, pos,
-						  write_bytes);
+						  write_bytes, nowait);
 		if (ret < 0) {
+			int can_nocow;
+
+			if (nowait && (ret == -ENOSPC || ret == -EAGAIN)) {
+				ret = -EAGAIN;
+				break;
+			}
+
 			/*
 			 * If we don't have to COW at the offset, reserve
 			 * metadata only. write_bytes may get smaller than
 			 * requested here.
 			 */
-			if (btrfs_check_nocow_lock(BTRFS_I(inode), pos,
-						   &write_bytes) > 0)
-				only_release_metadata = true;
-			else
+			can_nocow = btrfs_check_nocow_lock(BTRFS_I(inode), pos,
+							   &write_bytes, nowait);
+			if (can_nocow < 0)
+				ret = can_nocow;
+			if (can_nocow > 0)
+				ret = 0;
+			if (ret)
 				break;
+			only_release_metadata = true;
 		}
 
 		num_pages = DIV_ROUND_UP(write_bytes + offset, PAGE_SIZE);
@@ -1684,7 +1743,7 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
 		WARN_ON(reserve_bytes == 0);
 		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
 						      reserve_bytes,
-						      reserve_bytes, false);
+						      reserve_bytes, nowait);
 		if (ret) {
 			if (!only_release_metadata)
 				btrfs_free_reserved_data_space(BTRFS_I(inode),
@@ -1697,14 +1756,17 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
 
 		release_bytes = reserve_bytes;
 again:
+		ret = balance_dirty_pages_ratelimited_flags(inode->i_mapping, bdp_flags);
+		if (ret)
+			break;
+
 		/*
 		 * This is going to setup the pages array with the number of
 		 * pages we want, so we don't really need to worry about the
 		 * contents of pages from loop to loop
 		 */
 		ret = prepare_pages(inode, pages, num_pages,
-				    pos, write_bytes,
-				    force_page_uptodate);
+				    pos, write_bytes, force_page_uptodate, false);
 		if (ret) {
 			btrfs_delalloc_release_extents(BTRFS_I(inode),
 						       reserve_bytes);
@@ -1714,10 +1776,11 @@ again:
 		extents_locked = lock_and_cleanup_extent_if_need(
 				BTRFS_I(inode), pages,
 				num_pages, pos, write_bytes, &lockstart,
-				&lockend, &cached_state);
+				&lockend, nowait, &cached_state);
 		if (extents_locked < 0) {
-			if (extents_locked == -EAGAIN)
+			if (!nowait && extents_locked == -EAGAIN)
 				goto again;
+
 			btrfs_delalloc_release_extents(BTRFS_I(inode),
 						       reserve_bytes);
 			ret = extents_locked;
@@ -1799,8 +1862,6 @@ again:
 		btrfs_drop_pages(fs_info, pages, num_pages, pos, copied);
 
 		cond_resched();
-
-		balance_dirty_pages_ratelimited(inode->i_mapping);
 
 		pos += copied;
 		num_written += copied;
@@ -2044,13 +2105,13 @@ ssize_t btrfs_do_write_iter(struct kiocb *iocb, struct iov_iter *from,
 	if (BTRFS_FS_ERROR(inode->root->fs_info))
 		return -EROFS;
 
-	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
-		return -EOPNOTSUPP;
-
 	if (sync)
 		atomic_inc(&inode->sync_writers);
 
 	if (encoded) {
+		if (iocb->ki_flags & IOCB_NOWAIT)
+			return -EOPNOTSUPP;
+
 		num_written = btrfs_encoded_write(iocb, from, encoded);
 		num_sync = encoded->len;
 	} else if (iocb->ki_flags & IOCB_DIRECT) {
@@ -4070,7 +4131,7 @@ static int btrfs_file_open(struct inode *inode, struct file *filp)
 {
 	int ret;
 
-	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC;
+	filp->f_mode |= FMODE_NOWAIT | FMODE_BUF_RASYNC | FMODE_BUF_WASYNC;
 
 	ret = fsverity_file_open(inode, filp);
 	if (ret)

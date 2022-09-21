@@ -443,6 +443,8 @@ struct btrfs_path {
 	 * header (ie. sizeof(struct btrfs_item) is not included).
 	 */
 	unsigned int search_for_extension:1;
+	/* Stop search if any locks need to be taken (for read) */
+	unsigned int nowait:1;
 };
 
 struct btrfs_dev_replace {
@@ -3328,7 +3330,8 @@ int btrfs_csum_file_blocks(struct btrfs_trans_handle *trans,
 blk_status_t btrfs_csum_one_bio(struct btrfs_inode *inode, struct bio *bio,
 				u64 offset, bool one_ordered);
 int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
-			     struct list_head *list, int search_commit);
+			     struct list_head *list, int search_commit,
+			     bool nowait);
 void btrfs_extent_item_to_extent_map(struct btrfs_inode *inode,
 				     const struct btrfs_path *path,
 				     struct btrfs_file_extent_item *fi,
@@ -3356,7 +3359,7 @@ int btrfs_check_data_csum(struct inode *inode, struct btrfs_bio *bbio,
 			  u32 bio_offset, struct page *page, u32 pgoff);
 noinline int can_nocow_extent(struct inode *inode, u64 offset, u64 *len,
 			      u64 *orig_start, u64 *orig_block_len,
-			      u64 *ram_bytes, bool strict);
+			      u64 *ram_bytes, bool nowait, bool strict);
 
 void __btrfs_del_delalloc_inode(struct btrfs_root *root,
 				struct btrfs_inode *inode);
@@ -3522,7 +3525,7 @@ int btrfs_dirty_pages(struct btrfs_inode *inode, struct page **pages,
 		      struct extent_state **cached, bool noreserve);
 int btrfs_fdatawrite_range(struct inode *inode, loff_t start, loff_t end);
 int btrfs_check_nocow_lock(struct btrfs_inode *inode, loff_t pos,
-			   size_t *write_bytes);
+			   size_t *write_bytes, bool nowait);
 void btrfs_check_nocow_unlock(struct btrfs_inode *inode);
 bool btrfs_find_delalloc_in_range(struct btrfs_inode *inode, u64 start, u64 end,
 				  u64 *delalloc_start_ret, u64 *delalloc_end_ret);
