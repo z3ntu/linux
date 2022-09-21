@@ -499,159 +499,6 @@ int btrfs_dirty_pages(struct btrfs_inode *inode, struct page **pages,
 }
 
 /*
- * this drops all the extents in the cache that intersect the range
- * [start, end].  Existing extents are split as required.
- */
-void btrfs_drop_extent_cache(struct btrfs_inode *inode, u64 start, u64 end,
-			     int skip_pinned)
-{
-	struct extent_map *em;
-	struct extent_map *split = NULL;
-	struct extent_map *split2 = NULL;
-	struct extent_map_tree *em_tree = &inode->extent_tree;
-	u64 len = end - start + 1;
-	u64 gen;
-	int ret;
-	int testend = 1;
-	unsigned long flags;
-	int compressed = 0;
-	bool modified;
-
-	WARN_ON(end < start);
-	if (end == (u64)-1) {
-		len = (u64)-1;
-		testend = 0;
-	}
-	while (1) {
-		int no_splits = 0;
-
-		modified = false;
-		if (!split)
-			split = alloc_extent_map();
-		if (!split2)
-			split2 = alloc_extent_map();
-		if (!split || !split2)
-			no_splits = 1;
-
-		write_lock(&em_tree->lock);
-		em = lookup_extent_mapping(em_tree, start, len);
-		if (!em) {
-			write_unlock(&em_tree->lock);
-			break;
-		}
-		flags = em->flags;
-		gen = em->generation;
-		if (skip_pinned && test_bit(EXTENT_FLAG_PINNED, &em->flags)) {
-			if (testend && em->start + em->len >= start + len) {
-				free_extent_map(em);
-				write_unlock(&em_tree->lock);
-				break;
-			}
-			start = em->start + em->len;
-			if (testend)
-				len = start + len - (em->start + em->len);
-			free_extent_map(em);
-			write_unlock(&em_tree->lock);
-			continue;
-		}
-		compressed = test_bit(EXTENT_FLAG_COMPRESSED, &em->flags);
-		clear_bit(EXTENT_FLAG_PINNED, &em->flags);
-		clear_bit(EXTENT_FLAG_LOGGING, &flags);
-		modified = !list_empty(&em->list);
-		if (no_splits)
-			goto next;
-
-		if (em->start < start) {
-			split->start = em->start;
-			split->len = start - em->start;
-
-			if (em->block_start < EXTENT_MAP_LAST_BYTE) {
-				split->orig_start = em->orig_start;
-				split->block_start = em->block_start;
-
-				if (compressed)
-					split->block_len = em->block_len;
-				else
-					split->block_len = split->len;
-				split->orig_block_len = max(split->block_len,
-						em->orig_block_len);
-				split->ram_bytes = em->ram_bytes;
-			} else {
-				split->orig_start = split->start;
-				split->block_len = 0;
-				split->block_start = em->block_start;
-				split->orig_block_len = 0;
-				split->ram_bytes = split->len;
-			}
-
-			split->generation = gen;
-			split->flags = flags;
-			split->compress_type = em->compress_type;
-			replace_extent_mapping(em_tree, em, split, modified);
-			free_extent_map(split);
-			split = split2;
-			split2 = NULL;
-		}
-		if (testend && em->start + em->len > start + len) {
-			u64 diff = start + len - em->start;
-
-			split->start = start + len;
-			split->len = em->start + em->len - (start + len);
-			split->flags = flags;
-			split->compress_type = em->compress_type;
-			split->generation = gen;
-
-			if (em->block_start < EXTENT_MAP_LAST_BYTE) {
-				split->orig_block_len = max(em->block_len,
-						    em->orig_block_len);
-
-				split->ram_bytes = em->ram_bytes;
-				if (compressed) {
-					split->block_len = em->block_len;
-					split->block_start = em->block_start;
-					split->orig_start = em->orig_start;
-				} else {
-					split->block_len = split->len;
-					split->block_start = em->block_start
-						+ diff;
-					split->orig_start = em->orig_start;
-				}
-			} else {
-				split->ram_bytes = split->len;
-				split->orig_start = split->start;
-				split->block_len = 0;
-				split->block_start = em->block_start;
-				split->orig_block_len = 0;
-			}
-
-			if (extent_map_in_tree(em)) {
-				replace_extent_mapping(em_tree, em, split,
-						       modified);
-			} else {
-				ret = add_extent_mapping(em_tree, split,
-							 modified);
-				ASSERT(ret == 0); /* Logic error */
-			}
-			free_extent_map(split);
-			split = NULL;
-		}
-next:
-		if (extent_map_in_tree(em))
-			remove_extent_mapping(em_tree, em);
-		write_unlock(&em_tree->lock);
-
-		/* once for us */
-		free_extent_map(em);
-		/* once for the tree*/
-		free_extent_map(em);
-	}
-	if (split)
-		free_extent_map(split);
-	if (split2)
-		free_extent_map(split2);
-}
-
-/*
  * this is very complex, but the basic idea is to drop all extents
  * in the range start - end.  hint_block is filled in with a block number
  * that would be a good hint to the block allocator for this file.
@@ -708,7 +555,7 @@ int btrfs_drop_extents(struct btrfs_trans_handle *trans,
 	}
 
 	if (args->drop_cache)
-		btrfs_drop_extent_cache(inode, args->start, args->end - 1, 0);
+		btrfs_drop_extent_map_range(inode, args->start, args->end - 1, false);
 
 	if (args->start >= inode->disk_i_size && !args->replace_extent)
 		modify_tree = 0;
@@ -2261,14 +2108,6 @@ int btrfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
 	atomic_inc(&root->log_batch);
 
 	/*
-	 * Always check for the full sync flag while holding the inode's lock,
-	 * to avoid races with other tasks. The flag must be either set all the
-	 * time during logging or always off all the time while logging.
-	 */
-	full_sync = test_bit(BTRFS_INODE_NEEDS_FULL_SYNC,
-			     &BTRFS_I(inode)->runtime_flags);
-
-	/*
 	 * Before we acquired the inode's lock and the mmap lock, someone may
 	 * have dirtied more pages in the target range. We need to make sure
 	 * that writeback for any such pages does not start while we are logging
@@ -2291,6 +2130,17 @@ int btrfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
 		btrfs_inode_unlock(inode, BTRFS_ILOCK_MMAP);
 		goto out;
 	}
+
+	/*
+	 * Always check for the full sync flag while holding the inode's lock,
+	 * to avoid races with other tasks. The flag must be either set all the
+	 * time during logging or always off all the time while logging.
+	 * We check the flag here after starting delalloc above, because when
+	 * running delalloc the full sync flag may be set if we need to drop
+	 * extra extent map ranges due to temporary memory allocation failures.
+	 */
+	full_sync = test_bit(BTRFS_INODE_NEEDS_FULL_SYNC,
+			     &BTRFS_I(inode)->runtime_flags);
 
 	/*
 	 * We have to do this here to avoid the priority inversion of waiting on
@@ -2509,7 +2359,6 @@ static int fill_holes(struct btrfs_trans_handle *trans,
 	struct extent_buffer *leaf;
 	struct btrfs_file_extent_item *fi;
 	struct extent_map *hole_em;
-	struct extent_map_tree *em_tree = &inode->extent_tree;
 	struct btrfs_key key;
 	int ret;
 
@@ -2576,7 +2425,7 @@ out:
 
 	hole_em = alloc_extent_map();
 	if (!hole_em) {
-		btrfs_drop_extent_cache(inode, offset, end - 1, 0);
+		btrfs_drop_extent_map_range(inode, offset, end - 1, false);
 		btrfs_set_inode_full_sync(inode);
 	} else {
 		hole_em->start = offset;
@@ -2590,12 +2439,7 @@ out:
 		hole_em->compress_type = BTRFS_COMPRESS_NONE;
 		hole_em->generation = trans->transid;
 
-		do {
-			btrfs_drop_extent_cache(inode, offset, end - 1, 0);
-			write_lock(&em_tree->lock);
-			ret = add_extent_mapping(em_tree, hole_em, 1);
-			write_unlock(&em_tree->lock);
-		} while (ret == -EEXIST);
+		ret = btrfs_replace_extent_map_range(inode, hole_em, true);
 		free_extent_map(hole_em);
 		if (ret)
 			btrfs_set_inode_full_sync(inode);
