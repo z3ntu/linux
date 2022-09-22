@@ -41,6 +41,16 @@
 			   (unsigned long)(addr) +	\
 			   (size))
 
+/*
+ * Since EABI unwinder doesn't use ARM_fp as conventional fp
+ * use ARM_sp as hint register for kretprobes.
+ */
+#ifdef CONFIG_ARM_UNWIND
+#define TRAMP_FP ARM_sp
+#else /* CONFIG_FRAME_POINTER */
+#define TRAMP_FP ARM_fp
+#endif
+
 DEFINE_PER_CPU(struct kprobe *, current_kprobe) = NULL;
 DEFINE_PER_CPU(struct kprobe_ctlblk, kprobe_ctlblk);
 
@@ -376,8 +386,8 @@ int __kprobes kprobe_exceptions_notify(struct notifier_block *self,
 void __naked __kprobes __kretprobe_trampoline(void)
 {
 	__asm__ __volatile__ (
-#ifdef CONFIG_FRAME_POINTER
 		"ldr	lr, =__kretprobe_trampoline	\n\t"
+#ifdef CONFIG_FRAME_POINTER
 	/* __kretprobe_trampoline makes a framepointer on pt_regs. */
 #ifdef CONFIG_CC_IS_CLANG
 		"stmdb	sp, {sp, lr, pc}	\n\t"
@@ -395,8 +405,12 @@ void __naked __kprobes __kretprobe_trampoline(void)
 		"add	fp, sp, #60		\n\t"
 #endif /* CONFIG_CC_IS_CLANG */
 #else /* !CONFIG_FRAME_POINTER */
+		/* store SP, LR on stack and add EABI unwind hint */
+		"stmdb  sp, {sp, lr, pc}	\n\t"
+		".save	{sp, lr, pc}	\n\t"
 		"sub	sp, sp, #16		\n\t"
 		"stmdb	sp!, {r0 - r11}		\n\t"
+		".pad	#52				\n\t"
 #endif /* CONFIG_FRAME_POINTER */
 		"mov	r0, sp			\n\t"
 		"bl	trampoline_handler	\n\t"
@@ -414,14 +428,14 @@ void __naked __kprobes __kretprobe_trampoline(void)
 /* Called from __kretprobe_trampoline */
 static __used __kprobes void *trampoline_handler(struct pt_regs *regs)
 {
-	return (void *)kretprobe_trampoline_handler(regs, (void *)regs->ARM_fp);
+	return (void *)kretprobe_trampoline_handler(regs, (void *)regs->TRAMP_FP);
 }
 
 void __kprobes arch_prepare_kretprobe(struct kretprobe_instance *ri,
 				      struct pt_regs *regs)
 {
 	ri->ret_addr = (kprobe_opcode_t *)regs->ARM_lr;
-	ri->fp = (void *)regs->ARM_fp;
+	ri->fp = (void *)regs->TRAMP_FP;
 
 	/* Replace the return addr with trampoline addr. */
 	regs->ARM_lr = (unsigned long)&__kretprobe_trampoline;

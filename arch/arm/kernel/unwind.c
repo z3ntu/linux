@@ -28,6 +28,7 @@
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/list.h>
+#include <linux/kprobes.h>
 
 #include <asm/stacktrace.h>
 #include <asm/traps.h>
@@ -482,6 +483,12 @@ int unwind_frame(struct stackframe *frame)
 	frame->pc = ctrl.vrs[PC];
 	frame->lr_addr = ctrl.lr_addr;
 
+#ifdef CONFIG_KRETPROBES
+	if (is_kretprobe_trampoline(frame->pc))
+		frame->pc = kretprobe_find_ret_addr(frame->tsk,
+					(void *)frame->sp, &frame->kr_cur);
+#endif
+
 	return URC_OK;
 }
 
@@ -521,6 +528,11 @@ here:
 		frame.lr = 0;
 		frame.pc = thread_saved_pc(tsk);
 	}
+
+#ifdef CONFIG_KRETPROBES
+	frame.kr_cur = NULL;
+	frame.tsk = tsk;
+#endif
 
 	while (1) {
 		int urc;
