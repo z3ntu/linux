@@ -31,6 +31,9 @@
 #include "../ops.h"
 #include "hda.h"
 
+#define CREATE_TRACE_POINTS
+#include <trace/events/sof_intel.h>
+
 #if IS_ENABLED(CONFIG_SND_SOC_SOF_HDA)
 #include <sound/soc-acpi-intel-match.h>
 #endif
@@ -375,6 +378,10 @@ MODULE_PARM_DESC(hda_model, "Use the given HDA board model.");
 static int dmic_num_override = -1;
 module_param_named(dmic_num, dmic_num_override, int, 0444);
 MODULE_PARM_DESC(dmic_num, "SOF HDA DMIC number");
+
+static int mclk_id_override = -1;
+module_param_named(mclk_id, mclk_id_override, int, 0444);
+MODULE_PARM_DESC(mclk_id, "SOF SSP mclk_id");
 
 #if IS_ENABLED(CONFIG_SND_SOC_SOF_HDA)
 static bool hda_codec_use_common_hdmi = IS_ENABLED(CONFIG_SND_HDA_CODEC_HDMI);
@@ -749,6 +756,18 @@ static int check_nhlt_ssp_mask(struct snd_sof_dev *sdev)
 	return ssp_mask;
 }
 
+static int check_nhlt_ssp_mclk_mask(struct snd_sof_dev *sdev, int ssp_num)
+{
+	struct sof_intel_hda_dev *hdev = sdev->pdata->hw_pdata;
+	struct nhlt_acpi_table *nhlt;
+
+	nhlt = hdev->nhlt;
+	if (!nhlt)
+		return 0;
+
+	return intel_nhlt_ssp_mclk_mask(nhlt, ssp_num);
+}
+
 #if IS_ENABLED(CONFIG_SND_SOC_SOF_HDA) || IS_ENABLED(CONFIG_SND_SOC_SOF_INTEL_SOUNDWIRE)
 
 static const char *fixup_tplg_name(struct snd_sof_dev *sdev,
@@ -938,17 +957,25 @@ static irqreturn_t hda_dsp_interrupt_thread(int irq, void *context)
 	struct sof_intel_hda_dev *hdev = sdev->pdata->hw_pdata;
 
 	/* deal with streams and controller first */
-	if (hda_dsp_check_stream_irq(sdev))
+	if (hda_dsp_check_stream_irq(sdev)) {
+		trace_sof_intel_hda_irq(sdev, "stream");
 		hda_dsp_stream_threaded_handler(irq, sdev);
+	}
 
-	if (hda_check_ipc_irq(sdev))
+	if (hda_check_ipc_irq(sdev)) {
+		trace_sof_intel_hda_irq(sdev, "ipc");
 		sof_ops(sdev)->irq_thread(irq, sdev);
+	}
 
-	if (hda_dsp_check_sdw_irq(sdev))
+	if (hda_dsp_check_sdw_irq(sdev)) {
+		trace_sof_intel_hda_irq(sdev, "sdw");
 		hda_dsp_sdw_thread(irq, hdev->sdw);
+	}
 
-	if (hda_sdw_check_wakeen_irq(sdev))
+	if (hda_sdw_check_wakeen_irq(sdev)) {
+		trace_sof_intel_hda_irq(sdev, "wakeen");
 		hda_sdw_process_wakeen(sdev);
+	}
 
 	hda_check_for_state_change(sdev);
 
@@ -1108,6 +1135,8 @@ int hda_dsp_probe(struct snd_sof_dev *sdev)
 	sdev->dsp_box.offset = HDA_DSP_MBOX_UPLINK_OFFSET;
 
 	INIT_DELAYED_WORK(&hdev->d0i3_work, hda_dsp_d0i3_work);
+
+	init_waitqueue_head(&hdev->waitq);
 
 	hdev->nhlt = intel_nhlt_init(sdev->dev);
 
@@ -1529,6 +1558,7 @@ struct snd_soc_acpi_mach *hda_machine_select(struct snd_sof_dev *sdev)
 		    mach->mach_params.i2s_link_mask) {
 			const struct sof_intel_dsp_desc *chip = get_chip_info(sdev->pdata);
 			int ssp_num;
+			int mclk_mask;
 
 			if (hweight_long(mach->mach_params.i2s_link_mask) > 1 &&
 			    !(mach->tplg_quirk_mask & SND_SOC_ACPI_TPLG_INTEL_SSP_MSB))
@@ -1553,6 +1583,21 @@ struct snd_soc_acpi_mach *hda_machine_select(struct snd_sof_dev *sdev)
 
 			sof_pdata->tplg_filename = tplg_filename;
 			add_extension = true;
+
+			mclk_mask = check_nhlt_ssp_mclk_mask(sdev, ssp_num);
+
+			if (mclk_mask < 0) {
+				dev_err(sdev->dev, "Invalid MCLK configuration\n");
+				return NULL;
+			}
+
+			dev_dbg(sdev->dev, "MCLK mask %#x found in NHLT\n", mclk_mask);
+
+			if (mclk_mask) {
+				dev_info(sdev->dev, "Overriding topology with MCLK mask %#x from NHLT\n", mclk_mask);
+				sdev->mclk_id_override = true;
+				sdev->mclk_id_quirk = (mclk_mask & BIT(0)) ? 0 : 1;
+			}
 		}
 
 		if (tplg_fixup && add_extension) {
@@ -1564,6 +1609,13 @@ struct snd_soc_acpi_mach *hda_machine_select(struct snd_sof_dev *sdev)
 				return NULL;
 
 			sof_pdata->tplg_filename = tplg_filename;
+		}
+
+		/* check if mclk_id should be modified from topology defaults */
+		if (mclk_id_override >= 0) {
+			dev_info(sdev->dev, "Overriding topology with MCLK %d from kernel_parameter\n", mclk_id_override);
+			sdev->mclk_id_override = true;
+			sdev->mclk_id_quirk = mclk_id_override;
 		}
 	}
 
