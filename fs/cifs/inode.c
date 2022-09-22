@@ -913,7 +913,7 @@ cifs_set_fattr_ino(int xid,
 		} else {
 			/* make an ino by hashing the UNC */
 			fattr->cf_flags |= CIFS_FATTR_FAKE_ROOT_INO;
-			fattr->cf_uniqueid = simple_hashstr(tcon->treeName);
+			fattr->cf_uniqueid = simple_hashstr(tcon->tree_name);
 		}
 	}
 }
@@ -2265,13 +2265,13 @@ cifs_dentry_needs_reval(struct dentry *dentry)
 		return true;
 
 	if (!open_cached_dir_by_dentry(tcon, dentry->d_parent, &cfid)) {
-		mutex_lock(&cfid->fid_mutex);
+		spin_lock(&cfid->fid_lock);
 		if (cfid->time && cifs_i->time > cfid->time) {
-			mutex_unlock(&cfid->fid_mutex);
+			spin_unlock(&cfid->fid_lock);
 			close_cached_dir(cfid);
 			return false;
 		}
-		mutex_unlock(&cfid->fid_mutex);
+		spin_unlock(&cfid->fid_lock);
 		close_cached_dir(cfid);
 	}
 	/*
