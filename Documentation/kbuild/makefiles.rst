@@ -340,19 +340,7 @@ more details, with real examples.
 
 	Examples are:
 
-	1) head objects
-
-	    Some objects must be placed at the head of vmlinux. They are
-	    directly linked to vmlinux without going through built-in.a
-	    A typical use-case is an object that contains the entry point.
-
-	    arch/$(SRCARCH)/Makefile should specify such objects as head-y.
-
-	    Discussion:
-	      Given that we can control the section order in the linker script,
-	      why do we need head-y?
-
-	2) vmlinux linker script
+	1) vmlinux linker script
 
 	    The linker script for vmlinux is located at
 	    arch/$(SRCARCH)/kernel/vmlinux.lds
@@ -360,10 +348,6 @@ more details, with real examples.
 	Example::
 
 		# arch/x86/kernel/Makefile
-		extra-y	:= head_$(BITS).o
-		extra-y	+= head$(BITS).o
-		extra-y	+= ebda.o
-		extra-y	+= platform-quirks.o
 		extra-y	+= vmlinux.lds
 
 	$(extra-y) should only contain targets needed for vmlinux.
@@ -1081,8 +1065,7 @@ When kbuild executes, the following steps are followed (roughly):
    - The values of the above variables are expanded in arch/$(SRCARCH)/Makefile.
 5) All object files are then linked and the resulting file vmlinux is
    located at the root of the obj tree.
-   The very first objects linked are listed in head-y, assigned by
-   arch/$(SRCARCH)/Makefile.
+   The very first objects linked are listed in scripts/head-object-list.txt.
 6) Finally, the architecture-specific part does any required post processing
    and builds the final bootimage.
    - This includes building boot records
@@ -1230,6 +1213,9 @@ When kbuild executes, the following steps are followed (roughly):
 	All object files for vmlinux. They are linked to vmlinux in the same
 	order as listed in KBUILD_VMLINUX_OBJS.
 
+	The objects listed in scripts/head-object-list.txt are exceptions;
+	they are placed before the other objects.
+
     KBUILD_VMLINUX_LIBS
 
 	All .a "lib" files for vmlinux. KBUILD_VMLINUX_OBJS and
@@ -1273,8 +1259,7 @@ When kbuild executes, the following steps are followed (roughly):
 	machinery is all architecture-independent.
 
 
-	head-y, core-y, libs-y, drivers-y
-	    $(head-y) lists objects to be linked first in vmlinux.
+	core-y, libs-y, drivers-y
 
 	    $(libs-y) lists directories where a lib.a archive can be located.
 
