@@ -11,6 +11,7 @@
 
 #include <linux/firmware.h>
 #include <sound/sof/ipc4/header.h>
+#include <trace/events/sof_intel.h>
 #include "../ipc4-priv.h"
 #include "../ops.h"
 #include "hda.h"
@@ -63,7 +64,7 @@ static bool mtl_dsp_check_ipc_irq(struct snd_sof_dev *sdev)
 	hfintipptr = snd_sof_dsp_read(sdev, HDA_DSP_BAR, MTL_HFINTIPPTR) & MTL_HFINTIPPTR_PTR_MASK;
 	irq_status = snd_sof_dsp_read(sdev, HDA_DSP_BAR, hfintipptr + MTL_DSP_IRQSTS);
 
-	dev_vdbg(sdev->dev, "irq handler: irq_status:0x%x\n", irq_status);
+	trace_sof_intel_hda_irq_ipc_check(sdev, irq_status);
 
 	if (irq_status != U32_MAX && (irq_status & MTL_DSP_IRQSTS_IPC))
 		return true;
@@ -764,6 +765,8 @@ int sof_mtl_ops_init(struct snd_sof_dev *sdev)
 	ipc4_data = sdev->private;
 	ipc4_data->manifest_fw_hdr_offset = SOF_MAN4_FW_HDR_OFFSET;
 
+	ipc4_data->mtrace_type = SOF_IPC4_MTRACE_INTEL_CAVS_2;
+
 	/* set DAI ops */
 	hda_set_dai_drv_ops(sdev, &sof_mtl_ops);
 
@@ -782,7 +785,7 @@ const struct sof_intel_dsp_desc mtl_chip_info = {
 	.ipc_ctl = MTL_DSP_REG_HFIPCXCTL,
 	.rom_status_reg = MTL_DSP_ROM_STS,
 	.rom_init_timeout	= 300,
-	.ssp_count = ICL_SSP_COUNT,
+	.ssp_count = MTL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
 	.sdw_shim_base = SDW_SHIM_BASE_ACE,
 	.sdw_alh_base = SDW_ALH_BASE_ACE,

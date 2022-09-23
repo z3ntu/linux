@@ -80,6 +80,8 @@ int sof_tgl_ops_init(struct snd_sof_dev *sdev)
 		ipc4_data = sdev->private;
 		ipc4_data->manifest_fw_hdr_offset = SOF_MAN4_FW_HDR_OFFSET;
 
+		ipc4_data->mtrace_type = SOF_IPC4_MTRACE_INTEL_CAVS_2;
+
 		/* doorbell */
 		sof_tgl_ops.irq_thread	= cnl_ipc4_irq_thread;
 
@@ -121,7 +123,7 @@ const struct sof_intel_dsp_desc tgl_chip_info = {
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
 	.rom_status_reg = HDA_DSP_SRAM_REG_ROM_STATUS,
 	.rom_init_timeout	= 300,
-	.ssp_count = ICL_SSP_COUNT,
+	.ssp_count = TGL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
 	.sdw_shim_base = SDW_SHIM_BASE,
 	.sdw_alh_base = SDW_ALH_BASE,
@@ -144,7 +146,7 @@ const struct sof_intel_dsp_desc tglh_chip_info = {
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
 	.rom_status_reg = HDA_DSP_SRAM_REG_ROM_STATUS,
 	.rom_init_timeout	= 300,
-	.ssp_count = ICL_SSP_COUNT,
+	.ssp_count = TGL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
 	.sdw_shim_base = SDW_SHIM_BASE,
 	.sdw_alh_base = SDW_ALH_BASE,
@@ -167,7 +169,7 @@ const struct sof_intel_dsp_desc ehl_chip_info = {
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
 	.rom_status_reg = HDA_DSP_SRAM_REG_ROM_STATUS,
 	.rom_init_timeout	= 300,
-	.ssp_count = ICL_SSP_COUNT,
+	.ssp_count = TGL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
 	.sdw_shim_base = SDW_SHIM_BASE,
 	.sdw_alh_base = SDW_ALH_BASE,
@@ -190,7 +192,7 @@ const struct sof_intel_dsp_desc adls_chip_info = {
 	.ipc_ctl = CNL_DSP_REG_HIPCCTL,
 	.rom_status_reg = HDA_DSP_SRAM_REG_ROM_STATUS,
 	.rom_init_timeout	= 300,
-	.ssp_count = ICL_SSP_COUNT,
+	.ssp_count = TGL_SSP_COUNT,
 	.ssp_base_offset = CNL_SSP_BASE_OFFSET,
 	.sdw_shim_base = SDW_SHIM_BASE,
 	.sdw_alh_base = SDW_ALH_BASE,
