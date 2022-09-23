@@ -884,6 +884,13 @@ L:	netdev@vger.kernel.org
 S:	Maintained
 F:	drivers/net/ethernet/altera/
 
+ALTERA TSE PCS
+M:	Maxime Chevallier <maxime.chevallier@bootlin.com>
+L:	netdev@vger.kernel.org
+S:	Supported
+F:	drivers/net/pcs/pcs-altera-tse.c
+F:	include/linux/pcs-altera-tse.h
+
 ALTERA UART/JTAG UART SERIAL DRIVERS
 M:	Tobias Klauser <tklauser@distanz.ch>
 L:	linux-serial@vger.kernel.org
@@ -5720,13 +5727,6 @@ F:	include/linux/dccp.h
 F:	include/linux/tfrc.h
 F:	include/uapi/linux/dccp.h
 F:	net/dccp/
-
-DECnet NETWORK LAYER
-L:	linux-decnet-user@lists.sourceforge.net
-S:	Orphan
-W:	http://linux-decnet.sourceforge.net
-F:	Documentation/networking/decnet.rst
-F:	net/decnet/
 
 DECSTATION PLATFORM SUPPORT
 M:	"Maciej W. Rozycki" <macro@orcam.me.uk>
@@ -14765,6 +14765,13 @@ F:	net/dsa/tag_ocelot.c
 F:	net/dsa/tag_ocelot_8021q.c
 F:	tools/testing/selftests/drivers/net/ocelot/*
 
+OCELOT EXTERNAL SWITCH CONTROL
+M:	Colin Foster <colin.foster@in-advantage.com>
+S:	Supported
+F:	Documentation/devicetree/bindings/mfd/mscc,ocelot.yaml
+F:	drivers/mfd/ocelot*
+F:	include/linux/mfd/ocelot.h
+
 OCXL (Open Coherent Accelerator Processor Interface OpenCAPI) DRIVER
 M:	Frederic Barrat <fbarrat@linux.ibm.com>
 M:	Andrew Donnellan <ajd@linux.ibm.com>
@@ -21885,9 +21892,11 @@ F:	drivers/input/tablet/wacom_serial4.c
 
 WANGXUN ETHERNET DRIVER
 M:	Jiawen Wu <jiawenwu@trustnetic.com>
+M:	Mengyuan Lou <mengyuanlou@net-swift.com>
+W:	https://www.net-swift.com
 L:	netdev@vger.kernel.org
 S:	Maintained
-F:	Documentation/networking/device_drivers/ethernet/wangxun/txgbe.rst
+F:	Documentation/networking/device_drivers/ethernet/wangxun/*
 F:	drivers/net/ethernet/wangxun/
 
 WATCHDOG DEVICE DRIVERS

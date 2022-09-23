@@ -111,7 +111,7 @@ static void accel_rule_handle_work(struct work_struct *work)
 	if (unlikely(test_bit(MLX5E_PRIV_RX_FLAG_DELETING, priv_rx->flags)))
 		goto out;
 
-	rule = mlx5e_accel_fs_add_sk(accel_rule->priv, priv_rx->sk,
+	rule = mlx5e_accel_fs_add_sk(accel_rule->priv->fs, priv_rx->sk,
 				     mlx5e_tir_get_tirn(&priv_rx->tir),
 				     MLX5_FS_DEFAULT_FLOW_TAG);
 	if (!IS_ERR_OR_NULL(rule))
@@ -461,6 +461,7 @@ static void resync_update_sn(struct mlx5e_rq *rq, struct sk_buff *skb)
 {
 	struct ethhdr *eth = (struct ethhdr *)(skb->data);
 	struct net_device *netdev = rq->netdev;
+	struct net *net = dev_net(netdev);
 	struct sock *sk = NULL;
 	unsigned int datalen;
 	struct iphdr *iph;
@@ -475,7 +476,7 @@ static void resync_update_sn(struct mlx5e_rq *rq, struct sk_buff *skb)
 		depth += sizeof(struct iphdr);
 		th = (void *)iph + sizeof(struct iphdr);
 
-		sk = inet_lookup_established(dev_net(netdev), &tcp_hashinfo,
+		sk = inet_lookup_established(net, net->ipv4.tcp_death_row.hashinfo,
 					     iph->saddr, th->source, iph->daddr,
 					     th->dest, netdev->ifindex);
 #if IS_ENABLED(CONFIG_IPV6)
@@ -485,7 +486,7 @@ static void resync_update_sn(struct mlx5e_rq *rq, struct sk_buff *skb)
 		depth += sizeof(struct ipv6hdr);
 		th = (void *)ipv6h + sizeof(struct ipv6hdr);
 
-		sk = __inet6_lookup_established(dev_net(netdev), &tcp_hashinfo,
+		sk = __inet6_lookup_established(net, net->ipv4.tcp_death_row.hashinfo,
 						&ipv6h->saddr, th->source,
 						&ipv6h->daddr, ntohs(th->dest),
 						netdev->ifindex, 0);
