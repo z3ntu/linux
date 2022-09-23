@@ -25,7 +25,7 @@
 	qcom,msm-id = <434 0x10000>, <459 0x10000>;
 	qcom,board-id = <8 32>;
 
-	qca-pwrseq {
+	qca_pwrseq: qca-pwrseq {
 		compatible = "qcom,wcn3990-pwrseq";
 		#pwrseq-cells = <1>;
 
