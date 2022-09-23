@@ -832,8 +832,9 @@ static bool discover_dp_mst_topology(struct dc_link *link, enum dc_detect_reason
 	LINK_INFO("link=%d, mst branch is now Connected\n",
 		  link->link_index);
 
-	apply_dpia_mst_dsc_always_on_wa(link);
 	link->type = dc_connection_mst_branch;
+	apply_dpia_mst_dsc_always_on_wa(link);
+
 	dm_helpers_dp_update_branch_info(link->ctx, link);
 	if (dm_helpers_dp_mst_start_top_mgr(link->ctx,
 			link, (reason == DETECT_REASON_BOOT || reason == DETECT_REASON_RESUMEFROMS3S4))) {
@@ -1311,6 +1312,14 @@ static bool detect_link_and_local_sink(struct dc_link *link,
 				sink->edid_caps.audio_modes[i].sample_rate,
 				sink->edid_caps.audio_modes[i].sample_size);
 		}
+
+		if (link->connector_signal == SIGNAL_TYPE_EDP) {
+			// Init dc_panel_config
+			dm_helpers_init_panel_settings(dc_ctx, &link->panel_config);
+			// Override dc_panel_config if system has specific settings
+			dm_helpers_override_panel_settings(dc_ctx, &link->panel_config);
+		}
+
 	} else {
 		/* From Connected-to-Disconnected. */
 		link->type = dc_connection_none;
@@ -2069,11 +2078,7 @@ static enum dc_status enable_link_edp(
 		struct dc_state *state,
 		struct pipe_ctx *pipe_ctx)
 {
-	enum dc_status status;
-
-	status = enable_link_dp(state, pipe_ctx);
-
-	return status;
+	return enable_link_dp(state, pipe_ctx);
 }
 
 static enum dc_status enable_link_dp_mst(
@@ -3516,7 +3521,7 @@ static void update_mst_stream_alloc_table(
 	struct dc_link *link,
 	struct stream_encoder *stream_enc,
 	struct hpo_dp_stream_encoder *hpo_dp_stream_enc, // TODO: Rename stream_enc to dio_stream_enc?
-	const struct dp_mst_stream_allocation_table *proposed_table)
+	const struct dc_dp_mst_stream_allocation_table *proposed_table)
 {
 	struct link_mst_stream_allocation work_table[MAX_CONTROLLER_NUM] = { 0 };
 	struct link_mst_stream_allocation *dc_alloc;
@@ -3679,7 +3684,7 @@ enum dc_status dc_link_allocate_mst_payload(struct pipe_ctx *pipe_ctx)
 {
 	struct dc_stream_state *stream = pipe_ctx->stream;
 	struct dc_link *link = stream->link;
-	struct dp_mst_stream_allocation_table proposed_table = {0};
+	struct dc_dp_mst_stream_allocation_table proposed_table = {0};
 	struct fixed31_32 avg_time_slots_per_mtp;
 	struct fixed31_32 pbn;
 	struct fixed31_32 pbn_per_slot;
@@ -3784,7 +3789,7 @@ enum dc_status dc_link_reduce_mst_payload(struct pipe_ctx *pipe_ctx, uint32_t bw
 	struct fixed31_32 avg_time_slots_per_mtp;
 	struct fixed31_32 pbn;
 	struct fixed31_32 pbn_per_slot;
-	struct dp_mst_stream_allocation_table proposed_table = {0};
+	struct dc_dp_mst_stream_allocation_table proposed_table = {0};
 	uint8_t i;
 	const struct link_hwss *link_hwss = get_link_hwss(link, &pipe_ctx->link_res);
 	DC_LOGGER_INIT(link->ctx->logger);
@@ -3873,7 +3878,7 @@ enum dc_status dc_link_increase_mst_payload(struct pipe_ctx *pipe_ctx, uint32_t 
 	struct fixed31_32 avg_time_slots_per_mtp;
 	struct fixed31_32 pbn;
 	struct fixed31_32 pbn_per_slot;
-	struct dp_mst_stream_allocation_table proposed_table = {0};
+	struct dc_dp_mst_stream_allocation_table proposed_table = {0};
 	uint8_t i;
 	enum act_return_status ret;
 	const struct link_hwss *link_hwss = get_link_hwss(link, &pipe_ctx->link_res);
@@ -3957,7 +3962,7 @@ static enum dc_status deallocate_mst_payload(struct pipe_ctx *pipe_ctx)
 {
 	struct dc_stream_state *stream = pipe_ctx->stream;
 	struct dc_link *link = stream->link;
-	struct dp_mst_stream_allocation_table proposed_table = {0};
+	struct dc_dp_mst_stream_allocation_table proposed_table = {0};
 	struct fixed31_32 avg_time_slots_per_mtp = dc_fixpt_from_int(0);
 	int i;
 	bool mst_mode = (link->type == dc_connection_mst_branch);
@@ -4303,8 +4308,9 @@ void core_link_enable_stream(
 		 */
 		if (pipe_ctx->stream->timing.flags.DSC) {
 			if (dc_is_dp_signal(pipe_ctx->stream->signal) ||
-					dc_is_virtual_signal(pipe_ctx->stream->signal))
-				dp_set_dsc_enable(pipe_ctx, true);
+				dc_is_virtual_signal(pipe_ctx->stream->signal))
+			dp_set_dsc_enable(pipe_ctx, true);
+
 		}
 
 		status = enable_link(state, pipe_ctx);
@@ -4736,7 +4742,7 @@ bool dc_link_should_enable_fec(const struct dc_link *link)
 	else if (link->connector_signal == SIGNAL_TYPE_EDP
 			&& (link->dpcd_caps.dsc_caps.dsc_basic_caps.fields.
 			 dsc_support.DSC_SUPPORT == false
-				|| link->dc->debug.disable_dsc_edp
+				|| link->panel_config.dsc.disable_dsc_edp
 				|| !link->dc->caps.edp_dsc_support))
 		force_disable = true;
 

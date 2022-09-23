@@ -44,25 +44,6 @@
 
 #include "bios_parser_common.h"
 
-/* Temporarily add in defines until ObjectID.h patch is updated in a few days */
-#ifndef GENERIC_OBJECT_ID_BRACKET_LAYOUT
-#define GENERIC_OBJECT_ID_BRACKET_LAYOUT          0x05
-#endif /* GENERIC_OBJECT_ID_BRACKET_LAYOUT */
-
-#ifndef GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID1
-#define GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID1	\
-	(GRAPH_OBJECT_TYPE_GENERIC << OBJECT_TYPE_SHIFT |\
-	GRAPH_OBJECT_ENUM_ID1 << ENUM_ID_SHIFT |\
-	GENERIC_OBJECT_ID_BRACKET_LAYOUT << OBJECT_ID_SHIFT)
-#endif /* GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID1 */
-
-#ifndef GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID2
-#define GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID2	\
-	(GRAPH_OBJECT_TYPE_GENERIC << OBJECT_TYPE_SHIFT |\
-	GRAPH_OBJECT_ENUM_ID2 << ENUM_ID_SHIFT |\
-	GENERIC_OBJECT_ID_BRACKET_LAYOUT << OBJECT_ID_SHIFT)
-#endif /* GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID2 */
-
 #define DC_LOGGER \
 	bp->base.ctx->logger
 
@@ -868,6 +849,8 @@ static enum bp_result get_ss_info_v4_1(
 				disp_cntl_tbl->dvi_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->dvi_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_DVI: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	case AS_SIGNAL_TYPE_HDMI:
 		ss_info->spread_spectrum_percentage =
@@ -876,6 +859,8 @@ static enum bp_result get_ss_info_v4_1(
 				disp_cntl_tbl->hdmi_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->hdmi_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_HDMI: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	/* TODO LVDS not support anymore? */
 	case AS_SIGNAL_TYPE_DISPLAY_PORT:
@@ -885,6 +870,8 @@ static enum bp_result get_ss_info_v4_1(
 				disp_cntl_tbl->dp_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->dp_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_DISPLAY_PORT: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	case AS_SIGNAL_TYPE_GPU_PLL:
 		/* atom_firmware: DAL only get data from dce_info table.
@@ -905,6 +892,8 @@ static enum bp_result get_ss_info_v4_1(
 				smu_info->gpuclk_ss_rate_10hz * 10;
 		if (smu_info->waflclk_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_XGMI: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	default:
 		result = BP_RESULT_UNSUPPORTED;
@@ -954,6 +943,8 @@ static enum bp_result get_ss_info_v4_2(
 				disp_cntl_tbl->dvi_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->dvi_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_DVI: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	case AS_SIGNAL_TYPE_HDMI:
 		ss_info->spread_spectrum_percentage =
@@ -962,6 +953,8 @@ static enum bp_result get_ss_info_v4_2(
 				disp_cntl_tbl->hdmi_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->hdmi_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_HDMI: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	/* TODO LVDS not support anymore? */
 	case AS_SIGNAL_TYPE_DISPLAY_PORT:
@@ -971,6 +964,8 @@ static enum bp_result get_ss_info_v4_2(
 				smu_info->gpuclk_ss_rate_10hz * 10;
 		if (smu_info->gpuclk_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_DISPLAY_PORT: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	case AS_SIGNAL_TYPE_GPU_PLL:
 		/* atom_firmware: DAL only get data from dce_info table.
@@ -1019,6 +1014,8 @@ static enum bp_result get_ss_info_v4_5(
 				disp_cntl_tbl->dvi_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->dvi_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_DVI: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	case AS_SIGNAL_TYPE_HDMI:
 		ss_info->spread_spectrum_percentage =
@@ -1027,6 +1024,8 @@ static enum bp_result get_ss_info_v4_5(
 				disp_cntl_tbl->hdmi_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->hdmi_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_HDMI: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	case AS_SIGNAL_TYPE_DISPLAY_PORT:
 		ss_info->spread_spectrum_percentage =
@@ -1035,6 +1034,8 @@ static enum bp_result get_ss_info_v4_5(
 				disp_cntl_tbl->dp_ss_rate_10hz * 10;
 		if (disp_cntl_tbl->dp_ss_mode & ATOM_SS_CENTRE_SPREAD_MODE)
 			ss_info->type.CENTER_MODE = true;
+
+		DC_LOG_BIOS("AS_SIGNAL_TYPE_DISPLAY_PORT: %d\n", ss_info->spread_spectrum_percentage);
 		break;
 	case AS_SIGNAL_TYPE_GPU_PLL:
 		/* atom_smu_info_v4_0 does not have fields for SS for SMU Display PLL anymore.

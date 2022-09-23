@@ -912,7 +912,6 @@ static const struct dc_debug_options debug_defaults_drv = {
 		}
 	},
 	.optimize_edp_link_rate = true,
-	.enable_sw_cntl_psr = true,
 	.seamless_boot_odm_combine = true
 };
 
@@ -1644,6 +1643,7 @@ static struct clock_source *dcn31_clock_source_create(
 	}
 
 	BREAK_TO_DEBUGGER();
+	kfree(clk_src);
 	return NULL;
 }
 
@@ -1716,6 +1716,7 @@ static struct clock_source *dcn30_clock_source_create(
 	}
 
 	BREAK_TO_DEBUGGER();
+	kfree(clk_src);
 	return NULL;
 }
 
@@ -1815,8 +1816,6 @@ static bool dcn314_resource_construct(
 
 	if (dc->ctx->dce_environment == DCE_ENV_PRODUCTION_DRV)
 		dc->debug = debug_defaults_drv;
-	else if (dc->ctx->dce_environment == DCE_ENV_FPGA_MAXIMUS)
-		dc->debug = debug_defaults_diags;
 	else
 		dc->debug = debug_defaults_diags;
 	// Init the vm_helper

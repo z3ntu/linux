@@ -675,9 +675,9 @@ bool dcn32_set_output_transfer_func(struct dc *dc,
 					stream->out_transfer_func,
 					&mpc->blender_params, false))
 				params = &mpc->blender_params;
-		 /* there are no ROM LUTs in OUTGAM */
-		if (stream->out_transfer_func->type == TF_TYPE_PREDEFINED)
-			BREAK_TO_DEBUGGER();
+			/* there are no ROM LUTs in OUTGAM */
+			if (stream->out_transfer_func->type == TF_TYPE_PREDEFINED)
+				BREAK_TO_DEBUGGER();
 		}
 	}
 
@@ -1273,4 +1273,63 @@ bool dcn32_is_dp_dig_pixel_rate_div_policy(struct pipe_ctx *pipe_ctx)
 		dc->debug.enable_dp_dig_pixel_rate_div_policy)
 		return true;
 	return false;
+}
+
+void dcn32_update_phy_state(struct dc_state *state, struct pipe_ctx *pipe_ctx,
+		enum phy_state target_state)
+{
+	enum phy_state current_state = pipe_ctx->stream->link->phy_state;
+
+	if (target_state == TX_OFF_SYMCLK_OFF) {
+		core_link_disable_stream(pipe_ctx);
+		pipe_ctx->stream->link->phy_state = TX_OFF_SYMCLK_OFF;
+	} else if (target_state == TX_ON_SYMCLK_ON) {
+		core_link_enable_stream(state, pipe_ctx);
+		pipe_ctx->stream->link->phy_state = TX_ON_SYMCLK_ON;
+	} else if (target_state == TX_OFF_SYMCLK_ON) {
+		if (current_state == TX_ON_SYMCLK_ON) {
+			core_link_disable_stream(pipe_ctx);
+			pipe_ctx->stream->link->phy_state = TX_OFF_SYMCLK_OFF;
+		}
+
+		pipe_ctx->clock_source->funcs->program_pix_clk(
+			pipe_ctx->clock_source,
+			&pipe_ctx->stream_res.pix_clk_params,
+			dp_get_link_encoding_format(&pipe_ctx->link_config.dp_link_settings),
+			&pipe_ctx->pll_settings);
+		pipe_ctx->stream->link->phy_state = TX_OFF_SYMCLK_ON;
+	} else
+		BREAK_TO_DEBUGGER();
+}
+
+/* For SubVP the main pipe can have a viewport position change
+ * without a full update. In this case we must also update the
+ * viewport positions for the phantom pipe accordingly.
+ */
+void dcn32_update_phantom_vp_position(struct dc *dc,
+		struct dc_state *context,
+		struct pipe_ctx *phantom_pipe)
+{
+	uint8_t i;
+	struct dc_plane_state *phantom_plane = phantom_pipe->plane_state;
+
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
+		struct pipe_ctx *pipe = &context->res_ctx.pipe_ctx[i];
+
+		if (pipe->stream && pipe->stream->mall_stream_config.type == SUBVP_MAIN &&
+				pipe->stream->mall_stream_config.paired_stream == phantom_pipe->stream) {
+			if (pipe->plane_state && pipe->plane_state->update_flags.bits.position_change) {
+
+				phantom_plane->src_rect.x = pipe->plane_state->src_rect.x;
+				phantom_plane->src_rect.y = pipe->plane_state->src_rect.y;
+				phantom_plane->clip_rect.x = pipe->plane_state->clip_rect.x;
+				phantom_plane->dst_rect.x = pipe->plane_state->dst_rect.x;
+				phantom_plane->dst_rect.y = pipe->plane_state->dst_rect.y;
+
+				phantom_pipe->plane_state->update_flags.bits.position_change = 1;
+				resource_build_scaling_params(phantom_pipe);
+				return;
+			}
+		}
+	}
 }
