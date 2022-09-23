@@ -71,7 +71,7 @@ struct pwrseq *__devm_pwrseq_create(struct device *dev, struct module *owner, co
  *
  * Return: created instance or the wrapped error code.
  */
-#define devm_pwrseq_create(dev, ops, data) __devm_pwrseq_create((dev), THIS_MODULE, (ops))
+#define devm_pwrseq_create(dev, ops) __devm_pwrseq_create((dev), THIS_MODULE, (ops))
 
 void pwrseq_destroy(struct pwrseq *pwrseq);
 
