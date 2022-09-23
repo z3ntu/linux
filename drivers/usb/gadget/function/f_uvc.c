@@ -430,7 +430,7 @@ uvc_register_video(struct uvc_device *uvc)
 	uvc->vdev.vfl_dir = VFL_DIR_TX;
 	uvc->vdev.lock = &uvc->video.mutex;
 	uvc->vdev.device_caps = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_STREAMING;
-	strlcpy(uvc->vdev.name, cdev->gadget->name, sizeof(uvc->vdev.name));
+	strscpy(uvc->vdev.name, cdev->gadget->name, sizeof(uvc->vdev.name));
 
 	video_set_drvdata(&uvc->vdev, uvc);
 
@@ -897,9 +897,13 @@ static void uvc_function_unbind(struct usb_configuration *c,
 {
 	struct usb_composite_dev *cdev = c->cdev;
 	struct uvc_device *uvc = to_uvc(f);
+	struct uvc_video *video = &uvc->video;
 	long wait_ret = 1;
 
 	uvcg_info(f, "%s()\n", __func__);
+
+	if (video->async_wq)
+		destroy_workqueue(video->async_wq);
 
 	/*
 	 * If we know we're connected via v4l2, then there should be a cleanup
