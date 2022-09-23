@@ -24,7 +24,7 @@ struct folio_batch;
 #define GFP_RECLAIM_MASK (__GFP_RECLAIM|__GFP_HIGH|__GFP_IO|__GFP_FS|\
 			__GFP_NOWARN|__GFP_RETRY_MAYFAIL|__GFP_NOFAIL|\
 			__GFP_NORETRY|__GFP_MEMALLOC|__GFP_NOMEMALLOC|\
-			__GFP_ATOMIC|__GFP_NOLOCKDEP)
+			__GFP_NOLOCKDEP)
 
 /* The GFP flags allowed during early boot */
 #define GFP_BOOT_MASK (__GFP_BITS_MASK & ~(__GFP_RECLAIM|__GFP_IO|__GFP_FS))
@@ -83,9 +83,11 @@ vm_fault_t do_swap_page(struct vm_fault *vmf);
 void folio_rotate_reclaimable(struct folio *folio);
 bool __folio_end_writeback(struct folio *folio);
 void deactivate_file_folio(struct folio *folio);
+void folio_activate(struct folio *folio);
 
-void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
-		unsigned long floor, unsigned long ceiling);
+void free_pgtables(struct mmu_gather *tlb, struct maple_tree *mt,
+		   struct vm_area_struct *start_vma, unsigned long floor,
+		   unsigned long ceiling);
 void pmd_install(struct mm_struct *mm, pmd_t *pmd, pgtable_t *pte);
 
 struct zap_details;
@@ -365,7 +367,6 @@ extern int user_min_free_kbytes;
 extern void free_unref_page(struct page *page, unsigned int order);
 extern void free_unref_page_list(struct list_head *list);
 
-extern void zone_pcp_update(struct zone *zone, int cpu_online);
 extern void zone_pcp_reset(struct zone *zone);
 extern void zone_pcp_disable(struct zone *zone);
 extern void zone_pcp_enable(struct zone *zone);
@@ -479,9 +480,6 @@ static inline bool is_data_mapping(vm_flags_t flags)
 }
 
 /* mm/util.c */
-void __vma_link_list(struct mm_struct *mm, struct vm_area_struct *vma,
-		struct vm_area_struct *prev);
-void __vma_unlink_list(struct mm_struct *mm, struct vm_area_struct *vma);
 struct anon_vma *folio_anon_vma(struct folio *folio);
 
 #ifdef CONFIG_MMU
@@ -639,34 +637,6 @@ static inline void vunmap_range_noflush(unsigned long start, unsigned long end)
 }
 #endif /* !CONFIG_MMU */
 
-/*
- * Return the mem_map entry representing the 'offset' subpage within
- * the maximally aligned gigantic page 'base'.  Handle any discontiguity
- * in the mem_map at MAX_ORDER_NR_PAGES boundaries.
- */
-static inline struct page *mem_map_offset(struct page *base, int offset)
-{
-	if (unlikely(offset >= MAX_ORDER_NR_PAGES))
-		return nth_page(base, offset);
-	return base + offset;
-}
-
-/*
- * Iterator over all subpages within the maximally aligned gigantic
- * page 'base'.  Handle any discontiguity in the mem_map.
- */
-static inline struct page *mem_map_next(struct page *iter,
-						struct page *base, int offset)
-{
-	if (unlikely((offset & (MAX_ORDER_NR_PAGES - 1)) == 0)) {
-		unsigned long pfn = page_to_pfn(base) + offset;
-		if (!pfn_valid(pfn))
-			return NULL;
-		return pfn_to_page(pfn);
-	}
-	return iter + 1;
-}
-
 /* Memory initialisation debug and verification */
 enum mminit_level {
 	MMINIT_WARNING,
@@ -737,14 +707,6 @@ extern u64 hwpoison_filter_flags_mask;
 extern u64 hwpoison_filter_flags_value;
 extern u64 hwpoison_filter_memcg;
 extern u32 hwpoison_filter_enable;
-
-#ifdef CONFIG_MEMORY_FAILURE
-void clear_hwpoisoned_pages(struct page *memmap, int nr_pages);
-#else
-static inline void clear_hwpoisoned_pages(struct page *memmap, int nr_pages)
-{
-}
-#endif
 
 extern unsigned long  __must_check vm_mmap_pgoff(struct file *, unsigned long,
         unsigned long, unsigned long,
@@ -847,7 +809,13 @@ int vmap_pages_range_noflush(unsigned long addr, unsigned long end,
 }
 #endif
 
+int __vmap_pages_range_noflush(unsigned long addr, unsigned long end,
+			       pgprot_t prot, struct page **pages,
+			       unsigned int page_shift);
+
 void vunmap_range_noflush(unsigned long start, unsigned long end);
+
+void __vunmap_range_noflush(unsigned long start, unsigned long end);
 
 int numa_migrate_prep(struct page *page, struct vm_area_struct *vma,
 		      unsigned long addr, int page_nid, int *flags);
@@ -859,8 +827,6 @@ int migrate_device_coherent_page(struct page *page);
  * mm/gup.c
  */
 struct folio *try_grab_folio(struct page *page, int refs, unsigned int flags);
-
-DECLARE_PER_CPU(struct per_cpu_nodestat, boot_nodestats);
 
 extern bool mirrored_kernelcore;
 

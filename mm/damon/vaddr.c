@@ -113,37 +113,38 @@ static unsigned long sz_range(struct damon_addr_range *r)
  *
  * Returns 0 if success, or negative error code otherwise.
  */
-static int __damon_va_three_regions(struct vm_area_struct *vma,
+static int __damon_va_three_regions(struct mm_struct *mm,
 				       struct damon_addr_range regions[3])
 {
-	struct damon_addr_range gap = {0}, first_gap = {0}, second_gap = {0};
-	struct vm_area_struct *last_vma = NULL;
-	unsigned long start = 0;
-	struct rb_root rbroot;
+	struct damon_addr_range first_gap = {0}, second_gap = {0};
+	VMA_ITERATOR(vmi, mm, 0);
+	struct vm_area_struct *vma, *prev = NULL;
+	unsigned long start;
 
-	/* Find two biggest gaps so that first_gap > second_gap > others */
-	for (; vma; vma = vma->vm_next) {
-		if (!last_vma) {
+	/*
+	 * Find the two biggest gaps so that first_gap > second_gap > others.
+	 * If this is too slow, it can be optimised to examine the maple
+	 * tree gaps.
+	 */
+	for_each_vma(vmi, vma) {
+		unsigned long gap;
+
+		if (!prev) {
 			start = vma->vm_start;
 			goto next;
 		}
+		gap = vma->vm_start - prev->vm_end;
 
-		if (vma->rb_subtree_gap <= sz_range(&second_gap)) {
-			rbroot.rb_node = &vma->vm_rb;
-			vma = rb_entry(rb_last(&rbroot),
-					struct vm_area_struct, vm_rb);
-			goto next;
-		}
-
-		gap.start = last_vma->vm_end;
-		gap.end = vma->vm_start;
-		if (sz_range(&gap) > sz_range(&second_gap)) {
-			swap(gap, second_gap);
-			if (sz_range(&second_gap) > sz_range(&first_gap))
-				swap(second_gap, first_gap);
+		if (gap > sz_range(&first_gap)) {
+			second_gap = first_gap;
+			first_gap.start = prev->vm_end;
+			first_gap.end = vma->vm_start;
+		} else if (gap > sz_range(&second_gap)) {
+			second_gap.start = prev->vm_end;
+			second_gap.end = vma->vm_start;
 		}
 next:
-		last_vma = vma;
+		prev = vma;
 	}
 
 	if (!sz_range(&second_gap) || !sz_range(&first_gap))
@@ -159,7 +160,7 @@ next:
 	regions[1].start = ALIGN(first_gap.end, DAMON_MIN_REGION);
 	regions[1].end = ALIGN(second_gap.start, DAMON_MIN_REGION);
 	regions[2].start = ALIGN(second_gap.end, DAMON_MIN_REGION);
-	regions[2].end = ALIGN(last_vma->vm_end, DAMON_MIN_REGION);
+	regions[2].end = ALIGN(prev->vm_end, DAMON_MIN_REGION);
 
 	return 0;
 }
@@ -180,7 +181,7 @@ static int damon_va_three_regions(struct damon_target *t,
 		return -EINVAL;
 
 	mmap_read_lock(mm);
-	rc = __damon_va_three_regions(mm->mmap, regions);
+	rc = __damon_va_three_regions(mm, regions);
 	mmap_read_unlock(mm);
 
 	mmput(mm);
@@ -250,8 +251,8 @@ static void __damon_va_init_regions(struct damon_ctx *ctx,
 
 	for (i = 0; i < 3; i++)
 		sz += regions[i].end - regions[i].start;
-	if (ctx->min_nr_regions)
-		sz /= ctx->min_nr_regions;
+	if (ctx->attrs.min_nr_regions)
+		sz /= ctx->attrs.min_nr_regions;
 	if (sz < DAMON_MIN_REGION)
 		sz = DAMON_MIN_REGION;
 
@@ -396,8 +397,8 @@ static void damon_va_mkold(struct mm_struct *mm, unsigned long addr)
  * Functions for the access checking of the regions
  */
 
-static void __damon_va_prepare_access_check(struct damon_ctx *ctx,
-			struct mm_struct *mm, struct damon_region *r)
+static void __damon_va_prepare_access_check(struct mm_struct *mm,
+					struct damon_region *r)
 {
 	r->sampling_addr = damon_rand(r->ar.start, r->ar.end);
 
@@ -415,7 +416,7 @@ static void damon_va_prepare_access_checks(struct damon_ctx *ctx)
 		if (!mm)
 			continue;
 		damon_for_each_region(r, t)
-			__damon_va_prepare_access_check(ctx, mm, r);
+			__damon_va_prepare_access_check(mm, r);
 		mmput(mm);
 	}
 }
@@ -592,9 +593,8 @@ static unsigned int damon_va_check_accesses(struct damon_ctx *ctx)
  * Functions for the target validity check and cleanup
  */
 
-static bool damon_va_target_valid(void *target)
+static bool damon_va_target_valid(struct damon_target *t)
 {
-	struct damon_target *t = target;
 	struct task_struct *task;
 
 	task = damon_get_task_struct(t);
@@ -657,6 +657,9 @@ static unsigned long damon_va_apply_scheme(struct damon_ctx *ctx,
 	case DAMOS_STAT:
 		return 0;
 	default:
+		/*
+		 * DAMOS actions that are not yet supported by 'vaddr'.
+		 */
 		return 0;
 	}
 
@@ -670,7 +673,7 @@ static int damon_va_scheme_score(struct damon_ctx *context,
 
 	switch (scheme->action) {
 	case DAMOS_PAGEOUT:
-		return damon_pageout_score(context, r, scheme);
+		return damon_cold_score(context, r, scheme);
 	default:
 		break;
 	}

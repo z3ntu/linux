@@ -180,29 +180,30 @@ bad_bmap:
  */
 int swap_writepage(struct page *page, struct writeback_control *wbc)
 {
+	struct folio *folio = page_folio(page);
 	int ret = 0;
 
-	if (try_to_free_swap(page)) {
-		unlock_page(page);
+	if (folio_free_swap(folio)) {
+		folio_unlock(folio);
 		goto out;
 	}
 	/*
 	 * Arch code may have to preserve more data than just the page
 	 * contents, e.g. memory tags.
 	 */
-	ret = arch_prepare_to_swap(page);
+	ret = arch_prepare_to_swap(&folio->page);
 	if (ret) {
-		set_page_dirty(page);
-		unlock_page(page);
+		folio_mark_dirty(folio);
+		folio_unlock(folio);
 		goto out;
 	}
-	if (frontswap_store(page) == 0) {
-		set_page_writeback(page);
-		unlock_page(page);
-		end_page_writeback(page);
+	if (frontswap_store(&folio->page) == 0) {
+		folio_start_writeback(folio);
+		folio_unlock(folio);
+		folio_end_writeback(folio);
 		goto out;
 	}
-	ret = __swap_writepage(page, wbc);
+	ret = __swap_writepage(&folio->page, wbc);
 out:
 	return ret;
 }
@@ -452,18 +453,21 @@ int swap_readpage(struct page *page, bool synchronous,
 	struct swap_info_struct *sis = page_swap_info(page);
 	bool workingset = PageWorkingset(page);
 	unsigned long pflags;
+	bool in_thrashing;
 
 	VM_BUG_ON_PAGE(!PageSwapCache(page) && !synchronous, page);
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageUptodate(page), page);
 
 	/*
-	 * Count submission time as memory stall. When the device is congested,
-	 * or the submitting cgroup IO-throttled, submission can be a
-	 * significant part of overall IO time.
+	 * Count submission time as memory stall and delay. When the device
+	 * is congested, or the submitting cgroup IO-throttled, submission
+	 * can be a significant part of overall IO time.
 	 */
-	if (workingset)
+	if (workingset) {
+		delayacct_thrashing_start(&in_thrashing);
 		psi_memstall_enter(&pflags);
+	}
 	delayacct_swapin_start();
 
 	if (frontswap_load(page) == 0) {
@@ -512,8 +516,10 @@ int swap_readpage(struct page *page, bool synchronous,
 	bio_put(bio);
 
 out:
-	if (workingset)
+	if (workingset) {
+		delayacct_thrashing_end(&in_thrashing);
 		psi_memstall_leave(&pflags);
+	}
 	delayacct_swapin_end();
 	return ret;
 }
