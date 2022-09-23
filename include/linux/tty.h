@@ -434,7 +434,7 @@ int tty_hung_up_p(struct file *filp);
 void do_SAK(struct tty_struct *tty);
 void __do_SAK(struct tty_struct *tty);
 void no_tty(void);
-speed_t tty_termios_baud_rate(struct ktermios *termios);
+speed_t tty_termios_baud_rate(const struct ktermios *termios);
 void tty_termios_encode_baud_rate(struct ktermios *termios, speed_t ibaud,
 		speed_t obaud);
 void tty_encode_baud_rate(struct tty_struct *tty, speed_t ibaud,
@@ -458,7 +458,7 @@ static inline speed_t tty_get_baud_rate(struct tty_struct *tty)
 unsigned char tty_get_char_size(unsigned int cflag);
 unsigned char tty_get_frame_size(unsigned int cflag);
 
-void tty_termios_copy_hw(struct ktermios *new, struct ktermios *old);
+void tty_termios_copy_hw(struct ktermios *new, const struct ktermios *old);
 int tty_termios_hw_change(const struct ktermios *a, const struct ktermios *b);
 int tty_set_termios(struct tty_struct *tty, struct ktermios *kt);
 
