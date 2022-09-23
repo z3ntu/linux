@@ -912,7 +912,7 @@ static int fsl_lpspi_probe(struct platform_device *pdev)
 
 	ret = devm_spi_register_controller(&pdev->dev, controller);
 	if (ret < 0) {
-		dev_err_probe(&pdev->dev, ret, "spi_register_controller error: %i\n", ret);
+		dev_err_probe(&pdev->dev, ret, "spi_register_controller error\n");
 		goto free_dma;
 	}
 
@@ -947,11 +947,8 @@ static int fsl_lpspi_remove(struct platform_device *pdev)
 
 static int __maybe_unused fsl_lpspi_suspend(struct device *dev)
 {
-	int ret;
-
 	pinctrl_pm_select_sleep_state(dev);
-	ret = pm_runtime_force_suspend(dev);
-	return ret;
+	return pm_runtime_force_suspend(dev);
 }
 
 static int __maybe_unused fsl_lpspi_resume(struct device *dev)
