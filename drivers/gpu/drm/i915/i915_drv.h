@@ -75,9 +75,6 @@ struct intel_limit;
 struct intel_overlay_error_state;
 struct vlv_s0ix_state;
 
-/* Threshold == 5 for long IRQs, 50 for short */
-#define HPD_STORM_DEFAULT_THRESHOLD 50
-
 #define I915_GEM_GPU_DOMAINS \
 	(I915_GEM_DOMAIN_RENDER | \
 	 I915_GEM_DOMAIN_SAMPLER | \
@@ -396,8 +393,6 @@ struct drm_i915_private {
 	 * and should not be used.
 	 */
 	u8 snps_phy_failed_calibration;
-
-	bool ipc_enabled;
 
 	struct i915_pmu pmu;
 
