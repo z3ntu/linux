@@ -27,7 +27,7 @@
 			bias-pull-up;
 		};
 
-		usb_id: misc@900 {
+		usb_id: extcon@900 {
 			compatible = "qcom,pm8941-misc";
 			reg = <0x900>;
 			interrupts = <0x0 0x9 0 IRQ_TYPE_EDGE_BOTH>;
@@ -138,7 +138,7 @@
 			qcom,external-resistor-micro-ohms = <10000>;
 		};
 
-		pm8941_coincell: coincell@2800 {
+		pm8941_coincell: charger@2800 {
 			compatible = "qcom,pm8941-coincell";
 			reg = <0x2800>;
 			status = "disabled";
