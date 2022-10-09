@@ -160,6 +160,7 @@ EXPORT_SYMBOL(wait_for_random_bytes);
  *	u8 get_random_u8()
  *	u16 get_random_u16()
  *	u32 get_random_u32()
+ *	u32 get_random_u32_below(u32 ceil)
  *	u64 get_random_u64()
  *	unsigned long get_random_long()
  *
@@ -509,6 +510,18 @@ DEFINE_BATCHED_ENTROPY(u8)
 DEFINE_BATCHED_ENTROPY(u16)
 DEFINE_BATCHED_ENTROPY(u32)
 DEFINE_BATCHED_ENTROPY(u64)
+
+u32 __get_random_u32_below(u32 ceil)
+{
+	u64 mult = (u64)ceil * get_random_u32();
+	if (unlikely((u32)mult < ceil)) {
+		u32 bound = -ceil % ceil;
+		while (unlikely((u32)mult < bound))
+			mult = (u64)ceil * get_random_u32();
+	}
+	return mult >> 32;
+}
+EXPORT_SYMBOL(__get_random_u32_below);
 
 #ifdef CONFIG_SMP
 /*
