@@ -65,25 +65,27 @@ static void fuse_add_dirent_to_cache(struct file *file,
 		page = find_lock_page(file->f_mapping, index);
 	} else {
 		page = find_or_create_page(file->f_mapping, index,
-					   mapping_gfp_mask(file->f_mapping));
+				mapping_gfp_mask(file->f_mapping) | __GFP_ZERO);
 	}
 	if (!page)
 		return;
 
 	spin_lock(&fi->rdc.lock);
+	addr = kmap_local_page(page);
 	/* Raced with another readdir */
 	if (fi->rdc.version != version || fi->rdc.size != size ||
-	    WARN_ON(fi->rdc.pos != pos))
-		goto unlock;
+	    WARN_ON(fi->rdc.pos != pos)) {
+		/* Was this page just created? */
+		if (!offset && !((struct fuse_dirent *) addr)->namelen)
+			delete_from_page_cache(page);
+		goto unmap;
+	}
 
-	addr = kmap_local_page(page);
-	if (!offset)
-		clear_page(addr);
 	memcpy(addr + offset, dirent, reclen);
-	kunmap_local(addr);
 	fi->rdc.size = (index << PAGE_SHIFT) + offset + reclen;
 	fi->rdc.pos = dirent->off;
-unlock:
+unmap:
+	kunmap_local(addr);
 	spin_unlock(&fi->rdc.lock);
 	unlock_page(page);
 	put_page(page);

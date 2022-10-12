@@ -128,6 +128,7 @@ void delete_from_page_cache(struct page *page)
 {
 	return filemap_remove_folio(page_folio(page));
 }
+EXPORT_SYMBOL(delete_from_page_cache);
 
 int try_to_release_page(struct page *page, gfp_t gfp)
 {
