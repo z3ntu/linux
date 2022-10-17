@@ -1428,8 +1428,10 @@ static void ata_eh_request_sense(struct ata_queued_cmd *qc)
 	err_mask = ata_exec_internal(dev, &tf, NULL, DMA_NONE, NULL, 0, 0);
 	/* Ignore err_mask; ATA_ERR might be set */
 	if (tf.status & ATA_SENSE) {
-		ata_scsi_set_sense(dev, cmd, tf.lbah, tf.lbam, tf.lbal);
-		qc->flags |= ATA_QCFLAG_SENSE_VALID;
+		if (ata_scsi_sense_is_valid(tf.lbah, tf.lbam, tf.lbal)) {
+			ata_scsi_set_sense(dev, cmd, tf.lbah, tf.lbam, tf.lbal);
+			qc->flags |= ATA_QCFLAG_SENSE_VALID;
+		}
 	} else {
 		ata_dev_warn(dev, "request sense failed stat %02x emask %x\n",
 			     tf.status, err_mask);
@@ -1574,11 +1576,17 @@ static unsigned int ata_eh_analyze_tf(struct ata_queued_cmd *qc)
 	}
 
 	switch (qc->dev->class) {
-	case ATA_DEV_ZAC:
-		if (stat & ATA_SENSE)
-			ata_eh_request_sense(qc);
-		fallthrough;
 	case ATA_DEV_ATA:
+	case ATA_DEV_ZAC:
+		/*
+		 * Fetch the sense data explicitly if:
+		 * -It was a non-NCQ command that failed, or
+		 * -It was a NCQ command that failed, but the sense data
+		 *  was not included in the NCQ command error log
+		 *  (i.e. NCQ autosense is not supported by the device).
+		 */
+		if (!(qc->flags & ATA_QCFLAG_SENSE_VALID) && (stat & ATA_SENSE))
+			ata_eh_request_sense(qc);
 		if (err & ATA_ICRC)
 			qc->err_mask |= AC_ERR_ATA_BUS;
 		if (err & (ATA_UNC | ATA_AMNF))
