@@ -108,12 +108,5 @@ static inline struct dpu_hw_wb *dpu_rm_get_wb(struct dpu_rm *rm, enum dpu_wb wb_
 	return rm->hw_wb[wb_idx - WB_0];
 }
 
-/**
- * dpu_rm_clear_boot_config() - Tear down any data paths configured by boot
- * @rm: DPU Resource Manger handle
- * @cat: Pointer to hardware catalog
- */
-void dpu_rm_clear_boot_config(struct dpu_rm *rm, const struct dpu_mdss_cfg *cat);
-
 #endif /* __DPU_RM_H__ */
 
