@@ -18,6 +18,7 @@
 #include <linux/firmware/xlnx-zynqmp.h>
 
 #include <linux/pinctrl/pinconf-generic.h>
+#include <linux/pinctrl/pinconf.h>
 #include <linux/pinctrl/pinctrl.h>
 #include <linux/pinctrl/pinmux.h>
 
