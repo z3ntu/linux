@@ -4080,9 +4080,12 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 
 	snd_soc_component_init_regmap(component, wcd938x->regmap);
 
+	printk(KERN_ERR "%s:%d DBG before read variant=0x%x\n", __func__, __LINE__, wcd938x->variant);
 	wcd938x->variant = snd_soc_component_read_field(component,
 						 WCD938X_DIGITAL_EFUSE_REG_0,
 						 WCD938X_ID_MASK);
+	printk(KERN_ERR "%s:%d DBG variant=0x%x\n", __func__, __LINE__, wcd938x->variant);
+
 
 	wcd938x->clsh_info = wcd_clsh_ctrl_alloc(component, WCD938X);
 

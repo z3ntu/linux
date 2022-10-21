@@ -1709,6 +1709,7 @@ int q6afe_unvote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 	vote_cfg->hw_block_id = hw_block_id;
 	vote_cfg->client_handle = client_handle;
 
+	printk(KERN_ERR "%s: hw_block_id=%d\n", __func__, hw_block_id);
 	//print_hex_dump(KERN_INFO, "q6afe ", DUMP_PREFIX_NONE,
 	//	       16, 1, pkt, pkt_size, 0);
 	//printk(KERN_ERR "%s: lpass core hw unvote opcode[0x%x] hw id[0x%x] client handle [0x%x]\n",
@@ -1753,6 +1754,8 @@ int q6afe_vote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 	vote_cfg->hw_block_id = hw_block_id;
 	strscpy(vote_cfg->client_name, client_name,
 			sizeof(vote_cfg->client_name));
+
+	printk(KERN_ERR "%s: hw_block_id=%d\n", __func__, hw_block_id);
 
 	ret = afe_apr_send_pkt(afe, pkt, NULL,
 			       AFE_CMD_RSP_REMOTE_LPASS_CORE_HW_VOTE_REQUEST);
