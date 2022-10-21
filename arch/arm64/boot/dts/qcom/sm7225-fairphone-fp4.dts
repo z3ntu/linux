@@ -58,6 +58,30 @@
 		};
 	};
 
+	wcd9380: codec {
+		compatible = "qcom,wcd9380-codec";
+		#sound-dai-cells = <1>;
+		reset-gpios = <&tlmm 83 GPIO_ACTIVE_HIGH>;
+		vdd-buck-supply = <&vreg_l14a>;
+		vdd-rxtx-supply = <&vreg_l11a>;
+		vdd-io-supply = <&vreg_l11a>;
+		vdd-mic-bias-supply = <&vreg_bob>;
+
+		qcom,micbias1-microvolt = <2700000>;
+		qcom,micbias2-microvolt = <2700000>;
+		qcom,micbias3-microvolt = <2700000>;
+		qcom,micbias4-microvolt = <2700000>;
+		//qcom,mbhc-buttons-vthreshold-microvolt = <75000 150000 237000 500000 500000 500000 500000 500000>;
+		//qcom,mbhc-headset-vthreshold-microvolt = <1700000>;
+		//qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
+
+		qcom,rx-device = <&wcd_rx>;
+		qcom,tx-device = <&wcd_tx>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&wcd9380_reset_default>;
+	};
+
 	gpio-keys {
 		compatible = "gpio-keys";
 		pinctrl-names = "default";
@@ -331,6 +355,7 @@
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <2000000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on;
 		};
 
 		vreg_l12a: ldo12 {
@@ -1124,6 +1149,10 @@
 	};
 };
 
+&rxmacro {
+	status = "okay";
+};
+
 &sound {
 	compatible = "fairphone,fp4-sndcard";
 	model = "Fairphone 4";
@@ -1155,6 +1184,22 @@
 		};
 	};
 
+	wcd-capture-dai-link {
+		link-name = "WCD Capture";
+
+		codec {
+			sound-dai = <&wcd9380 1>, <&swr2 0>, <&txmacro 0>;
+		};
+
+		cpu {
+			sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
+
 	i2s-dai-link {
 		link-name = "I2S Playback";
 
@@ -1169,6 +1214,43 @@
 		codec {
 			sound-dai = <&aw882xx_l>, <&aw882xx_r>;
 		};
+	};
+
+	va-dai-link {
+		link-name = "VA Capture";
+
+		codec {
+			sound-dai = <&vamacro 0>;
+		};
+
+		cpu {
+			sound-dai = <&q6afedai VA_CODEC_DMA_TX_0>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
+};
+
+&swr1 {
+	status = "okay";
+
+	wcd_rx: codec@0,4 {
+		compatible = "sdw20217010d00";
+		reg = <0 4>;
+		qcom,rx-port-mapping = <1 2 3 4 5>;
+	};
+};
+
+&swr2 {
+	status = "okay";
+
+	wcd_tx: codec@0,3 {
+		compatible = "sdw20217010d00";
+		reg = <0 3>;
+		qcom,tx-port-mapping = <2 3 4 5>;
+		//qcom,tx-port-mapping = <1 1 2 3>;
 	};
 };
 
@@ -1325,6 +1407,17 @@
 			input-enable;
 		};
 	};
+
+	wcd9380_reset_default: wcd9380-reset-default-state {
+		pins = "gpio83";
+		function = "gpio";
+		drive-strength = <16>;
+		//output-high;
+	};
+};
+
+&txmacro {
+	status = "okay";
 };
 
 &uart1 {
@@ -1402,6 +1495,11 @@
 
 &usb_1_qmpphy_out {
 	remote-endpoint = <&pm7250b_ss_in>;
+};
+
+&vamacro {
+	/* No DMIC on this board */
+	qcom,dmic-sample-rate = <600000>;
 };
 
 &wifi {
