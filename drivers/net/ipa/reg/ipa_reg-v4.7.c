@@ -397,31 +397,31 @@ IPA_REG_STRIDE_FIELDS(ENDP_FILTER_ROUTER_HSH_CFG, endp_filter_router_hsh_cfg,
 		      0x0000085c, 0x0070);
 
 /* Valid bits defined by enum ipa_irq_id; only used for GSI_EE_AP */
-IPA_REG(IPA_IRQ_STTS, ipa_irq_stts, 0x00004008 + 0x1000 * GSI_EE_AP);
+IPA_REG(IPA_IRQ_STTS, ipa_irq_stts, 0x00003008 + 0x1000 * GSI_EE_AP);
 
 /* Valid bits defined by enum ipa_irq_id; only used for GSI_EE_AP */
-IPA_REG(IPA_IRQ_EN, ipa_irq_en, 0x0000400c + 0x1000 * GSI_EE_AP);
+IPA_REG(IPA_IRQ_EN, ipa_irq_en, 0x0000300c + 0x1000 * GSI_EE_AP);
 
 /* Valid bits defined by enum ipa_irq_id; only used for GSI_EE_AP */
-IPA_REG(IPA_IRQ_CLR, ipa_irq_clr, 0x00004010 + 0x1000 * GSI_EE_AP);
+IPA_REG(IPA_IRQ_CLR, ipa_irq_clr, 0x00003010 + 0x1000 * GSI_EE_AP);
 
 static const u32 ipa_reg_ipa_irq_uc_fmask[] = {
 	[UC_INTR]					= BIT(0),
 						/* Bits 1-31 reserved */
 };
-IPA_REG_FIELDS(IPA_IRQ_UC, ipa_irq_uc, 0x0000401c + 0x1000 * GSI_EE_AP);
+IPA_REG_FIELDS(IPA_IRQ_UC, ipa_irq_uc, 0x0000301c + 0x1000 * GSI_EE_AP);
 
 /* Valid bits defined by ipa->available */
 IPA_REG_STRIDE(IRQ_SUSPEND_INFO, irq_suspend_info,
-	       0x00004030 + 0x1000 * GSI_EE_AP, 0x0004);
+	       0x00003030 + 0x1000 * GSI_EE_AP, 0x0004);
 
 /* Valid bits defined by ipa->available */
 IPA_REG_STRIDE(IRQ_SUSPEND_EN, irq_suspend_en,
-	       0x00004034 + 0x1000 * GSI_EE_AP, 0x0004);
+	       0x00003034 + 0x1000 * GSI_EE_AP, 0x0004);
 
 /* Valid bits defined by ipa->available */
 IPA_REG_STRIDE(IRQ_SUSPEND_CLR, irq_suspend_clr,
-	       0x00004038 + 0x1000 * GSI_EE_AP, 0x0004);
+	       0x00003038 + 0x1000 * GSI_EE_AP, 0x0004);
 
 static const struct ipa_reg *ipa_reg_array[] = {
 	[COMP_CFG]			= &ipa_reg_comp_cfg,
