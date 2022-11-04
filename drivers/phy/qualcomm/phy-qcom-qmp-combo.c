@@ -2798,8 +2798,8 @@ static int qcom_qmp_phy_typec_switch_set(struct typec_switch_dev *sw,
 
 	qmp->orientation = orientation;
 	if (qmp->init_count) {
-		qcom_qmp_phy_disable(qphy->phy);
-		qcom_qmp_phy_enable(qphy->phy);
+		qmp_combo_disable(qphy->phy);
+		qmp_combo_enable(qphy->phy);
 	}
 
 	return 0;
@@ -2966,8 +2966,7 @@ static int qmp_combo_probe(struct platform_device *pdev)
 		id++;
 	}
 
-	if (cfg->has_phy_dp_com_ctrl)
-		qcom_qmp_phy_typec_switch_register(qmp, cfg);
+	qcom_qmp_phy_typec_switch_register(qmp, cfg);
 
 	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
 
