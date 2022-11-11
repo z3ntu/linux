@@ -95,6 +95,18 @@
 		};
 	};
 
+	vreg_imx576_dvdd: regulator-imx576-dvdd {
+		compatible = "regulator-fixed";
+		regulator-name = "regulator-imx576-dvdd";
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+		gpio = <&pm6150l_gpio 2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_s8e>;
+
+		regulator-always-on; // FIXME
+	};
+
 	fake-reg-mclk0 {
 		compatible = "regulator-fixed-clock";
 		regulator-name = "fake-reg-mclk0";
@@ -119,6 +131,13 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&cam_mclk2_default>;
 		clocks = <&camcc CAM_CC_MCLK2_CLK>;
+		regulator-always-on;
+	};
+
+	fake-reg-cam1 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-cam1";
+		clocks = <&gcc GCC_CAMERA_AHB_CLK>;
 		regulator-always-on;
 	};
 };
@@ -350,6 +369,44 @@
 	};
 };
 
+&camss {
+	status = "okay";
+
+	vdda-0.9-supply = <&vreg_l18a>;
+	vdda-1.25-supply = <&vreg_l22a>;
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+#if 0
+		port@0 {
+			reg = <0>;
+			csiphy0_ep: endpoint {
+				data-lanes = <0 1 2 3>;
+				//remote-endpoint = <&imx582_uw_ep>;
+			};
+		};
+
+		port@2 {
+			reg = <2>;
+			csiphy2_ep: endpoint {
+				data-lanes = <0 1 2 3>;
+				//remote-endpoint = <&imx582_ep>;
+			};
+		};
+#endif
+
+		port@3 {
+			reg = <3>;
+			csiphy3_ep: endpoint {
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&imx576_ep>;
+				link-frequencies = /bits/ 64 <600000000>;
+			};
+		};
+	};
+};
+
 &cdsp {
 	status = "okay";
 	firmware-name = "qcom/sm7225/fairphone4/cdsp.mdt";
@@ -373,6 +430,29 @@
 
 &cci1_i2c0 {
 	/* IMX576 @ 0x10 */
+
+	camera@10 {
+		compatible = "sony,imx412";
+		reg = <0x10>;
+
+		reset-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
+
+		clocks = <&camcc CAM_CC_MCLK1_CLK>;
+		assigned-clocks = <&camcc CAM_CC_MCLK1_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		dovdd-supply = <&pm8008_l6>;
+		avdd-supply = <&pm8008_l3>;
+		dvdd-supply = <&vreg_imx576_dvdd>;
+
+		port {
+			imx576_ep: endpoint {
+				remote-endpoint = <&csiphy3_ep>;
+				data-lanes = <0 1 2 3>;
+				link-frequencies = /bits/ 64 <600000000>;
+			};
+		};
+	};
 };
 
 &gmu {
