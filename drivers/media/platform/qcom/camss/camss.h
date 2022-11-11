@@ -73,12 +73,12 @@ enum camss_version {
 	CAMSS_8x96,
 	CAMSS_660,
 	CAMSS_845,
+	CAMSS_6350,
 	CAMSS_8250,
 };
 
 enum icc_count {
-	ICC_DEFAULT_COUNT = 0,
-	ICC_SM8250_COUNT = 4,
+	ICC_SM6350_COUNT = 7,
 };
 
 struct camss_resources {
@@ -108,7 +108,7 @@ struct camss {
 	int genpd_num;
 	struct device **genpd;
 	struct device_link **genpd_link;
-	struct icc_path *icc_path[ICC_SM8250_COUNT];
+	struct icc_path *icc_path[ICC_SM6350_COUNT];
 	const struct camss_resources *res;
 	unsigned int vfe_total_num;
 };
