@@ -465,6 +465,9 @@ static void ispif_select_clk_mux(struct ispif_device *ispif,
 			val |= (csid << (8 + (vfe * 12)));
 		writel_relaxed(val, ispif->base_clk_mux + CSI_RDI_CLK_MUX_SEL);
 		break;
+	case RDI3:
+		printk(KERN_ERR "%s:%d DBG RDI3!!!\n", __func__, __LINE__);
+		break;
 	}
 
 	mb();
@@ -504,6 +507,9 @@ static int ispif_validate_intf_status(struct ispif_device *ispif,
 	case RDI2:
 		val = readl_relaxed(ispif->base +
 			ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 2));
+		break;
+	case RDI3:
+		printk(KERN_ERR "%s:%d DBG RDI3!!!\n", __func__, __LINE__);
 		break;
 	}
 
@@ -546,6 +552,9 @@ static int ispif_wait_for_stop(struct ispif_device *ispif,
 		break;
 	case RDI2:
 		addr = ISPIF_VFE_m_RDI_INTF_n_STATUS(vfe, 2);
+		break;
+	case RDI3:
+		printk(KERN_ERR "%s:%d DBG RDI3!!!\n", __func__, __LINE__);
 		break;
 	}
 
@@ -601,6 +610,9 @@ static void ispif_select_csid(struct ispif_device *ispif, enum ispif_intf intf,
 		if (enable)
 			val |= (csid << 20);
 		break;
+	case RDI3:
+		printk(KERN_ERR "%s:%d DBG RDI3!!!\n", __func__, __LINE__);
+		break;
 	}
 
 	writel(val, ispif->base + ISPIF_VFE_m_INTF_INPUT_SEL(vfe));
@@ -636,6 +648,9 @@ static void ispif_select_cid(struct ispif_device *ispif, enum ispif_intf intf,
 		break;
 	case RDI2:
 		addr = ISPIF_VFE_m_RDI_INTF_n_CID_MASK(vfe, 2);
+		break;
+	case RDI3:
+		printk(KERN_ERR "%s:%d DBG RDI3!!!\n", __func__, __LINE__);
 		break;
 	}
 
@@ -705,6 +720,9 @@ static void ispif_config_irq(struct ispif_device *ispif, enum ispif_intf intf,
 		writel_relaxed(val, ispif->base + ISPIF_VFE_m_IRQ_MASK_2(vfe));
 		writel_relaxed(ISPIF_VFE_m_IRQ_MASK_2_RDI2_ENABLE,
 			       ispif->base + ISPIF_VFE_m_IRQ_CLEAR_2(vfe));
+		break;
+	case RDI3:
+		printk(KERN_ERR "%s:%d DBG RDI3!!!\n", __func__, __LINE__);
 		break;
 	}
 
@@ -1245,7 +1263,10 @@ static enum ispif_intf ispif_get_intf(enum vfe_line_id line_id)
 		return RDI1;
 	case (VFE_LINE_RDI2):
 		return RDI2;
+	//case (VFE_LINE_RDI3):
+	//	return RDI3;
 	case (VFE_LINE_PIX):
+		printk(KERN_ERR "%s:%d DBG RDI3!!!\n", __func__, __LINE__);
 		return PIX0;
 	default:
 		return RDI0;

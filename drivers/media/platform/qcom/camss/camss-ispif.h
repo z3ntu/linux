@@ -26,7 +26,8 @@ enum ispif_intf {
 	RDI0,
 	PIX1,
 	RDI1,
-	RDI2
+	RDI2,
+	RDI3
 };
 
 struct ispif_intf_cmd_reg {
