@@ -567,6 +567,7 @@ int msm_csiphy_subdev_init(struct camss *camss,
 		csiphy->formats = csiphy_formats_8x96;
 		csiphy->nformats = ARRAY_SIZE(csiphy_formats_8x96);
 	} else if (camss->version == CAMSS_845 ||
+		   camss->version == CAMSS_6350 ||
 		   camss->version == CAMSS_8250) {
 		csiphy->ops = &csiphy_ops_3ph_1_0;
 		csiphy->formats = csiphy_formats_sdm845;

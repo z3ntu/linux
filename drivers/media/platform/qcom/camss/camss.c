@@ -663,6 +663,186 @@ static const struct resources vfe_res_845[] = {
 	}
 };
 
+static const struct resources csiphy_res_6350[] = {
+	/* CSIPHY0 */
+	{
+		.regulators = {},
+		.clock = { "csiphy0", "csiphy0_timer" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy0" },
+		.interrupt = { "csiphy0" }
+	},
+	/* CSIPHY1 */
+	{
+		.regulators = {},
+		.clock = { "csiphy1", "csiphy1_timer" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy1" },
+		.interrupt = { "csiphy1" }
+	},
+	/* CSIPHY2 */
+	{
+		.regulators = {},
+		.clock = { "csiphy2", "csiphy2_timer" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy2" },
+		.interrupt = { "csiphy2" }
+	},
+	/* CSIPHY3 */
+	{
+		.regulators = {},
+		.clock = { "csiphy3", "csiphy3_timer" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy3" },
+		.interrupt = { "csiphy3" }
+	}
+};
+
+static const struct resources csid_res_6350[] = {
+	/* CSID0 */
+	{
+		.regulators = { "vdda-0.9", "vdda-1.25" },
+		.clock = { "vfe0_csid", "vfe0_cphy_rx", "vfe0" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 0 },
+				{ 320000000, 404000000, 480000000, 600000000 } },
+		.reg = { "csid0" },
+		.interrupt = { "csid0" }
+	},
+	/* CSID1 */
+	{
+		.regulators = { "vdda-0.9", "vdda-1.25" },
+		.clock = { "vfe1_csid", "vfe1_cphy_rx", "vfe1" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 0 },
+				{ 320000000, 404000000, 480000000, 600000000 } },
+		.reg = { "csid1" },
+		.interrupt = { "csid1" }
+	},
+	/* CSID2 */
+	{
+		.regulators = { "vdda-0.9", "vdda-1.25" },
+		.clock = { "vfe2_csid", "vfe2_cphy_rx", "vfe2" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 0 },
+				{ 320000000, 404000000, 480000000, 600000000 } },
+		.reg = { "csid2" },
+		.interrupt = { "csid2" }
+	},
+	/* CSID3 (lite) */
+	{
+		.regulators = { "vdda-0.9", "vdda-1.25" },
+		.clock = { "vfe_lite_csid", "vfe_lite_cphy_rx", "vfe_lite" },
+		.clock_rate = { { 300000000, 384000000, 400000000 },
+				{ 0 },
+				{ 400000000, 480000000 } },
+		.reg = { "csid_lite" },
+		.interrupt = { "csid_lite" }
+	}
+};
+
+// FIXME cam_hf_axi doesn't exist, maybe cam_axi?
+static const struct resources vfe_res_6350[] = {
+	/* VFE0 */
+	{
+		.regulators = {},
+		.clock = { "slow_ahb_src", "cpas_ahb",
+			   "camnoc_axi", "vfe0", "vfe0_axi", "cam_axi" },
+		.clock_rate = { { 19200000, 80000000 },
+				{ 19200000 },
+				{ 0 },
+				{ 320000000, 404000000, 480000000, 600000000 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "vfe0" },
+		.interrupt = { "vfe0" }
+	},
+	/* VFE1 */
+	{
+		.regulators = {},
+		.clock = { "slow_ahb_src", "cpas_ahb",
+			   "camnoc_axi", "vfe1", "vfe1_axi", "cam_axi" },
+		.clock_rate = { { 19200000, 80000000 },
+				{ 19200000 },
+				{ 0 },
+				{ 320000000, 404000000, 480000000, 600000000 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "vfe1" },
+		.interrupt = { "vfe1" }
+	},
+	/* VFE2 */
+	{
+		.regulators = {},
+		.clock = { "slow_ahb_src", "cpas_ahb",
+			   "camnoc_axi", "vfe2", "vfe2_axi", "cam_axi" },
+		.clock_rate = { { 19200000, 80000000 },
+				{ 19200000 },
+				{ 0 },
+				{ 320000000, 404000000, 480000000, 600000000 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "vfe2" },
+		.interrupt = { "vfe2" }
+	},
+	/* VFE3 (lite) */
+	{
+		.regulators = {},
+		.clock = { "slow_ahb_src", "cpas_ahb",
+			   "camnoc_axi", "vfe_lite", "cam_axi" },
+		.clock_rate = { { 19200000, 80000000 },
+				{ 19200000 },
+				{ 0 },
+				{ 400000000, 480000000 },
+				{ 0 } },
+		.reg = { "vfe_lite" },
+		.interrupt = { "vfe_lite" }
+	},
+};
+
+// FIXME generally might be a bit off
+static const struct resources_icc icc_res_sm6350[] = {
+	{
+		.name = "cam_ahb",
+		.icc_bw_tbl.avg = 38400,
+		.icc_bw_tbl.peak = 76800,
+	},
+	{
+		.name = "cam_hf_0_mnoc",
+		.icc_bw_tbl.avg = 2097152,
+		.icc_bw_tbl.peak = 2097152,
+	},
+	{
+		.name = "cam_hf_0_camnoc",
+		.icc_bw_tbl.avg = 0, // FIXME
+		.icc_bw_tbl.peak = 0, // FIXME
+	},
+	{
+		.name = "cam_sf_0_mnoc",
+		.icc_bw_tbl.avg = 0,
+		.icc_bw_tbl.peak = 2097152,
+	},
+	{
+		.name = "cam_sf_0_camnoc",
+		.icc_bw_tbl.avg = 0, // FIXME
+		.icc_bw_tbl.peak = 0, // FIXME
+	},
+	{
+		.name = "cam_sf_icp_mnoc",
+		.icc_bw_tbl.avg = 2097152,
+		.icc_bw_tbl.peak = 2097152,
+	},
+	{
+		.name = "cam_sf_icp_camnoc",
+		.icc_bw_tbl.avg = 0, // FIXME
+		.icc_bw_tbl.peak = 0, // FIXME
+	},
+};
+
 static const struct resources csiphy_res_8250[] = {
 	/* CSIPHY0 */
 	{
@@ -1148,6 +1328,12 @@ static int camss_init_subdevices(struct camss *camss)
 		/* Titan VFEs don't have an ISPIF  */
 		ispif_res = NULL;
 		vfe_res = vfe_res_845;
+	} else if (camss->version == CAMSS_6350) {
+		csiphy_res = csiphy_res_6350;
+		csid_res = csid_res_6350;
+		/* Titan VFEs don't have an ISPIF  */
+		ispif_res = NULL;
+		vfe_res = vfe_res_6350;
 	} else if (camss->version == CAMSS_8250) {
 		csiphy_res = csiphy_res_8250;
 		csid_res = csid_res_8250;
@@ -1512,7 +1698,10 @@ static int camss_icc_get(struct camss *camss)
 	int nbr_icc_paths = 0;
 	int i;
 
-	if (camss->version == CAMSS_8250) {
+	if (camss->version == CAMSS_6350) {
+		icc_res = &icc_res_sm6350[0];
+		nbr_icc_paths = ICC_SM6350_COUNT;
+	} else if (camss->version == CAMSS_8250) {
 		icc_res = &icc_res_sm8250[0];
 		nbr_icc_paths =	ICC_SM8250_COUNT;
 	}
@@ -1572,6 +1761,12 @@ static int camss_probe(struct platform_device *pdev)
 		camss->csiphy_num = 4;
 		camss->csid_num = 3;
 		camss->vfe_num = 3;
+	} else if (of_device_is_compatible(dev->of_node,
+					   "qcom,sm6350-camss")) {
+		camss->version = CAMSS_6350;
+		camss->csiphy_num = 4;
+		camss->csid_num = 4;
+		camss->vfe_num = 4;
 	} else if (of_device_is_compatible(dev->of_node,
 					   "qcom,sm8250-camss")) {
 		camss->version = CAMSS_8250;
@@ -1729,6 +1924,7 @@ static const struct of_device_id camss_dt_match[] = {
 	{ .compatible = "qcom,msm8996-camss" },
 	{ .compatible = "qcom,sdm660-camss" },
 	{ .compatible = "qcom,sdm845-camss" },
+	{ .compatible = "qcom,sm6350-camss" },
 	{ .compatible = "qcom,sm8250-camss" },
 	{ }
 };
@@ -1742,7 +1938,9 @@ static int __maybe_unused camss_runtime_suspend(struct device *dev)
 	int i;
 	int ret;
 
-	if (camss->version == CAMSS_8250)
+	if (camss->version == CAMSS_6350)
+		nbr_icc_paths =	ICC_SM6350_COUNT;
+	else if (camss->version == CAMSS_8250)
 		nbr_icc_paths =	ICC_SM8250_COUNT;
 
 	for (i = 0; i < nbr_icc_paths; i++) {
@@ -1761,7 +1959,9 @@ static int __maybe_unused camss_runtime_resume(struct device *dev)
 	int i;
 	int ret;
 
-	if (camss->version == CAMSS_8250)
+	if (camss->version == CAMSS_6350)
+		nbr_icc_paths =	ICC_SM6350_COUNT;
+	else if (camss->version == CAMSS_8250)
 		nbr_icc_paths =	ICC_SM8250_COUNT;
 
 	for (i = 0; i < nbr_icc_paths; i++) {

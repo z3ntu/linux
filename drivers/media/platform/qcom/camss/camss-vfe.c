@@ -221,6 +221,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
 	else if (vfe->camss->version == CAMSS_8x96 ||
 		 vfe->camss->version == CAMSS_660 ||
 		 vfe->camss->version == CAMSS_845 ||
+		 vfe->camss->version == CAMSS_6350 ||
 		 vfe->camss->version == CAMSS_8250)
 		switch (sink_code) {
 		case MEDIA_BUS_FMT_YUYV8_2X8:
@@ -453,6 +454,7 @@ static int vfe_set_clock_rates(struct vfe_device *vfe)
 
 		if (!strcmp(clock->name, "vfe0") ||
 		    !strcmp(clock->name, "vfe1") ||
+		    !strcmp(clock->name, "vfe2") ||
 		    !strcmp(clock->name, "vfe_lite")) {
 			u64 min_rate = 0;
 			long rate;
@@ -1297,6 +1299,9 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 	case CAMSS_845:
 		vfe->ops = &vfe_ops_170;
 		break;
+	case CAMSS_6350:
+		vfe->ops = &vfe_ops_170; // FIXME? qcom,csid170_200 qcom,vfe170_150
+		break;
 	case CAMSS_8250:
 		vfe->ops = &vfe_ops_480;
 		break;
@@ -1408,6 +1413,7 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 				l->nformats = ARRAY_SIZE(formats_rdi_8x96);
 			}
 		} else if (camss->version == CAMSS_845 ||
+			   camss->version == CAMSS_6350 ||
 			   camss->version == CAMSS_8250) {
 			l->formats = formats_rdi_845;
 			l->nformats = ARRAY_SIZE(formats_rdi_845);

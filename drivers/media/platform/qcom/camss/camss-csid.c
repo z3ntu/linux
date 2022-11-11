@@ -163,7 +163,8 @@ static int csid_set_power(struct v4l2_subdev *sd, int on)
 	int ret = 0;
 
 	if (on) {
-		if (version == CAMSS_8250 || version == CAMSS_845) {
+		if (version == CAMSS_6350 || version == CAMSS_8250 ||
+		    version == CAMSS_845) {
 			ret = vfe_get(vfe);
 			if (ret < 0)
 				return ret;
@@ -215,7 +216,8 @@ static int csid_set_power(struct v4l2_subdev *sd, int on)
 		regulator_bulk_disable(csid->num_supplies,
 				       csid->supplies);
 		pm_runtime_put_sync(dev);
-		if (version == CAMSS_8250 || version == CAMSS_845)
+		if (version == CAMSS_6350 || version == CAMSS_8250 ||
+		    version == CAMSS_845)
 			vfe_put(vfe);
 	}
 
@@ -576,6 +578,7 @@ int msm_csid_subdev_init(struct camss *camss, struct csid_device *csid,
 		   camss->version == CAMSS_660) {
 		csid->ops = &csid_ops_4_7;
 	} else if (camss->version == CAMSS_845 ||
+		   camss->version == CAMSS_6350 ||
 		   camss->version == CAMSS_8250) {
 		csid->ops = &csid_ops_gen2;
 	} else {
