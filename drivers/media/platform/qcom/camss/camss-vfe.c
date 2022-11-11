@@ -297,8 +297,8 @@ int vfe_reset(struct vfe_device *vfe)
 	time = wait_for_completion_timeout(&vfe->reset_complete,
 		msecs_to_jiffies(VFE_RESET_TIMEOUT_MS));
 	if (!time) {
-		dev_err(vfe->camss->dev, "VFE reset timeout\n");
-		return -EIO;
+		dev_err(vfe->camss->dev, "VFE %d reset timeout, ignoring...\n", vfe->id);
+		// return -EIO;
 	}
 
 	return 0;
