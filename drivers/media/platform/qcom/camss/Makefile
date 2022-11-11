@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # Makefile for Qualcomm CAMSS driver
 
+ccflags-y := -DDEBUG # FIXME
+
 qcom-camss-objs += \
 		camss.o \
 		camss-csid.o \
