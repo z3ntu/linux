@@ -557,6 +557,7 @@ detach_proxy_pds:
 	adsp_pds_detach(adsp, adsp->proxy_pds, adsp->proxy_pd_count);
 free_rproc:
 	rproc_free(rproc);
+	device_init_wakeup(adsp->dev, false);
 
 	return ret;
 }
@@ -573,6 +574,7 @@ static int adsp_remove(struct platform_device *pdev)
 	qcom_remove_smd_subdev(adsp->rproc, &adsp->smd_subdev);
 	qcom_remove_ssr_subdev(adsp->rproc, &adsp->ssr_subdev);
 	rproc_free(adsp->rproc);
+	device_init_wakeup(adsp->dev, false);
 
 	return 0;
 }
