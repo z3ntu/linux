@@ -82,6 +82,8 @@ static int clk_branch_wait(const struct clk_branch *br, bool enabling,
 		   br->halt_check == BRANCH_HALT ||
 		   (enabling && voted)) {
 		int count = 200;
+		//printk(KERN_ERR "%s status MAYBE stuck at 'o%s'", name,
+		//		enabling ? "ff" : "n");
 
 		while (count-- > 0) {
 			if (check_halt(br, enabling))

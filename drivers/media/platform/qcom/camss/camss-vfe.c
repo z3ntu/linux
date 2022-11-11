@@ -480,13 +480,17 @@ static int vfe_set_clock_rates(struct vfe_device *vfe)
 
 			camss_add_clock_margin(&min_rate);
 
-			for (j = 0; j < clock->nfreqs; j++)
+			printk(KERN_INFO "clock->nfreqs=%d\n", clock->nfreqs);
+
+			for (j = 0; j < clock->nfreqs; j++) {
+				printk(KERN_INFO "clock->nfreqs=%d min_rate=%lld clock->freq[j]=%d\n", clock->nfreqs, min_rate, clock->freq[j]);
 				if (min_rate < clock->freq[j])
 					break;
+			}
 
 			if (j == clock->nfreqs) {
 				dev_err(dev,
-					"Pixel clock is too high for VFE");
+					"Pixel clock %s is too high for VFE", clock->name);
 				return -EINVAL;
 			}
 
@@ -1340,6 +1344,8 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 	while (res->clock[vfe->nclocks])
 		vfe->nclocks++;
 
+	printk(KERN_INFO "id=%d vfe->nclocks=%d\n", id, vfe->nclocks);
+
 	vfe->clock = devm_kcalloc(dev, vfe->nclocks, sizeof(*vfe->clock),
 				  GFP_KERNEL);
 	if (!vfe->clock)
@@ -1357,6 +1363,8 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 		clock->nfreqs = 0;
 		while (res->clock_rate[i][clock->nfreqs])
 			clock->nfreqs++;
+
+		printk(KERN_INFO "id=%d clock->name=%s clock->nfreqs=%d\n", id, clock->name, clock->nfreqs);
 
 		if (!clock->nfreqs) {
 			clock->freq = NULL;

@@ -484,7 +484,7 @@ static u32 csid_hw_version(struct csid_device *csid)
 	hw_gen = (hw_version >> HW_VERSION_GENERATION) & 0xF;
 	hw_rev = (hw_version >> HW_VERSION_REVISION) & 0xFFF;
 	hw_step = (hw_version >> HW_VERSION_STEPPING) & 0xFFFF;
-	dev_dbg(csid->camss->dev, "CSID HW Version = %u.%u.%u\n",
+	dev_info(csid->camss->dev, "CSID HW Version = %u.%u.%u\n",
 		hw_gen, hw_rev, hw_step);
 
 	return hw_version;
@@ -506,6 +506,7 @@ static irqreturn_t csid_isr(int irq, void *dev)
 	val = readl_relaxed(csid->base + CSID_TOP_IRQ_STATUS);
 	writel_relaxed(val, csid->base + CSID_TOP_IRQ_CLEAR);
 	reset_done = val & BIT(TOP_IRQ_STATUS_RESET_DONE);
+	dev_info(csid->camss->dev, "csid_isr() reset_done = %d ??", reset_done);
 
 	val = readl_relaxed(csid->base + CSID_CSI2_RX_IRQ_STATUS);
 	writel_relaxed(val, csid->base + CSID_CSI2_RX_IRQ_CLEAR);
