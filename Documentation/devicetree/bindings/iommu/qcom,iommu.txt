@@ -14,6 +14,12 @@ to non-secure vs secure interrupt line.
 
                      Followed by "qcom,msm-iommu-v1".
 
+                     Or it should be one of:
+
+                        "qcom,msm8976-iommu"
+
+                     Followed by "qcom,msm-iommu-v2".
+
 - clock-names      : Should be a pair of "iface" (required for IOMMUs
                      register group access) and "bus" (required for
                      the IOMMUs underlying bus access).
@@ -37,6 +43,8 @@ to non-secure vs secure interrupt line.
   - compatible     : Should be one of:
         - "qcom,msm-iommu-v1-ns"  : non-secure context bank
         - "qcom,msm-iommu-v1-sec" : secure context bank
+        - "qcom,msm-iommu-v2-ns"  : non-secure QSMMUv2/QSMMU500 context bank
+        - "qcom,msm-iommu-v2-sec" : secure QSMMUv2/QSMMU500 context bank
   - reg            : Base address and size of context bank within the iommu
   - interrupts     : The context fault irq.
 
