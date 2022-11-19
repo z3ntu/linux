@@ -42,6 +42,59 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
+
+	fake-reg-mclk0 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk0";
+		pinctrl-names = "default";
+		pinctrl-0 = <&camss_mclk0_default>;
+		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		regulator-always-on;
+	};
+
+	fake-reg-mclk1 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk1";
+		pinctrl-names = "default";
+		pinctrl-0 = <&camss_mclk1_default>;
+		clocks = <&gcc GCC_CAMSS_MCLK1_CLK>;
+		regulator-always-on;
+	};
+};
+
+&cci {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&cci0_default>,
+		    <&cci1_default>;
+};
+
+&cci_i2c0 {
+	/* Rear camera */
+	/*
+	 * CAM_MCLK0
+	 * Reset: gpio40
+	 *     sudo gpioset gpiochip0 40=1
+	 * Regulators: VREG_L22 + VREG_L2 + CAM_I/O_1P8 + CAM_AF_2P85
+	 */
+};
+
+// CAM_I/O_1P8: regulator-fixed from VPH_PWR with (gpio123 or) gpio130, 1.8V
+//     sudo gpioset gpiochip0 130=1
+// CAM_AF_2P85: regulator-fixed from VPH_PWR with gpio128, 2.85V
+//     sudo gpioset gpiochip0 128=1
+// CAM2_DIG_1P2: regulator-fixed from VPH_PWR with gpio46, 1.2V
+//     sudo gpioset gpiochip0 46=1
+
+&cci_i2c1 {
+	/* Front camera */
+	/*
+	 * CAM_MCLK1
+	 * Reset: gpio129
+	 *     sudo gpioset gpiochip0 129=1
+	 * Regulators: CAM_I/O_1P8 + VREG_L22 + CAM2_DIG_1P2 + VREG_L10
+	 */
 };
 
 &dsi0 {
@@ -227,6 +280,7 @@
 		pm8953_l2: l2 {
 			regulator-min-microvolt = <975000>;
 			regulator-max-microvolt = <1175000>;
+			regulator-always-on; // FIXME camera
 		};
 		pm8953_l3: l3 {
 			regulator-min-microvolt = <925000>;
@@ -255,6 +309,7 @@
 		pm8953_l10: l10 {
 			regulator-min-microvolt = <2800000>;
 			regulator-max-microvolt = <3000000>;
+			regulator-always-on; // FIXME camera
 		};
 		pm8953_l11: l11 {
 			regulator-min-microvolt = <2950000>;
@@ -283,6 +338,7 @@
 		pm8953_l22: l22 {
 			regulator-min-microvolt = <2800000>;
 			regulator-max-microvolt = <2800000>;
+			regulator-always-on; // FIXME camera
 		};
 		pm8953_l23: l23 {
 			regulator-min-microvolt = <975000>;
