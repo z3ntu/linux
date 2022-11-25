@@ -149,7 +149,7 @@ static struct clk_branch video_cc_iris_ahb_clk = {
 				&video_cc_iris_clk_src.clkr.hw,
 			},
 			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | ALWAYS_ON,
 			.ops = &clk_branch2_ops,
 		},
 	},
@@ -164,6 +164,7 @@ static struct clk_branch video_cc_mvs0_axi_clk = {
 		.hw.init = &(struct clk_init_data){
 			.name = "video_cc_mvs0_axi_clk",
 			.ops = &clk_branch2_ops,
+			.flags = ALWAYS_ON,
 		},
 	},
 };
@@ -182,7 +183,7 @@ static struct clk_branch video_cc_mvs0_core_clk = {
 				&video_cc_iris_clk_src.clkr.hw,
 			},
 			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | ALWAYS_ON,
 			.ops = &clk_branch2_ops,
 		},
 	},
@@ -200,7 +201,7 @@ static struct clk_branch video_cc_mvsc_core_clk = {
 				&video_cc_iris_clk_src.clkr.hw,
 			},
 			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | ALWAYS_ON,
 			.ops = &clk_branch2_ops,
 		},
 	},
@@ -215,6 +216,7 @@ static struct clk_branch video_cc_mvsc_ctl_axi_clk = {
 		.hw.init = &(struct clk_init_data){
 			.name = "video_cc_mvsc_ctl_axi_clk",
 			.ops = &clk_branch2_ops,
+			.flags = ALWAYS_ON,
 		},
 	},
 };
@@ -231,7 +233,7 @@ static struct clk_branch video_cc_sleep_clk = {
 				&video_cc_sleep_clk_src.clkr.hw,
 			},
 			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | ALWAYS_ON,
 			.ops = &clk_branch2_ops,
 		},
 	},
@@ -246,6 +248,7 @@ static struct clk_branch video_cc_venus_ahb_clk = {
 		.hw.init = &(struct clk_init_data){
 			.name = "video_cc_venus_ahb_clk",
 			.ops = &clk_branch2_ops,
+			.flags = ALWAYS_ON,
 		},
 	},
 };
