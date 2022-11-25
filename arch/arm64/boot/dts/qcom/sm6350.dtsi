@@ -1483,12 +1483,14 @@
 				 <&videocc VIDEO_CC_MVS0_AXI_CLK>;
 			clock-names = "core", "bus", "iface",
 				      "vcodec_core", "vcodec_bus";
-			assigned-clocks = <&videocc VIDEO_CC_MVSC_CORE_CLK>,
-					  <&videocc VIDEO_CC_VENUS_AHB_CLK>;
-			assigned-clock-rates = <200000000>, <200000000>;
+			//assigned-clocks = <&videocc VIDEO_CC_MVSC_CORE_CLK>,
+			//		  <&videocc VIDEO_CC_VENUS_AHB_CLK>;
+			//assigned-clock-rates = <200000000>, <200000000>;
 			// FIXME Do we need both iommu?
-			iommus = <&apps_smmu 0x0c00 0x20>; //,
-				 //<&apps_smmu 0x0c04 0x20>;
+			iommus = <&apps_smmu 0x0c00 0x20>,
+				 <&apps_smmu 0x0c04 0x20>,
+				 <&apps_smmu 0x0c01 0x04>,
+				 <&apps_smmu 0x0c03 0x00>;
 			memory-region = <&pil_video_mem>;
 			interconnects = <&mmss_noc MASTER_VIDEO_P0 0 &clk_virt SLAVE_EBI_CH0 0>,
 					<&gem_noc MASTER_AMPSS_M0 0 &config_noc SLAVE_VENUS_CFG 0>;
