@@ -468,6 +468,7 @@ static int venus_boot_core(struct venus_hfi_device *hdev)
 
 	while (!ctrl_status && count < max_tries) {
 		ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
+		dev_err(hdev->core->dev, "%s:%d ctrl_status=%x (OK %d)\n", __func__, __LINE__, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_ERROR_STATUS_MASK);
 		if ((ctrl_status & CPU_CS_SCIACMDARG0_ERROR_STATUS_MASK) == 4) {
 			dev_err(dev, "invalid setting for UC_REGION\n");
 			ret = -EINVAL;
@@ -530,7 +531,7 @@ static int venus_run(struct venus_hfi_device *hdev)
 
 	ret = venus_boot_core(hdev);
 	if (ret) {
-		dev_err(dev, "failed to reset venus core\n");
+		dev_err(dev, "failed to reset venus core: %d\n", ret);
 		return ret;
 	}
 
@@ -553,8 +554,12 @@ static int venus_halt_axi(struct venus_hfi_device *hdev)
 	if (IS_V6(hdev->core)) {
 		writel(0x3, cpu_cs_base + CPU_CS_X2RPMH_V6);
 
-		if (hdev->core->res->num_vpp_pipes == 1)
+		if (hdev->core->res->num_vpp_pipes == 1) {
+			printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 			goto skip_aon_mvp_noc;
+		}
+
+		BUG(); // sm6350 shouldn't hit this
 
 		writel(0x1, aon_base + AON_WRAPPER_MVP_NOC_LPI_CONTROL);
 		ret = readl_poll_timeout(aon_base + AON_WRAPPER_MVP_NOC_LPI_STATUS,
@@ -1551,7 +1556,7 @@ static bool venus_cpu_and_video_core_idle(struct venus_hfi_device *hdev)
 		cpu_status = readl(wrapper_base + WRAPPER_CPU_STATUS);
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
 
-	dev_err(hdev->core->dev, "cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK);
+	dev_err(hdev->core->dev, "%s:%d cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", __func__, __LINE__, cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK);
 
 	if (cpu_status & WRAPPER_CPU_STATUS_WFI &&
 	    ctrl_status & CPU_CS_SCIACMDARG0_INIT_IDLE_MSG_MASK)
@@ -1573,7 +1578,7 @@ static bool venus_cpu_idle_and_pc_ready(struct venus_hfi_device *hdev)
 		cpu_status = readl(wrapper_base + WRAPPER_CPU_STATUS);
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
 
-	dev_err(hdev->core->dev, "cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_PC_READY);
+	dev_err(hdev->core->dev, "%s:%d cpu_status=%x (OK %ld) ctrl_status=%x (OK %ld)\n", __func__, __LINE__, cpu_status, cpu_status & WRAPPER_CPU_STATUS_WFI, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_PC_READY);
 
 	if (cpu_status & WRAPPER_CPU_STATUS_WFI &&
 	    ctrl_status & CPU_CS_SCIACMDARG0_PC_READY)
