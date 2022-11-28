@@ -156,6 +156,17 @@
 		interrupts-extended = <&tlmm 31 IRQ_TYPE_EDGE_FALLING>;
 		omit-battery-class;
 	};
+
+	nfc@28 {
+		compatible = "nxp,pn544-i2c";
+		reg = <0x28>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <59 IRQ_TYPE_LEVEL_HIGH>;
+
+		enable-gpios = <&tlmm 13 GPIO_ACTIVE_HIGH>;
+		firmware-gpios = <&tlmm 12 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &blsp1_uart2 {
