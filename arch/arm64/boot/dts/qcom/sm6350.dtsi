@@ -1545,7 +1545,7 @@
 			clock-names = "bi_tcxo",
 				      "sleep_clk";
 			power-domains = <&rpmhpd SM6350_CX>;
-			required-opps = <&rpmhpd_opp_low_svs>; // TODO?
+			required-opps = <&rpmhpd_opp_nom>; // <&rpmhpd_opp_low_svs>; // TODO?
 			#clock-cells = <1>;
 			#reset-cells = <1>;
 			#power-domain-cells = <1>;

@@ -251,12 +251,13 @@ static const struct hfi_plat_caps *get_capabilities(unsigned int *entries)
 	return caps;
 }
 
+// downstream: static struct msm_vidc_codec lagoon_codecs
 static void get_codecs(u32 *enc_codecs, u32 *dec_codecs, u32 *count)
 {
-	*enc_codecs = HFI_VIDEO_CODEC_H264 | HFI_VIDEO_CODEC_HEVC |
-		      HFI_VIDEO_CODEC_VP8;
+	*enc_codecs = HFI_VIDEO_CODEC_H264 | HFI_VIDEO_CODEC_HEVC; // |
+		      //HFI_VIDEO_CODEC_VP8;
 	*dec_codecs = HFI_VIDEO_CODEC_H264 | HFI_VIDEO_CODEC_HEVC |
-		      HFI_VIDEO_CODEC_VP8 | HFI_VIDEO_CODEC_VP9 |
+		      /*HFI_VIDEO_CODEC_VP8 |*/ HFI_VIDEO_CODEC_VP9 |
 		      HFI_VIDEO_CODEC_MPEG2;
 	*count = 8;
 }

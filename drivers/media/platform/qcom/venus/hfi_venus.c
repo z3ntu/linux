@@ -468,7 +468,7 @@ static int venus_boot_core(struct venus_hfi_device *hdev)
 
 	while (!ctrl_status && count < max_tries) {
 		ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
-		dev_err(hdev->core->dev, "%s:%d ctrl_status=%x (OK %d)\n", __func__, __LINE__, ctrl_status, ctrl_status & CPU_CS_SCIACMDARG0_ERROR_STATUS_MASK);
+		dev_err(hdev->core->dev, "%s:%d ctrl_status=%x\n", __func__, __LINE__, ctrl_status);
 		if ((ctrl_status & CPU_CS_SCIACMDARG0_ERROR_STATUS_MASK) == 4) {
 			dev_err(dev, "invalid setting for UC_REGION\n");
 			ret = -EINVAL;
@@ -1595,10 +1595,14 @@ static int venus_suspend_3xx(struct venus_core *core)
 	u32 ctrl_status;
 	bool val;
 	int ret;
+	dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 
-	if (!hdev->power_enabled || hdev->suspended)
+	if (!hdev->power_enabled || hdev->suspended) {
+		dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 		return 0;
+	}
 
+	dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 	mutex_lock(&hdev->lock);
 	ret = venus_is_valid_state(hdev);
 	mutex_unlock(&hdev->lock);
@@ -1609,8 +1613,10 @@ static int venus_suspend_3xx(struct venus_core *core)
 	}
 
 	ctrl_status = readl(cpu_cs_base + CPU_CS_SCIACMDARG0);
-	if (ctrl_status & CPU_CS_SCIACMDARG0_PC_READY)
+	if (ctrl_status & CPU_CS_SCIACMDARG0_PC_READY) {
+		dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 		goto power_off;
+	}
 
 	/*
 	 * Power collapse sequence for Venus 3xx and 4xx versions:
@@ -1642,6 +1648,7 @@ static int venus_suspend_3xx(struct venus_core *core)
 	}
 
 power_off:
+	dev_err(hdev->core->dev, "%s:%d DBG\n", __func__, __LINE__);
 	mutex_lock(&hdev->lock);
 
 	ret = venus_power_off(hdev);

@@ -205,6 +205,8 @@ static int venus_enumerate_codecs(struct venus_core *core, u32 type)
 	if (core->res->hfi_version != HFI_VERSION_1XX)
 		return 0;
 
+	BUG(); // shouldn't hit this
+
 	inst = kzalloc(sizeof(*inst), GFP_KERNEL);
 	if (!inst)
 		return -ENOMEM;
@@ -322,11 +324,14 @@ static int venus_probe(struct platform_device *pdev)
 			return ret;
 	}
 
-	ret = dma_set_mask_and_coherent(dev, core->res->dma_mask);
-	if (ret)
-		goto err_core_put;
+	//ret = dma_set_mask_and_coherent(dev, core->res->dma_mask);
+	//if (ret)
+	//	goto err_core_put;
 
-	dma_set_max_seg_size(dev, UINT_MAX);
+	//dma_set_max_seg_size(dev, UINT_MAX);
+
+	dma_set_max_seg_size(dev, DMA_BIT_MASK(32));
+	dma_set_seg_boundary(dev, (unsigned long)DMA_BIT_MASK(64));
 
 	INIT_LIST_HEAD(&core->instances);
 	mutex_init(&core->lock);
@@ -351,40 +356,53 @@ static int venus_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, core);
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	pm_runtime_enable(dev);
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = pm_runtime_get_sync(dev);
 	if (ret < 0)
 		goto err_runtime_disable;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = of_platform_populate(dev->of_node, NULL, NULL, dev);
 	if (ret)
 		goto err_runtime_disable;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = venus_firmware_init(core);
 	if (ret)
 		goto err_of_depopulate;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = venus_boot(core);
 	if (ret)
 		goto err_firmware_deinit;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = hfi_core_resume(core, true);
 	if (ret)
 		goto err_venus_shutdown;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = hfi_core_init(core);
 	if (ret)
 		goto err_venus_shutdown;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = venus_enumerate_codecs(core, VIDC_SESSION_TYPE_DEC);
 	if (ret)
 		goto err_venus_shutdown;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = venus_enumerate_codecs(core, VIDC_SESSION_TYPE_ENC);
 	if (ret)
 		goto err_venus_shutdown;
 
+	msleep(1000);
+	//usleep_range(200000, 210000);
+
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = pm_runtime_put_sync(dev);
 	if (ret) {
 		printk(KERN_ERR "%s:%d ret=%d\n", __func__, __LINE__, ret);
@@ -392,6 +410,7 @@ static int venus_probe(struct platform_device *pdev)
 		goto err_dev_unregister;
 	}
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	venus_dbgfs_init(core);
 
 	return 0;
@@ -468,6 +487,10 @@ static __maybe_unused int venus_runtime_suspend(struct device *dev)
 	const struct venus_pm_ops *pm_ops = core->pm_ops;
 	int ret;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
+	usleep_range(50000, 51000);
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
+
 	ret = hfi_core_suspend(core);
 	if (ret)
 		return ret;
@@ -503,6 +526,7 @@ static __maybe_unused int venus_runtime_resume(struct device *dev)
 	const struct venus_pm_ops *pm_ops = core->pm_ops;
 	int ret;
 
+	printk(KERN_ERR "%s:%d\n", __func__, __LINE__);
 	ret = icc_set_bw(core->video_path, kbps_to_icc(20000), 0);
 	if (ret)
 		return ret;
