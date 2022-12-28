@@ -69,9 +69,11 @@ properties:
       CX regulator to be held on behalf of the booting of the WCNSS core.
 
   power-domains:
+    minItems: 1
     maxItems: 2
 
   power-domain-names:
+    minItems: 1
     items:
       - const: cx
       - const: mx
