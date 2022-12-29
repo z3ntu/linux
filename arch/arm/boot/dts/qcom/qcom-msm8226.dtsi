@@ -904,6 +904,11 @@
 			#hwlock-cells = <1>;
 		};
 
+		tcsr_regs_1: syscon@fd485000 {
+			compatible = "qcom,msm8226-tcsr", "syscon";
+			reg = <0xfd485000 0x1000>;
+		};
+
 		adsp: remoteproc@fe200000 {
 			compatible = "qcom,msm8226-adsp-pil";
 			reg = <0xfe200000 0x100>;
