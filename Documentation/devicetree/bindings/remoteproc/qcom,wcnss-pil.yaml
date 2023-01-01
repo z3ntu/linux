@@ -111,6 +111,7 @@ properties:
         enum:
           - qcom,wcn3620
           - qcom,wcn3660
+          - qcom,wcn3660a
           - qcom,wcn3660b
           - qcom,wcn3680
 
