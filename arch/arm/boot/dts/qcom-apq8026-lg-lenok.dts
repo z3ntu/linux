@@ -27,6 +27,21 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	chosen {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		framebuffer@f100000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0f100000 (320 * 320 * 3)>;
+			width = <320>;
+			height = <320>;
+			stride = <(320 * 3)>;
+			format = "r8g8b8";
+		};
+	};
+
 	reserved-memory {
 		sbl_region: sbl@2f00000 {
 			reg = <0x02f00000 0x100000>;
@@ -40,6 +55,12 @@
 
 		adsp_region: adsp@3300000 {
 			reg = <0x03300000 0x1400000>;
+			no-map;
+		};
+
+		framebuffer@f100000 {
+			// FIXME Needs to be quite a bit larger than 0x4b000 for some unknown reason
+			reg = <0x0f100000 0x100000>;
 			no-map;
 		};
 	};
