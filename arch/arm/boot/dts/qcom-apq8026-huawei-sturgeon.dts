@@ -17,6 +17,21 @@
 	qcom,msm-id = <199 0x20000>;
 	qcom,board-id = <8 4>;
 
+	chosen {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		framebuffer@4200000 {
+			compatible = "simple-framebuffer";
+			reg = <0x04200000 (400 * 400 * 3)>;
+			width = <400>;
+			height = <400>;
+			stride = <(400 * 3)>;
+			format = "r8g8b8";
+		};
+	};
+
 	reserved-memory {
 		sbl_region: sbl@2f00000 {
 			reg = <0x02f00000 0x100000>;
@@ -35,6 +50,11 @@
 
 		adsp_region: adsp@3900000 {
 			reg = <0x3900000 0x1400000>;
+			no-map;
+		};
+
+		framebuffer@4200000 {
+			reg = <0x4200000 0x75300>;
 			no-map;
 		};
 
