@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2022, Matti Lehtimäki <matti.lehtimaki@gmail.com>
+ * Copyright (c) 2023, Stefan Hansson <newbyte@postmarketos.org>
+ */
+
+/dts-v1/;
+
+#include "qcom-msm8226-samsung-matisse-common.dtsi"
+
+/ {
+	model = "Samsung Galaxy Tab 4 10.1 LTE";
+	compatible = "samsung,matisselte", "qcom,msm8926";
+	chassis-type = "tablet";
+};
+
+&reg_tsp_3p3v {
+		gpio = <&tlmm 32 GPIO_ACTIVE_HIGH>;
+};
+
+&pm8226_s4 {
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <2200000>;
+};
+
+&pm8226_l3 {
+	regulator-min-microvolt = <750000>;
+	regulator-max-microvolt = <1350000>;
+	regulator-always-on;
+};
+
+&tsp_en1_default_state {
+	pins = "gpio32";
+};
