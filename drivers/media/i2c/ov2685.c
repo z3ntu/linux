@@ -104,7 +104,6 @@ struct ov2685 {
 
 /* PLL settings bases on 24M xvclk */
 static struct regval ov2685_1600x1200_regs[] = {
-	{0x0103, 0x01},
 	{0x0100, 0x00},
 	{0x3002, 0x00},
 	{0x3016, 0x1c},
@@ -250,6 +249,8 @@ static int ov2685_write_reg(struct i2c_client *client, u16 reg,
 	u8 *val_p;
 	__be32 val_be;
 
+	dev_err(&client->dev, "%s:%d reg=0x%x, len=%d\n", __func__, __LINE__, reg, len);
+
 	if (len > 4)
 		return -EINVAL;
 
@@ -264,8 +265,10 @@ static int ov2685_write_reg(struct i2c_client *client, u16 reg,
 	while (val_i < 4)
 		buf[buf_i++] = val_p[val_i++];
 
-	if (i2c_master_send(client, buf, len + 2) != len + 2)
+	if (i2c_master_send(client, buf, len + 2) != len + 2) {
+		dev_err(&client->dev, "%s:%d FAILED reg=0x%x, len=%d\n", __func__, __LINE__, reg, len);
 		return -EIO;
+	}
 
 	return 0;
 }
@@ -418,9 +421,17 @@ static int __ov2685_power_on(struct ov2685 *ov2685)
 	/* HACK: ov2685 would output messy data after reset(R0103),
 	 * writing register before .s_stream() as a workaround
 	 */
+
+	ret = ov2685_write_reg(ov2685->client, 0x0103, OV2685_REG_VALUE_08BIT, 0x01);
+
+	// .delay = 10
+	usleep_range(10000, 10100);
+
 	ret = ov2685_write_array(ov2685->client, ov2685->cur_mode->reg_list);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "Failed to set regs for power on\n");
 		goto disable_supplies;
+	}
 
 	return 0;
 
@@ -726,11 +737,11 @@ static int ov2685_probe(struct i2c_client *client,
 		dev_err(dev, "Failed to get xvclk\n");
 		return -EINVAL;
 	}
-	ret = clk_set_rate(ov2685->xvclk, OV2685_XVCLK_FREQ);
-	if (ret < 0) {
-		dev_err(dev, "Failed to set xvclk rate (24MHz)\n");
-		return ret;
-	}
+	// ret = clk_set_rate(ov2685->xvclk, OV2685_XVCLK_FREQ);
+	// if (ret < 0) {
+	// 	dev_err(dev, "Failed to set xvclk rate (24MHz)\n");
+	// 	return ret;
+	// }
 	if (clk_get_rate(ov2685->xvclk) != OV2685_XVCLK_FREQ)
 		dev_warn(dev, "xvclk mismatched, modes are based on 24MHz\n");
 

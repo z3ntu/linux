@@ -69,6 +69,17 @@
 
 		pinctrl-0 = <&vdd_front_cam_en_default>;
 		pinctrl-names = "default";
+
+		regulator-always-on;
+	};
+
+	fake-reg-mclk2 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk2";
+		pinctrl-names = "default";
+		pinctrl-0 = <&mclk2_pin_a>;
+		clocks = <&mmcc CAMSS_MCLK2_CLK>;
+		regulator-always-on;
 	};
 
 	vibrator {
@@ -136,6 +147,7 @@
 	vdda-supply = <&pm8941_l12>;
 
 	ports {
+		#if 0
 		port@0 {
 			reg = <0>;
 			csiphy0_ep: endpoint {
@@ -145,7 +157,9 @@
 				remote-endpoint = <&ov8865_ep>;
 			};
 		};
+		#endif
 
+		#if 1
 		port@2 {
 			reg = <2>;
 			csiphy2_ep: endpoint {
@@ -155,6 +169,7 @@
 				remote-endpoint = <&ov2685_ep>;
 			};
 		};
+		#endif
 	};
 };
 
@@ -171,6 +186,7 @@
 	// 	/* enable-gpios is shared with OV8865 powerdown-gpios */
 	// };
 
+	#if 0
 	ov8865: camera-sensor@10 {
 		compatible = "ovti,ov8865";
 		reg = <0x10>;
@@ -203,15 +219,17 @@
 			};
 		};
 	};
+	#endif
 };
 
 &cci_i2c1 {
+	#if 1
 	ov2685: camera-sensor@10 {
 		compatible = "ovti,ov2685";
 		reg = <0x10>;
 
-		pinctrl-0 = <&mclk2_pin_a>;
-		pinctrl-names = "default";
+		//pinctrl-0 = <&mclk2_pin_a>;
+		//pinctrl-names = "default";
 
 		clocks = <&mmcc CAMSS_MCLK2_CLK>;
 		clock-names = "xvclk";
@@ -235,6 +253,7 @@
 			};
 		};
 	};
+	#endif
 };
 
 &dsi0 {
