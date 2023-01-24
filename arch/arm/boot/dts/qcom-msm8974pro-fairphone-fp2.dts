@@ -51,6 +51,26 @@
 		};
 	};
 
+	/*
+	 * This models two fixed regulators, one providing 2.8V (AVDD_2P8) and
+	 * one providing 1.8V (DVDD_1P8). Both have the same vin-supply and
+	 * gpio and therefore modelled as one.
+	 */
+	reg_front_cam: regulator-front-camera {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_front_cam";
+		regulator-min-microvolt = <2800000>;
+		regulator-max-microvolt = <2800000>;
+
+		gpio = <&tlmm 18 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		vin-supply = <&pm8941_l22>;
+
+		pinctrl-0 = <&vdd_front_cam_en_default>;
+		pinctrl-names = "default";
+	};
+
 	vibrator {
 		compatible = "gpio-vibrator";
 		enable-gpios = <&tlmm 86 GPIO_ACTIVE_HIGH>;
@@ -125,6 +145,16 @@
 				remote-endpoint = <&ov8865_ep>;
 			};
 		};
+
+		port@2 {
+			reg = <2>;
+			csiphy2_ep: endpoint {
+				clock-lanes = <1>;
+				data-lanes = <0>;
+				link-frequencies = /bits/ 64 <330000000>;
+				remote-endpoint = <&ov2685_ep>;
+			};
+		};
 	};
 };
 
@@ -170,6 +200,38 @@
 				data-lanes = <0 2 3 4>;
 				link-frequencies = /bits/ 64 <360000000>;
 				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+};
+
+&cci_i2c1 {
+	ov2685: camera-sensor@10 {
+		compatible = "ovti,ov2685";
+		reg = <0x10>;
+
+		pinctrl-0 = <&mclk2_pin_a>;
+		pinctrl-names = "default";
+
+		clocks = <&mmcc CAMSS_MCLK2_CLK>;
+		clock-names = "xvclk";
+
+		avdd-supply = <&reg_front_cam>; /* AVDD_2P8 */
+		dovdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+		dvdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+
+		/* XSHUTDOWN pin unused, connected to DOVDD */
+
+		/* Front camera */
+		orientation = <0>;
+		// rotation = <0>; // FIXME
+
+		port {
+			ov2685_ep: endpoint {
+				clock-lanes = <1>;
+				data-lanes = <0>;
+				link-frequencies = /bits/ 64 <330000000>;
+				remote-endpoint = <&csiphy2_ep>;
 			};
 		};
 	};
@@ -558,9 +620,23 @@
 };
 
 &tlmm {
+	vdd_front_cam_en_default: vdd-front-cam-default-state {
+		pins = "gpio18";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
 	mclk0_pin_a: mclk0-pin-active-state {
 		pins = "gpio15";
 		function = "cam_mclk0";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	mclk2_pin_a: mclk2-pin-active-state {
+		pins = "gpio17";
+		function = "cam_mclk2";
 		drive-strength = <2>;
 		bias-disable;
 	};
