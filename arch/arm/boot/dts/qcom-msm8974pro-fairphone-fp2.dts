@@ -147,7 +147,7 @@
 	vdda-supply = <&pm8941_l12>;
 
 	ports {
-		#if 0
+		#if 1
 		port@0 {
 			reg = <0>;
 			csiphy0_ep: endpoint {
@@ -186,7 +186,7 @@
 	// 	/* enable-gpios is shared with OV8865 powerdown-gpios */
 	// };
 
-	#if 0
+	#if 1
 	ov8865: camera-sensor@10 {
 		compatible = "ovti,ov8865";
 		reg = <0x10>;
