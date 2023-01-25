@@ -69,11 +69,9 @@
 
 		pinctrl-0 = <&vdd_front_cam_en_default>;
 		pinctrl-names = "default";
-
-		regulator-always-on;
 	};
 
-	fake-reg-mclk2 {
+	fake-reg-mclk2 { // FIXME remove
 		compatible = "regulator-fixed-clock";
 		regulator-name = "fake-reg-mclk2";
 		pinctrl-names = "default";
@@ -147,7 +145,7 @@
 	vdda-supply = <&pm8941_l12>;
 
 	ports {
-		#if 1
+		#if 0
 		port@0 {
 			reg = <0>;
 			csiphy0_ep: endpoint {
@@ -165,8 +163,10 @@
 			csiphy2_ep: endpoint {
 				clock-lanes = <1>;
 				data-lanes = <0>;
-				link-frequencies = /bits/ 64 <330000000>;
-				remote-endpoint = <&ov2685_ep>;
+				//link-frequencies = /bits/ 64 <330000000>;
+				//remote-endpoint = <&ov2685_ep>;
+				link-frequencies = /bits/ 64 <422400000>;
+				remote-endpoint = <&ov5670_ep>;
 			};
 		};
 		#endif
@@ -186,7 +186,7 @@
 	// 	/* enable-gpios is shared with OV8865 powerdown-gpios */
 	// };
 
-	#if 1
+	#if 0
 	ov8865: camera-sensor@10 {
 		compatible = "ovti,ov8865";
 		reg = <0x10>;
@@ -223,7 +223,7 @@
 };
 
 &cci_i2c1 {
-	#if 1
+	#if 0
 	ov2685: camera-sensor@10 {
 		compatible = "ovti,ov2685";
 		reg = <0x10>;
@@ -249,6 +249,36 @@
 				clock-lanes = <1>;
 				data-lanes = <0>;
 				link-frequencies = /bits/ 64 <330000000>;
+				remote-endpoint = <&csiphy2_ep>;
+			};
+		};
+	};
+	#endif
+	#if 1
+	ov5670: camera-sensor@10 {
+		compatible = "ovti,ov5670";
+		reg = <0x10>;
+
+		//pinctrl-0 = <&mclk2_pin_a>;
+		//pinctrl-names = "default";
+
+		clocks = <&mmcc CAMSS_MCLK2_CLK>;
+
+		avdd-supply = <&reg_front_cam>; /* AVDD_2P8 */
+		dovdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+		dvdd-supply = <&reg_front_cam>; /* DVDD_1P8 */
+
+		/* XSHUTDOWN pin unused, connected to DOVDD */
+
+		/* Front camera */
+		orientation = <0>;
+		// rotation = <0>; // FIXME
+
+		port {
+			ov5670_ep: endpoint {
+				clock-lanes = <1>;
+				data-lanes = <0>;
+				link-frequencies = /bits/ 64 <422400000>;
 				remote-endpoint = <&csiphy2_ep>;
 			};
 		};
