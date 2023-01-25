@@ -2343,6 +2343,7 @@ static int ov5670_identify_module(struct ov5670 *ov5670)
 			OV5670_CHIP_ID, val);
 		return -ENXIO;
 	}
+	dev_err(&client->dev, "chip id match!\n");
 
 	ov5670->identified = true;
 
@@ -2691,6 +2692,12 @@ static int ov5670_probe(struct i2c_client *client)
 		pm_runtime_set_active(&client->dev);
 	}
 
+	ret = ov5670_identify_module(ov5670);
+	if (ret) {
+		err_msg = "ov5670_identify_module() error";
+		goto error_power_off;
+	}
+
 	mutex_init(&ov5670->mutex);
 
 	/* Set default mode to max resolution */
@@ -2726,6 +2733,7 @@ static int ov5670_probe(struct i2c_client *client)
 
 	pm_runtime_suspend(&client->dev);
 
+	dev_err(&client->dev, "%s: sensor probed!\n", __func__);
 	return 0;
 
 error_entity_cleanup:
