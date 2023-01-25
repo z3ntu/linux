@@ -2471,7 +2471,6 @@ static const struct v4l2_subdev_internal_ops ov5670_internal_ops = {
 static int ov5670_probe(struct i2c_client *client)
 {
 	struct ov5670 *ov5670;
-	const char *err_msg;
 	u32 input_clk = 0;
 	bool full_power;
 	int ret;
@@ -2481,11 +2480,8 @@ static int ov5670_probe(struct i2c_client *client)
 		return -EINVAL;
 
 	ov5670 = devm_kzalloc(&client->dev, sizeof(*ov5670), GFP_KERNEL);
-	if (!ov5670) {
-		ret = -ENOMEM;
-		err_msg = "devm_kzalloc() error";
-		goto error_print;
-	}
+	if (!ov5670)
+		return -ENOMEM;
 
 	/* Initialize subdev */
 	v4l2_i2c_subdev_init(&ov5670->sd, client, &ov5670_subdev_ops);
@@ -2494,10 +2490,8 @@ static int ov5670_probe(struct i2c_client *client)
 	if (full_power) {
 		/* Check module identity */
 		ret = ov5670_identify_module(ov5670);
-		if (ret) {
-			err_msg = "ov5670_identify_module() error";
-			goto error_print;
-		}
+		if (ret)
+			return dev_err_probe(&client->dev, ret, "ov5670_identify_module() error\n");
 	}
 
 	mutex_init(&ov5670->mutex);
@@ -2507,7 +2501,7 @@ static int ov5670_probe(struct i2c_client *client)
 
 	ret = ov5670_init_controls(ov5670);
 	if (ret) {
-		err_msg = "ov5670_init_controls() error";
+		dev_err_probe(&client->dev, ret, "ov5670_init_controls() error\n");
 		goto error_mutex_destroy;
 	}
 
@@ -2521,14 +2515,14 @@ static int ov5670_probe(struct i2c_client *client)
 	ov5670->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&ov5670->sd.entity, 1, &ov5670->pad);
 	if (ret) {
-		err_msg = "media_entity_pads_init() error";
+		dev_err_probe(&client->dev, ret, "media_entity_pads_init() error\n");
 		goto error_handler_free;
 	}
 
 	/* Async register for subdev */
 	ret = v4l2_async_register_subdev_sensor(&ov5670->sd);
 	if (ret < 0) {
-		err_msg = "v4l2_async_register_subdev() error";
+		dev_err_probe(&client->dev, ret, "v4l2_async_register_subdev() error\n");
 		goto error_entity_cleanup;
 	}
 
@@ -2550,9 +2544,6 @@ error_handler_free:
 
 error_mutex_destroy:
 	mutex_destroy(&ov5670->mutex);
-
-error_print:
-	dev_err(&client->dev, "%s: %s %d\n", __func__, err_msg, ret);
 
 	return ret;
 }
