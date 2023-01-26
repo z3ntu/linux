@@ -77,11 +77,6 @@
 #define OV5670_TEST_PATTERN_ENABLE	BIT(3)
 #define OV5670_REG_TEST_PATTERN_CTRL	0x4320
 
-/* MIPI lane config */
-#define OV5670_MIPI_LANE_SEL01_REG		0x4850
-#define OV5670_MIPI_LANE_SEL01_LANE0(v)		(((v) << 0) & GENMASK(2, 0))
-#define OV5670_MIPI_LANE_SEL01_LANE1(v)		(((v) << 4) & GENMASK(6, 4))
-
 #define OV5670_REG_VALUE_08BIT		1
 #define OV5670_REG_VALUE_16BIT		2
 #define OV5670_REG_VALUE_24BIT		3
@@ -104,7 +99,6 @@ struct ov5670_reg_list {
 };
 
 struct ov5670_link_freq_config {
-	u32 pixel_rate;
 	const struct ov5670_reg_list reg_list;
 };
 
@@ -175,7 +169,6 @@ static const struct ov5670_reg mode_2592x1944_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -441,7 +434,6 @@ static const struct ov5670_reg mode_1296x972_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -707,7 +699,6 @@ static const struct ov5670_reg mode_648x486_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -973,7 +964,6 @@ static const struct ov5670_reg mode_2560x1440_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -1238,7 +1228,6 @@ static const struct ov5670_reg mode_1280x720_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -1504,7 +1493,6 @@ static const struct ov5670_reg mode_640x360_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -1774,8 +1762,6 @@ static const char * const ov5670_test_pattern_menu[] = {
 #define OV5670_LINK_FREQ_422MHZ_INDEX	0
 static const struct ov5670_link_freq_config link_freq_configs[] = {
 	{
-		/* pixel_rate = link_freq * 2 / bits_per_sample */
-		.pixel_rate = (OV5670_LINK_FREQ_422MHZ * 2) / 10,
 		.reg_list = {
 			.num_of_regs = ARRAY_SIZE(mipi_data_rate_840mbps),
 			.regs = mipi_data_rate_840mbps,
@@ -1871,6 +1857,7 @@ static const struct ov5670_mode supported_modes[] = {
 struct ov5670 {
 	struct v4l2_subdev sd;
 	struct media_pad pad;
+	struct v4l2_fwnode_endpoint endpoint;
 
 	struct v4l2_ctrl_handler ctrl_handler;
 	/* V4L2 Controls */
@@ -2137,11 +2124,8 @@ static int ov5670_init_controls(struct ov5670 *ov5670)
 
 	/* By default, V4L2_CID_PIXEL_RATE is read only */
 	ov5670->pixel_rate = v4l2_ctrl_new_std(ctrl_hdlr, &ov5670_ctrl_ops,
-					       V4L2_CID_PIXEL_RATE,
-					       link_freq_configs[0].pixel_rate,
-					       link_freq_configs[0].pixel_rate,
-					       1,
-					       link_freq_configs[0].pixel_rate);
+					       V4L2_CID_PIXEL_RATE, 1,
+					       INT_MAX, 1, 1);
 
 	vblank_max = OV5670_VTS_MAX - ov5670->cur_mode->height;
 	vblank_def = ov5670->cur_mode->vts_def - ov5670->cur_mode->height;
@@ -2300,7 +2284,11 @@ static int ov5670_set_pad_format(struct v4l2_subdev *sd,
 				 struct v4l2_subdev_format *fmt)
 {
 	struct ov5670 *ov5670 = to_ov5670(sd);
+	struct v4l2_mbus_config_mipi_csi2 *bus_mipi_csi2 =
+		&ov5670->endpoint.bus.mipi_csi2;
 	const struct ov5670_mode *mode;
+	unsigned int lanes_count;
+	s64 mipi_pixel_rate;
 	s32 vblank_def;
 	s32 h_blank;
 
@@ -2318,9 +2306,13 @@ static int ov5670_set_pad_format(struct v4l2_subdev *sd,
 	} else {
 		ov5670->cur_mode = mode;
 		__v4l2_ctrl_s_ctrl(ov5670->link_freq, mode->link_freq_index);
+
+		lanes_count = bus_mipi_csi2->num_data_lanes;
+		/* pixel_rate = link_freq * 2 * nr_of_lanes / bits_per_sample */
+		mipi_pixel_rate = OV5670_LINK_FREQ_422MHZ * 2 * lanes_count / 10;
 		__v4l2_ctrl_s_ctrl_int64(
 			ov5670->pixel_rate,
-			link_freq_configs[mode->link_freq_index].pixel_rate);
+			mipi_pixel_rate);
 		/* Update limits and set FPS to default */
 		vblank_def = ov5670->cur_mode->vts_def -
 			     ov5670->cur_mode->height;
@@ -2374,37 +2366,30 @@ static int ov5670_identify_module(struct ov5670 *ov5670)
 	return 0;
 }
 
+static int ov5670_mipi_configure(struct ov5670 *ov5670)
+{
+	struct v4l2_mbus_config_mipi_csi2 *bus_mipi_csi2 =
+		&ov5670->endpoint.bus.mipi_csi2;
+	unsigned int lanes_count = bus_mipi_csi2->num_data_lanes;
+
+	return ov5670_write_reg(ov5670, OV5670_MIPI_SC_CTRL0_REG,
+				OV5670_REG_VALUE_08BIT,
+				OV5670_MIPI_SC_CTRL0_LANES(lanes_count) |
+				OV5670_MIPI_SC_CTRL0_MIPI_EN |
+				OV5670_MIPI_SC_CTRL0_UNKNOWN);
+}
+
 /* Prepare streaming by writing default values and customized values */
 static int ov5670_start_streaming(struct ov5670 *ov5670)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(&ov5670->sd);
 	const struct ov5670_reg_list *reg_list;
-	//struct v4l2_mbus_config_mipi_csi2 *bus_mipi_csi2 =
-	//	&sensor->endpoint.bus.mipi_csi2;
-	//unsigned int lanes_count = bus_mipi_csi2->num_data_lanes;
 	int link_freq_index;
 	int ret;
 
 	ret = ov5670_identify_module(ov5670);
 	if (ret)
 		return ret;
-
-	//unsigned int lanes_count = 1;
-	//ret = ov5670_write_reg(ov5670, OV5670_MIPI_SC_CTRL0_REG,
-	//		   OV5670_MIPI_SC_CTRL0_LANES(lanes_count) |
-	//		   OV5670_MIPI_SC_CTRL0_MIPI_EN |
-	//		   OV5670_MIPI_SC_CTRL0_UNKNOWN);
-	ret = ov5670_write_reg(ov5670, OV5670_MIPI_SC_CTRL0_REG,
-				OV5670_REG_VALUE_08BIT, 0x12);
-	if (ret)
-		return ret;
-	//ret = ov5670_write_reg(ov5670, OV5670_MIPI_LANE_SEL01_REG,
-	//		   OV5670_MIPI_LANE_SEL01_LANE0(0) |
-	//		   OV5670_MIPI_LANE_SEL01_LANE1(1));
-	//if (ret)
-	//	return ret;
-
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 
 	/* Get out of from software reset */
 	ret = ov5670_write_reg(ov5670, OV5670_REG_SOFTWARE_RST,
@@ -2415,7 +2400,6 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Setup PLL */
 	link_freq_index = ov5670->cur_mode->link_freq_index;
 	reg_list = &link_freq_configs[link_freq_index].reg_list;
@@ -2425,7 +2409,6 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Apply default values of current mode */
 	reg_list = &ov5670->cur_mode->reg_list;
 	ret = ov5670_write_reg_list(ov5670, reg_list);
@@ -2434,12 +2417,16 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
+	ret = ov5670_mipi_configure(ov5670);
+	if (ret) {
+		dev_err(&client->dev, "%s failed to configure MIPI\n", __func__);
+		return ret;
+	}
+
 	ret = __v4l2_ctrl_handler_setup(ov5670->sd.ctrl_handler);
 	if (ret)
 		return ret;
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Write stream on list */
 	ret = ov5670_write_reg(ov5670, OV5670_REG_MODE_SELECT,
 			       OV5670_REG_VALUE_08BIT, OV5670_MODE_STREAMING);
@@ -2448,7 +2435,6 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return 0;
 }
 
@@ -2457,13 +2443,11 @@ static int ov5670_stop_streaming(struct ov5670 *ov5670)
 	struct i2c_client *client = v4l2_get_subdevdata(&ov5670->sd);
 	int ret;
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	ret = ov5670_write_reg(ov5670, OV5670_REG_MODE_SELECT,
 			       OV5670_REG_VALUE_08BIT, OV5670_MODE_STANDBY);
 	if (ret)
 		dev_err(&client->dev, "%s failed to set stream\n", __func__);
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Return success even if it was an error, as there is nothing the
 	 * caller can do about it.
 	 */
@@ -2501,7 +2485,6 @@ error:
 unlock_and_return:
 	mutex_unlock(&ov5670->mutex);
 
-	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return ret;
 }
 
@@ -2735,6 +2718,21 @@ static int ov5670_probe(struct i2c_client *client)
 		goto error_print;
 	}
 
+	/* Graph Endpoint */
+	// FIXME
+	//handle = fwnode_graph_get_next_endpoint(dev_fwnode(dev), NULL);
+	//if (!handle)
+	//	return -EPROBE_DEFER;
+
+	//sensor->endpoint.bus_type = V4L2_MBUS_CSI2_DPHY;
+
+	//ret = v4l2_fwnode_endpoint_alloc_parse(handle, &sensor->endpoint);
+	//fwnode_handle_put(handle);
+	//if (ret) {
+	//	dev_err(dev, "failed to parse endpoint node\n");
+	//	return ret;
+	//}
+
 	full_power = acpi_dev_state_d0(&client->dev);
 	if (full_power) {
 		ret = ov5670_runtime_resume(&client->dev);
@@ -2807,6 +2805,7 @@ error_power_off:
 error_print:
 	dev_err(&client->dev, "%s: %s %d\n", __func__, err_msg, ret);
 
+	v4l2_fwnode_endpoint_free(&ov5670->endpoint); // FIXME
 	return ret;
 }
 
@@ -2822,6 +2821,8 @@ static void ov5670_remove(struct i2c_client *client)
 
 	ov5670_runtime_suspend(&client->dev);
 	pm_runtime_disable(&client->dev);
+
+	v4l2_fwnode_endpoint_free(&ov5670->endpoint);
 }
 
 static const struct dev_pm_ops ov5670_pm_ops = {
