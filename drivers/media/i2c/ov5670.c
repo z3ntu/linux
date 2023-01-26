@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2017 Intel Corporation.
 
+#include <asm/unaligned.h>
 #include <linux/acpi.h>
 #include <linux/clk.h>
+#include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
 #include <linux/mod_devicetable.h>
@@ -14,6 +16,8 @@
 #include <media/v4l2-device.h>
 #include <media/v4l2-event.h>
 #include <media/v4l2-fwnode.h>
+
+#define OV5670_XVCLK_FREQ		19200000
 
 #define OV5670_REG_CHIP_ID		0x300a
 #define OV5670_CHIP_ID			0x005670
@@ -1841,6 +1845,9 @@ struct ov5670 {
 	/* Current mode */
 	const struct ov5670_mode *cur_mode;
 
+	/* xvclk input clock */
+	struct clk *xvclk;
+
 	/* Regulators */
 	struct regulator_bulk_data supplies[OV5670_NUM_SUPPLIES];
 
@@ -2425,6 +2432,48 @@ unlock_and_return:
 	return ret;
 }
 
+static int __maybe_unused ov5670_runtime_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct ov5670 *ov5670 = to_ov5670(sd);
+	unsigned long delay_us;
+	int ret;
+
+	ret = clk_prepare_enable(ov5670->xvclk);
+	if (ret)
+		return ret;
+
+	ret = regulator_bulk_enable(OV5670_NUM_SUPPLIES, ov5670->supplies);
+	if (ret) {
+		clk_disable_unprepare(ov5670->xvclk);
+		return ret;
+	}
+
+	gpiod_set_value_cansleep(ov5670->pwdn_gpio, 0);
+	gpiod_set_value_cansleep(ov5670->reset_gpio, 0);
+
+	/* 8192 * 2 clock pulses before the first SCCB transaction. */
+	delay_us = DIV_ROUND_UP(8192 * 2, OV5670_XVCLK_FREQ / 1000 / 1000);
+	fsleep(delay_us);
+
+	return 0;
+}
+
+static int __maybe_unused ov5670_runtime_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct ov5670 *ov5670 = to_ov5670(sd);
+
+	gpiod_set_value_cansleep(ov5670->reset_gpio, 1);
+	gpiod_set_value_cansleep(ov5670->pwdn_gpio, 1);
+	regulator_bulk_disable(OV5670_NUM_SUPPLIES, ov5670->supplies);
+	clk_disable_unprepare(ov5670->xvclk);
+
+	return 0;
+}
+
 static int __maybe_unused ov5670_suspend(struct device *dev)
 {
 	struct v4l2_subdev *sd = dev_get_drvdata(dev);
@@ -2523,7 +2572,6 @@ static int ov5670_probe(struct i2c_client *client)
 	struct ov5670 *ov5670;
 	const char *err_msg;
 	u32 input_clk = 0;
-	struct clk *clk;
 	bool full_power;
 	int ret;
 
@@ -2536,18 +2584,19 @@ static int ov5670_probe(struct i2c_client *client)
 
 	/* OF uses the common clock framework, ACPI uses "clock-frequency". */
 	if (is_of_node(dev_fwnode(&client->dev))) {
-		clk = devm_clk_get(&client->dev, NULL);
-		if (IS_ERR(clk))
-			return dev_err_probe(&client->dev, PTR_ERR(clk),
+		ov5670->xvclk = devm_clk_get(&client->dev, NULL);
+		if (IS_ERR(ov5670->xvclk))
+			return dev_err_probe(&client->dev,
+					     PTR_ERR(ov5670->xvclk),
 					     "error getting clock\n");
 
-		input_clk = clk_get_rate(clk);
+		input_clk = clk_get_rate(ov5670->xvclk);
 	} else {
 		device_property_read_u32(&client->dev, "clock-frequency",
 					 &input_clk);
 	}
 
-	if (input_clk != 19200000) {
+	if (input_clk != OV5670_XVCLK_FREQ) {
 		dev_err(&client->dev,
 			"Unsupported clock frequency %u\n", input_clk);
 		return -EINVAL;
@@ -2570,12 +2619,20 @@ static int ov5670_probe(struct i2c_client *client)
 
 	full_power = acpi_dev_state_d0(&client->dev);
 	if (full_power) {
+		ret = ov5670_runtime_resume(&client->dev);
+		if (ret) {
+			err_msg = "Power up failed";
+			goto error_print;
+		}
+
 		/* Check module identity */
 		ret = ov5670_identify_module(ov5670);
 		if (ret) {
 			err_msg = "ov5670_identify_module() error";
-			goto error_print;
+			goto error_power_off;
 		}
+
+		pm_runtime_set_active(&client->dev);
 	}
 
 	ret = ov5670_identify_module(ov5670);
@@ -2618,9 +2675,6 @@ static int ov5670_probe(struct i2c_client *client)
 
 	ov5670->streaming = false;
 
-	/* Set the device's state to active if it's in D0 state. */
-	if (full_power)
-		pm_runtime_set_active(&client->dev);
 	pm_runtime_enable(&client->dev);
 	pm_runtime_idle(&client->dev);
 
@@ -2635,6 +2689,9 @@ error_handler_free:
 
 error_mutex_destroy:
 	mutex_destroy(&ov5670->mutex);
+
+error_power_off:
+	ov5670_runtime_suspend(&client->dev);
 
 error_print:
 	dev_err(&client->dev, "%s: %s %d\n", __func__, err_msg, ret);
@@ -2652,11 +2709,13 @@ static void ov5670_remove(struct i2c_client *client)
 	v4l2_ctrl_handler_free(sd->ctrl_handler);
 	mutex_destroy(&ov5670->mutex);
 
+	ov5670_runtime_suspend(&client->dev);
 	pm_runtime_disable(&client->dev);
 }
 
 static const struct dev_pm_ops ov5670_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(ov5670_suspend, ov5670_resume)
+	SET_RUNTIME_PM_OPS(ov5670_runtime_suspend, ov5670_runtime_resume, NULL)
 };
 
 #ifdef CONFIG_ACPI
