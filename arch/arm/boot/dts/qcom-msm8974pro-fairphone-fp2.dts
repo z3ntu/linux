@@ -77,14 +77,14 @@
 		pinctrl-names = "default";
 	};
 
-	fake-reg-mclk2 { // FIXME remove
-		compatible = "regulator-fixed-clock";
-		regulator-name = "fake-reg-mclk2";
-		pinctrl-names = "default";
-		pinctrl-0 = <&mclk2_pin_a>;
-		clocks = <&mmcc CAMSS_MCLK2_CLK>;
-		regulator-always-on;
-	};
+	//fake-reg-mclk2 { // FIXME remove
+	//	compatible = "regulator-fixed-clock";
+	//	regulator-name = "fake-reg-mclk2";
+	//	pinctrl-names = "default";
+	//	pinctrl-0 = <&mclk2_pin_a>;
+	//	clocks = <&mmcc CAMSS_MCLK2_CLK>;
+	//	regulator-always-on;
+	//};
 
 	vibrator {
 		compatible = "gpio-vibrator";
@@ -277,8 +277,8 @@
 		compatible = "ovti,ov5670";
 		reg = <0x10>;
 
-		//pinctrl-0 = <&mclk2_pin_a>;
-		//pinctrl-names = "default";
+		pinctrl-0 = <&mclk2_pin_a>;
+		pinctrl-names = "default";
 
 		clocks = <&mmcc CAMSS_MCLK2_CLK>;
 
