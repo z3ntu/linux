@@ -2713,12 +2713,6 @@ static int ov5670_probe(struct i2c_client *client)
 		pm_runtime_set_active(&client->dev);
 	}
 
-	ret = ov5670_identify_module(ov5670);
-	if (ret) {
-		err_msg = "ov5670_identify_module() error";
-		goto error_power_off;
-	}
-
 	mutex_init(&ov5670->mutex);
 
 	/* Set default mode to max resolution */
