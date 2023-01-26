@@ -6,6 +6,12 @@
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 
+#define FRONT_CAM_2MP 1 // Old - OV2685
+#define REAR_CAM_8MP  1 // Old - OV8865
+
+#define FRONT_CAM_5MP 0 // New - OV5670
+#define REAR_CAM_12MP 0 // New - OV12870
+
 / {
 	model = "Fairphone 2";
 	compatible = "fairphone,fp2", "qcom,msm8974";
@@ -145,28 +151,37 @@
 	vdda-supply = <&pm8941_l12>;
 
 	ports {
-		#if 0
+		#if REAR_CAM_8MP || REAR_CAM_12MP
 		port@0 {
 			reg = <0>;
 			csiphy0_ep: endpoint {
 				clock-lanes = <1>;
 				data-lanes = <0 2 3 4>;
+				#if REAR_CAM_8MP
 				link-frequencies = /bits/ 64 <360000000>;
 				remote-endpoint = <&ov8865_ep>;
+				#endif
+				#if REAR_CAM_12MP
+				#error "Not implemented yet"
+				#endif
 			};
 		};
 		#endif
 
-		#if 1
+		#if FRONT_CAM_2MP || FRONT_CAM_5MP
 		port@2 {
 			reg = <2>;
 			csiphy2_ep: endpoint {
 				clock-lanes = <1>;
 				data-lanes = <0>;
-				//link-frequencies = /bits/ 64 <330000000>;
-				//remote-endpoint = <&ov2685_ep>;
+				#if FRONT_CAM_2MP
+				link-frequencies = /bits/ 64 <330000000>;
+				remote-endpoint = <&ov2685_ep>;
+				#endif
+				#if FRONT_CAM_5MP
 				link-frequencies = /bits/ 64 <422400000>;
 				remote-endpoint = <&ov5670_ep>;
+				#endif
 			};
 		};
 		#endif
@@ -178,6 +193,7 @@
 };
 
 &cci_i2c0 {
+	#if REAR_CAM_8MP
 	// ad5823: coil@c {
 	// 	compatible = "adi,ad5823";
 	// 	reg = <0x0c>;
@@ -186,7 +202,6 @@
 	// 	/* enable-gpios is shared with OV8865 powerdown-gpios */
 	// };
 
-	#if 0
 	ov8865: camera-sensor@10 {
 		compatible = "ovti,ov8865";
 		reg = <0x10>;
@@ -220,10 +235,13 @@
 		};
 	};
 	#endif
+	#if REAR_CAM_12MP
+	// TODO
+	#endif
 };
 
 &cci_i2c1 {
-	#if 0
+	#if FRONT_CAM_2MP
 	ov2685: camera-sensor@10 {
 		compatible = "ovti,ov2685";
 		reg = <0x10>;
@@ -254,7 +272,7 @@
 		};
 	};
 	#endif
-	#if 1
+	#if FRONT_CAM_5MP
 	ov5670: camera-sensor@10 {
 		compatible = "ovti,ov5670";
 		reg = <0x10>;
