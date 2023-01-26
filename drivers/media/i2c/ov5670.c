@@ -29,6 +29,13 @@
 #define OV5670_REG_SOFTWARE_RST		0x0103
 #define OV5670_SOFTWARE_RST		0x01
 
+#define OV5670_MIPI_SC_CTRL0_REG		0x3018
+#define OV5670_MIPI_SC_CTRL0_LANES(v)		((((v) - 1) << 5) & \
+						 GENMASK(7, 5))
+#define OV5670_MIPI_SC_CTRL0_MIPI_EN		BIT(4)
+#define OV5670_MIPI_SC_CTRL0_UNKNOWN		BIT(1)
+#define OV5670_MIPI_SC_CTRL0_LANES_PD_MIPI	BIT(0)
+
 /* vertical-timings from sensor */
 #define OV5670_REG_VTS			0x380e
 #define OV5670_VTS_30FPS		0x0808 /* default for 30 fps */
@@ -69,6 +76,11 @@
 #define OV5670_REG_TEST_PATTERN		0x4303
 #define OV5670_TEST_PATTERN_ENABLE	BIT(3)
 #define OV5670_REG_TEST_PATTERN_CTRL	0x4320
+
+/* MIPI lane config */
+#define OV5670_MIPI_LANE_SEL01_REG		0x4850
+#define OV5670_MIPI_LANE_SEL01_LANE0(v)		(((v) << 0) & GENMASK(2, 0))
+#define OV5670_MIPI_LANE_SEL01_LANE1(v)		(((v) << 4) & GENMASK(6, 4))
 
 #define OV5670_REG_VALUE_08BIT		1
 #define OV5670_REG_VALUE_16BIT		2
@@ -142,7 +154,7 @@ static const struct v4l2_rect ov5670_analog_crop = {
 static const struct ov5670_reg mipi_data_rate_840mbps[] = {
 	{0x0300, 0x04},
 	{0x0301, 0x00},
-	{0x0302, 0x84},
+	{0x0302, 0x84}, // (0x69 or) 0xa4
 	{0x0303, 0x00},
 	{0x0304, 0x03},
 	{0x0305, 0x01},
@@ -150,7 +162,7 @@ static const struct ov5670_reg mipi_data_rate_840mbps[] = {
 	{0x030a, 0x00},
 	{0x030b, 0x00},
 	{0x030c, 0x00},
-	{0x030d, 0x26},
+	{0x030d, 0x26}, // (0x1e or) 0x68
 	{0x030e, 0x00},
 	{0x030f, 0x06},
 	{0x0312, 0x01},
@@ -163,7 +175,7 @@ static const struct ov5670_reg mode_2592x1944_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x32},
+	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -429,7 +441,7 @@ static const struct ov5670_reg mode_1296x972_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x32},
+	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -695,7 +707,7 @@ static const struct ov5670_reg mode_648x486_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x32},
+	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -961,7 +973,7 @@ static const struct ov5670_reg mode_2560x1440_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x32},
+	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -1226,7 +1238,7 @@ static const struct ov5670_reg mode_1280x720_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x32},
+	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -1492,7 +1504,7 @@ static const struct ov5670_reg mode_640x360_regs[] = {
 	{0x3005, 0xf0},
 	{0x3007, 0x00},
 	{0x3015, 0x0f},
-	{0x3018, 0x32},
+	{0x3018, 0x12},
 	{0x301a, 0xf0},
 	{0x301b, 0xf0},
 	{0x301c, 0xf0},
@@ -1762,8 +1774,8 @@ static const char * const ov5670_test_pattern_menu[] = {
 #define OV5670_LINK_FREQ_422MHZ_INDEX	0
 static const struct ov5670_link_freq_config link_freq_configs[] = {
 	{
-		/* pixel_rate = link_freq * 2 * nr_of_lanes / bits_per_sample */
-		.pixel_rate = (OV5670_LINK_FREQ_422MHZ * 2 * 2) / 10,
+		/* pixel_rate = link_freq * 2 / bits_per_sample */
+		.pixel_rate = (OV5670_LINK_FREQ_422MHZ * 2) / 10,
 		.reg_list = {
 			.num_of_regs = ARRAY_SIZE(mipi_data_rate_840mbps),
 			.regs = mipi_data_rate_840mbps,
@@ -2367,12 +2379,32 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(&ov5670->sd);
 	const struct ov5670_reg_list *reg_list;
+	//struct v4l2_mbus_config_mipi_csi2 *bus_mipi_csi2 =
+	//	&sensor->endpoint.bus.mipi_csi2;
+	//unsigned int lanes_count = bus_mipi_csi2->num_data_lanes;
 	int link_freq_index;
 	int ret;
 
 	ret = ov5670_identify_module(ov5670);
 	if (ret)
 		return ret;
+
+	//unsigned int lanes_count = 1;
+	//ret = ov5670_write_reg(ov5670, OV5670_MIPI_SC_CTRL0_REG,
+	//		   OV5670_MIPI_SC_CTRL0_LANES(lanes_count) |
+	//		   OV5670_MIPI_SC_CTRL0_MIPI_EN |
+	//		   OV5670_MIPI_SC_CTRL0_UNKNOWN);
+	ret = ov5670_write_reg(ov5670, OV5670_MIPI_SC_CTRL0_REG,
+				OV5670_REG_VALUE_08BIT, 0x12);
+	if (ret)
+		return ret;
+	//ret = ov5670_write_reg(ov5670, OV5670_MIPI_LANE_SEL01_REG,
+	//		   OV5670_MIPI_LANE_SEL01_LANE0(0) |
+	//		   OV5670_MIPI_LANE_SEL01_LANE1(1));
+	//if (ret)
+	//	return ret;
+
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 
 	/* Get out of from software reset */
 	ret = ov5670_write_reg(ov5670, OV5670_REG_SOFTWARE_RST,
@@ -2383,6 +2415,7 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Setup PLL */
 	link_freq_index = ov5670->cur_mode->link_freq_index;
 	reg_list = &link_freq_configs[link_freq_index].reg_list;
@@ -2392,6 +2425,7 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Apply default values of current mode */
 	reg_list = &ov5670->cur_mode->reg_list;
 	ret = ov5670_write_reg_list(ov5670, reg_list);
@@ -2400,10 +2434,12 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	ret = __v4l2_ctrl_handler_setup(ov5670->sd.ctrl_handler);
 	if (ret)
 		return ret;
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Write stream on list */
 	ret = ov5670_write_reg(ov5670, OV5670_REG_MODE_SELECT,
 			       OV5670_REG_VALUE_08BIT, OV5670_MODE_STREAMING);
@@ -2412,6 +2448,7 @@ static int ov5670_start_streaming(struct ov5670 *ov5670)
 		return ret;
 	}
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return 0;
 }
 
@@ -2420,11 +2457,13 @@ static int ov5670_stop_streaming(struct ov5670 *ov5670)
 	struct i2c_client *client = v4l2_get_subdevdata(&ov5670->sd);
 	int ret;
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	ret = ov5670_write_reg(ov5670, OV5670_REG_MODE_SELECT,
 			       OV5670_REG_VALUE_08BIT, OV5670_MODE_STANDBY);
 	if (ret)
 		dev_err(&client->dev, "%s failed to set stream\n", __func__);
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	/* Return success even if it was an error, as there is nothing the
 	 * caller can do about it.
 	 */
@@ -2462,6 +2501,7 @@ error:
 unlock_and_return:
 	mutex_unlock(&ov5670->mutex);
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return ret;
 }
 
