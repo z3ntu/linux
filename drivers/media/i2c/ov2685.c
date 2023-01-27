@@ -277,8 +277,10 @@ static int ov2685_write_reg(struct i2c_client *client, u16 reg,
 	while (val_i < 4)
 		buf[buf_i++] = val_p[val_i++];
 
-	if (i2c_master_send(client, buf, len + 2) != len + 2)
+	if (i2c_master_send(client, buf, len + 2) != len + 2) {
+		dev_err(&client->dev, "%s:%d FAILED reg=0x%x, len=%d\n", __func__, __LINE__, reg, len);
 		return -EIO;
+	}
 
 	return 0;
 }
