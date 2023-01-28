@@ -2370,6 +2370,7 @@ static int ov5670_identify_module(struct ov5670 *ov5670)
 			OV5670_CHIP_ID, val);
 		return -ENXIO;
 	}
+	dev_err(&client->dev, "chip id match!\n"); // FIXME
 
 	ov5670->identified = true;
 
@@ -2381,6 +2382,10 @@ static int ov5670_mipi_configure(struct ov5670 *ov5670)
 	struct v4l2_mbus_config_mipi_csi2 *bus_mipi_csi2 =
 		&ov5670->endpoint.bus.mipi_csi2;
 	unsigned int lanes_count = bus_mipi_csi2->num_data_lanes;
+	u32 val = OV5670_MIPI_SC_CTRL0_LANES(lanes_count) |
+				OV5670_MIPI_SC_CTRL0_MIPI_EN |
+				OV5670_MIPI_SC_CTRL0_RESERVED;
+	printk(KERN_ERR "%s:%d DBG lanes_count=%d val=0x%x\n", __func__, __LINE__, lanes_count, val); // FIXME
 
 	return ov5670_write_reg(ov5670, OV5670_MIPI_SC_CTRL0_REG,
 				OV5670_REG_VALUE_08BIT,
@@ -2787,6 +2792,7 @@ static int ov5670_probe(struct i2c_client *client)
 
 	pm_runtime_idle(&client->dev);
 
+	dev_err(&client->dev, "%s: sensor probed!\n", __func__); // FIXME
 	return 0;
 
 error_pm_disable:
