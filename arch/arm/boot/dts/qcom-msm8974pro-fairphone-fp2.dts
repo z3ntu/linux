@@ -227,8 +227,7 @@
 
 		port {
 			ov8865_ep: endpoint {
-				clock-lanes = <1>;
-				data-lanes = <0 2 3 4>;
+				data-lanes = <1 2 3 4>;
 				link-frequencies = /bits/ 64 <360000000>;
 				remote-endpoint = <&csiphy0_ep>;
 			};
@@ -269,8 +268,7 @@
 
 		port {
 			ov2685_ep: endpoint {
-				clock-lanes = <1>;
-				data-lanes = <0>;
+				data-lanes = <1>;
 				link-frequencies = /bits/ 64 <330000000>;
 				remote-endpoint = <&csiphy2_ep>;
 			};
@@ -299,8 +297,7 @@
 
 		port {
 			ov5670_ep: endpoint {
-				clock-lanes = <1>;
-				data-lanes = <0>;
+				data-lanes = <1>;
 				link-frequencies = /bits/ 64 <422400000>;
 				remote-endpoint = <&csiphy2_ep>;
 			};
