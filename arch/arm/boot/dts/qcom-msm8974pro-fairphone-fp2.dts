@@ -6,8 +6,8 @@
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 
-#define FRONT_CAM_2MP 1 // Old - OV2685
-#define REAR_CAM_8MP  1 // Old - OV8865
+#define FRONT_CAM_2MP 0 // Old - OV2685
+#define REAR_CAM_8MP  0 // Old - OV8865
 
 #define FRONT_CAM_5MP 0 // New - OV5670
 #define REAR_CAM_12MP 0 // New - OV12870
