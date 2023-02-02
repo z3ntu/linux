@@ -25,13 +25,15 @@
 #define REG_BMS_REVISION_MINOR		0x0
 #define REG_BMS_REVISION_MAJOR		0x1
 
-#define REG_BMS_OCV_FOR_SOC_DATA0	0x90
-#define REG_BMS_SHDW_CC_DATA0		0xA8
 #define REG_BMS_CC_DATA_CTL		0x42
-#define REG_BMS_CC_CLEAR_CTL		0x4
-
 #define BMS_HOLD_OREG_DATA		BIT(0)
+
+#define REG_BMS_CC_CLEAR_CTL		0x43
 #define BMS_CLEAR_SHDW_CC		BIT(6)
+
+#define REG_BMS_OCV_FOR_SOC_DATA0	0x90
+
+#define REG_BMS_SHDW_CC_DATA0		0xA8
 
 #define BMS_CC_READING_RESOLUTION_N	542535
 #define BMS_CC_READING_RESOLUTION_D	100000
@@ -282,6 +284,11 @@ static int bms_read_ocv(struct bms_device_info *di, u32 *ocv)
 		goto err_read;
 	}
 
+	// TODO
+	// #define V_PER_BIT_MUL_FACTOR	97656
+	// #define V_PER_BIT_DIV_FACTOR	1000
+	// #define VADC_INTRINSIC_OFFSET	0x6000
+
 	/* convert read_ocv to microvolt */
 	*ocv = ((read_ocv - 0x6000) * 97656 / 1000) * 3; // Value of 3 <- should be the result of a calibration
 	dev_dbg(di->dev, "read open circuit voltage of: %d mV\n", read_ocv / 10);
@@ -329,6 +336,7 @@ static int bms_read_cc(struct bms_device_info *di, s64 *cc_uah)
 			BMS_CC_READING_RESOLUTION_D);
 
 	/* adjust for gain */
+	// #define QPNP_ADC_GAIN_IDEAL				3291LL
 	cc_uv = div_s64(cc_uv * 3291, 100); // Value of 100 <- should be calculated
 
 	/* convert µV to picovolt hours */
@@ -390,7 +398,6 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 		dev_err(di->dev, "failed to read temperature: %d\n", ret);
 		return ret;
 	}
-
 	dev_dbg(di->dev, "temp_adc result: %d\n", temp);
 
 	ret = iio_read_channel_processed(di->temp_adc, &temp);
@@ -398,11 +405,9 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 		dev_err(di->dev, "failed to read temperature: %d\n", ret);
 		return ret;
 	}
-
 	dev_dbg(di->dev, "temp_adc (processed) result: %d\n", temp);
 
 	temp_degc = DIV_ROUND_CLOSEST(temp, 1000);
-
 	dev_dbg(di->dev, "read temperature of: %d degC\n", temp_degc);
 
 	// read uAh (maybe 1000000 uAh - 1000 mAh?)
@@ -411,6 +416,7 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 		dev_err(di->dev, "failed to read coulomb counter: %d\n", ret);
 		return ret;
 	}
+	dev_dbg(di->dev, "cc=%lld\n", cc);
 
 	/* interpolate capacity (in %) from open circuit voltage */
 	// get 'perfect' percentage for ocv at temperature according to table => 72%
@@ -425,16 +431,21 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 	// |   0% | 3000mV |   0% | 3012mV |   0% | 3000mV |   0% | 3000mV |   0% | 3005mV |
 	ocv_capacity = interpolate_capacity(temp_degc, di->ocv,
 					    di->info);
+	dev_dbg(di->dev, "ocv_capacity=%d %\n", ocv_capacity);
 
 	/* interpolate the full charge capacity (in μAh) from temperature */
 	// get the capacity in uAh at 100% for our temperature => 2400 mAh / 2400800 μAh
 	fcc = interpolate_fcc(temp_degc, &di->fcc_lut);
+	dev_dbg(di->dev, "fcc for temperature: %ld uAh\n", fcc);
 
+	// TODO: Should be downstream line 2236+ => rc_new_uah = (params->fcc_uah * pc_new) / 100;
 	/* append coulomb counter to capacity */
 	// (2400800 μAh * 72%) / 100 = 1728576 μAh = 1728 mAh
 	*capacity = DIV_ROUND_CLOSEST(fcc * ocv_capacity, 100);
+	dev_dbg(di->dev, "capacity1=%d mAh\n", *capacity);
 	// (1728576 μAh - $cc μAh) * 100 / 2400800 μAh => 30.34%
 	*capacity = div_s64((*capacity + cc) * 100, fcc);
+	dev_dbg(di->dev, "capacity2=%d %\n", *capacity);
 
 	return 0;
 }
@@ -519,6 +530,7 @@ static int bms_probe(struct platform_device *pdev)
 		return ret;
 	}
 	dev_err(di->dev, "id resistor (processed): %d\n", batt_id_uv);
+	batt_id_uv *= 1000; // convert millivolt (mV) to microvolt (uV) // TODO: Adjust calculation to use mV
 
 	int vadc_vdd = 1800000;
 	int rpull_up = 100;
