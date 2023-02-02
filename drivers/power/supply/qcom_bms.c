@@ -51,7 +51,7 @@ struct bms_device_info {
 	struct device *dev;
 	struct regmap *regmap;
 	struct power_supply_desc bat_desc;
-	struct power_supply_battery_info info;
+	struct power_supply_battery_info *info;
 	struct bms_fcc_lut fcc_lut;
 	struct iio_channel *temp_adc;
 	struct iio_channel *id_adc;
@@ -424,7 +424,7 @@ static int bms_calculate_capacity(struct bms_device_info *di, int *capacity)
 	// |   1% | 3040mV |   1% | 3120mV |   1% | 3160mV |   1% | 3155mV |   1% | 3138mV |
 	// |   0% | 3000mV |   0% | 3012mV |   0% | 3000mV |   0% | 3000mV |   0% | 3005mV |
 	ocv_capacity = interpolate_capacity(temp_degc, di->ocv,
-					    &di->info);
+					    di->info);
 
 	/* interpolate the full charge capacity (in μAh) from temperature */
 	// get the capacity in uAh at 100% for our temperature => 2400 mAh / 2400800 μAh
@@ -613,7 +613,7 @@ static int bms_probe(struct platform_device *pdev)
 		return ret;
 	}
 	// Validate that ocv_temp & ocv_table was populated
-	if (di->info.ocv_table_size[0] == -EINVAL || di->info.ocv_table_size[1] == -EINVAL) {
+	if (di->info->ocv_table_size[0] == -EINVAL || di->info->ocv_table_size[1] == -EINVAL) {
 		dev_err(di->dev, "failed to get ocv table: %d\n", ret);
 		return ret; // FIXME
 	}
