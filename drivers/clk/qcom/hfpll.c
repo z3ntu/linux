@@ -21,7 +21,7 @@ static const struct hfpll_data hdata = {
 	.n_reg = 0x0c,
 	.user_reg = 0x10,
 	.config_reg = 0x14,
-	.config_val = 0x430405d,
+	.config_val = 0x4d0405d,
 	.status_reg = 0x1c,
 	.lock_bit = 16,
 
