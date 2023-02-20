@@ -23,12 +23,23 @@ properties:
     items:
       - description: Board XO source
 
+  power-domains:
+    maxItems: 1
+    description:
+      A phandle and PM domain specifier for the CX power domain.
+
+  required-opps:
+    description:
+      A phandle to an OPP node describing required CX performance point.
+
   reg:
     maxItems: 1
 
 required:
   - compatible
   - clocks
+  - power-domains
+  - required-opps
 
 allOf:
   - $ref: qcom,gcc.yaml#
