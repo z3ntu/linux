@@ -210,6 +210,7 @@ static int qcom_pmic_virt_tcpm_probe(struct platform_device *pdev)
 
 	tcpm->pmic_typec = platform_get_drvdata(typec_pdev);
 	if (!tcpm->pmic_typec) {
+		dev_err(dev, "failed to get drvdata1\n");
 		ret = -EPROBE_DEFER;
 		goto put_typec_pdev;
 	}
@@ -223,27 +224,35 @@ static int qcom_pmic_virt_tcpm_probe(struct platform_device *pdev)
 
 	tcpm->pmic_pdphy = platform_get_drvdata(pdphy_pdev);
 	if (!tcpm->pmic_pdphy) {
+		dev_err(dev, "failed to get drvdata2\n");
 		ret = -EPROBE_DEFER;
 		goto put_pdphy_dev;
 	}
 
 	tcpm->tcpc.fwnode = device_get_named_child_node(tcpm->dev, "connector");
-	if (IS_ERR(tcpm->tcpc.fwnode))
+	if (IS_ERR(tcpm->tcpc.fwnode)) {
+		dev_err(dev, "failed to get connector\n");
 		return PTR_ERR(tcpm->tcpc.fwnode);
+	}
 
 	tcpm->tcpm_port = tcpm_register_port(tcpm->dev, &tcpm->tcpc);
 	if (IS_ERR(tcpm->tcpm_port)) {
+		dev_err(dev, "failed to register port\n");
 		ret = PTR_ERR(tcpm->tcpm_port);
 		goto fwnode_remove;
 	}
 
 	ret = qcom_pmic_pdphy_init(tcpm->pmic_pdphy, tcpm->tcpm_port);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "failed to init pdphy\n");
 		goto fwnode_remove;
+	}
 
 	ret = qcom_pmic_typec_init(tcpm->pmic_typec, tcpm->tcpm_port);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "failed to init typec\n");
 		goto fwnode_remove;
+	}
 
 	return 0;
 
@@ -256,6 +265,7 @@ put_pdphy_dev:
 put_typec_pdev:
 	put_device(&typec_pdev->dev);
 
+	dev_err(dev, "failed to probe: %d\n", ret);
 	return ret;
 }
 
