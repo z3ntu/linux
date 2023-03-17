@@ -765,6 +765,14 @@
 	pinctrl-0 = <&i2s1_active>;
 	pinctrl-names = "default";
 	model = "Fairphone 4";
+	audio-routing =
+		"AMIC1", "MIC BIAS1",
+		"AMIC3", "MIC BIAS1",
+		"AMIC5", "MIC BIAS3",
+		"TX SWR_ADC0", "ADC1_OUTPUT",
+		"TX SWR_ADC1", "ADC2_OUTPUT",
+		"TX SWR_ADC2", "ADC3_OUTPUT",
+		"TX SWR_ADC3", "ADC4_OUTPUT";
 
 	mm1-dai-link {
 		link-name = "MultiMedia1";
