@@ -1271,7 +1271,13 @@
 };
 
 &usb_1_dwc3 {
-	dr_mode = "peripheral";
+	dr_mode = "otg";
+	usb-role-switch;
+	port {
+		dwc3_drd_switch: endpoint {
+			remote-endpoint = <&usb3_role>;
+		};
+	};
 };
 
 &usb_1_hsphy {
@@ -1350,6 +1356,12 @@
 
 &tcpm {
 	status = "okay";
+	port {
+		usb3_role: endpoint {
+			remote-endpoint = <&dwc3_drd_switch>;
+		};
+	};
+
 	connector {
 		compatible = "usb-c-connector";
 
