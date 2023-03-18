@@ -1293,6 +1293,12 @@
 
 	vdda-phy-supply = <&vreg_l9a_1p2>;
 	vdda-pll-supply = <&vreg_l18a_0p92>;
+	orientation-switch;
+	port {
+		qmp_ss_mux: endpoint {
+			remote-endpoint = <&pmic_tcpm_ss_mux>;
+		};
+	};
 };
 
 &usb_2 {
@@ -1373,5 +1379,17 @@
 					 PDO_FIXED_DUAL_ROLE |
 					 PDO_FIXED_USB_COMM |
 					 PDO_FIXED_DATA_SWAP)>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				pmic_tcpm_ss_mux: endpoint {
+					remote-endpoint = <&qmp_ss_mux>;
+				};
+			};
+		};
 	};
 };
