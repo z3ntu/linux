@@ -191,8 +191,10 @@ int qcom_pmic_typec_set_vbus(struct pmic_typec *pmic_typec, bool on)
 				       pmic_typec->base + TYPEC_SM_STATUS_REG,
 				       sm_stat, sm_stat & val,
 				       100, 250000);
-	if (ret)
+	if (ret) {
 		dev_err(pmic_typec->dev, "vbus vsafe%dv fail\n", on ? 5 : 0);
+		ret = 0; // ignore...
+	}
 
 	return ret;
 }
