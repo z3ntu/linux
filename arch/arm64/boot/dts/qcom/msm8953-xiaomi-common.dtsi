@@ -398,7 +398,10 @@
 };
 
 &usb3_dwc3 {
-	dr_mode = "peripheral";
+	usb-psy-name = "qcom-smbchg-usb";
+	extcon = <&pmi8950_smbcharger>;
+	vbus-supply = <&otg_vbus>;
+	dr_mode = "otg";
 };
 
 &wcnss {
