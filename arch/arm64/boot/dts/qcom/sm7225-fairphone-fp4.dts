@@ -113,27 +113,6 @@
 			};
 		};
 	};
-
-	// TODO: https://lore.kernel.org/linux-arm-msm/20230321-topic-sagami_dp-v1-3-340c8bce4276@linaro.org/
-	sbu-mux {
-		/* TODO: switch to a proper driver when one gets upstreamed */
-		compatible = "awinic,aw35743-mux", "gpio-sbu-mux";
-
-		enable-gpios = <&tlmm 54 GPIO_ACTIVE_HIGH>;
-		select-gpios = <&tlmm 93 GPIO_ACTIVE_HIGH>;
-		svid = /bits/ 16 <0xff01>;
-
-		mode-switch;
-		orientation-switch;
-
-		pinctrl-0 = <&sbu_sw_oe &sbu_sw_sel>;
-
-		port {
-			sbu_mux_in: endpoint {
-				// remote-endpoint = <&todo>; // FIXME
-			};
-		};
-	};
 };
 
 &adsp {
@@ -593,14 +572,6 @@
 					 PDO_FIXED_USB_COMM |
 					 PDO_FIXED_DATA_SWAP)>;
 
-		// https://git.linaro.org/people/bryan.odonoghue/kernel.git/commit/?h=pm8150b-tcpm&id=1119dd8404e35a1836c84d6f6648dd762beea116
-		altmodes {
-			displayport {
-				svid = <0xff01>;
-				vdo = <0x001c0046>;
-			};
-		};
-
 		ports {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -746,22 +717,6 @@
 		output-high;
 	};
 
-	sbu_sw_oe: sbu-sw-oe-state {
-		pins = "gpio54";
-		function = "gpio";
-		drive-strength = <8>;
-		bias-disable;
-		output-low;
-	};
-
-	sbu_sw_sel: sbu-sw-sel-state {
-		pins = "gpio93";
-		function = "gpio";
-		drive-strength = <8>;
-		bias-disable;
-		output-low;
-	};
-
 	ts_active: ts-irq-active-state {
 		pins = "gpio22";
 		function = "gpio";
@@ -872,21 +827,6 @@
 
 &mdss {
 	status = "okay";
-};
-
-&mdss_dp {
-	//data-lanes = <0 1 2 3>;
-	//status = "okay";
-
-	ports {
-		port@1 {
-			reg = <1>;
-
-			mdss_dp_altmode: endpoint {
-				// remote-endpoint = <&todo>; // FIXME
-			};
-		};
-	};
 };
 
 &dsi0 {
