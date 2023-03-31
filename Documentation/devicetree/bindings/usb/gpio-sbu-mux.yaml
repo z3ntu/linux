@@ -19,6 +19,7 @@ properties:
   compatible:
     items:
       - enum:
+          - awinic,aw35743-mux
           - onnn,fsusb43l10x
           - pericom,pi3usb102
       - const: gpio-sbu-mux
