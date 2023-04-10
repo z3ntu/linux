@@ -114,6 +114,7 @@
 };
 
 &mss_pil {
+	//status = "disabled";
 	firmware-name = "qcom/msm8996/scorpio/mba.mbn",
 			"qcom/msm8996/scorpio/modem.mbn";
 };
@@ -210,6 +211,10 @@
 			sound-dai = <&wcd9335 AIF1_CAP>;
 		};
 	};
+};
+
+&smgr {
+	status = "okay";
 };
 
 &venus {
