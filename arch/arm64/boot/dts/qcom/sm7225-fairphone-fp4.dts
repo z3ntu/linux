@@ -544,21 +544,9 @@
 
 &pm7250b_typec {
 	vdd-vbus-supply = <&pm7250b_vbus>;
-	status = "okay";
-};
+	vdd-pdphy-supply = <&vreg_l3a>;
 
-&pm7250b_pdphy {
-	vdd-phy-supply = <&vreg_l3a>;
 	status = "okay";
-};
-
-&pm7250b_tcpm {
-	status = "okay";
-	port {
-		usb3_role: endpoint {
-			remote-endpoint = <&dwc3_drd_switch>;
-		};
-	};
 
 	connector {
 		compatible = "usb-c-connector";
@@ -578,8 +566,14 @@
 
 			port@0 {
 				reg = <0>;
-				pmic_tcpm_ss_mux: endpoint {
-					remote-endpoint = <&qmp_ss_mux>;
+				pm7250b_role_switch_out: endpoint {
+					remote-endpoint = <&dwc3_role_switch_in>;
+				};
+			};
+			port@1 {
+				reg = <1>;
+				pm7250b_typec_mux_out: endpoint {
+					remote-endpoint = <&qmpphy_typec_mux_in>;
 				};
 			};
 		};
@@ -779,7 +773,6 @@
 
 &usb_1 {
 	status = "okay";
-	usb-role-switch;
 };
 
 &usb_1_dwc3 {
@@ -787,8 +780,8 @@
 	dr_mode = "otg";
 	usb-role-switch;
 	port {
-		dwc3_drd_switch: endpoint {
-			remote-endpoint = <&usb3_role>;
+		dwc3_role_switch_in: endpoint {
+			remote-endpoint = <&pm7250b_role_switch_out>;
 		};
 	};
 };
@@ -808,9 +801,11 @@
 
 	status = "okay";
 
-	port {
-		qmp_ss_mux: endpoint {
-			remote-endpoint = <&pmic_tcpm_ss_mux>;
+	ports {
+		port@1 {
+			qmpphy_typec_mux_in: endpoint {
+				remote-endpoint = <&pm7250b_typec_mux_out>;
+			};
 		};
 	};
 };
