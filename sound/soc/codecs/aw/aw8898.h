@@ -36,7 +36,7 @@ enum aw8898_mode_spk_rcv{
 struct aw8898 {
     struct regmap *regmap;
     struct i2c_client *i2c;
-    struct snd_soc_codec *codec;
+    struct snd_soc_component *component;
     struct device *dev;
     struct mutex cfg_lock;
 #ifdef AW8898_VBAT_MONITOR
