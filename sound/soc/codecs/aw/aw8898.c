@@ -31,6 +31,7 @@
 #include <linux/workqueue.h>
 #include <linux/hrtimer.h>
 #include <linux/syscalls.h>
+#include <linux/interrupt.h>
 #include <sound/tlv.h>
 #include "aw8898.h"
 #include "aw8898_reg.h"
@@ -352,7 +353,7 @@ static int aw8898_load_cfg(struct aw8898 *aw8898)
 {
     pr_info("%s enter\n", __func__);
 
-    return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+    return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
             aw8898_cfg_name, aw8898->dev, GFP_KERNEL,
             aw8898, aw8898_cfg_loaded);
 }
@@ -416,8 +417,8 @@ static int aw8898_volume_info(struct snd_kcontrol *kcontrol,struct snd_ctl_elem_
 
 static int aw8898_volume_get(struct snd_kcontrol *kcontrol,struct snd_ctl_elem_value *ucontrol)
 {
-    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
     unsigned int reg_val = 0;
     unsigned int value = 0;
     struct soc_mixer_control *mc = (struct soc_mixer_control*) kcontrol->private_value;
@@ -431,8 +432,8 @@ static int aw8898_volume_get(struct snd_kcontrol *kcontrol,struct snd_ctl_elem_v
 static int aw8898_volume_put(struct snd_kcontrol *kcontrol,struct snd_ctl_elem_value *ucontrol)
 {
     struct soc_mixer_control *mc = (struct soc_mixer_control*) kcontrol->private_value;
-    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
     unsigned int value = 0;
     unsigned int reg_value = 0;
 
@@ -482,8 +483,8 @@ static int aw8898_spk_get(struct snd_kcontrol *kcontrol,
 static int aw8898_spk_set(struct snd_kcontrol *kcontrol,
         struct snd_ctl_elem_value *ucontrol)
 {
-    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
 
     pr_debug("%s: ucontrol->value.integer.value[0]=%ld\n ",
             __func__, ucontrol->value.integer.value[0]);
@@ -509,8 +510,8 @@ static int aw8898_rcv_get(struct snd_kcontrol *kcontrol,
 static int aw8898_rcv_set(struct snd_kcontrol *kcontrol,
         struct snd_ctl_elem_value *ucontrol)
 {
-    struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
     pr_debug("%s: ucontrol->value.integer.value[0]=%ld\n ",
             __func__, ucontrol->value.integer.value[0]);
     if(ucontrol->value.integer.value[0] == aw8898_rcv_control)
@@ -540,10 +541,10 @@ static void aw8898_add_codec_controls(struct aw8898 *aw8898)
 {
     pr_info("%s enter\n", __func__);
 
-    snd_soc_add_codec_controls(aw8898->codec, aw8898_controls,
+    snd_soc_add_component_controls(aw8898->component, aw8898_controls,
             ARRAY_SIZE(aw8898_controls));
 
-    snd_soc_add_codec_controls(aw8898->codec, &aw8898_volume,1);
+    snd_soc_add_component_controls(aw8898->component, &aw8898_volume,1);
 }
 
 /******************************************************
@@ -598,8 +599,7 @@ static void aw8898_add_widgets(struct aw8898 *aw8898)
 static int aw8898_startup(struct snd_pcm_substream *substream,
         struct snd_soc_dai *dai)
 {
-    struct snd_soc_codec *codec = dai->codec;
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
 
     pr_info("%s: enter\n", __func__);
     aw8898_run_pwd(aw8898, false);
@@ -609,8 +609,8 @@ static int aw8898_startup(struct snd_pcm_substream *substream,
 
 static int aw8898_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 {
-    //struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(dai->codec);
-    struct snd_soc_codec *codec = dai->codec;
+    //struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->codec);
+    struct snd_soc_component *component = dai->component;
 
     pr_info("%s: fmt=0x%x\n", __func__, fmt);
 
@@ -618,12 +618,12 @@ static int aw8898_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
     switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
     case SND_SOC_DAIFMT_I2S:
         if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS) {
-            dev_err(codec->dev, "%s: invalid codec master mode\n", __func__);
+            dev_err(component->dev, "%s: invalid codec master mode\n", __func__);
             return -EINVAL;
         }
         break;
     default:
-        dev_err(codec->dev, "%s: unsupported DAI format %d\n", __func__,
+        dev_err(component->dev, "%s: unsupported DAI format %d\n", __func__,
                 fmt & SND_SOC_DAIFMT_FORMAT_MASK);
         return -EINVAL;
     }
@@ -633,7 +633,7 @@ static int aw8898_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 static int aw8898_set_dai_sysclk(struct snd_soc_dai *codec_dai,
         int clk_id, unsigned int freq, int dir)
 {
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec_dai->codec);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(codec_dai->component);
 
     pr_info("%s: freq=%d\n", __func__, freq);
 
@@ -645,8 +645,7 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
     struct snd_pcm_hw_params *params,
     struct snd_soc_dai *dai)
 {
-    struct snd_soc_codec *codec = dai->codec;
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
     unsigned int rate = 0;
     int reg_value = 0;
     int width = 0;
@@ -718,8 +717,7 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
 
 static int aw8898_mute(struct snd_soc_dai *dai, int mute, int stream)
 {
-    struct snd_soc_codec *codec = dai->codec;
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
 
     pr_info("%s: mute state=%d\n", __func__, mute);
 
@@ -754,8 +752,7 @@ static int aw8898_mute(struct snd_soc_dai *dai, int mute, int stream)
 static void aw8898_shutdown(struct snd_pcm_substream *substream,
         struct snd_soc_dai *dai)
 {
-    struct snd_soc_codec *codec = dai->codec;
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
 
     aw8898->rate = 0;
     aw8898_run_pwd(aw8898, true);
@@ -789,9 +786,9 @@ static struct snd_soc_dai_driver aw8898_dai[] = {
             .formats = AW8898_FORMATS,
          },
         .ops = &aw8898_dai_ops,
-        .symmetric_rates = 1,
+        .symmetric_rate = 1,
         .symmetric_channels = 1,
-        .symmetric_samplebits = 1,
+        .symmetric_sample_bits = 1,
     },
 };
 
@@ -800,35 +797,33 @@ static struct snd_soc_dai_driver aw8898_dai[] = {
  * codec driver
  *
  *****************************************************/
-static int aw8898_probe(struct snd_soc_codec *codec)
+static int aw8898_probe(struct snd_soc_component *component)
 {
-    struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
     int ret = 0;
 
     pr_info("%s enter\n", __func__);
 
-    aw8898->codec = codec;
+    aw8898->component = component;
 
     //aw8898_add_widgets(aw8898);
 
     aw8898_add_codec_controls(aw8898);
 
-    if (codec->dev->of_node)
-        dev_set_name(codec->dev, "%s", "aw8898_smartpa");
+    if (component->dev->of_node)
+        dev_set_name(component->dev, "%s", "aw8898_smartpa");
 
     pr_info("%s exit\n", __func__);
 
     return ret;
 }
 
-static int aw8898_remove(struct snd_soc_codec *codec)
+static void aw8898_remove(struct snd_soc_component *component)
 {
-    //struct aw8898 *aw8898 = snd_soc_codec_get_drvdata(codec);
+    //struct aw8898 *aw8898 = snd_soc_component_get_drvdata(codec);
     pr_info("%s enter\n", __func__);
 
     //aw8898_inputdev_unregister(aw8898);
-
-    return 0;
 }
 
 /*
@@ -840,9 +835,9 @@ struct regmap *aw8898_get_regmap(struct device *dev)
 }
 */
 
-static unsigned int aw8898_codec_read(struct snd_soc_codec *codec,unsigned int reg)
+static unsigned int aw8898_codec_read(struct snd_soc_component *component,unsigned int reg)
 {
-    struct aw8898 *aw8898=snd_soc_codec_get_drvdata(codec);
+    struct aw8898 *aw8898=snd_soc_component_get_drvdata(component);
     unsigned int value =0;
     int ret;
     pr_debug("%s:enter \n",__func__);
@@ -860,10 +855,10 @@ static unsigned int aw8898_codec_read(struct snd_soc_codec *codec,unsigned int r
     return value;
 }
 
-static int aw8898_codec_write(struct snd_soc_codec *codec,unsigned int reg,unsigned int value)
+static int aw8898_codec_write(struct snd_soc_component *component,unsigned int reg,unsigned int value)
 {
     int ret ;
-    struct aw8898 *aw8898=snd_soc_codec_get_drvdata(codec);
+    struct aw8898 *aw8898=snd_soc_component_get_drvdata(component);
     pr_debug("%s:enter ,reg is 0x%x value is 0x%x\n",__func__,reg,value);
 
     if(aw8898_reg_access[reg]&REG_WR_ACCESS){
@@ -881,14 +876,12 @@ static int aw8898_codec_readable(struct snd_soc_codec *codec,unsigned int reg)
     return aw8898_reg_access[reg]&REG_RD_ACCESS;
 }
 */
-static struct snd_soc_codec_driver soc_codec_dev_aw8898 = {
+static struct snd_soc_component_driver soc_codec_dev_aw8898 = {
     .probe = aw8898_probe,
     .remove = aw8898_remove,
     //.get_regmap = aw8898_get_regmap,
     .read = aw8898_codec_read,
     .write= aw8898_codec_write,
-    .reg_cache_size= AW8898_REG_MAX,
-    .reg_word_size=2,
 };
 
 /*****************************************************
@@ -1380,7 +1373,7 @@ static struct attribute_group aw8898_attribute_group = {
  * i2c driver
  *
  ******************************************************/
-static int aw8898_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
+static int aw8898_i2c_probe(struct i2c_client *i2c)
 {
     struct snd_soc_dai_driver *dai;
     struct aw8898 *aw8898;
@@ -1468,7 +1461,7 @@ static int aw8898_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *
     memcpy(dai, aw8898_dai, sizeof(aw8898_dai));
     pr_info("%s dai->name(%s)\n", __func__, dai->name);
 
-    ret = snd_soc_register_codec(&i2c->dev, &soc_codec_dev_aw8898,
+    ret = devm_snd_soc_register_component(&i2c->dev, &soc_codec_dev_aw8898,
             dai, ARRAY_SIZE(aw8898_dai));
     if (ret < 0) {
         dev_err(&i2c->dev, "%s failed to register aw8898: %d\n", __func__, ret);
@@ -1523,16 +1516,11 @@ err_sysfs:
     device_remove_bin_file(&i2c->dev, &dev_attr_rw);
     devm_free_irq(&i2c->dev, gpio_to_irq(aw8898->irq_gpio), aw8898);
 err_irq:
-    snd_soc_unregister_codec(&i2c->dev);
 err_register_codec:
     devm_kfree(&i2c->dev, dai);
     dai = NULL;
 err_dai_kzalloc:
 err_id:
-    if (gpio_is_valid(aw8898->reset_gpio))
-        devm_gpio_free(&i2c->dev, aw8898->reset_gpio);
-    if (gpio_is_valid(aw8898->irq_gpio))
-        devm_gpio_free(&i2c->dev, aw8898->irq_gpio);
 err_gpio_request:
 err_parse_dt:
 err_regmap:
@@ -1541,7 +1529,7 @@ err_regmap:
     return ret;
 }
 
-static int aw8898_i2c_remove(struct i2c_client *i2c)
+static void aw8898_i2c_remove(struct i2c_client *i2c)
 {
     struct aw8898 *aw8898 = i2c_get_clientdata(i2c);
 
@@ -1550,15 +1538,6 @@ static int aw8898_i2c_remove(struct i2c_client *i2c)
     device_remove_bin_file(&i2c->dev, &dev_attr_regaddr);
     device_remove_bin_file(&i2c->dev, &dev_attr_rw);
     devm_free_irq(&i2c->dev, gpio_to_irq(aw8898->irq_gpio), aw8898);
-
-    snd_soc_unregister_codec(&i2c->dev);
-
-    if (gpio_is_valid(aw8898->irq_gpio))
-        devm_gpio_free(&i2c->dev, aw8898->irq_gpio);
-    if (gpio_is_valid(aw8898->reset_gpio))
-        devm_gpio_free(&i2c->dev, aw8898->reset_gpio);
-
-    return 0;
 }
 
 static const struct i2c_device_id aw8898_i2c_id[] = {
