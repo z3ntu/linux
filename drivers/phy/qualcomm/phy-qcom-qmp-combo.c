@@ -2836,12 +2836,13 @@ static int qmp_combo_typec_switch_set(struct typec_switch_dev *sw,
 
 	qmp->orientation = orientation;
 
-	if (orientation == TYPEC_ORIENTATION_NONE) {
-		if (qmp->init_count)
-			ret = qmp_combo_dp_power_off(dp_phy);
-	} else {
-		if (!qmp->init_count)
-			ret = qmp_combo_dp_power_on(dp_phy);
+	if (orientation != TYPEC_ORIENTATION_NONE) {
+		ret = qmp_combo_dp_power_off(dp_phy);
+		if (ret)
+			return ret;
+		ret = qmp_combo_dp_power_on(dp_phy);
+		if (ret)
+			return ret;
 	}
 
 	return 0;
