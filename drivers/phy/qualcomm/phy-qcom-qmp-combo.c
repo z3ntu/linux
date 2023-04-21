@@ -2065,6 +2065,7 @@ static int qmp_combo_dp_power_on(struct phy *phy)
 	void __iomem *tx = qmp->dp_tx;
 	void __iomem *tx2 = qmp->dp_tx2;
 
+	dev_err(qmp->dev, "%s:%d DBG\n", __func__, __LINE__);
 	qmp_combo_dp_serdes_init(qmp);
 
 	qmp_combo_configure_lane(tx, cfg->dp_tx_tbl, cfg->dp_tx_tbl_num, 1);
@@ -2082,6 +2083,7 @@ static int qmp_combo_dp_power_on(struct phy *phy)
 static int qmp_combo_dp_power_off(struct phy *phy)
 {
 	struct qmp_combo *qmp = phy_get_drvdata(phy);
+	dev_err(qmp->dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	/* Assert DP PHY power down */
 	writel(DP_PHY_PD_CTL_PSR_PWRDN, qmp->dp_dp_phy + QSERDES_DP_PHY_PD_CTL);
@@ -2102,6 +2104,7 @@ static int qmp_combo_usb_power_on(struct phy *phy)
 	void __iomem *status;
 	unsigned int val;
 	int ret;
+	dev_err(qmp->dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	qmp_combo_configure(serdes, cfg->serdes_tbl, cfg->serdes_tbl_num);
 
@@ -2149,6 +2152,7 @@ static int qmp_combo_usb_power_off(struct phy *phy)
 {
 	struct qmp_combo *qmp = phy_get_drvdata(phy);
 	const struct qmp_phy_cfg *cfg = qmp->cfg;
+	dev_err(qmp->dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	clk_disable_unprepare(qmp->pipe_clk);
 
@@ -2831,10 +2835,14 @@ static int qmp_combo_typec_switch_set(struct typec_switch_dev *sw,
 	struct phy *dp_phy = qmp->dp_phy;
 	int ret = 0;
 
-	dev_dbg(qmp->dev, "Toggling orientation current %d requested %d\n",
+	dev_err(qmp->dev, "Toggling orientation current %d requested %d\n",
 		qmp->orientation, orientation);
 
+	//return 0;
+
 	qmp->orientation = orientation;
+
+	//return 0;
 
 	if (orientation != TYPEC_ORIENTATION_NONE) {
 		ret = qmp_combo_dp_power_off(dp_phy);
@@ -2853,6 +2861,8 @@ static int qmp_combo_typec_switch_register(struct qmp_combo *qmp)
 	struct typec_switch_desc sw_desc;
 	struct device *dev = qmp->dev;
 
+	dev_err(qmp->dev, "%s:%d DBG\n", __func__, __LINE__);
+
 	sw_desc.drvdata = qmp;
 	sw_desc.fwnode = dev->fwnode;
 	sw_desc.set = qmp_combo_typec_switch_set;
@@ -2867,6 +2877,7 @@ static int qmp_combo_typec_switch_register(struct qmp_combo *qmp)
 #else
 static int qmp_combo_typec_switch_register(struct qmp_combo *qmp)
 {
+	dev_err(qmp->dev, "%s:%d DBG\n", __func__, __LINE__);
 	return 0;
 }
 #endif
