@@ -114,6 +114,46 @@
 	/* HDMI/MHL bridge SII8620 @ 0x72 or 0x39 */
 };
 
+&dsi0 {
+	vdda-supply = <&pm8941_l2>;
+	vdd-supply = <&pm8941_s3>;
+	vddio-supply = <&pm8941_l12>;
+
+	status = "okay";
+
+	panel@0 {
+		compatible = "sony,leo-panel-novatek-lgd";
+		reg = <0>;
+
+		backlight = <&pm8941_wled>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi0_out>;
+			};
+		};
+	};
+};
+
+&dsi0_out {
+	remote-endpoint = <&panel_in>;
+	data-lanes = <0 1 2 3>;
+};
+
+&dsi0_phy {
+	vddio-supply = <&pm8941_l12>;
+
+	status = "okay";
+};
+
+&gpu {
+	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
 &pm8941_gpios {
 	gpio_keys_pin_a: gpio-keys-active-state {
 		pins = "gpio2", "gpio3", "gpio4", "gpio5";
