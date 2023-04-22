@@ -357,6 +357,17 @@
 	};
 };
 
+&pm8941_wled {
+	qcom,cs-out;
+	qcom,current-limit = <24>;
+	qcom,current-boost-limit = <805>;
+	qcom,switching-freq = <800>;
+	qcom,ovp = <29>;
+	qcom,num-strings = <2>;
+
+	status = "okay";
+};
+
 &sdhc_1 {
 	vmmc-supply = <&pm8941_l20>;
 	vqmmc-supply = <&pm8941_s3>;
