@@ -459,6 +459,10 @@
 	qcom,minimum-input-voltage = <4450000>;
 };
 
+&smgr {
+	status = "okay";
+};
+
 &tlmm {
 	sdc1_on: sdc1-on-state {
 		clk-pins {

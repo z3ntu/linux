@@ -312,6 +312,14 @@
 		};
 	};
 
+	smgr: sensor-hub {
+		compatible = "qcom,smgr-v1";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		status = "disabled";
+	};
+
 	soc: soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
