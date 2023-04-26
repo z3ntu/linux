@@ -7,6 +7,7 @@ config IIO_QCOM_SMGR
 	tristate "Qualcomm SSC Sensor Manager"
 	depends on ARCH_QCOM
 	depends on QCOM_RPROC_COMMON
+	select QCOM_QMI_HELPERS
 	help
 	  Say yes here to build core support for the Sensor Manager (SMGR)
 	  service provided by the Qualcomm Snapdragon Sensor Core (SSC).
