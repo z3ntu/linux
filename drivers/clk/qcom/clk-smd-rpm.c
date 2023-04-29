@@ -1281,6 +1281,11 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 	rpm_smd_clks = desc->clks;
 	num_clks = desc->num_clks;
 
+
+	ret = clk_smd_rpm_enable_scaling(rpm);
+	if (ret)
+		goto err;
+
 	for (i = 0; i < num_clks; i++) {
 		if (!rpm_smd_clks[i])
 			continue;
@@ -1291,10 +1296,6 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 		if (ret)
 			goto err;
 	}
-
-	ret = clk_smd_rpm_enable_scaling(rpm);
-	if (ret)
-		goto err;
 
 	for (i = 0; i < num_clks; i++) {
 		if (!rpm_smd_clks[i])
