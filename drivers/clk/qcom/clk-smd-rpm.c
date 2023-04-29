@@ -178,6 +178,7 @@ struct clk_smd_rpm_req {
 struct rpm_smd_clk_desc {
 	struct clk_smd_rpm **clks;
 	size_t num_clks;
+	bool scaling_before_handover;
 };
 
 static DEFINE_MUTEX(rpm_smd_clk_lock);
@@ -693,6 +694,7 @@ static struct clk_smd_rpm *msm8974_clks[] = {
 static const struct rpm_smd_clk_desc rpm_clk_msm8974 = {
 	.clks = msm8974_clks,
 	.num_clks = ARRAY_SIZE(msm8974_clks),
+	.scaling_before_handover = true,
 };
 
 static struct clk_smd_rpm *msm8976_clks[] = {
@@ -1318,6 +1320,12 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 	rpm_smd_clks = desc->clks;
 	num_clks = desc->num_clks;
 
+	if (desc->scaling_before_handover) {
+		ret = clk_smd_rpm_enable_scaling(rpm);
+		if (ret)
+			goto err;
+	}
+
 	for (i = 0; i < num_clks; i++) {
 		if (!rpm_smd_clks[i])
 			continue;
@@ -1329,9 +1337,11 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 			goto err;
 	}
 
-	ret = clk_smd_rpm_enable_scaling(rpm);
-	if (ret)
-		goto err;
+	if (!desc->scaling_before_handover) {
+		ret = clk_smd_rpm_enable_scaling(rpm);
+		if (ret)
+			goto err;
+	}
 
 	for (i = 0; i < num_clks; i++) {
 		if (!rpm_smd_clks[i])
