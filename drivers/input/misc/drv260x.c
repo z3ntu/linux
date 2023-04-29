@@ -237,6 +237,8 @@ static int drv260x_haptics_play(struct input_dev *input, void *data,
 
 	haptics->mode = DRV260X_LRA_NO_CAL_MODE;
 
+	dev_err(&haptics->client->dev, "strong_magnitude=0x%x weak_magnitude=0x%x\n", effect->u.rumble.strong_magnitude, effect->u.rumble.weak_magnitude); // FIXME remove
+
 	/* Scale u16 magnitude into u8 register value */
 	if (effect->u.rumble.strong_magnitude > 0)
 		haptics->magnitude = effect->u.rumble.strong_magnitude >> 8;
@@ -304,10 +306,47 @@ static const struct reg_sequence drv260x_erm_cal_regs[] = {
 	{ DRV260X_CTRL4, DRV260X_AUTOCAL_TIME_500MS },
 };
 
+#define DRV2605_VER_1DOT1 (3 << 5)
+#define DRV2605_VER_1DOT0 (5 << 5)
+#define DRV2604 (4 << 5)
+#define DRV2604L (6 << 5)
+#define DRV2605L (7 << 5)
+
 static int drv260x_init(struct drv260x_data *haptics)
 {
 	int error;
-	unsigned int cal_buf;
+	unsigned int read_buf;
+	const char *model;
+
+	error = regmap_read(haptics->regmap, DRV260X_STATUS, &read_buf);
+	if (error) {
+		dev_err(&haptics->client->dev,
+			"Failed to read DRV260X_STATUS register: %d\n",
+			error);
+		return error;
+	}
+	/* Upper 3 bits are used for model */
+	switch (read_buf >> 5) {
+		case 3:
+			model = "DRV2605 1.1";
+			break;
+		case 4:
+			model = "DRV2604";
+			break;
+		case 5:
+			model = "DRV2605 1.0";
+			break;
+		case 6:
+			model = "DRV2604L";
+			break;
+		case 7:
+			model = "DRV2605L";
+			break;
+		default:
+			model = "unknown model";
+			break;
+	}
+	dev_info(&haptics->client->dev, "Found model: %s (%x)\n", model, read_buf);
 
 	error = regmap_write(haptics->regmap,
 			     DRV260X_RATED_VOLT, haptics->rated_voltage);
@@ -399,14 +438,14 @@ static int drv260x_init(struct drv260x_data *haptics)
 
 	do {
 		usleep_range(15000, 15500);
-		error = regmap_read(haptics->regmap, DRV260X_GO, &cal_buf);
+		error = regmap_read(haptics->regmap, DRV260X_GO, &read_buf);
 		if (error) {
 			dev_err(&haptics->client->dev,
 				"Failed to read GO register: %d\n",
 				error);
 			return error;
 		}
-	} while (cal_buf == DRV260X_GO_BIT);
+	} while (read_buf == DRV260X_GO_BIT);
 
 	return 0;
 }
@@ -472,15 +511,17 @@ static int drv260x_probe(struct i2c_client *client)
 	error = device_property_read_u32(dev, "vib-rated-mv", &voltage);
 	haptics->rated_voltage = error ? DRV260X_DEF_RATED_VOLT :
 					 drv260x_calculate_voltage(voltage);
+	dev_err(dev, "DBG Got rated voltage: 0x%x\n", haptics->rated_voltage);
 
 	error = device_property_read_u32(dev, "vib-overdrive-mv", &voltage);
 	haptics->overdrive_voltage = error ? DRV260X_DEF_OD_CLAMP_VOLT :
 					     drv260x_calculate_voltage(voltage);
+	dev_err(dev, "DBG Got overdrive voltage: 0x%x\n", haptics->overdrive_voltage);
 
 	haptics->regulator = devm_regulator_get(dev, "vbat");
 	if (IS_ERR(haptics->regulator)) {
 		error = PTR_ERR(haptics->regulator);
-		dev_err(dev, "unable to get regulator, error: %d\n", error);
+		dev_err(dev, "unable to get regulator FOOOOO, error: %d\n", error);
 		return error;
 	}
 
