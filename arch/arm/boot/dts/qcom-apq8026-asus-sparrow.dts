@@ -17,6 +17,7 @@
 	qcom,msm-id = <199 0x20000>;
 	qcom,board-id = <8 3005>;
 
+#if 0
 	chosen {
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -31,6 +32,7 @@
 			format = "r8g8b8";
 		};
 	};
+#endif
 
 	reserved-memory {
 		sbl_region: sbl@2f00000 {
@@ -49,10 +51,12 @@
 			reg = <0x3900000 0x1400000>;
 			no-map;
 		};
+		#if 0
 		framebuffer@4200000 {
 			reg = <0x4200000 0x4b000>;
 			no-map;
 		};
+		#endif
 		modem_region: modem@4d00000 {
 			reg = <0x4d00000 0x1b00000>;
 			no-map;
@@ -61,6 +65,12 @@
 			reg = <0x7f00000 0x100000>;
 			no-map;
 		};
+		#if 0
+		stuff@7e9c000 {
+			reg = <0x7e9c000 0x64000>;
+			no-map;
+		};
+		#endif
 	};
 
 	vreg_wlan: wlan-regulator {
