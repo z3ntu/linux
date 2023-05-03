@@ -177,6 +177,10 @@
 	vddio-supply = <&pm8226_l8>;
 };
 
+&gpu {
+	status = "okay";
+};
+
 &mdss {
 	status = "okay";
 };
