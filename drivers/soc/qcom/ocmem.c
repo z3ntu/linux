@@ -8,6 +8,7 @@
  * Copyright (C) 2019 Brian Masney <masneyb@onstation.org>
  * Copyright (C) 2015 Red Hat. Author: Rob Clark <robdclark@gmail.com>
  */
+#define DEBUG
 
 #include <linux/bitfield.h>
 #include <linux/clk.h>
