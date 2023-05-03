@@ -15,7 +15,9 @@ description: |
 
 properties:
   compatible:
-    const: qcom,msm8974-ocmem
+    enum:
+      - qcom,msm8226-ocmem
+      - qcom,msm8974-ocmem
 
   reg:
     items:
@@ -28,11 +30,13 @@ properties:
       - const: mem
 
   clocks:
+    minItems: 1
     items:
       - description: Core clock
       - description: Interface clock
 
   clock-names:
+    minItems: 1
     items:
       - const: core
       - const: iface
