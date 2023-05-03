@@ -186,6 +186,11 @@ static inline bool adreno_is_a305(const struct adreno_gpu *gpu)
 	return adreno_is_revn(gpu, 305);
 }
 
+static inline bool adreno_is_a305b(const struct adreno_gpu *gpu)
+{
+	return adreno_is_revn(gpu, 335);
+}
+
 static inline bool adreno_is_a306(const struct adreno_gpu *gpu)
 {
 	/* yes, 307, because a305c is 306 */
