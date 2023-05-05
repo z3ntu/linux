@@ -1694,6 +1694,8 @@ void hci_conn_del_sysfs(struct hci_conn *conn);
 #define use_ext_scan(dev) (((dev)->commands[37] & 0x20) && \
 			   ((dev)->commands[37] & 0x40) && \
 			   !test_bit(HCI_QUIRK_BROKEN_EXT_SCAN, &(dev)->quirks))
+#undef use_ext_scan
+#define use_ext_scan(dev) (1)
 
 /* Use ext create connection if command is supported */
 #define use_ext_conn(dev) ((dev)->commands[37] & 0x80)
