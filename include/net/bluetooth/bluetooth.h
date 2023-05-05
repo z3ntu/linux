@@ -39,11 +39,20 @@
 #endif
 
 /* Bluetooth versions */
+#define BLUETOOTH_VER_1_0B	0
 #define BLUETOOTH_VER_1_1	1
 #define BLUETOOTH_VER_1_2	2
 #define BLUETOOTH_VER_2_0	3
 #define BLUETOOTH_VER_2_1	4
+#define BLUETOOTH_VER_3_0	5
 #define BLUETOOTH_VER_4_0	6
+#define BLUETOOTH_VER_4_1	7
+#define BLUETOOTH_VER_4_2	8
+#define BLUETOOTH_VER_5_0	9
+#define BLUETOOTH_VER_5_1	10
+#define BLUETOOTH_VER_5_2	11
+#define BLUETOOTH_VER_5_3	12
+#define BLUETOOTH_VER_5_4	13
 
 /* Reserv for core and drivers use */
 #define BT_SKB_RESERVE	8
