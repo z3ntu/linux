@@ -1,0 +1,141 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2023, Luca Weiss <luca@z3ntu.xyz>
+ */
+
+/dts-v1/;
+
+#include "qcom-msm8226.dtsi"
+#include "qcom-pm8226.dtsi"
+
+/delete-node/ &adsp_region;
+/delete-node/ &smem_region;
+
+/ {
+	model = "HTC One Mini 2";
+	compatible = "htc,memul", "qcom,msm8926";
+
+	chosen {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		stdout-path = "display0";
+
+		framebuffer0: framebuffer@10a2d000 {
+			compatible = "simple-framebuffer";
+			reg = <0x10a2d000 0x800000>; // TODO: Fix size
+			width = <720>;
+			height = <1280>;
+			stride = <(720 * 2)>;
+			format = "r5g6b5";
+		};
+	};
+
+/*
+memul:/ # cat /sys/kernel/debug/memblock/memory
+   0: 0x00000000..0x05afffff
+   1: 0x05d00000..0x074fffff
+   2: 0x11600000..0x3f9fffff
+memul:/ # cat /sys/kernel/debug/memblock/reserved
+   0: 0x00000000..0x00007fff
+   1: 0x00100000..0x01522f1b
+   2: 0x01e00000..0x01e2e401
+   3: 0x02008000..0x02160d47
+   4: 0x05b00000..0x05bcffff
+   5: 0x2b400000..0x2fffffff
+   6: 0x302cb000..0x302fefff
+   7: 0x302ffda0..0x302fffff
+
+[140] MDP continuous splash detected: pipe RGB_0, base: 0x10a2d000, stride: 1440, src: 720x1280 (0,0), img: 720x1280, out: 720x1280 (0,0), format: 0x22216 (bpp: 2)
+
+Address and Size of Hole
+qcom,memblock-remove = <0x8000000 0x7500000 0xfa00000 0x500000>;
+
+[    5.667433] pil-q6v5-mss fc880000.qcom,mss: mba: loading from 0x0d100000 to 0x0d13a000
+[    5.671198] pil-q6v5-lpass fe200000.qcom,lpass: adsp: loading from 0x0dc00000 to 0x0f000000
+[    5.742635] pil-q6v5-mss fc880000.qcom,mss: modem: loading from 0x08000000 to 0x0cf00000
+[   19.441562] pil_venus fdce0000.qcom,venus: venus: loading from 0x0f500000 to 0x0fa00000
+*/
+
+/*
+[    0.000000] OF: reserved mem: OVERLAP DETECTED!
+[    0.000000] unknown@7500000 (0x07500000--0x11600000) overlaps with modem@8000000 (0x08000000--0x0cf00000)
+[    0.000000] OF: reserved mem: OVERLAP DETECTED!
+[    0.000000] modem@8000000 (0x08000000--0x0cf00000) overlaps with unknown@8000000 (0x08000000--0x0f500000)
+[    0.000000] OF: reserved mem: OVERLAP DETECTED!
+[    0.000000] unknown@8000000 (0x08000000--0x0f500000) overlaps with mba@d100000 (0x0d100000--0x0d13a000)
+*/
+	reserved-memory {
+		unknown@5b00000 {
+			//0x5b00000 - 0x5d00000
+			reg = <0x05b00000 0x200000>;
+			no-map;
+		};
+		unknown@7500000 { // TODO: giant region that contains most others
+			//0x7500000 - 0x11600000
+			reg = <0x07500000 0xa100000>;
+			no-map;
+		};
+
+		unknown@8000000 { // TODO: pretty big region that contains many others
+			reg = <0x08000000 0x7500000>; // until 0x0f500000
+			no-map;
+		};
+		modem_region: modem@8000000 {
+			reg = <0x08000000 0x4f00000>;
+			no-map;
+		};
+		mba_region: mba@d100000 {
+			reg = <0x0d100000 0x3a000>;
+			no-map;
+		};
+		adsp_region: adsp@dc00000 {
+			reg = <0x0dc00000 0x1400000>;
+			no-map;
+		};
+		venus_region: venus@f500000 {
+			reg = <0x0f500000 0x500000>;
+			no-map;
+		};
+		smem_region: smem@fa00000 {
+			reg = <0x0fa00000 0x100000>;
+			no-map;
+		};
+		unknown@fb00000 {
+			reg = <0x0fb00000 0x400000>;
+			no-map;
+		};
+		framebuffer@10a2d000 {
+			reg = <0x10a2d000 0x800000>; // TODO: Fix size
+			no-map;
+		};
+	};
+};
+
+&rpm_requests {
+	regulators {
+		compatible = "qcom,rpm-pm8226-regulators";
+
+		pm8226_l10: l10 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+		};
+		pm8226_l20: l20 {
+			regulator-min-microvolt = <3075000>;
+			regulator-max-microvolt = <3075000>;
+		};
+	};
+};
+
+&usb {
+	extcon = <&smbb>;
+	dr_mode = "peripheral";
+	status = "okay";
+};
+
+&usb_hs_phy {
+	extcon = <&smbb>;
+	v1p8-supply = <&pm8226_l10>;
+	v3p3-supply = <&pm8226_l20>;
+};
