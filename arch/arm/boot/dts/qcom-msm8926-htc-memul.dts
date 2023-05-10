@@ -38,6 +38,31 @@
 		};
 	};
 
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		key-power {
+			label = "Power";
+			gpios = <&tlmm 106 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_POWER>;
+			debounce-interval = <15>;
+		};
+
+		key-volume-down {
+			label = "Volume Down";
+			gpios = <&tlmm 107 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEDOWN>;
+			debounce-interval = <15>;
+		};
+
+		key-volume-up {
+			label = "Volume Up";
+			gpios = <&tlmm 108 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_VOLUMEUP>;
+			debounce-interval = <15>;
+		};
+	};
+
 /*
 memul:/ # cat /sys/kernel/debug/memblock/memory
    0: 0x00000000..0x05afffff
@@ -117,6 +142,96 @@ qcom,memblock-remove = <0x8000000 0x7500000 0xfa00000 0x500000>;
 			no-map;
 		};
 	};
+};
+
+&blsp1_i2c2 {
+	status = "okay";
+
+	// akm8963 @ 0d -- OK!
+	magnetometer@d {
+		compatible = "asahi-kasei,ak8963";
+		reg = <0x0d>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <66 IRQ_TYPE_EDGE_RISING>;
+		vdd-supply = <&pm8226_l19>;
+		vid-supply = <&pm8226_l28>;
+	};
+
+	// bma250_bosch @ 18 -- OK!
+	accelerometer@18 {
+		compatible = "bosch,bma250e";
+		reg = <0x18>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <63 IRQ_TYPE_EDGE_RISING>;
+		vdd-supply = <&pm8226_l19>;
+		vddio-supply = <&pm8226_l28>;
+	};
+};
+
+&blsp1_i2c4 {
+	status = "okay";
+	// ?? @ 0e
+	// tfa9887 @ 34
+	// tfa9887l @ 35
+	// rt5501 @ 52 ?
+};
+
+&blsp1_i2c5 {
+	status = "okay";
+	// himax @ 48 ?
+
+	// synaptics @ 20 ?
+	touchscreen@20 {
+		compatible = "syna,rmi4-i2c";
+		reg = <0x20>;
+
+		interrupts-extended = <&tlmm 17 IRQ_TYPE_EDGE_FALLING>;
+		//vdd-supply = <&pm8226_l19>;
+		//vio-supply = <&pm8226_lvs1>;
+
+		//pinctrl-names = "default";
+		//pinctrl-0 = <&touch_default_state>;
+
+		syna,startup-delay-ms = <160>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		rmi4-f01@1 {
+			reg = <0x1>;
+			syna,nosleep-mode = <1>;
+		};
+
+		rmi4-f12@12 {
+			reg = <0x12>;
+			syna,sensor-type = <1>;
+		};
+	};
+};
+
+&blsp1_i2c6 {
+	status = "okay";
+	// ncp6924 @ 10 (camera regulators)
+	// tps61310 @ 33 (flashlight/torch) -- mfd/tps6105x.txt
+	// tps_65132 @ 3e ? (panel regulator)
+
+	// pn544_nfc @ 28 -- OK! but fails with neard
+	// [  130.388553] i2c: 00000000: 05 f9 04 00 c3 e5
+	// [  130.389765] pn544_hci_i2c 3-0028: NFC: invalid len byte
+	nfc@28 {
+		compatible = "nxp,pn544-i2c";
+		reg = <0x28>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <35 IRQ_TYPE_LEVEL_HIGH>;
+
+		enable-gpios = <&tlmm 8 GPIO_ACTIVE_HIGH>;
+		firmware-gpios = <&tlmm 2 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&pm8226_vib {
+	status = "okay";
 };
 
 &rpm_requests {
