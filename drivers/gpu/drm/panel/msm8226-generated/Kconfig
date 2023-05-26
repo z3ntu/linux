@@ -1,0 +1,16 @@
+menu "MSM8916 panel drivers generated with linux-mdss-dsi-panel-driver-generator"
+	depends on GPIOLIB && OF && REGULATOR
+	depends on DRM_MIPI_DSI
+
+config DRM_PANEL_MSM8226_GENERATED
+	tristate "Select all generated MSM8226 panel drivers by default"
+
+config DRM_PANEL_HTC_MEMUL_NOVATEK35521
+	tristate "Htc MEMUL NOVATEK35521"
+	default DRM_PANEL_MSM8226_GENERATED
+
+config DRM_PANEL_LG_LENOK_LG4237
+	tristate "Lg LENOK LG4237"
+	default DRM_PANEL_MSM8226_GENERATED
+
+endmenu
