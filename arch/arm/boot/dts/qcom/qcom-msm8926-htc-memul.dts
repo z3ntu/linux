@@ -21,23 +21,6 @@
 		mmc1 = &sdhc_2; /* SDC2 SD card slot */
 	};
 
-	chosen {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		ranges;
-
-		stdout-path = "display0";
-
-		framebuffer0: framebuffer@10a2d000 {
-			compatible = "simple-framebuffer";
-			reg = <0x10a2d000 0x800000>; // TODO: Fix size
-			width = <720>;
-			height = <1280>;
-			stride = <(720 * 2)>;
-			format = "r5g6b5";
-		};
-	};
-
 	gpio-keys {
 		compatible = "gpio-keys";
 
@@ -236,6 +219,41 @@ qcom,memblock-remove = <0x8000000 0x7500000 0xfa00000 0x500000>;
 
 &pm8226_vib {
 	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	vdda-supply = <&pm8226_l4>;
+	vdd-supply = <&pm8226_l23>;
+	vddio-supply = <&pm8226_lvs1>;
+
+	panel@0 {
+		compatible = "htc,memul-panel-novatek35521";
+		reg = <0>;
+
+		// qcom,platform-enable-gpio = <&msmgpio 109 0>;
+		// qcom,platform-reset-gpio = <&msmgpio 25 0>;
+		// qcom,platform-te-gpio = <&msmgpio 24 0>;
+		reset-gpios = <&tlmm 109 GPIO_ACTIVE_LOW>; // FIXME most likely wrong
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	remote-endpoint = <&panel_in>;
+	data-lanes = <0 1 2>;
+};
+
+&mdss_dsi0_phy {
+	vddio-supply = <&pm8226_l8>;
 };
 
 &rpm_requests {
