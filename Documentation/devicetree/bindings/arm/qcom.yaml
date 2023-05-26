@@ -382,6 +382,11 @@ properties:
           - const: qcom,qrb2210
           - const: qcom,qcm2290
 
+      - items:
+          - enum:
+              - fairphone,fp5
+          - const: qcom,qcm6490
+
       - description: Qualcomm Technologies, Inc. Distributed Unit 1000 platform
         items:
           - enum:
@@ -1060,6 +1065,7 @@ allOf:
               - qcom,msm8994
               - qcom,msm8996
               - qcom,msm8998
+              - qcom,qcm6490
               - qcom,sdm450
               - qcom,sdm630
               - qcom,sdm632
