@@ -2885,6 +2885,8 @@
 					<&rpmhpd SC7280_MSS>;
 			power-domain-names = "cx", "mss";
 
+			interconnects = <&mc_virt MASTER_LLCC 0 &mc_virt SLAVE_EBI1 0>;
+
 			memory-region = <&mpss_mem>;
 
 			qcom,qmp = <&aoss_qmp>;
@@ -3595,10 +3597,9 @@
 			status = "disabled";
 		};
 
-		remoteproc_adsp: remoteproc@3000000 {
-			compatible = "qcom,sc7280-adsp-pil";
-			reg = <0 0x03000000 0 0x5000>, <0 0x0355b000 0 0x10>;
-			reg-names = "qdsp6ss_base", "lpass_efuse";
+		remoteproc_adsp: remoteproc@3700000 {
+			compatible = "qcom,sm7325-adsp-pas";
+			reg = <0 0x03700000 0 0x100>;
 
 			interrupts-extended = <&pdc 6 IRQ_TYPE_LEVEL_HIGH>,
 					      <&adsp_smp2p_in 0 IRQ_TYPE_NONE>,
@@ -3613,23 +3614,14 @@
 
 			qcom,qmp = <&aoss_qmp>;
 
-			clocks = <&rpmhcc RPMH_CXO_CLK>,
-				 <&gcc GCC_CFG_NOC_LPASS_CLK>;
-
-			clock-names = "xo", "gcc_cfg_noc_lpass";
+			clocks = <&rpmhcc RPMH_CXO_CLK>;
+			clock-names = "xo";
 
 			iommus = <&apps_smmu 0x1800 0x0>;
 
-			power-domains =	<&rpmhpd SC7280_CX>;
-			power-domain-names = "cx";
-
-			required-opps = <&rpmhpd_opp_nom>;
-
-			resets = <&pdc_reset PDC_AUDIO_SYNC_RESET>,
-				 <&aoss_reset AOSS_CC_LPASS_RESTART>;
-
-			reset-names =  "pdc_sync", "cc_lpass";
-			qcom,halt-regs = <&tcsr_1 0x3000 0x5000 0x8000 0x13000>;
+			power-domains = <&rpmhpd SC7280_LCX>,
+					<&rpmhpd SC7280_LMX>;
+			power-domain-names = "lcx", "lmx";
 
 			memory-region = <&adsp_mem>;
 
@@ -3687,7 +3679,7 @@
 		};
 
 		remoteproc_wpss: remoteproc@8a00000 {
-			compatible = "qcom,sc7280-wpss-pil";
+			compatible = "qcom,sm7325-wpss-pas";
 			reg = <0 0x08a00000 0 0x10000>;
 
 			interrupts-extended = <&intc GIC_SPI 587 IRQ_TYPE_EDGE_RISING>,
@@ -3699,12 +3691,8 @@
 			interrupt-names = "wdog", "fatal", "ready", "handover",
 					  "stop-ack", "shutdown-ack";
 
-			clocks = <&gcc GCC_WPSS_AHB_BDG_MST_CLK>,
-				 <&gcc GCC_WPSS_AHB_CLK>,
-				 <&gcc GCC_WPSS_RSCP_CLK>,
-				 <&rpmhcc RPMH_CXO_CLK>;
-			clock-names = "ahb_bdg", "ahb",
-				      "rscp", "xo";
+			clocks = <&rpmhcc RPMH_CXO_CLK>;
+			clock-names = "xo";
 
 			power-domains = <&rpmhpd SC7280_CX>,
 					<&rpmhpd SC7280_MX>;
@@ -3717,11 +3705,6 @@
 			qcom,smem-states = <&wpss_smp2p_out 0>;
 			qcom,smem-state-names = "stop";
 
-			resets = <&aoss_reset AOSS_CC_WCSS_RESTART>,
-				 <&pdc_reset PDC_WPSS_SYNC_RESET>;
-			reset-names = "restart", "pdc_sync";
-
-			qcom,halt-regs = <&tcsr_1 0x17000>;
 
 			status = "disabled";
 
