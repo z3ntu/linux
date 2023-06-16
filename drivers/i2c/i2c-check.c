@@ -342,7 +342,7 @@ EXPORT_SYMBOL(i2c_check_status_create);
 
 void i2c_check_device_register ( void )
 {
-	i2c_check_class = class_create(THIS_MODULE, "i2c_check");
+	i2c_check_class = class_create("i2c_check");
 	if (IS_ERR(i2c_check_class))
 		pr_err("Failed to create class(i2c_check_class)!\n");
 }
