@@ -67,6 +67,11 @@ int apr_send_pkt(struct apr_device *adev, struct apr_pkt *pkt)
 	hdr->dest_domain = adev->domain_id;
 	hdr->dest_svc = adev->svc.id;
 
+	printk(KERN_WARNING "<APR>: Tx: src_addr[0x%X] dest_addr[0x%X] opcode[0x%X] token[0x%X]",
+			(hdr->src_domain << 8) | hdr->src_svc,
+			(hdr->dest_domain << 8) | hdr->dest_svc, hdr->opcode,
+			hdr->token);
+
 	ret = rpmsg_trysend(apr->ch, pkt, hdr->pkt_size);
 	spin_unlock_irqrestore(&adev->svc.lock, flags);
 
@@ -253,6 +258,20 @@ static int apr_do_rx_callback(struct packet_router *apr, struct apr_rx_buf *abuf
 	 */
 	if (resp.payload_size > 0)
 		resp.payload = buf + hdr_size;
+
+	if (hdr->opcode == APR_BASIC_RSP_RESULT && resp.payload) {
+		uint32_t *ptr = resp.payload;
+
+		printk(KERN_WARNING "Rx: src_addr[0x%X] dest_addr[0x%X] opcode[0x%X] token[0x%X] rc[0x%X]",
+				(hdr->src_domain << 8) | hdr->src_svc,
+				(hdr->dest_domain << 8) | hdr->dest_svc,
+				hdr->opcode, hdr->token, ptr[1]);
+	} else {
+		printk(KERN_WARNING "Rx: src_addr[0x%X] dest_addr[0x%X] opcode[0x%X] token[0x%X]",
+				(hdr->src_domain << 8) | hdr->src_svc,
+				(hdr->dest_domain << 8) | hdr->dest_svc, hdr->opcode,
+				hdr->token);
+	}
 
 	adrv->callback(adev, &resp);
 
