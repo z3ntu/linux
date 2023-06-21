@@ -57,6 +57,31 @@ properties:
         - description: dtest line to attach
         - description: flags for the attachment
 
+  nvmem:
+    description: >
+      Phandle(s) of the nvmem device(s) to access the LUT stored in the SDAM module(s).
+      This property is required only when LUT mode is supported and the LUT pattern is
+      stored in SDAM modules instead of a LUT module.
+    minItems: 1
+    maxItems: 2
+
+  nvmem-names:
+    description: >
+      The nvmem device name(s) for the SDAM module(s) where the LUT pattern data is stored.
+      This property is required only when LUT mode is supported with SDAM module instead of
+      LUT module.
+    minItems: 1
+    items:
+      - const: lpg_chan_sdam
+      - const: lut_sdam
+
+  qcom,pbs-client:
+    $ref: /schemas/types.yaml#/definitions/phandle
+    description: >
+      Phandle of the PBS client used for sending the PBS trigger. This property is
+      required when LUT mode is supported and the LUT pattern is stored in a single
+      SDAM module instead of a LUT module.
+
   multi-led:
     type: object
     $ref: leds-class-multicolor.yaml#
@@ -185,4 +210,64 @@ examples:
       compatible = "qcom,pm8916-pwm";
       #pwm-cells = <2>;
     };
+  - |
+    #include <dt-bindings/leds/common.h>
+
+    led-controller {
+      compatible = "qcom,pm8350c-pwm";
+      #address-cells = <1>;
+      #size-cells = <0>;
+      #pwm-cells = <2>;
+      nvmem-names = "lpg_chan_sdam" , "lut_sdam";
+      nvmem = <&pmk8550_sdam_21 &pmk8550_sdam_22>;
+
+      led@1 {
+        reg = <1>;
+        color = <LED_COLOR_ID_RED>;
+        label = "red";
+      };
+
+      led@2 {
+        reg = <2>;
+        color = <LED_COLOR_ID_GREEN>;
+        label = "green";
+      };
+
+      led@3 {
+        reg = <3>;
+        color = <LED_COLOR_ID_BLUE>;
+        label = "blue";
+      };
+    };
+  - |
+    #include <dt-bindings/leds/common.h>
+
+    led-controller {
+      compatible = "qcom,pmi632-lpg";
+      #address-cells = <1>;
+      #size-cells = <0>;
+      #pwm-cells = <2>;
+      nvmem-names = "lpg_chan_sdam";
+      nvmem = <&pmi632_sdam7>;
+      qcom,pbs-client = <&pmi632_pbs_client3>;
+
+      led@1 {
+        reg = <1>;
+        color = <LED_COLOR_ID_RED>;
+        label = "red";
+      };
+
+      led@2 {
+        reg = <2>;
+        color = <LED_COLOR_ID_GREEN>;
+        label = "green";
+      };
+
+      led@3 {
+        reg = <3>;
+        color = <LED_COLOR_ID_BLUE>;
+        label = "blue";
+      };
+    };
+
 ...
