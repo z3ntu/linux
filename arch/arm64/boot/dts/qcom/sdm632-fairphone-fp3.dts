@@ -141,6 +141,8 @@
 	power-domain-names = "cx", "mx", "mss";
 
 	pll-supply = <&pm8953_l7>;
+
+	status = "okay";
 };
 
 &pm8953_resin {
