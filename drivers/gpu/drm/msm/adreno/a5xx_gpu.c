@@ -1720,6 +1720,7 @@ static void check_speed_bin(struct device *dev)
 	 * actual bins
 	 */
 	val = 0x80;
+	of_property_read_u32(dev->of_node, "opp-default-hw", &val);
 
 	cell = nvmem_cell_get(dev, "speed_bin");
 
