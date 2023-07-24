@@ -32,7 +32,7 @@
 	};
 };
 
-&dsi0 {
+&mdss_dsi0 {
 	vdda-supply = <&pm8953_s3>;
 	vddio-supply = <&pm8953_l6>;
 	status = "okay";
@@ -53,18 +53,18 @@
 
 		port {
 			panel_in: endpoint {
-				remote-endpoint = <&dsi0_out>;
+				remote-endpoint = <&mdss_dsi0_out>;
 			};
 		};
 	};
 };
 
-&dsi0_out {
+&mdss_dsi0_out {
 	data-lanes = <0 1 2 3>;
 	remote-endpoint = <&panel_in>;
 };
 
-&dsi0_phy {
+&mdss_dsi0_phy {
 	vddio-supply = <&pm8953_l6>;
 	vcca-supply = <&pm8953_l3>;
 
@@ -394,6 +394,7 @@
 };
 
 &usb3 {
+	extcon = <&pmi8950_smbcharger>;
 	status = "okay";
 };
 
