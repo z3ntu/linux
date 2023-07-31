@@ -391,6 +391,12 @@
 		drive-strength = <2>;
 		bias-pull-down;
 	};
+
+	tlmm_pri_ws_default: tlmm_pri_ws_default {
+		pins = "gpio92";
+		function = "pri_mi2s_ws";
+		drive-strength = <8>;
+	};
 };
 
 &usb3 {
