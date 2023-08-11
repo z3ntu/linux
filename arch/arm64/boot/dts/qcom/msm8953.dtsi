@@ -2514,6 +2514,9 @@
 			clock-names = "core", "iface";
 			clocks = <&gcc GCC_BLSP1_QUP3_I2C_APPS_CLK>,
 				 <&gcc GCC_BLSP1_AHB_CLK>;
+			dmas = <&blsp1_dma 8>, <&blsp1_dma 9>;
+			dma-names = "tx", "rx";
+
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&spi_3_default>;
 			pinctrl-1 = <&spi_3_sleep>;
@@ -2584,6 +2587,9 @@
 			clock-names = "core", "iface";
 			clocks = <&gcc GCC_BLSP2_QUP1_I2C_APPS_CLK>,
 				<&gcc GCC_BLSP2_AHB_CLK>;
+			dmas = <&blsp2_dma 4>, <&blsp2_dma 5>;
+			dma-names = "tx", "rx";
+
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&spi_5_default>;
 			pinctrl-1 = <&spi_5_sleep>;
@@ -2621,6 +2627,9 @@
 			clock-names = "core", "iface";
 			clocks = <&gcc GCC_BLSP2_QUP2_I2C_APPS_CLK>,
 				 <&gcc GCC_BLSP2_AHB_CLK>;
+			dmas = <&blsp2_dma 6>, <&blsp2_dma 7>;
+			dma-names = "tx", "rx";
+
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&spi_6_default>;
 			pinctrl-1 = <&spi_6_sleep>;
