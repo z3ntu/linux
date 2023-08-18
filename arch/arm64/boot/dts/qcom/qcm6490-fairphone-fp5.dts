@@ -546,6 +546,21 @@
 	status = "okay";
 };
 
+&remoteproc_adsp {
+	firmware-name = "qcom/qcm6490/fairphone5/adsp.mdt";
+	status = "okay";
+};
+
+&remoteproc_mpss {
+	firmware-name = "qcom/qcm6490/fairphone5/modem.mdt";
+	status = "okay";
+};
+
+&remoteproc_wpss {
+	firmware-name = "qcom/qcm6490/fairphone5/wpss.mdt";
+	status = "okay";
+};
+
 &rmtfs_mem {
 	qcom,vmid = <QCOM_SCM_VMID_MSS_MSA>, <QCOM_SCM_VMID_NAV>;
 	reg = <0x0 0xf8500000 0x0 0x600000>;
@@ -743,5 +758,9 @@
 	vdda-phy-supply = <&vreg_l6b>;
 	vdda-pll-supply = <&vreg_l1b>;
 
+	status = "okay";
+};
+
+&wifi {
 	status = "okay";
 };
