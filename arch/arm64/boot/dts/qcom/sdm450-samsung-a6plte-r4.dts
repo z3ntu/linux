@@ -54,6 +54,7 @@
 				 <&gcc GCC_MDSS_BYTE0_CLK>,
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>;
+			status = "disabled";
 		};
 	};
 
@@ -200,6 +201,32 @@
 		regulator-min-microvolt = <3700000>;
 		regulator-max-microvolt = <3700000>;
 		regulator-always-on;
+	};
+
+	panel_vdd_vci: vreg-panel-vdd-vci {
+		compatible = "regulator-fixed";
+
+		enable-active-high;
+		gpio = <&tlmm 35 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+		regulator-max-microvolt = <3000000>;
+		regulator-min-microvolt = <3000000>;
+		regulator-name = "panel_vdd_vci";
+		startup-delay-us = <1000>;
+		vin-supply = <&vbat>;
+	};
+
+	panel_vddr: vreg-panel-vddr {
+		compatible = "regulator-fixed";
+
+		enable-active-high;
+		gpio = <&tlmm 93 GPIO_ACTIVE_HIGH>;
+		regulator-boot-on;
+		regulator-max-microvolt = <1500000>;
+		regulator-min-microvolt = <1500000>;
+		regulator-name = "panel_vddr";
+		startup-delay-us = <1000>;
+		vin-supply = <&pm8953_s4>;
 	};
 
 	ts_avdd: vreg-ts-avdd {
@@ -668,6 +695,46 @@
 
 &lpass {
 	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&mdss_te_default>;
+
+	vdda-supply = <&pm8953_s3>;
+	vddio-supply = <&pm8953_l6>;
+
+	panel@0 {
+		compatible = "samsung,s6e3fa7-ams604nl01";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 50 GPIO_ACTIVE_LOW>;
+
+		vdd-supply = <&panel_vdd_vci>;
+		vddr-supply = <&panel_vddr>;
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	status = "okay";
+	vcca-supply = <&pm8953_l3>;
 };
 
 &mpss {
