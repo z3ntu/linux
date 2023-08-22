@@ -45,6 +45,11 @@
 			reg = <0x0 0x9ae00000 0x0 0x1900000>;
 			no-map;
 		};
+
+		cdsp_mem: memory@9be00000 { // FIXME just took whatever
+			reg = <0x0 0x9be00000 0x0 0x1900000>;
+			no-map;
+		};
 	};
 };
 
