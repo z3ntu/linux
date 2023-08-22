@@ -565,6 +565,11 @@
 	status = "okay";
 };
 
+&remoteproc_cdsp {
+	firmware-name = "qcom/qcm6490/fairphone5/cdsp.mdt";
+	status = "okay";
+};
+
 &remoteproc_mpss {
 	firmware-name = "qcom/qcm6490/fairphone5/modem.mdt";
 	status = "okay";
