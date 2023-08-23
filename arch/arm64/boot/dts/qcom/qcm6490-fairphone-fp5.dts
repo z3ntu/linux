@@ -925,6 +925,11 @@
 	status = "okay";
 };
 
+&venus {
+	firmware-name = "qcom/qcm6490/fairphone5/venus.mbn";
+	status = "okay";
+};
+
 &wifi {
 	status = "okay";
 };
