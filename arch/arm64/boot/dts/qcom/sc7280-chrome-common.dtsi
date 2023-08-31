@@ -64,11 +64,6 @@
 	status = "disabled";
 };
 
-&qfprom {
-	clocks = <&gcc GCC_SEC_CTRL_CLK_SRC>;
-	clock-names = "core";
-};
-
 /*
  * Chrome designs always boot from SPI flash hooked up to the qspi.
  *

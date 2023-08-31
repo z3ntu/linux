@@ -899,6 +899,8 @@
 			      <0 0x00780000 0 0xa20>,
 			      <0 0x00782000 0 0x120>,
 			      <0 0x00786000 0 0x1fff>;
+			clocks = <&gcc GCC_SEC_CTRL_CLK_SRC>;
+			clock-names = "core";
 			power-domains = <&rpmhpd SC7280_MX>;
 			#address-cells = <1>;
 			#size-cells = <1>;
