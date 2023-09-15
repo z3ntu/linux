@@ -1379,8 +1379,6 @@ static int camss_init_subdevices(struct camss *camss)
 	const struct camss_resources *res = camss->res;
 	unsigned int i;
 	int ret;
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
-	dev_info(camss->dev, "DBG test=%ld\n", ARRAY_SIZE(csiphy_res_6350));
 
 	for (i = 0; i < camss->res->csiphy_num; i++) {
 		ret = msm_csiphy_subdev_init(camss, &camss->csiphy[i],
@@ -1391,7 +1389,6 @@ static int camss_init_subdevices(struct camss *camss)
 				i, ret);
 			return ret;
 		}
-		dev_info(camss->dev, "csiphy%d init done\n", i);
 	}
 
 	/* note: SM8250 requires VFE to be initialized before CSID */
@@ -1403,7 +1400,6 @@ static int camss_init_subdevices(struct camss *camss)
 				"Fail to init vfe%d sub-device: %d\n", i, ret);
 			return ret;
 		}
-		dev_info(camss->dev, "vfe%d init done\n", i);
 	}
 
 	for (i = 0; i < camss->res->csid_num; i++) {
@@ -1745,20 +1741,15 @@ static int camss_icc_get(struct camss *camss)
 {
 	const struct resources_icc *icc_res;
 	int i;
-	//dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d icc_path_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num, camss->res->icc_path_num);
 
 	icc_res = camss->res->icc_res;
-	//dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d icc_path_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num, camss->res->icc_path_num);
 
 	for (i = 0; i < camss->res->icc_path_num; i++) {
-		//dev_info(camss->dev, "DBG i=%d name=%s\n", i, icc_res[i].name);
 		camss->icc_path[i] = devm_of_icc_get(camss->dev,
 						     icc_res[i].name);
-		//dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d icc_path_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num, camss->res->icc_path_num);
 		if (IS_ERR(camss->icc_path[i]))
 			return PTR_ERR(camss->icc_path[i]);
 	}
-	//dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d icc_path_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num, camss->res->icc_path_num);
 
 	return 0;
 }
@@ -1795,7 +1786,6 @@ static int camss_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	camss->res = of_device_get_match_data(dev);
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 
 	atomic_set(&camss->ref_count, 0);
 	camss->dev = dev;
@@ -1819,27 +1809,22 @@ static int camss_probe(struct platform_device *pdev)
 	}
 
 	camss->vfe_total_num = camss->res->vfe_num + camss->res->vfe_lite_num;
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 	camss->vfe = devm_kcalloc(dev, camss->vfe_total_num,
 				  sizeof(*camss->vfe), GFP_KERNEL);
 	if (!camss->vfe)
 		return -ENOMEM;
 
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 	ret = camss_icc_get(camss);
 	if (ret < 0)
 		return ret;
 
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 	ret = camss_configure_pd(camss);
 	if (ret < 0) {
 		dev_err(dev, "Failed to configure power domains: %d\n", ret);
 		return ret;
 	}
 
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 	ret = camss_init_subdevices(camss);
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 	if (ret < 0)
 		goto err_genpd_cleanup;
 
@@ -1915,7 +1900,6 @@ err_genpd_cleanup:
 
 void camss_delete(struct camss *camss)
 {
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 	v4l2_device_unregister(&camss->v4l2_dev);
 	media_device_unregister(&camss->media_dev);
 	media_device_cleanup(&camss->media_dev);
@@ -1932,7 +1916,6 @@ void camss_delete(struct camss *camss)
 static void camss_remove(struct platform_device *pdev)
 {
 	struct camss *camss = platform_get_drvdata(pdev);
-	dev_info(camss->dev, "DBG %s:%d csiphy_num=%d, vfe_total_num=%d csid_num=%d\n", __func__, __LINE__, camss->res->csiphy_num, camss->vfe_total_num, camss->res->csid_num);
 
 	v4l2_async_nf_unregister(&camss->notifier);
 	v4l2_async_nf_cleanup(&camss->notifier);

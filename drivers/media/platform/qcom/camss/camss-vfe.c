@@ -1347,15 +1347,10 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 	int i, j;
 	int ret;
 
-	//dev_err(dev, "DBG %s:%d clock0=%s\n", __func__, __LINE__, res->clock[0]);
-	//dev_err(dev, "DBG %s:%d clock1=%s\n", __func__, __LINE__, res->clock[1]);
-
 	vfe->ops = res->ops;
 
-	if (!res->line_num) {
-		dev_err(dev, "DBG %s:%d\n", __func__, __LINE__);
+	if (!res->line_num)
 		return -EINVAL;
-	}
 
 	vfe->line_num = res->line_num;
 	vfe->ops->subdev_init(dev, vfe);
@@ -1371,10 +1366,8 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 	/* Interrupt */
 
 	ret = platform_get_irq_byname(pdev, res->interrupt[0]);
-	if (ret < 0) {
-		dev_err(dev, "DBG %s:%d\n", __func__, __LINE__);
+	if (ret < 0)
 		return ret;
-	}
 
 	vfe->irq = ret;
 	snprintf(vfe->irq_name, sizeof(vfe->irq_name), "%s_%s%d",
@@ -1396,19 +1389,15 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 
 	vfe->clock = devm_kcalloc(dev, vfe->nclocks, sizeof(*vfe->clock),
 				  GFP_KERNEL);
-	if (!vfe->clock) {
-		dev_err(dev, "DBG %s:%d\n", __func__, __LINE__);
+	if (!vfe->clock)
 		return -ENOMEM;
-	}
 
 	for (i = 0; i < vfe->nclocks; i++) {
 		struct camss_clock *clock = &vfe->clock[i];
 
 		clock->clk = devm_clk_get(dev, res->clock[i]);
-		if (IS_ERR(clock->clk)) {
-			dev_err(dev, "DBG %s:%d\n", __func__, __LINE__);
+		if (IS_ERR(clock->clk))
 			return PTR_ERR(clock->clk);
-		}
 
 		clock->name = res->clock[i];
 
@@ -1427,10 +1416,8 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 					   clock->nfreqs,
 					   sizeof(*clock->freq),
 					   GFP_KERNEL);
-		if (!clock->freq) {
-			dev_err(dev, "DBG %s:%d\n", __func__, __LINE__);
+		if (!clock->freq)
 			return -ENOMEM;
-		}
 
 		for (j = 0; j < clock->nfreqs; j++)
 			clock->freq[j] = res->clock_rate[i][j];
