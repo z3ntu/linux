@@ -175,7 +175,6 @@ static int gdsc_toggle_logic(struct gdsc *sc, enum gdsc_status status,
 	}
 
 	ret = gdsc_poll_status(sc, status);
-	//printk(KERN_ERR "--%d-- %s status MAYBE stuck at 'o%s'", ret, sc->pd.name, status ? "ff" : "n");
 	WARN(ret, "%s status stuck at 'o%s'", sc->pd.name, status ? "ff" : "n");
 
 	if (!ret && status == GDSC_OFF && sc->rsupply) {
