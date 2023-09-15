@@ -801,7 +801,7 @@ static const struct camss_subdev_resources vfe_res_6350[] = {
 	{
 		.regulators = {},
 		.clock = { "slow_ahb_src", "cpas_ahb",
-			   "camnoc_axi", "vfe0", "vfe0_axi", "cam_axi" },
+			   "camnoc_axi", "vfe0", "vfe0_axi", "cam_axi", "soc_ahb" },
 		.clock_rate = { { 19200000, 80000000 },
 				{ 19200000 },
 				{ 0 },
@@ -817,7 +817,7 @@ static const struct camss_subdev_resources vfe_res_6350[] = {
 	{
 		.regulators = {},
 		.clock = { "slow_ahb_src", "cpas_ahb",
-			   "camnoc_axi", "vfe1", "vfe1_axi", "cam_axi" },
+			   "camnoc_axi", "vfe1", "vfe1_axi", "cam_axi", "soc_ahb" },
 		.clock_rate = { { 19200000, 80000000 },
 				{ 19200000 },
 				{ 0 },
@@ -833,7 +833,7 @@ static const struct camss_subdev_resources vfe_res_6350[] = {
 	{
 		.regulators = {},
 		.clock = { "slow_ahb_src", "cpas_ahb",
-			   "camnoc_axi", "vfe2", "vfe2_axi", "cam_axi" },
+			   "camnoc_axi", "vfe2", "vfe2_axi", "cam_axi", "soc_ahb" },
 		.clock_rate = { { 19200000, 80000000 },
 				{ 19200000 },
 				{ 0 },
@@ -849,7 +849,7 @@ static const struct camss_subdev_resources vfe_res_6350[] = {
 	{
 		.regulators = {},
 		.clock = { "slow_ahb_src", "cpas_ahb",
-			   "camnoc_axi", "vfe_lite", "cam_axi" },
+			   "camnoc_axi", "vfe_lite", "cam_axi", "soc_ahb" },
 		.clock_rate = { { 19200000, 80000000 },
 				{ 19200000 },
 				{ 0 },
