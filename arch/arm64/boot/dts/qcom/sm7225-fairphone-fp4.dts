@@ -153,12 +153,226 @@
 		regulator-always-on;
 	};
 
-	fake-reg-cam1 {
+	fake-reg-cam-extra1 {
 		compatible = "regulator-fixed-clock";
-		regulator-name = "fake-reg-cam1";
-		clocks = <&gcc GCC_CAMERA_AHB_CLK>;
+		regulator-name = "fake-reg-cam-extra1";
+		clocks = <&camcc CAMCC_FAST_AHB_CLK_SRC>;
 		regulator-always-on;
 	};
+
+	fake-reg-cam-extra2 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-cam-extra2";
+		clocks = <&camcc CAMCC_CPHY_RX_CLK_SRC>;
+		regulator-always-on;
+	};
+
+	fake-reg-cam-extra3 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-cam-extra3";
+		clocks = <&camcc CAMCC_IFE_0_DSP_CLK>;
+		regulator-always-on;
+	};
+
+	fake-reg-cam-extra4 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-cam-extra4";
+		clocks = <&camcc CAMCC_ICP_CLK>;
+		regulator-always-on;
+	};
+
+/*
+i = 0
+for clk in ["&gcc GCC_CAMERA_AHB_CLK", "&gcc GCC_CAMERA_AXI_CLK", "&camcc CAMCC_SOC_AHB_CLK", "&camcc CAMCC_CAMNOC_AXI_CLK", "&camcc CAMCC_CORE_AHB_CLK", "&camcc CAMCC_CPAS_AHB_CLK", "&camcc CAMCC_CSIPHY0_CLK", "&camcc CAMCC_CSI0PHYTIMER_CLK", "&camcc CAMCC_CSIPHY1_CLK", "&camcc CAMCC_CSI1PHYTIMER_CLK", "&camcc CAMCC_CSIPHY2_CLK", "&camcc CAMCC_CSI2PHYTIMER_CLK", "&camcc CAMCC_CSIPHY3_CLK", "&camcc CAMCC_CSI3PHYTIMER_CLK", "&camcc CAMCC_SLOW_AHB_CLK_SRC", "&camcc CAMCC_IFE_0_AXI_CLK", "&camcc CAMCC_IFE_0_CLK", "&camcc CAMCC_IFE_0_CPHY_RX_CLK", "&camcc CAMCC_IFE_0_CSID_CLK", "&camcc CAMCC_IFE_1_AXI_CLK", "&camcc CAMCC_IFE_1_CLK", "&camcc CAMCC_IFE_1_CPHY_RX_CLK", "&camcc CAMCC_IFE_1_CSID_CLK", "&camcc CAMCC_IFE_2_AXI_CLK", "&camcc CAMCC_IFE_2_CLK", "&camcc CAMCC_IFE_2_CPHY_RX_CLK", "&camcc CAMCC_IFE_2_CSID_CLK", "&camcc CAMCC_IFE_LITE_CLK", "&camcc CAMCC_IFE_LITE_CPHY_RX_CLK", "&camcc CAMCC_IFE_LITE_CSID_CLK"]:
+    i += 1
+    print(f"\tfake-reg-cam{i} {{")
+    print("\t\tcompatible = \"regulator-fixed-clock\";")
+    print(f"\t\tregulator-name = \"fake-reg-cam{i}\";")
+    print(f"\t\tclocks = <{clk}>;")
+    print("\t\tregulator-always-on;")
+    print("\t};")
+
+*/
+	fake-reg-cam1 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam1";
+                clocks = <&gcc GCC_CAMERA_AHB_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam2 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam2";
+                clocks = <&gcc GCC_CAMERA_AXI_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam3 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam3";
+                clocks = <&camcc CAMCC_SOC_AHB_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam4 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam4";
+                clocks = <&camcc CAMCC_CAMNOC_AXI_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam5 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam5";
+                clocks = <&camcc CAMCC_CORE_AHB_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam6 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam6";
+                clocks = <&camcc CAMCC_CPAS_AHB_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam7 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam7";
+                clocks = <&camcc CAMCC_CSIPHY0_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam8 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam8";
+                clocks = <&camcc CAMCC_CSI0PHYTIMER_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam9 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam9";
+                clocks = <&camcc CAMCC_CSIPHY1_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam10 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam10";
+                clocks = <&camcc CAMCC_CSI1PHYTIMER_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam11 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam11";
+                clocks = <&camcc CAMCC_CSIPHY2_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam12 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam12";
+                clocks = <&camcc CAMCC_CSI2PHYTIMER_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam13 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam13";
+                clocks = <&camcc CAMCC_CSIPHY3_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam14 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam14";
+                clocks = <&camcc CAMCC_CSI3PHYTIMER_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam15 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam15";
+                clocks = <&camcc CAMCC_SLOW_AHB_CLK_SRC>;
+                regulator-always-on;
+        };
+        fake-reg-cam16 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam16";
+                clocks = <&camcc CAMCC_IFE_0_AXI_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam17 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam17";
+                clocks = <&camcc CAMCC_IFE_0_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam18 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam18";
+                clocks = <&camcc CAMCC_IFE_0_CPHY_RX_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam19 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam19";
+                clocks = <&camcc CAMCC_IFE_0_CSID_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam20 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam20";
+                clocks = <&camcc CAMCC_IFE_1_AXI_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam21 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam21";
+                clocks = <&camcc CAMCC_IFE_1_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam22 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam22";
+                clocks = <&camcc CAMCC_IFE_1_CPHY_RX_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam23 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam23";
+                clocks = <&camcc CAMCC_IFE_1_CSID_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam24 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam24";
+                clocks = <&camcc CAMCC_IFE_2_AXI_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam25 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam25";
+                clocks = <&camcc CAMCC_IFE_2_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam26 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam26";
+                clocks = <&camcc CAMCC_IFE_2_CPHY_RX_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam27 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam27";
+                clocks = <&camcc CAMCC_IFE_2_CSID_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam28 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam28";
+                clocks = <&camcc CAMCC_IFE_LITE_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam29 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam29";
+                clocks = <&camcc CAMCC_IFE_LITE_CPHY_RX_CLK>;
+                regulator-always-on;
+        };
+        fake-reg-cam30 {
+                compatible = "regulator-fixed-clock";
+                regulator-name = "fake-reg-cam30";
+                clocks = <&camcc CAMCC_IFE_LITE_CSID_CLK>;
+                regulator-always-on;
+        };
 };
 
 &adsp {
