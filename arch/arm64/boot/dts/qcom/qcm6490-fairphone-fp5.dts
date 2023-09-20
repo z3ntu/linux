@@ -24,10 +24,6 @@
 	compatible = "fairphone,fp5", "qcom,qcm6490";
 	chassis-type = "handset";
 
-	/* required for bootloader to select correct board */
-	qcom,msm-id = <QCOM_ID_QCM6490 0x10000>;
-	qcom,board-id = <34 0>;
-
 	aliases {
 		serial0 = &uart5;
 		serial1 = &uart7;
