@@ -185,6 +185,17 @@
 		regulator-always-on; // FIXME
 	};
 
+	usb_redrive_1v8: regulator-usb-redrive-1v8 {
+		compatible = "regulator-fixed";
+		regulator-name = "USB_REDRIVE_1V8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		gpio = <&tlmm 61 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		vin-supply = <&vreg_bob>;
+		regulator-always-on; // FIXME
+	};
+
 	fake-reg-mclk0 {
 		compatible = "regulator-fixed-clock";
 		regulator-name = "fake-reg-mclk0";
@@ -523,7 +534,18 @@
 &i2c4 {
 	status = "okay";
 
-	/* PTN36502 USB redriver @ 1a */
+	typec-mux@1a {
+		compatible = "nxp,ptn36502";
+		reg = <0x1a>;
+
+		vdd18-supply = <&usb_redrive_1v8>;
+
+		retimer-switch;
+		orientation-switch;
+
+		//pinctrl-names = "default";
+		//pinctrl-0 = <&ptn36502_pin1_default &ptn36502_pin2_default>;
+	};
 };
 
 &i2c9 {
