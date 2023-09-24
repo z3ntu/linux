@@ -81,7 +81,15 @@
 					reg = <1>;
 
 					pmic_glink_ss_in: endpoint {
-						remote-endpoint = <&usb_1_dwc3_ss>;
+						remote-endpoint = <&redriver_ss_out>;
+					};
+				};
+
+				port@2 {
+					reg = <2>;
+
+					pmic_glink_sbu: endpoint {
+						remote-endpoint = <&fsa4480_sbu_mux>;
 					};
 				};
 			};
@@ -193,7 +201,7 @@
 		gpio = <&tlmm 61 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		vin-supply = <&vreg_bob>;
-		regulator-always-on; // FIXME
+		regulator-boot-on;
 	};
 
 	fake-reg-mclk0 {
@@ -513,6 +521,16 @@
 		interrupts-extended = <&tlmm 7 IRQ_TYPE_LEVEL_LOW>;
 
 		vcc-supply = <&vreg_bob>;
+
+		mode-switch;
+		orientation-switch;
+
+		port {
+			fsa4480_sbu_mux: endpoint {
+				remote-endpoint = <&pmic_glink_sbu>;
+				data-lanes = <1 0>;
+			};
+		};
 	};
 
 	/* Pixelworks @ 26 */
@@ -551,8 +569,26 @@
 		retimer-switch;
 		orientation-switch;
 
-		//pinctrl-names = "default";
-		//pinctrl-0 = <&ptn36502_pin1_default &ptn36502_pin2_default>;
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				redriver_ss_out: endpoint {
+					remote-endpoint = <&pmic_glink_ss_in>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				redriver_ss_in: endpoint {
+					remote-endpoint = <&usb_dp_qmpphy_out>;
+				};
+			};
+		};
 	};
 };
 
@@ -572,6 +608,15 @@
 
 &mdss {
 	status = "okay";
+};
+
+&mdss_dp {
+	status = "okay";
+};
+
+&mdss_dp_out {
+	data-lanes = <0 1>;
+	remote-endpoint = <&usb_dp_qmpphy_dp_in>;
 };
 
 &mdss_dsi {
@@ -1015,7 +1060,7 @@
 };
 
 &usb_1_dwc3_ss {
-	remote-endpoint = <&pmic_glink_ss_in>;
+	remote-endpoint = <&usb_dp_qmpphy_usb_ss_in>;
 };
 
 &usb_1_hsphy {
@@ -1041,7 +1086,21 @@
 	vdda-phy-supply = <&vreg_l6b>;
 	vdda-pll-supply = <&vreg_l1b>;
 
+	orientation-switch;
+
 	status = "okay";
+};
+
+&usb_dp_qmpphy_dp_in {
+	remote-endpoint = <&mdss_dp_out>;
+};
+
+&usb_dp_qmpphy_out {
+	remote-endpoint = <&redriver_ss_in>;
+};
+
+&usb_dp_qmpphy_usb_ss_in {
+	remote-endpoint = <&usb_1_dwc3_ss>;
 };
 
 &venus {
