@@ -142,6 +142,7 @@ static int fsa4480_switch_set(struct typec_switch_dev *sw,
 {
 	struct fsa4480 *fsa = typec_switch_get_drvdata(sw);
 	int ret = 0;
+	printk(KERN_ERR "%s:%d DBG orientation=%d\n", __func__, __LINE__, orientation);
 
 	mutex_lock(&fsa->lock);
 
@@ -160,6 +161,7 @@ static int fsa4480_mux_set(struct typec_mux_dev *mux, struct typec_mux_state *st
 {
 	struct fsa4480 *fsa = typec_mux_get_drvdata(mux);
 	int ret = 0;
+	printk(KERN_ERR "%s:%d DBG state->mode=%lu\n", __func__, __LINE__, state->mode);
 
 	mutex_lock(&fsa->lock);
 
