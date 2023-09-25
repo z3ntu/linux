@@ -866,7 +866,40 @@
 		};
 	};
 
-	/* AW86927FCR haptics @ 5a */
+	vibrator@5a {
+		compatible = "awinic,haptic_hv";
+		reg = <0x5a>;
+
+		irq-gpio = <&tlmm 101 GPIO_ACTIVE_HIGH>;
+		reset-gpio = <&tlmm 100 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-0 = <&vibrator_irq_default>;
+		pinctrl-names = "irq_active";
+
+		f0_pre = <1700>;
+		f0_cali_percent = /bits/ 8 <7>;
+		mode = /bits/ 8 <5>;
+		aw8692x_gain_bypass = /bits/ 8 <1>;
+		aw8692x_cont_drv1_lvl = /bits/ 8 <0x7f>;
+		aw8692x_cont_lra_vrms = <1000>; /* Motor rated voltage, mV */
+		aw8692x_cont_drv1_time = /bits/ 8 <0x04>;
+		aw8692x_cont_drv2_time = /bits/ 8 <0x06>;
+		aw8692x_cont_track_margin = /bits/ 8 <0x0f>;
+		aw8692x_cont_brk_gain = /bits/ 8 <0x08>;
+		aw8692x_cont_bst_brk_gain = /bits/ 8 <0x05>;
+		aw8692x_cont_wait_num = /bits/ 8 <0x06>;
+		aw8692x_cont_brk_time = /bits/ 8 <0x08>;
+		aw8692x_brk_bst_md = /bits/ 8 <0>;
+		aw8692x_cont_tset = /bits/ 8 <0x06>;
+		aw8692x_cont_bemf_set = /bits/ 8 <0x02>;
+		aw8692x_duration_time = /bits/ 8 <20 30 60>;
+		aw8692x_d2s_gain = /bits/ 8 <0x04>;
+		aw8692x_trig_config = /bits/ 8 <0 0 0 1 0 2 0 0
+						0 0 0 1 0 2 0 0
+						0 0 0 1 0 2 0 0>;
+		aw8692x_bst_vol_default = <8500>;
+		aw8692x_is_enabled_track_en;
+	};
 };
 
 &i2c2 {
@@ -1414,6 +1447,14 @@
 		drive-strength = <2>;
 		bias-disable;
 		output-high;
+	};
+
+	vibrator_irq_default: vibrator-irq-default-state {
+		pins = "gpio101";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+		input-enable;
 	};
 };
 
