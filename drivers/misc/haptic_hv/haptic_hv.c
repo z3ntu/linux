@@ -1301,7 +1301,7 @@ static int ram_update(struct aw_haptic *aw_haptic)
 {
 	aw_haptic->ram_init = false;
 	aw_haptic->rtp_init = false;
-	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
+	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
 				       aw_ram_name, aw_haptic->dev, GFP_KERNEL,
 				       aw_haptic, ram_load);
 }
@@ -3413,8 +3413,7 @@ static int vibrator_init(struct aw_haptic *aw_haptic)
 		return ret;
 	}
 #endif
-	hrtimer_init(&aw_haptic->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	aw_haptic->timer.function = vibrator_timer_func;
+	hrtimer_setup(&aw_haptic->timer, vibrator_timer_func, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	INIT_WORK(&aw_haptic->vibrator_work, vibrator_work_routine);
 	INIT_WORK(&aw_haptic->rtp_work, rtp_work_routine);
 	mutex_init(&aw_haptic->lock);
@@ -3431,9 +3430,8 @@ static void haptic_init(struct aw_haptic *aw_haptic)
 	aw_haptic->haptic_audio.delay_val = 1;
 	aw_haptic->haptic_audio.timer_val = 21318;
 	INIT_LIST_HEAD(&(aw_haptic->haptic_audio.ctr_list));
-	hrtimer_init(&aw_haptic->haptic_audio.timer, CLOCK_MONOTONIC,
+	hrtimer_setup(&aw_haptic->haptic_audio.timer, audio_timer_func, CLOCK_MONOTONIC,
 		     HRTIMER_MODE_REL);
-	aw_haptic->haptic_audio.timer.function = audio_timer_func;
 	INIT_WORK(&aw_haptic->haptic_audio.work, audio_work_routine);
 	mutex_init(&aw_haptic->haptic_audio.lock);
 	INIT_LIST_HEAD(&(aw_haptic->haptic_audio.list));
@@ -3458,7 +3456,7 @@ static void haptic_init(struct aw_haptic *aw_haptic)
 	mutex_unlock(&aw_haptic->lock);
 }
 
-static int aw_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
+static int aw_i2c_probe(struct i2c_client *i2c)
 {
 	int ret = 0;
 	struct aw_haptic *aw_haptic;
@@ -3532,7 +3530,7 @@ static int aw_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 #endif
 	if (gpio_is_valid(aw_haptic->irq_gpio)) {
 		ret = devm_gpio_request_one(&i2c->dev, aw_haptic->irq_gpio,
-					    GPIOF_DIR_IN, "aw_int");
+					    GPIOF_IN, "aw_int");
 		if (ret) {
 			aw_err("int request failed");
 			goto err_irq_gpio_request;
@@ -3593,13 +3591,7 @@ static int aw_i2c_probe(struct i2c_client *i2c, const struct i2c_device_id *id)
 err_id:
 err_ctrl_init:
 err_irq_config:
-	if (gpio_is_valid(aw_haptic->irq_gpio))
-		devm_gpio_free(&i2c->dev, aw_haptic->irq_gpio);
-
 err_irq_gpio_request:
-	if (gpio_is_valid(aw_haptic->reset_gpio))
-		devm_gpio_free(&i2c->dev, aw_haptic->reset_gpio);
-
 err_parse_dt:
 err_reset_gpio_request:
 	devm_kfree(&i2c->dev, aw_haptic);
@@ -3607,7 +3599,7 @@ err_reset_gpio_request:
 	return ret;
 }
 
-static int aw_remove(struct i2c_client *i2c)
+static void aw_remove(struct i2c_client *i2c)
 {
 	struct aw_haptic *aw_haptic = i2c_get_clientdata(i2c);
 
@@ -3633,8 +3625,6 @@ static int aw_remove(struct i2c_client *i2c)
 	mutex_destroy(&aw_haptic->rtp_lock);
 	mutex_destroy(&aw_haptic->haptic_audio.lock);
 	devm_free_irq(&i2c->dev, gpio_to_irq(aw_haptic->irq_gpio), aw_haptic);
-	if (gpio_is_valid(aw_haptic->irq_gpio))
-		devm_gpio_free(&i2c->dev, aw_haptic->irq_gpio);
 #ifdef AW_SND_SOC_CODEC
 #ifdef KERNEL_OVER_4_19
 	snd_soc_unregister_component(&i2c->dev);
@@ -3648,10 +3638,6 @@ static int aw_remove(struct i2c_client *i2c)
 	free_pages((unsigned long)aw_haptic->start_buf, AW_TIKTAP_MMAP_PAGE_ORDER);
 	aw_haptic->start_buf = NULL;
 #endif
-	if (gpio_is_valid(aw_haptic->reset_gpio))
-		devm_gpio_free(&i2c->dev, aw_haptic->reset_gpio);
-
-	return 0;
 }
 
 static int aw_i2c_suspend(struct device *dev)
