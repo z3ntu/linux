@@ -76,6 +76,9 @@ static int fsa4480_set(struct fsa4480 *fsa)
 	u8 enable = FSA4480_ENABLE_DEVICE;
 	u8 sel = 0;
 
+	// HACK "exchange the switch control register value of SBU1 and SBU2 for the IC OCP96011 used in FP5"
+	reverse = !reverse;
+
 	/* USB Mode */
 	if (fsa->mode < TYPEC_STATE_MODAL ||
 	    (!fsa->svid && (fsa->mode == TYPEC_MODE_USB2 ||
