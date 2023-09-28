@@ -103,8 +103,10 @@ static int ptn36502_set(struct ptn36502 *ptn)
 		return 0;
 
 	default:
-		if (ptn->svid != USB_TYPEC_DP_SID)
+		if (ptn->svid != USB_TYPEC_DP_SID) {
+			printk(KERN_ERR "%s:%d DBG", __func__, __LINE__);
 			return -EINVAL;
+		}
 
 		break;
 	}
@@ -264,6 +266,7 @@ static int ptn36502_set(struct ptn36502 *ptn)
 		break;
 
 	default:
+		printk(KERN_ERR "%s:%d DBG", __func__, __LINE__);
 		return -EOPNOTSUPP;
 	}
 
@@ -274,6 +277,11 @@ static int ptn36502_sw_set(struct typec_switch_dev *sw, enum typec_orientation o
 {
 	struct ptn36502 *ptn = typec_switch_get_drvdata(sw);
 	int ret;
+
+	// TYPEC_ORIENTATION_NONE,
+	// TYPEC_ORIENTATION_NORMAL,
+	// TYPEC_ORIENTATION_REVERSE,
+	printk(KERN_ERR "%s:%d DBG orientation=%d\n", __func__, __LINE__, orientation);
 
 	ret = typec_switch_set(ptn->typec_switch, orientation);
 	if (ret)
@@ -299,6 +307,17 @@ static int ptn36502_retimer_set(struct typec_retimer *retimer, struct typec_reti
 
 	mutex_lock(&ptn->lock);
 
+	// TYPEC_STATE_SAFE,	/* USB Safe State */
+	// TYPEC_STATE_USB,	/* USB Operation */
+	// TYPEC_STATE_MODAL,	/* Alternate Modes */
+	// + TYPEC_DP_STATE_A = TYPEC_STATE_MODAL /* Deprecated */
+	// TYPEC_DP_STATE_B, /* Deprecated */
+	// TYPEC_DP_STATE_C,
+	// TYPEC_DP_STATE_D,
+	// TYPEC_DP_STATE_E,
+	// TYPEC_DP_STATE_F, /* Deprecated */
+	printk(KERN_ERR "%s:%d DBG state->mode=%lu\n", __func__, __LINE__, state->mode);
+
 	if (ptn->mode != state->mode) {
 		ptn->mode = state->mode;
 
@@ -306,6 +325,8 @@ static int ptn36502_retimer_set(struct typec_retimer *retimer, struct typec_reti
 			ptn->svid = state->alt->svid;
 		else
 			ptn->svid = 0; // No SVID
+
+		printk(KERN_ERR "%s:%d DBG svid=%x\n", __func__, __LINE__, ptn->svid);
 
 		ret = ptn36502_set(ptn);
 	}
