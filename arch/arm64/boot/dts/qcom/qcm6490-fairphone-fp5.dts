@@ -529,9 +529,17 @@
 &i2c1 {
 	status = "okay";
 
+	typec-mux@42 {
+		compatible = "ocs,ocp96011", "fcs,fsa4480";
+		reg = <0x42>;
+
+		interrupts-extended = <&tlmm 7 IRQ_TYPE_LEVEL_LOW>;
+
+		vcc-supply = <&vreg_bob>;
+	};
+
 	/* PM8008 PMIC @ 8 and 9 */
 	/* Pixelworks @ 26 */
-	/* FSA4480 USB audio switch @ 42 */
 	/* AW86927FCR haptics @ 5a */
 };
 
