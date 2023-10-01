@@ -63,6 +63,7 @@ struct qcom_icc_provider {
 	struct clk_bulk_data *intf_clks;
 	bool keep_alive;
 	bool is_on;
+	bool nodes_changed;
 };
 
 /**
@@ -95,6 +96,7 @@ struct qcom_icc_qos {
  * @buswidth: width of the interconnect between a node and the bus (bytes)
  * @sum_avg: current sum aggregate value of all avg bw requests
  * @max_peak: current max aggregate value of all peak bw requests
+ * @app_sum_avg: applied sum aggregate value of all avg bw requests
  * @mas_rpm_id:	RPM id for devices that are bus masters
  * @slv_rpm_id:	RPM id for devices that are bus slaves
  * @qos: NoC QoS setting parameters
@@ -108,6 +110,7 @@ struct qcom_icc_node {
 	u16 buswidth;
 	u64 sum_avg[QCOM_SMD_RPM_STATE_NUM];
 	u64 max_peak[QCOM_SMD_RPM_STATE_NUM];
+	u64 app_sum_avg[QCOM_SMD_RPM_STATE_NUM];
 	int mas_rpm_id;
 	int slv_rpm_id;
 	struct qcom_icc_qos qos;
