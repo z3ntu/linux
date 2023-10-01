@@ -169,6 +169,16 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		pm8226_lpg: pwm {
+			compatible = "qcom,pm8226-lpg";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#pwm-cells = <2>;
+
+			status = "disabled";
+		};
+
 		pm8226_spmi_regulators: regulators {
 			compatible = "qcom,pm8226-regulators";
 		};
