@@ -148,11 +148,19 @@ static int qcom_cpufreq_kryo_name_version(struct device *cpu_dev,
 	switch (msm_id) {
 	case QCOM_ID_MSM8996:
 	case QCOM_ID_APQ8096:
+	case QCOM_ID_MSM8953:
+	case QCOM_ID_APQ8053:
+	case QCOM_ID_SDM450:
+	case QCOM_ID_SDA450:
 		drv->versions = 1 << (unsigned int)(*speedbin);
 		break;
 	case QCOM_ID_MSM8996SG:
 	case QCOM_ID_APQ8096SG:
 		drv->versions = 1 << ((unsigned int)(*speedbin) + 4);
+		break;
+	case QCOM_ID_SDM632:
+	case QCOM_ID_SDA632:
+		drv->versions = 1 << ((unsigned int)(*speedbin) + 8);
 		break;
 	default:
 		BUG();
@@ -203,18 +211,23 @@ len_error:
 	return ret;
 }
 
+static const char *cpr_genpd_names[] = { "cpr", NULL };
+
 static const struct qcom_cpufreq_match_data match_data_kryo = {
 	.get_version = qcom_cpufreq_kryo_name_version,
 };
 
-static const struct qcom_cpufreq_match_data match_data_krait = {
-	.get_version = qcom_cpufreq_krait_name_version,
+static const struct qcom_cpufreq_match_data match_data_kryo_cpr = {
+	.get_version = qcom_cpufreq_kryo_name_version,
+	.genpd_names = cpr_genpd_names,
 };
 
-static const char *qcs404_genpd_names[] = { "cpr", NULL };
-
 static const struct qcom_cpufreq_match_data match_data_qcs404 = {
-	.genpd_names = qcs404_genpd_names,
+	.genpd_names = cpr_genpd_names,
+};
+
+static const struct qcom_cpufreq_match_data match_data_krait = {
+	.get_version = qcom_cpufreq_krait_name_version,
 };
 
 static int qcom_cpufreq_probe(struct platform_device *pdev)
@@ -358,6 +371,9 @@ static struct platform_driver qcom_cpufreq_driver = {
 static const struct of_device_id qcom_cpufreq_match_list[] __initconst = {
 	{ .compatible = "qcom,apq8096", .data = &match_data_kryo },
 	{ .compatible = "qcom,msm8996", .data = &match_data_kryo },
+	{ .compatible = "qcom,msm8953", .data = &match_data_kryo_cpr },
+	{ .compatible = "qcom,sdm450", .data = &match_data_kryo_cpr },
+	{ .compatible = "qcom,sdm632", .data = &match_data_kryo_cpr },
 	{ .compatible = "qcom,qcs404", .data = &match_data_qcs404 },
 	{ .compatible = "qcom,ipq8064", .data = &match_data_krait },
 	{ .compatible = "qcom,apq8064", .data = &match_data_krait },
