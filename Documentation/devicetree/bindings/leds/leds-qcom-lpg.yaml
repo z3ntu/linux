@@ -21,6 +21,7 @@ properties:
           - qcom,pm660l-lpg
           - qcom,pm8150b-lpg
           - qcom,pm8150l-lpg
+          - qcom,pm8226-lpg
           - qcom,pm8350c-pwm
           - qcom,pm8916-pwm
           - qcom,pm8941-lpg
