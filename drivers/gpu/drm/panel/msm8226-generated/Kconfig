@@ -1,4 +1,4 @@
-menu "MSM8916 panel drivers generated with linux-mdss-dsi-panel-driver-generator"
+menu "MSM8226 panel drivers generated with linux-mdss-dsi-panel-driver-generator"
 	depends on GPIOLIB && OF && REGULATOR
 	depends on DRM_MIPI_DSI
 
