@@ -3766,16 +3766,14 @@
 				 <&apps_smmu 0x2184 0x20>;
 			memory-region = <&video_mem>;
 
+			status = "disabled";
+
 			video-decoder {
 				compatible = "venus-decoder";
 			};
 
 			video-encoder {
 				compatible = "venus-encoder";
-			};
-
-			video-firmware {
-				iommus = <&apps_smmu 0x21a2 0x0>;
 			};
 
 			venus_opp_table: opp-table {
