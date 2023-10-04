@@ -1321,7 +1321,7 @@ static struct platform_driver msm8953_noc_driver = {
 	.driver = {
 		.name = "qnoc-msm8953",
 		.of_match_table = msm8953_noc_of_match,
-		//.sync_state = icc_sync_state,
+		.sync_state = icc_sync_state,
 	},
 };
 
