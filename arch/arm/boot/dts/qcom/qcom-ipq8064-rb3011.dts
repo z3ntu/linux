@@ -16,7 +16,7 @@
 	};
 
 	chosen {
-		bootargs = "loglevel=8 console=ttyMSM0,115200";
+		bootargs = "loglevel=8 console=ttyMSM0,115200 PMOS_NO_OUTPUT_REDIRECT";
 		stdout-path = "serial0:115200n8";
 	};
 
@@ -327,7 +327,8 @@
 				label = "rb3011:green:user";
 				color = <LED_COLOR_ID_GREEN>;
 				gpios = <&qcom_pinmux 33 GPIO_ACTIVE_HIGH>;
-				default-state = "off";
+				//default-state = "off";
+				linux,default-trigger = "heartbeat";
 			};
 		};
 
