@@ -153,16 +153,21 @@ static struct regmap *qcom_hwspinlock_probe_mmio(struct platform_device *pdev,
 	void __iomem *base;
 
 	data = of_device_get_match_data(dev);
-	if (!data->regmap_config)
+	if (!data->regmap_config) {
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		return ERR_PTR(-EINVAL);
+	}
 
 	*offset = data->offset;
 	*stride = data->stride;
 
 	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
+	if (IS_ERR(base)) {
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		return ERR_CAST(base);
+	}
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return devm_regmap_init_mmio(dev, base, data->regmap_config);
 }
 
@@ -177,18 +182,25 @@ static int qcom_hwspinlock_probe(struct platform_device *pdev)
 	int i;
 
 	regmap = qcom_hwspinlock_probe_syscon(pdev, &base, &stride);
-	if (IS_ERR(regmap) && PTR_ERR(regmap) == -ENODEV)
+	if (IS_ERR(regmap) && PTR_ERR(regmap) == -ENODEV) {
+		printk(KERN_ERR "%s:%d DBG err=%ld\n", __func__, __LINE__, PTR_ERR(regmap));
 		regmap = qcom_hwspinlock_probe_mmio(pdev, &base, &stride);
+	}
 
-	if (IS_ERR(regmap))
+	if (IS_ERR(regmap)) {
+		printk(KERN_ERR "%s:%d DBG err=%ld\n", __func__, __LINE__, PTR_ERR(regmap));
 		return PTR_ERR(regmap);
+	}
 
 	array_size = QCOM_MUTEX_NUM_LOCKS * sizeof(struct hwspinlock);
 	bank = devm_kzalloc(&pdev->dev, sizeof(*bank) + array_size, GFP_KERNEL);
-	if (!bank)
+	if (!bank) {
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		return -ENOMEM;
+	}
 
 	platform_set_drvdata(pdev, bank);
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 
 	for (i = 0; i < QCOM_MUTEX_NUM_LOCKS; i++) {
 		field.reg = base + i * stride;
@@ -199,6 +211,7 @@ static int qcom_hwspinlock_probe(struct platform_device *pdev)
 							     regmap, field);
 	}
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return devm_hwspin_lock_register(&pdev->dev, bank, &qcom_hwspinlock_ops,
 					 0, QCOM_MUTEX_NUM_LOCKS);
 }
