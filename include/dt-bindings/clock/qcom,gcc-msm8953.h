@@ -218,6 +218,7 @@
 #define GCC_USB3PHY_PHY_BCR			3
 #define GCC_USB3_PHY_BCR			4
 #define GCC_USB_30_BCR				5
+#define GCC_MDSS_BCR				6
 
 /* GDSCs */
 #define CPP_GDSC				0
