@@ -4166,6 +4166,7 @@ static struct clk_regmap *gcc_msm8953_clocks[] = {
 
 static const struct qcom_reset_map gcc_msm8953_resets[] = {
 	[GCC_CAMSS_MICRO_BCR]	= { 0x56008 },
+	[GCC_MDSS_BCR]		= { 0x4d074 },
 	[GCC_MSS_BCR]		= { 0x71000 },
 	[GCC_QUSB2_PHY_BCR]	= { 0x4103c },
 	[GCC_USB3PHY_PHY_BCR]	= { 0x3f03c },
