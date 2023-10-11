@@ -7,6 +7,7 @@
 
 #include "msm8926.dtsi"
 #include "pm8226.dtsi"
+#include <dt-bindings/leds/common.h>
 
 /delete-node/ &adsp_region;
 /delete-node/ &mba_region;
@@ -243,6 +244,52 @@
 
 &mdss_dsi0_phy {
 	vddio-supply = <&pm8226_l8>;
+};
+
+&pm8226_lpg {
+	// FIXME not even sure if this fits here, or used downstream at all?!
+	//qcom,dtest = <1 2>, // FIXME validate '2' "flags denoting how the value should be outputted"
+	//	     <0 0>,
+	//	     <0 0>,
+	//	     <0 0>,
+	//	     <0 0>,
+	//	     <2 2>;
+
+	pinctrl-0 = <&test>, <&test2>;
+	pinctrl-names = "default";
+
+	status = "okay";
+
+	// mpp4 - routing to dtest1 - pwm0 (+1=@1)
+	// or I think it's rather: pwm0 - routing to dtest1 - routing to mpp4 - which is connected to LED
+	led@1 {
+		reg = <1>;
+		color = <LED_COLOR_ID_GREEN>;
+		function = LED_FUNCTION_INDICATOR;
+	};
+
+	// mpp6 - routing to dtest2 - pwm5 (+1=@6)
+	led@6 {
+		reg = <6>;
+		color = <LED_COLOR_ID_AMBER>;
+		function = LED_FUNCTION_INDICATOR;
+	};
+};
+
+&pm8226_mpps {
+	test: test-state {
+		pins = "mpp4";
+		function = "sink"; // confirmed qcom,mode-ctrl = <0x60>;
+		output-low;
+		qcom,dtest = <1>; // confirmed qcom,source-sel = <0x08>;
+	};
+
+	test2: test2-state {
+		pins = "mpp6";
+		function = "sink"; // confirmed qcom,mode-ctrl = <0x60>;
+		output-low;
+		qcom,dtest = <2>; // confirmed qcom,source-sel = <0x0a>;
+	};
 };
 
 &rpm_requests {
