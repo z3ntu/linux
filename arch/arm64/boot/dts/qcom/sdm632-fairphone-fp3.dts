@@ -44,6 +44,10 @@
 	};
 };
 
+&gpu {
+	status = "okay";
+};
+
 &mdss_dsi0 {
 	vdda-supply = <&pm8953_s3>;
 	vddio-supply = <&pm8953_l6>;
