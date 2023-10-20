@@ -780,3 +780,14 @@ obj-$(CONFIG_SND_SOC_LPASS_TX_MACRO)	+= snd-soc-lpass-tx-macro.o
 
 # Mux
 obj-$(CONFIG_SND_SOC_SIMPLE_MUX)	+= snd-soc-simple-mux.o
+
+AW882XX_OBJS += aw882xx/aw882xx.o
+AW882XX_OBJS += aw882xx/aw882xx_device.o
+AW882XX_OBJS += aw882xx/aw882xx_calib.o
+AW882XX_OBJS += aw882xx/aw882xx_monitor.o
+AW882XX_OBJS += aw882xx/aw882xx_init.o
+AW882XX_OBJS += aw882xx/aw882xx_dsp.o
+AW882XX_OBJS += aw882xx/aw882xx_bin_parse.o
+AW882XX_OBJS += aw882xx/aw882xx_spin.o
+aw882xx_dlkm-objs := $(AW882XX_OBJS)
+obj-y += aw882xx_dlkm.o
