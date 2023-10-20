@@ -56,6 +56,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD0>, <&cpr 0>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
@@ -73,6 +74,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD1>, <&cpr 0>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
@@ -90,6 +92,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD2>, <&cpr 0>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
@@ -107,6 +110,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD3>, <&cpr 0>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
@@ -124,6 +128,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD4>, <&cpr 1>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
@@ -141,6 +146,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD5>, <&cpr 1>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
@@ -158,6 +164,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD6>, <&cpr 1>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
@@ -175,6 +182,7 @@
 			operating-points-v2 = <&cpu_opp>;
 			power-domains = <&CPU_PD7>, <&cpr 1>;
 			power-domain-names = "psci", "perf";
+			dynamic-power-coefficient = <280>;
 			#cooling-cells = <2>;
 		};
 
