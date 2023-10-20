@@ -1,7 +1,7 @@
 #ifndef __AW882XX_DSP_H__
 #define __AW882XX_DSP_H__
 
-#define AW_QCOM_PLATFORM
+//#define AW_QCOM_PLATFORM
 /*#define AW_AUDIOREACH_PLATFORM*/
 
 /*factor form 12bit(4096) to 1000*/
