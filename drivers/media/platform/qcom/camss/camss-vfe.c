@@ -224,6 +224,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
 	case CAMSS_8x96:
 	case CAMSS_660:
 	case CAMSS_845:
+	case CAMSS_7280:
 	case CAMSS_8250:
 		switch (sink_code) {
 		case MEDIA_BUS_FMT_YUYV8_1X16:
@@ -1519,6 +1520,7 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 			}
 			break;
 		case CAMSS_845:
+		case CAMSS_7280:
 		case CAMSS_8250:
 			l->formats = formats_rdi_845;
 			l->nformats = ARRAY_SIZE(formats_rdi_845);
@@ -1664,6 +1666,7 @@ int msm_vfe_register_entities(struct vfe_device *vfe,
 
 		video_out->ops = &vfe->video_ops;
 		if (vfe->camss->res->version == CAMSS_845 ||
+		    vfe->camss->res->version == CAMSS_7280 ||
 		    vfe->camss->res->version == CAMSS_8250)
 			video_out->bpl_alignment = 16;
 		else

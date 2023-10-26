@@ -29,6 +29,9 @@
 #define VFE_480_CSID_OFFSET 0x1200
 #define VFE_480_LITE_CSID_OFFSET 0x200
 
+/* offset of CSID registers in VFE region for VFE 165 */
+#define VFE_165_CSID_OFFSET 0x4000
+
 #define MSM_CSID_NAME "msm_csid"
 
 const char * const csid_testgen_modes[] = {
@@ -582,7 +585,13 @@ int msm_csid_subdev_init(struct camss *camss, struct csid_device *csid,
 
 	/* Memory */
 
-	if (camss->res->version == CAMSS_8250) {
+	if (camss->res->version == CAMSS_7280) {
+		/* for titan 165, CSID registers are inside the VFE region,
+		 * between the VFE "top" and "bus" registers. this requires
+		 * VFE to be initialized before CSID
+		 */
+		csid->base = camss->vfe[id].base + VFE_165_CSID_OFFSET;
+	} else if (camss->res->version == CAMSS_8250) {
 		/* for titan 480, CSID registers are inside the VFE region,
 		 * between the VFE "top" and "bus" registers. this requires
 		 * VFE to be initialized before CSID
