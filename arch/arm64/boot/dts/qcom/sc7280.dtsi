@@ -2893,6 +2893,8 @@
 					<&rpmhpd SC7280_MSS>;
 			power-domain-names = "cx", "mss";
 
+			interconnects = <&mc_virt MASTER_LLCC 0 &mc_virt SLAVE_EBI1 0>;
+
 			memory-region = <&mpss_mem>;
 
 			qcom,qmp = <&aoss_qmp>;
