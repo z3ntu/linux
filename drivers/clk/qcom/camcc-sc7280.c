@@ -2268,6 +2268,7 @@ static struct gdsc cam_cc_ife_0_gdsc = {
 	.pd = {
 		.name = "cam_cc_ife_0_gdsc",
 	},
+	.parent = &cam_cc_titan_top_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = RETAIN_FF_ENABLE,
 };
@@ -2277,6 +2278,7 @@ static struct gdsc cam_cc_ife_1_gdsc = {
 	.pd = {
 		.name = "cam_cc_ife_1_gdsc",
 	},
+	.parent = &cam_cc_titan_top_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = RETAIN_FF_ENABLE,
 };
@@ -2286,6 +2288,7 @@ static struct gdsc cam_cc_ife_2_gdsc = {
 	.pd = {
 		.name = "cam_cc_ife_2_gdsc",
 	},
+	.parent = &cam_cc_titan_top_gdsc.pd,
 	.pwrsts = PWRSTS_OFF_ON,
 	.flags = RETAIN_FF_ENABLE,
 };
