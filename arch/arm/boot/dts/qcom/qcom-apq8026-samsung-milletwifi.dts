@@ -316,6 +316,13 @@
 	};
 };
 
+&modem {
+	mx-supply = <&pm8226_l3>;
+	pll-supply = <&pm8226_l8>;
+
+	status = "okay";
+};
+
 &pronto {
 	vddmx-supply = <&pm8226_l3>;
 	vddpx-supply = <&pm8226_l6>;
