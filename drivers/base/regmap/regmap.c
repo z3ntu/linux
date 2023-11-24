@@ -31,6 +31,7 @@
  * register I/O on a specific device.
  */
 #undef LOG_DEVICE
+#define LOG_DEVICE "sdw:0:0217:010d:00:4"
 
 #ifdef LOG_DEVICE
 static inline bool regmap_should_log(struct regmap *map)

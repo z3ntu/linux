@@ -190,6 +190,7 @@ static void qcom_snd_hdmi_jack_free(struct snd_jack *hdmi_jack)
 {
 	struct snd_soc_component *component = hdmi_jack->private_data;
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	snd_soc_component_set_jack(component, NULL, NULL);
 }
 
@@ -240,6 +241,8 @@ int qcom_snd_wcd_jack_setup(struct snd_soc_pcm_runtime *rtd,
 		*hdmi_jack_setup = true;
 	}
 
+	printk(KERN_ERR "%s:%d DBG cpu_dai->id=0x%x\n", __func__, __LINE__, cpu_dai->id);
+
 	switch (cpu_dai->id) {
 	case TX_CODEC_DMA_TX_0:
 	case TX_CODEC_DMA_TX_1:
@@ -264,6 +267,7 @@ int qcom_snd_wcd_jack_setup(struct snd_soc_pcm_runtime *rtd,
 		}
 		break;
 	default:
+		printk(KERN_ERR "%s:%d DBG cpu_dai->id=0x%x\n", __func__, __LINE__, cpu_dai->id);
 		break;
 	}
 

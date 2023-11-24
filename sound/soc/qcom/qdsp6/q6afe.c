@@ -1762,6 +1762,7 @@ int q6afe_vote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 	else {
 		//printk(KERN_ERR "%s: client_handle_ptr=%px, hw_block_id=%d\n", __func__, client_handle, hw_block_id);
 		*client_handle = afe->lpass_hw_core_client_hdl[hw_block_id];
+		dev_err(afe->dev, "q6afe_vote_lpass_core_hw AFE succeeded to vote (%d)\n", hw_block_id);
 	}
 
 

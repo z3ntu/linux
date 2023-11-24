@@ -606,6 +606,7 @@ struct snd_soc_dai_driver *q6dsp_audio_ports_set_config(struct device *dev,
 		switch (q6dsp_audio_fe_dais[i].id) {
 		case HDMI_RX:
 		case DISPLAY_PORT_RX:
+			printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 			q6dsp_audio_fe_dais[i].ops = cfg->q6hdmi_ops;
 			break;
 		case DISPLAY_PORT_RX_1 ... DISPLAY_PORT_RX_7:

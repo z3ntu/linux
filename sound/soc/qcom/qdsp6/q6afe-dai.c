@@ -367,6 +367,7 @@ static int q6afe_dai_prepare(struct snd_pcm_substream *substream,
 	switch (dai->id) {
 	case HDMI_RX:
 	case DISPLAY_PORT_RX:
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		q6afe_hdmi_port_prepare(dai_data->port[dai->id],
 					&dai_data->port_config[dai->id].hdmi);
 		break;
