@@ -3350,6 +3350,7 @@ static int wcd938x_populate_dt_data(struct wcd938x_priv *wcd938x, struct device 
 
 static int wcd938x_reset(struct wcd938x_priv *wcd938x)
 {
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	gpio_direction_output(wcd938x->reset_gpio, 0);
 	/* 20us sleep required after pulling the reset gpio to LOW */
 	usleep_range(20, 30);

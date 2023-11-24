@@ -1272,11 +1272,12 @@ static int wcd9380_probe(struct sdw_slave *pdev,
 		regcache_cache_only(wcd->regmap, true);
 	}
 
-	pm_runtime_set_autosuspend_delay(dev, 3000);
+	pm_runtime_set_autosuspend_delay(dev, 10000);
 	pm_runtime_use_autosuspend(dev);
 	pm_runtime_mark_last_busy(dev);
 	pm_runtime_set_active(dev);
 	pm_runtime_enable(dev);
+	//pm_runtime_get_sync(dev); // FIXME HACK to prohibit suspending since something seems broken there
 
 	ret = component_add(dev, &wcd938x_sdw_component_ops);
 	if (ret)
@@ -1315,17 +1316,22 @@ static int __maybe_unused wcd938x_sdw_runtime_suspend(struct device *dev)
 {
 	struct wcd938x_sdw_priv *wcd = dev_get_drvdata(dev);
 
+	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+
 	if (wcd->regmap) {
 		regcache_cache_only(wcd->regmap, true);
 		regcache_mark_dirty(wcd->regmap);
 	}
 
+	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 	return 0;
 }
 
 static int __maybe_unused wcd938x_sdw_runtime_resume(struct device *dev)
 {
 	struct wcd938x_sdw_priv *wcd = dev_get_drvdata(dev);
+
+	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	if (wcd->regmap) {
 		regcache_cache_only(wcd->regmap, false);

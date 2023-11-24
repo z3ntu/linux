@@ -331,9 +331,11 @@
 	wcd9385: audio-codec-1 {
 		compatible = "qcom,wcd9385-codec";
 
-		pinctrl-0 = <&wcd_reset_n>;
-		pinctrl-1 = <&wcd_reset_n_sleep>;
-		pinctrl-names = "default", "sleep";
+		//pinctrl-0 = <&wcd_reset_n>;
+		pinctrl-0 = <&wcd_default>;
+		pinctrl-names = "default";
+		//pinctrl-1 = <&wcd_reset_n_sleep>;
+		//pinctrl-names = "default", "sleep";
 
 		reset-gpios = <&tlmm 83 GPIO_ACTIVE_LOW>;
 
@@ -576,7 +578,7 @@
 		};
 
 		vreg_bob: bob {
-			regulator-min-microvolt = <3008000>;
+			regulator-min-microvolt = <3150000>;
 			regulator-max-microvolt = <3960000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_AUTO>;
 		};
@@ -1434,6 +1436,14 @@
 		function = "gpio";
 		drive-strength = <16>;
 		bias-disable;
+	};
+
+	wcd_default: wcd-reset-n-active-state {
+		pins = "gpio83";
+		function = "gpio";
+		drive-strength = <16>;
+		bias-disable;
+		output-low;
 	};
 };
 
