@@ -327,6 +327,36 @@
 			};
 		};
 	};
+
+	wcd9385: audio-codec-1 {
+		compatible = "qcom,wcd9385-codec";
+
+		pinctrl-0 = <&wcd_reset_n>;
+		pinctrl-1 = <&wcd_reset_n_sleep>;
+		pinctrl-names = "default", "sleep";
+
+		reset-gpios = <&tlmm 83 GPIO_ACTIVE_LOW>;
+
+		qcom,rx-device = <&wcd_rx>;
+		qcom,tx-device = <&wcd_tx>;
+
+		vdd-rxtx-supply = <&vreg_l18b>;
+		vdd-io-supply = <&vreg_l18b>; // ???
+		vdd-buck-supply = <&vreg_l17b>;
+		vdd-mic-bias-supply = <&vreg_bob>;
+
+		qcom,micbias1-microvolt = <1800000>;
+		qcom,micbias2-microvolt = <1800000>;
+		qcom,micbias3-microvolt = <1800000>;
+		qcom,micbias4-microvolt = <1800000>;
+
+		// FIXME validate those
+		qcom,mbhc-buttons-vthreshold-microvolt = <75000 150000 237000 500000 500000
+							  500000 500000 500000>;
+		qcom,mbhc-headset-vthreshold-microvolt = <1700000>;
+		qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
+		#sound-dai-cells = <1>;
+	};
 };
 
 &apps_rsc {
@@ -703,6 +733,43 @@
 	status = "okay";
 };
 
+&lpass_rx_macro {
+	status = "okay";
+};
+
+&lpass_tx_macro {
+	status = "okay";
+};
+
+&lpass_va_macro {
+	status = "okay";
+	//vdd-micb-supply = <&vreg_bob>; // FIXME? don't think this is set downstream, some code can be found but nothing in dt
+};
+
+&lpass_rx_swr_clk {
+	drive-strength = <2>;
+	slew-rate = <1>;
+	bias-disable;
+};
+
+&lpass_rx_swr_data {
+	drive-strength = <2>;
+	slew-rate = <1>;
+	bias-bus-hold;
+};
+
+&lpass_tx_swr_clk {
+	drive-strength = <2>;
+	slew-rate = <1>;
+	bias-disable;
+};
+
+&lpass_tx_swr_data {
+	drive-strength = <2>;
+	slew-rate = <1>;
+	bias-bus-hold;
+};
+
 &mdss {
 	status = "okay";
 };
@@ -1066,10 +1133,27 @@
 	compatible = "qcom,sm8250-sndcard"; // FIXME use qcom,sc7280-qdsp6-sndcard or so
 	model = "Fairphone 5";
 
+	// FIXME seems to be enabled downstream but since we don't use WSA macro, probably not used
+	assigned-clocks = <&q6afecc LPASS_CLK_ID_WSA_CORE_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+			  <&q6afecc LPASS_CLK_ID_WSA_CORE_NPL_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+	assigned-clock-rates = <19200000>, <19200000>;
+
 	mm1-dai-link {
 		link-name = "MultiMedia1";
 		cpu {
 			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+		};
+	};
+
+	wcd-capture-dai-link {
+		link-name = "WCD Capture";
+
+		cpu {
+			sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
+		};
+
+		codec {
+			sound-dai = <&wcd9385 1>, <&swr1 0>, <&lpass_tx_macro 0>;
 		};
 	};
 
@@ -1117,6 +1201,27 @@
 		goodix.sleep-enable; // enter sleep mode
 		goodix,firmware-name = "GT9897_05.01.FF.17_4D6C5476.bin";
 		goodix,config-name = "goodix_cfg_group_V14.bin";
+	};
+};
+
+&swr0 {
+	status = "okay";
+
+	wcd_rx: codec@0,4 {
+		compatible = "sdw20217010d00";
+		reg = <0 4>;
+		qcom,rx-port-mapping = <1 2 3 4 5>; // TODO no clue if correct
+	};
+};
+
+&swr1 {
+	status = "okay";
+
+	wcd_tx: codec@0,3 {
+		compatible = "sdw20217010d00";
+		reg = <0 3>;
+		qcom,tx-port-mapping = <1 2 3 4>; // TODO no clue if correct
+		//qcom,tx-port-mapping = <1 1 2 3>; // TODO no clue if correct
 	};
 };
 
@@ -1241,6 +1346,19 @@
 		drive-strength = <2>;
 		bias-disable;
 		output-high;
+	};
+
+	wcd_reset_n: wcd-reset-n-state {
+		pins = "gpio83";
+		function = "gpio";
+		drive-strength = <16>;
+	};
+
+	wcd_reset_n_sleep: wcd-reset-n-sleep-state {
+		pins = "gpio83";
+		function = "gpio";
+		drive-strength = <16>;
+		bias-disable;
 	};
 };
 
