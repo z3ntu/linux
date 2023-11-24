@@ -27,6 +27,7 @@
 #include <dt-bindings/soc/qcom,apr.h>
 #include <dt-bindings/soc/qcom,rpmh-rsc.h>
 #include <dt-bindings/sound/qcom,lpass.h>
+#include <dt-bindings/sound/qcom,q6dsp-lpass-ports.h>
 #include <dt-bindings/thermal/thermal.h>
 
 / {
@@ -2443,14 +2444,16 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&lpass_rx_swr_clk>, <&lpass_rx_swr_data>;
 
-			clocks = <&lpass_aon LPASS_AON_CC_TX_MCLK_CLK>,
-				 <&lpass_aon LPASS_AON_CC_TX_MCLK_2X_CLK>,
+			clocks = <&q6afecc LPASS_CLK_ID_RX_CORE_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_CLK_ID_RX_CORE_NPL_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
 				 <&lpass_va_macro>;
-			clock-names = "mclk", "npl", "fsgen";
+			clock-names = "mclk", "npl", "macro", "dcodec", "fsgen";
 
-			power-domains = <&lpass_hm LPASS_CORE_CC_LPASS_CORE_HM_GDSC>,
-					<&lpass_aon LPASS_AON_CC_LPASS_AUDIO_HM_GDSC>;
-			power-domain-names = "macro", "dcodec";
+			assigned-clocks = <&q6afecc LPASS_CLK_ID_RX_CORE_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+					  <&q6afecc LPASS_CLK_ID_RX_CORE_NPL_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+			assigned-clock-rates = <22579200>, <22579200>;
 
 			#clock-cells = <0>;
 			#sound-dai-cells = <1>;
@@ -2468,9 +2471,6 @@
 
 			qcom,din-ports = <0>;
 			qcom,dout-ports = <5>;
-
-			resets = <&lpass_audiocc LPASS_AUDIO_SWR_RX_CGCR>;
-			reset-names = "swr_audio_cgcr";
 
 			qcom,ports-word-length =	/bits/ 8 <0x01 0x07 0x04 0xff 0xff>;
 			qcom,ports-sinterval-low =	/bits/ 8 <0x03 0x3f 0x1f 0x03 0x03>;
@@ -2496,14 +2496,18 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&lpass_tx_swr_clk>, <&lpass_tx_swr_data>;
 
-			clocks = <&lpass_aon LPASS_AON_CC_TX_MCLK_CLK>,
-				 <&lpass_aon LPASS_AON_CC_TX_MCLK_2X_CLK>,
+			clocks = <&q6afecc LPASS_CLK_ID_TX_CORE_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_CLK_ID_TX_CORE_NPL_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
 				 <&lpass_va_macro>;
-			clock-names = "mclk", "npl", "fsgen";
+			clock-names = "mclk", "npl", "macro", "dcodec", "fsgen";
 
-			power-domains = <&lpass_hm LPASS_CORE_CC_LPASS_CORE_HM_GDSC>,
-					<&lpass_aon LPASS_AON_CC_LPASS_AUDIO_HM_GDSC>;
-			power-domain-names = "macro", "dcodec";
+			assigned-clocks = <&q6afecc LPASS_CLK_ID_TX_CORE_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+					  <&q6afecc LPASS_CLK_ID_TX_CORE_NPL_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+			assigned-clock-rates = <19200000>, <19200000>;
+
+			clock-output-names = "mclk";
 
 			#clock-cells = <0>;
 			#sound-dai-cells = <1>;
@@ -2522,9 +2526,6 @@
 
 			qcom,din-ports = <3>;
 			qcom,dout-ports = <0>;
-
-			resets = <&lpass_audiocc LPASS_AUDIO_SWR_TX_CGCR>;
-			reset-names = "swr_audio_cgcr";
 
 			qcom,ports-sinterval-low =	/bits/ 8 <0x01 0x03 0x03>;
 			qcom,ports-offset1 =		/bits/ 8 <0x01 0x00 0x02>;
@@ -2554,21 +2555,23 @@
 			#clock-cells = <1>;
 			#power-domain-cells = <1>;
 			#reset-cells = <1>;
+
+			status = "reserved"; /* Owned by ADSP firmware */
 		};
 
 		lpass_va_macro: codec@3370000 {
 			compatible = "qcom,sc7280-lpass-va-macro";
 			reg = <0 0x03370000 0 0x1000>;
 
-			pinctrl-names = "default";
-			pinctrl-0 = <&lpass_dmic01_clk>, <&lpass_dmic01_data>;
+			clocks = <&q6afecc LPASS_CLK_ID_VA_CORE_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_CLK_ID_VA_CORE_2X_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+			clock-names = "mclk", "macro", "dcodec", "npl";
 
-			clocks = <&lpass_aon LPASS_AON_CC_TX_MCLK_CLK>;
-			clock-names = "mclk";
-
-			power-domains = <&lpass_hm LPASS_CORE_CC_LPASS_CORE_HM_GDSC>,
-					<&lpass_aon LPASS_AON_CC_LPASS_AUDIO_HM_GDSC>;
-			power-domain-names = "macro", "dcodec";
+			assigned-clocks = <&q6afecc LPASS_CLK_ID_VA_CORE_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+					  <&q6afecc LPASS_CLK_ID_VA_CORE_2X_MCLK LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+			assigned-clock-rates = <19200000>, <19200000>;
 
 			#clock-cells = <0>;
 			#sound-dai-cells = <1>;
@@ -2684,6 +2687,10 @@
 			gpio-controller;
 			#gpio-cells = <2>;
 			gpio-ranges = <&lpass_tlmm 0 0 15>;
+
+			clocks = <&q6afecc LPASS_HW_MACRO_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+				 <&q6afecc LPASS_HW_DCODEC_VOTE LPASS_CLK_ATTRIBUTE_COUPLE_NO>;
+			clock-names = "core", "audio";
 
 			lpass_dmic01_clk: dmic01-clk-state {
 				pins = "gpio6";
