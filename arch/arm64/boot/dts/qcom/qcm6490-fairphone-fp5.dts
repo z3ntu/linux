@@ -469,6 +469,7 @@
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <2000000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on; // FIXME DVDD AW88261
 		};
 
 		vreg_l19b: ldo19 {
@@ -667,6 +668,44 @@
 &i2c2 {
 	status = "okay";
 
+#if 1
+	aw88261_l: aw882xx_smartpa@34 {
+		compatible = "awinic,aw882xx_smartpa";
+		reg = <0x34>;
+		irq-gpio = <&tlmm 63 0x2008>;
+		/*dc-flag = <0>;*/
+		/*sync-flag = <0>;*/
+		sound-channel = <0>; /*0:pri_l 1:pri_r 2:sec_l 3:sec_r*/
+		aw-tx-topo-id = <0x1000ff00>;
+		aw-rx-topo-id = <0x1000ff01>;
+		aw-tx-port-id = <0x1017>;
+		aw-rx-port-id = <0x1016>;
+		aw-re-min = <4000>;
+		aw-re-max= <30000>;
+		rename-flag = <1>;
+		#sound-dai-cells = <0>;
+		status = "disabled";
+	};
+
+#if 0
+	aw882xx_smartpa@35 {
+		compatible = "awinic,aw882xx_smartpa";
+		reg = <0x35>;
+		irq-gpio = <&tlmm 18 0x2008>;
+		/*dc-flag = <0>;*/
+		/*sync-flag = <0>;*/
+		sound-channel = <1>; /*0:pri_l 1:pri_r 2:sec_l 3:sec_r*/
+		aw-tx-topo-id = <0x1000ff00>;
+		aw-rx-topo-id = <0x1000ff01>;
+		aw-tx-port-id = <0x1017>;
+		aw-rx-port-id = <0x1016>;
+		aw-re-min = <4000>;
+		aw-re-max= <30000>;
+		rename-flag = <1>;
+		status = "okay";
+	};
+#endif
+#else
 	aw88261_l: audio-codec@34 {
 		compatible = "awinic,aw88261";
 		reg = <0x34>;
@@ -675,6 +714,14 @@
 		#sound-dai-cells = <0>;
 	};
 
+/*
+[   18.186318] snd-sm8250 sound: control 2:0:0:PCM Playback Volume:0 is already present
+[   18.186325] aw88261 2-0035: ASoC: Failed to add PCM Playback Volume: -16
+[   18.186330] aw88261 2-0035: ASoC: error at snd_soc_component_probe on aw88261.2-0035: -16
+[   18.186376] snd-sm8250 sound: ASoC: failed to instantiate card -16
+[   18.186774] snd-sm8250: probe of sound failed with error -16
+*/
+#if 0
 	aw88261_r: audio-codec@35 {
 		compatible = "awinic,aw88261";
 		reg = <0x35>;
@@ -682,6 +729,8 @@
 		awinic,sync-flag;
 		#sound-dai-cells = <0>;
 	};
+#endif
+#endif
 };
 
 &i2c4 {
@@ -1054,6 +1103,13 @@
 	dai@104 {
 		reg = <DISPLAY_PORT_RX>;
 	};
+
+	// RX = playback?
+	dai@127 {
+		reg = <QUINARY_MI2S_RX>;
+		// gpio152 is used (first data line of quinary i2s)
+		qcom,sd-lines = <0>; // dai_mi2s4: qcom,msm-mi2s-rx-lines = <1>;
+	};
 };
 
 &qup_spi13_cs {
@@ -1131,6 +1187,8 @@
 
 &sound {
 	compatible = "qcom,sm8250-sndcard"; // FIXME use qcom,sc7280-qdsp6-sndcard or so
+	pinctrl-0 = <&i2s1_active>;
+	pinctrl-names = "default";
 	model = "Fairphone 5";
 
 	// FIXME seems to be enabled downstream but since we don't use WSA macro, probably not used
@@ -1142,6 +1200,23 @@
 		link-name = "MultiMedia1";
 		cpu {
 			sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+		};
+	};
+
+	i2s-dai-link {
+		link-name = "I2S Playback";
+		cpu {
+			// From my understanding, the playback path to the amplifier is via GPIO152 / QUINARY_MI2S_RX.
+			// The amplifier also returns the audio (I2STXEN) via GPIO153 / QUINARY_MI2S_TX for echo-reference.
+			sound-dai = <&q6afedai QUINARY_MI2S_RX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		codec {
+			sound-dai = <&aw88261_l>; // , <&aw88261_r>;
 		};
 	};
 
