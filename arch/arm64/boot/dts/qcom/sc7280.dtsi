@@ -2472,6 +2472,9 @@
 			qcom,din-ports = <0>;
 			qcom,dout-ports = <5>;
 
+			resets = <&lpass_audiocc LPASS_AUDIO_SWR_RX_CGCR>;
+			reset-names = "swr_audio_cgcr";
+
 			qcom,ports-word-length =	/bits/ 8 <0x01 0x07 0x04 0xff 0xff>;
 			qcom,ports-sinterval-low =	/bits/ 8 <0x03 0x3f 0x1f 0x03 0x03>;
 			qcom,ports-offset1 =		/bits/ 8 <0x00 0x00 0x0b 0x01 0x01>;
@@ -2527,6 +2530,9 @@
 			qcom,din-ports = <3>;
 			qcom,dout-ports = <0>;
 
+			resets = <&lpass_audiocc LPASS_AUDIO_SWR_TX_CGCR>;
+			reset-names = "swr_audio_cgcr";
+
 			qcom,ports-sinterval-low =	/bits/ 8 <0x01 0x03 0x03>;
 			qcom,ports-offset1 =		/bits/ 8 <0x01 0x00 0x02>;
 			qcom,ports-offset2 =		/bits/ 8 <0x00 0x00 0x00>;
@@ -2544,6 +2550,14 @@
 			status = "disabled";
 		};
 
+		lpass_audiocc: clock-controller@32a9000 {
+			compatible = "qcom,sc7280-lpassaudiocc";
+			reg = <0 0x032a9000 0 0x1000>;
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+		};
+
+#if 0
 		lpass_audiocc: clock-controller@3300000 {
 			compatible = "qcom,sc7280-lpassaudiocc";
 			reg = <0 0x03300000 0 0x30000>,
@@ -2558,6 +2572,7 @@
 
 			status = "reserved"; /* Owned by ADSP firmware */
 		};
+#endif
 
 		lpass_va_macro: codec@3370000 {
 			compatible = "qcom,sc7280-lpass-va-macro";
