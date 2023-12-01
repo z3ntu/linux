@@ -1998,18 +1998,18 @@ static int tx_macro_probe(struct platform_device *pdev)
 	}
 
 	/* Update defaults for lpass sc7280 */
-	if (of_device_is_compatible(np, "qcom,sc7280-lpass-tx-macro")) {
-		for (reg = 0; reg < ARRAY_SIZE(tx_defaults); reg++) {
-			switch (tx_defaults[reg].reg) {
-			case CDC_TX_TOP_CSR_SWR_AMIC0_CTL:
-			case CDC_TX_TOP_CSR_SWR_AMIC1_CTL:
-				tx_defaults[reg].def = 0x0E;
-				break;
-			default:
-				break;
-			}
-		}
-	}
+	//if (of_device_is_compatible(np, "qcom,sc7280-lpass-tx-macro")) {
+	//	for (reg = 0; reg < ARRAY_SIZE(tx_defaults); reg++) {
+	//		switch (tx_defaults[reg].reg) {
+	//		case CDC_TX_TOP_CSR_SWR_AMIC0_CTL:
+	//		case CDC_TX_TOP_CSR_SWR_AMIC1_CTL:
+	//			tx_defaults[reg].def = 0x0E;
+	//			break;
+	//		default:
+	//			break;
+	//		}
+	//	}
+	//}
 
 	tx->regmap = devm_regmap_init_mmio(dev, base, &tx_regmap_config);
 	if (IS_ERR(tx->regmap)) {
@@ -2167,7 +2167,7 @@ static const struct dev_pm_ops tx_macro_pm_ops = {
 static const struct of_device_id tx_macro_dt_match[] = {
 	{
 		.compatible = "qcom,sc7280-lpass-tx-macro",
-		.data = (void *)(LPASS_MACRO_FLAG_HAS_NPL_CLOCK | LPASS_MACRO_FLAG_RESET_SWR),
+		.data = (void *)LPASS_MACRO_FLAG_HAS_NPL_CLOCK,
 	}, {
 		.compatible = "qcom,sm6115-lpass-tx-macro",
 		.data = (void *)LPASS_MACRO_FLAG_HAS_NPL_CLOCK,
