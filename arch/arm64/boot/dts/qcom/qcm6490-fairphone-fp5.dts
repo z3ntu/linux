@@ -1106,6 +1106,10 @@
 		reg = <DISPLAY_PORT_RX>;
 	};
 
+	dai@120 {
+		reg = <TX_CODEC_DMA_TX_3>;
+	};
+
 	// RX = playback?
 	dai@127 {
 		reg = <QUINARY_MI2S_RX>;
@@ -1205,6 +1209,7 @@
 		};
 	};
 
+#if 0
 	i2s-dai-link {
 		link-name = "I2S Playback";
 		cpu {
@@ -1221,6 +1226,7 @@
 			sound-dai = <&aw88261_l>; // , <&aw88261_r>;
 		};
 	};
+#endif
 
 	wcd-capture-dai-link {
 		link-name = "WCD Capture";
@@ -1229,11 +1235,16 @@
 			sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
 		};
 
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
 		codec {
 			sound-dai = <&wcd9385 1>, <&swr1 0>, <&lpass_tx_macro 0>;
 		};
 	};
 
+#if 0
 	displayport-rx-dai-link {
 		link-name = "DisplayPort Playback";
 
@@ -1249,6 +1260,7 @@
 			sound-dai = <&mdss_dp>;
 		};
 	};
+#endif
 };
 
 &spi13 {
