@@ -363,7 +363,7 @@ static int swrm_wait_for_rd_fifo_avail(struct qcom_swrm_ctrl *ctrl)
 
 		/* Check if read data is available in read fifo */
 		if (fifo_outstanding_data > 0) {
-			dev_warn(ctrl->dev, "%s DBG there's data!\n", __func__);
+			//dev_warn(ctrl->dev, "%s DBG there's data!\n", __func__);
 			return 0;
 		}
 
@@ -375,7 +375,7 @@ static int swrm_wait_for_rd_fifo_avail(struct qcom_swrm_ctrl *ctrl)
 		return -EIO;
 	}
 
-	dev_warn(ctrl->dev, "%s DBG no data?\n", __func__);
+	//dev_warn(ctrl->dev, "%s DBG no data?\n", __func__);
 	return 0;
 }
 
@@ -392,7 +392,7 @@ static int swrm_wait_for_wr_fifo_avail(struct qcom_swrm_ctrl *ctrl)
 
 		/* Check for space in write fifo before writing */
 		if (fifo_outstanding_cmds < ctrl->wr_fifo_depth) {
-			dev_warn(ctrl->dev, "%s there's space!\n", __func__);
+			//dev_warn(ctrl->dev, "%s DBG there's space!\n", __func__);
 			return 0;
 		}
 
@@ -404,7 +404,7 @@ static int swrm_wait_for_wr_fifo_avail(struct qcom_swrm_ctrl *ctrl)
 		return -EIO;
 	}
 
-	dev_warn(ctrl->dev, "%s there's zero space?\n", __func__);
+	//dev_warn(ctrl->dev, "%s DBG there's zero space?\n", __func__);
 	return 0;
 }
 
@@ -676,7 +676,7 @@ static irqreturn_t qcom_swrm_irq_handler(int irq, void *dev_id)
 	u32 i;
 	int devnum;
 	int ret = IRQ_HANDLED;
-	dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
 	clk_prepare_enable(ctrl->hclk);
 
 	ctrl->reg_read(ctrl, ctrl->reg_layout[SWRM_REG_INTERRUPT_STATUS],
@@ -696,7 +696,7 @@ static irqreturn_t qcom_swrm_irq_handler(int irq, void *dev_id)
 					dev_err_ratelimited(ctrl->dev,
 					    "no slave alert found.spurious interrupt\n");
 				} else {
-					dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
+					//dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
 					sdw_handle_slave_status(&ctrl->bus, ctrl->status);
 				}
 
@@ -709,11 +709,11 @@ static irqreturn_t qcom_swrm_irq_handler(int irq, void *dev_id)
 					dev_dbg(ctrl->dev, "Slave status not changed %x\n",
 						slave_status);
 				} else {
-					dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
+					//dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
 					qcom_swrm_get_device_status(ctrl);
-					dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
+					//dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
 					qcom_swrm_enumerate(&ctrl->bus);
-					dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
+					//dev_warn(ctrl->dev, "%s:%d DBG\n", __func__, __LINE__);
 					sdw_handle_slave_status(&ctrl->bus, ctrl->status);
 				}
 				break;
@@ -1662,7 +1662,7 @@ static int __maybe_unused swrm_runtime_resume(struct device *dev)
 	struct qcom_swrm_ctrl *ctrl = dev_get_drvdata(dev);
 	int ret;
 
-	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	if (ctrl->wake_irq > 0) {
 		if (!irqd_irq_disabled(irq_get_irq_data(ctrl->wake_irq)))
@@ -1686,7 +1686,7 @@ static int __maybe_unused swrm_runtime_resume(struct device *dev)
 		wait_for_completion_timeout(&ctrl->enumeration,
 					    msecs_to_jiffies(TIMEOUT_MS));
 		qcom_swrm_get_device_status(ctrl);
-		dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+		//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 		sdw_handle_slave_status(&ctrl->bus, ctrl->status);
 	} else {
 		reset_control_reset(ctrl->audio_cgcr);
@@ -1730,10 +1730,10 @@ static int __maybe_unused swrm_runtime_suspend(struct device *dev)
 	struct qcom_swrm_ctrl *ctrl = dev_get_drvdata(dev);
 	int ret;
 
-	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	swrm_wait_for_wr_fifo_done(ctrl);
-	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 	if (!ctrl->clock_stop_not_supported) {
 		/* Mask bus clash interrupt */
 		ctrl->intr_mask &= ~SWRM_INTERRUPT_STATUS_MASTER_CLASH_DET;
@@ -1743,7 +1743,7 @@ static int __maybe_unused swrm_runtime_suspend(struct device *dev)
 					ctrl->intr_mask);
 		ctrl->reg_write(ctrl, ctrl->reg_layout[SWRM_REG_INTERRUPT_CPU_EN],
 				ctrl->intr_mask);
-		dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+		//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 		/* Prepare slaves for clock stop */
 		ret = sdw_bus_prep_clk_stop(&ctrl->bus);
 		if (ret < 0 && ret != -ENODATA) {
@@ -1751,7 +1751,7 @@ static int __maybe_unused swrm_runtime_suspend(struct device *dev)
 			return ret;
 		}
 
-		dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+		//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 		ret = sdw_bus_clk_stop(&ctrl->bus);
 		if (ret < 0 && ret != -ENODATA) {
 			dev_err(dev, "bus clock stop failed %d", ret);
@@ -1759,12 +1759,12 @@ static int __maybe_unused swrm_runtime_suspend(struct device *dev)
 		}
 	}
 
-	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 	clk_disable_unprepare(ctrl->hclk);
 
 	usleep_range(300, 305);
 
-	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 	if (ctrl->wake_irq > 0) {
 		if (irqd_irq_disabled(irq_get_irq_data(ctrl->wake_irq)))
 			enable_irq(ctrl->wake_irq);

@@ -1147,7 +1147,7 @@ int sdw_bus_clk_stop(struct sdw_bus *bus)
 {
 	int ret;
 
-	dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 	/*
 	 * broadcast clock stop now, attached Slaves will ACK this,
 	 * unattached will ignore
@@ -1157,10 +1157,10 @@ int sdw_bus_clk_stop(struct sdw_bus *bus)
 	if (ret < 0) {
 		if (ret != -ENODATA)
 			dev_err(bus->dev, "ClockStopNow Broadcast msg failed %d\n", ret);
-		dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+		//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 		return ret;
 	}
-	dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	return 0;
 }
@@ -1856,11 +1856,11 @@ int sdw_handle_slave_status(struct sdw_bus *bus,
 	struct sdw_slave *slave;
 	bool attached_initializing, id_programmed;
 	int i, ret = 0;
-	dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 
 	/* first check if any Slaves fell off the bus */
 	for (i = 1; i <= SDW_MAX_DEVICES; i++) {
-		dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+		//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 		mutex_lock(&bus->bus_lock);
 		if (test_bit(i, bus->assigned) == false) {
 			mutex_unlock(&bus->bus_lock);
@@ -1885,7 +1885,7 @@ int sdw_handle_slave_status(struct sdw_bus *bus,
 		}
 	}
 
-	dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 	if (status[0] == SDW_SLAVE_ATTACHED) {
 		dev_dbg(bus->dev, "Slave attached, programming device number\n");
 
@@ -1909,7 +1909,7 @@ int sdw_handle_slave_status(struct sdw_bus *bus,
 
 	/* Continue to check other slave statuses */
 	for (i = 1; i <= SDW_MAX_DEVICES; i++) {
-		dev_warn(bus->dev, "%s:%d DBG i=%d\n", __func__, __LINE__, i);
+		//dev_warn(bus->dev, "%s:%d DBG i=%d\n", __func__, __LINE__, i);
 		mutex_lock(&bus->bus_lock);
 		if (test_bit(i, bus->assigned) == false) {
 			mutex_unlock(&bus->bus_lock);
@@ -1943,14 +1943,14 @@ int sdw_handle_slave_status(struct sdw_bus *bus,
 			break;
 
 		case SDW_SLAVE_ATTACHED:
-			dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+			//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 			if (slave->status == SDW_SLAVE_ATTACHED)
 				break;
 
 			prev_status = slave->status;
 			sdw_modify_slave_status(slave, SDW_SLAVE_ATTACHED);
 
-			dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
+			//dev_warn(bus->dev, "%s:%d DBG\n", __func__, __LINE__);
 			if (prev_status == SDW_SLAVE_ALERT)
 				break;
 

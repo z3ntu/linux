@@ -1323,7 +1323,7 @@ static int __maybe_unused wcd938x_sdw_runtime_suspend(struct device *dev)
 		regcache_mark_dirty(wcd->regmap);
 	}
 
-	dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
+	//dev_warn(dev, "%s:%d DBG\n", __func__, __LINE__);
 	return 0;
 }
 

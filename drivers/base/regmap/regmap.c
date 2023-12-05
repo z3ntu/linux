@@ -36,13 +36,13 @@
 #ifdef LOG_DEVICE
 static inline bool regmap_should_log(struct regmap *map)
 {
-	if (strcmp(dev_name(map->dev), "100000.clock-controller") != 0 &&
-			strcmp(dev_name(map->dev), "9091000.pmu") != 0 &&
-			strcmp(dev_name(map->dev), "90b6400.pmu") != 0 &&
-			strcmp(dev_name(map->dev), "3d90000.clock-controller") != 0 &&
-			strcmp(dev_name(map->dev), "9200000.system-cache-controller") != 0 &&
-			strcmp(dev_name(map->dev), "af00000.clock-controller") != 0)
-		dev_info(map->dev, "DBG dev_name=%s\n", dev_name(map->dev));
+	//if (strcmp(dev_name(map->dev), "100000.clock-controller") != 0 &&
+	//		strcmp(dev_name(map->dev), "9091000.pmu") != 0 &&
+	//		strcmp(dev_name(map->dev), "90b6400.pmu") != 0 &&
+	//		strcmp(dev_name(map->dev), "3d90000.clock-controller") != 0 &&
+	//		strcmp(dev_name(map->dev), "9200000.system-cache-controller") != 0 &&
+	//		strcmp(dev_name(map->dev), "af00000.clock-controller") != 0)
+	//	dev_info(map->dev, "DBG dev_name=%s\n", dev_name(map->dev));
 
 	return (map->dev && strcmp(dev_name(map->dev), LOG_DEVICE) == 0);
 }
