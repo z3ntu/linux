@@ -596,13 +596,17 @@ static unsigned long zswap_shrinker_scan(struct shrinker *shrinker,
 	struct zswap_pool *pool = shrinker->private_data;
 	bool encountered_page_in_swapcache = false;
 
+	if (!zswap_shrinker_enabled) {
+		sc->nr_scanned = 0;
+		return SHRINK_STOP;
+	}
+
 	nr_protected =
 		atomic_long_read(&lruvec->zswap_lruvec_state.nr_zswap_protected);
 	lru_size = list_lru_shrink_count(&pool->list_lru, sc);
 
 	/*
-	 * Abort if the shrinker is disabled or if we are shrinking into the
-	 * protected region.
+	 * Abort if we are shrinking into the protected region.
 	 *
 	 * This short-circuiting is necessary because if we have too many multiple
 	 * concurrent reclaimers getting the freeable zswap object counts at the
@@ -611,7 +615,7 @@ static unsigned long zswap_shrinker_scan(struct shrinker *shrinker,
 	 * objects (i.e the reclaimers will reclaim into the protected area of the
 	 * zswap LRU).
 	 */
-	if (!zswap_shrinker_enabled || nr_protected >= lru_size - sc->nr_to_scan) {
+	if (nr_protected >= lru_size - sc->nr_to_scan) {
 		sc->nr_scanned = 0;
 		return SHRINK_STOP;
 	}
@@ -633,8 +637,11 @@ static unsigned long zswap_shrinker_count(struct shrinker *shrinker,
 	struct lruvec *lruvec = mem_cgroup_lruvec(memcg, NODE_DATA(sc->nid));
 	unsigned long nr_backing, nr_stored, nr_freeable, nr_protected;
 
+	if (!zswap_shrinker_enabled)
+		return 0;
+
 #ifdef CONFIG_MEMCG_KMEM
-	cgroup_rstat_flush(memcg->css.cgroup);
+	mem_cgroup_flush_stats();
 	nr_backing = memcg_page_state(memcg, MEMCG_ZSWAP_B) >> PAGE_SHIFT;
 	nr_stored = memcg_page_state(memcg, MEMCG_ZSWAPPED);
 #else
@@ -643,7 +650,7 @@ static unsigned long zswap_shrinker_count(struct shrinker *shrinker,
 	nr_stored = atomic_read(&pool->nr_stored);
 #endif
 
-	if (!zswap_shrinker_enabled || !nr_stored)
+	if (!nr_stored)
 		return 0;
 
 	nr_protected =
