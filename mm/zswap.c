@@ -859,6 +859,7 @@ static void shrink_worker(struct work_struct *w)
 resched:
 		cond_resched();
 	} while (!zswap_can_accept());
+	zswap_pool_put(pool);
 }
 
 static struct zswap_pool *zswap_pool_create(char *type, char *compressor)
