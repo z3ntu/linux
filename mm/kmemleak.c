@@ -21,8 +21,8 @@
  *   red black trees used to look-up metadata based on a pointer to the
  *   corresponding memory block. The kmemleak_object structures are added to
  *   the object_list and the object tree root in the create_object() function
- *   called from the kmemleak_alloc() (or kmemleak_alloc_phys()) callback and
- *   removed in delete_object() called from the kmemleak_free() callback
+ *   called from the kmemleak_alloc{,_phys,_percpu}() callback and removed in
+ *   delete_object() called from the kmemleak_free{,_phys,_percpu}() callback
  * - kmemleak_object.lock (raw_spinlock_t): protects a kmemleak_object.
  *   Accesses to the metadata (e.g. count) are protected by this lock. Note
  *   that some members of this structure may be protected by other means
