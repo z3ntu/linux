@@ -4498,6 +4498,9 @@ again:
 		mas->last = mas->index - 1;
 		mas->index = mas_safe_min(mas, pivots, mas->offset);
 	} else  {
+		if (mas->index <= min)
+			goto underflow;
+
 		if (mas_prev_node(mas, min)) {
 			mas_rewalk(mas, save_point);
 			goto retry;
@@ -4518,15 +4521,15 @@ again:
 	if (unlikely(mas_rewalk_if_dead(mas, node, save_point)))
 		goto retry;
 
-	if (mas->index <= min)
-		mas->status = ma_underflow;
 
 	if (likely(entry))
 		return entry;
 
 	if (!empty) {
-		if (mas_is_underflow(mas))
+		if (mas->index <= min) {
+			mas->status = ma_underflow;
 			return NULL;
+		}
 
 		goto again;
 	}
@@ -4662,7 +4665,7 @@ retry:
 		if (unlikely(mas_rewalk_if_dead(mas, node, save_point)))
 			goto retry;
 
-		if (pivot >= max) {
+		if (pivot >= max) { /* Was at the limit, next will extend beyond */
 			mas->status = ma_overflow;
 			return NULL;
 		}
@@ -4677,6 +4680,11 @@ again:
 		else
 			mas->last = mas->max;
 	} else  {
+		if (mas->last >= max) {
+			mas->status = ma_overflow;
+			return NULL;
+		}
+
 		if (mas_next_node(mas, node, max)) {
 			mas_rewalk(mas, save_point);
 			goto retry;
