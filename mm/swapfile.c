@@ -1789,8 +1789,8 @@ static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
 	arch_swap_restore(entry, page_folio(page));
 
 	/* See do_swap_page() */
-	BUG_ON(!PageAnon(page) && PageMappedToDisk(page));
-	BUG_ON(PageAnon(page) && PageAnonExclusive(page));
+	VM_BUG_ON_FOLIO(!folio_test_anon(folio), folio);
+	VM_BUG_ON_PAGE(PageAnonExclusive(page), page);
 
 	dec_mm_counter(vma->vm_mm, MM_SWAPENTS);
 	inc_mm_counter(vma->vm_mm, MM_ANONPAGES);
