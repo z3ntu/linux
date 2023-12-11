@@ -138,7 +138,7 @@ void filemap_free_folio(struct address_space *mapping, struct folio *folio);
 int truncate_inode_folio(struct address_space *mapping, struct folio *folio);
 bool truncate_inode_partial_folio(struct folio *folio, loff_t start,
 		loff_t end);
-long invalidate_inode_page(struct page *page);
+long mapping_evict_folio(struct address_space *mapping, struct folio *folio);
 unsigned long mapping_try_invalidate(struct address_space *mapping,
 		pgoff_t start, pgoff_t end, unsigned long *nr_failed);
 
@@ -1152,17 +1152,6 @@ static inline int vma_iter_prealloc(struct vma_iterator *vmi,
 static inline void vma_iter_clear(struct vma_iterator *vmi)
 {
 	mas_store_prealloc(&vmi->mas, NULL);
-}
-
-static inline int vma_iter_clear_gfp(struct vma_iterator *vmi,
-			unsigned long start, unsigned long end, gfp_t gfp)
-{
-	__mas_set_range(&vmi->mas, start, end - 1);
-	mas_store_gfp(&vmi->mas, NULL, gfp);
-	if (unlikely(mas_is_err(&vmi->mas)))
-		return -ENOMEM;
-
-	return 0;
 }
 
 static inline struct vm_area_struct *vma_iter_load(struct vma_iterator *vmi)
