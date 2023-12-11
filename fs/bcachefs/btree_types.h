@@ -185,33 +185,32 @@ struct btree_node_iter {
  * Iterate over all possible positions, synthesizing deleted keys for holes:
  */
 static const __maybe_unused u16 BTREE_ITER_SLOTS		= 1 << 0;
-static const __maybe_unused u16 BTREE_ITER_ALL_LEVELS		= 1 << 1;
 /*
  * Indicates that intent locks should be taken on leaf nodes, because we expect
  * to be doing updates:
  */
-static const __maybe_unused u16 BTREE_ITER_INTENT		= 1 << 2;
+static const __maybe_unused u16 BTREE_ITER_INTENT		= 1 << 1;
 /*
  * Causes the btree iterator code to prefetch additional btree nodes from disk:
  */
-static const __maybe_unused u16 BTREE_ITER_PREFETCH		= 1 << 3;
+static const __maybe_unused u16 BTREE_ITER_PREFETCH		= 1 << 2;
 /*
  * Used in bch2_btree_iter_traverse(), to indicate whether we're searching for
  * @pos or the first key strictly greater than @pos
  */
-static const __maybe_unused u16 BTREE_ITER_IS_EXTENTS		= 1 << 4;
-static const __maybe_unused u16 BTREE_ITER_NOT_EXTENTS		= 1 << 5;
-static const __maybe_unused u16 BTREE_ITER_CACHED		= 1 << 6;
-static const __maybe_unused u16 BTREE_ITER_WITH_KEY_CACHE	= 1 << 7;
-static const __maybe_unused u16 BTREE_ITER_WITH_UPDATES		= 1 << 8;
-static const __maybe_unused u16 BTREE_ITER_WITH_JOURNAL		= 1 << 9;
-static const __maybe_unused u16 __BTREE_ITER_ALL_SNAPSHOTS	= 1 << 10;
-static const __maybe_unused u16 BTREE_ITER_ALL_SNAPSHOTS	= 1 << 11;
-static const __maybe_unused u16 BTREE_ITER_FILTER_SNAPSHOTS	= 1 << 12;
-static const __maybe_unused u16 BTREE_ITER_NOPRESERVE		= 1 << 13;
-static const __maybe_unused u16 BTREE_ITER_CACHED_NOFILL	= 1 << 14;
-static const __maybe_unused u16 BTREE_ITER_KEY_CACHE_FILL	= 1 << 15;
-#define __BTREE_ITER_FLAGS_END					       16
+static const __maybe_unused u16 BTREE_ITER_IS_EXTENTS		= 1 << 3;
+static const __maybe_unused u16 BTREE_ITER_NOT_EXTENTS		= 1 << 4;
+static const __maybe_unused u16 BTREE_ITER_CACHED		= 1 << 5;
+static const __maybe_unused u16 BTREE_ITER_WITH_KEY_CACHE	= 1 << 6;
+static const __maybe_unused u16 BTREE_ITER_WITH_UPDATES		= 1 << 7;
+static const __maybe_unused u16 BTREE_ITER_WITH_JOURNAL		= 1 << 8;
+static const __maybe_unused u16 __BTREE_ITER_ALL_SNAPSHOTS	= 1 << 9;
+static const __maybe_unused u16 BTREE_ITER_ALL_SNAPSHOTS	= 1 << 10;
+static const __maybe_unused u16 BTREE_ITER_FILTER_SNAPSHOTS	= 1 << 11;
+static const __maybe_unused u16 BTREE_ITER_NOPRESERVE		= 1 << 12;
+static const __maybe_unused u16 BTREE_ITER_CACHED_NOFILL	= 1 << 13;
+static const __maybe_unused u16 BTREE_ITER_KEY_CACHE_FILL	= 1 << 14;
+#define __BTREE_ITER_FLAGS_END					       15
 
 enum btree_path_uptodate {
 	BTREE_ITER_UPTODATE		= 0,
@@ -228,8 +227,6 @@ struct btree_path {
 	u8			sorted_idx;
 	u8			ref;
 	u8			intent_ref;
-	u32			alloc_seq;
-	u32			downgrade_seq;
 
 	/* btree_iter_copy starts here: */
 	struct bpos		pos;
@@ -288,8 +285,7 @@ struct btree_iter {
 	struct btree_path	*key_cache_path;
 
 	enum btree_id		btree_id:8;
-	unsigned		min_depth:3;
-	unsigned		advanced:1;
+	u8			min_depth;
 
 	/* btree_iter_copy starts here: */
 	u16			flags;
@@ -306,7 +302,6 @@ struct btree_iter {
 
 	/* BTREE_ITER_WITH_JOURNAL: */
 	size_t			journal_idx;
-	struct bpos		journal_pos;
 #ifdef TRACK_PATH_ALLOCATED
 	unsigned long		ip_allocated;
 #endif
@@ -356,7 +351,6 @@ struct btree_insert_entry {
 	u8			old_btree_u64s;
 	struct bkey_i		*k;
 	struct btree_path	*path;
-	u64			seq;
 	/* key being overwritten: */
 	struct bkey		old_k;
 	const struct bch_val	*old_v;
@@ -394,8 +388,6 @@ struct btree_trans {
 	u8			fn_idx;
 	u8			nr_sorted;
 	u8			nr_updates;
-	u8			nr_wb_updates;
-	u8			wb_updates_size;
 	bool			srcu_held:1;
 	bool			used_mempool:1;
 	bool			in_traverse_all:1;
@@ -416,9 +408,11 @@ struct btree_trans {
 	 * extent:
 	 */
 	unsigned		extra_journal_res;
-	unsigned		nr_max_paths;
+	u8			nr_max_paths;
+	u16			journal_entries_u64s;
+	u16			journal_entries_size;
 
-	u64			paths_allocated;
+	unsigned long		paths_allocated[BITS_TO_LONGS(BTREE_ITER_MAX)];
 
 	unsigned		mem_top;
 	unsigned		mem_max;
@@ -428,11 +422,10 @@ struct btree_trans {
 	u8			sorted[BTREE_ITER_MAX + 8];
 	struct btree_path	paths[BTREE_ITER_MAX];
 	struct btree_insert_entry updates[BTREE_ITER_MAX];
-	struct btree_write_buffered_key *wb_updates;
 
 	/* update path: */
 	struct btree_trans_commit_hook *hooks;
-	darray_u64		extra_journal_entries;
+	struct jset_entry	*journal_entries;
 	struct journal_entry_pin *journal_pin;
 
 	struct journal_res	journal_res;

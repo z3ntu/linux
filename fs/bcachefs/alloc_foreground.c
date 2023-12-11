@@ -377,7 +377,7 @@ static struct open_bucket *try_alloc_bucket(struct btree_trans *trans, struct bc
 
 	ob = __try_alloc_bucket(c, ca, b, watermark, a, s, cl);
 	if (!ob)
-		iter.path->preserve = false;
+		set_btree_iter_dontneed(&iter);
 err:
 	if (iter.trans && iter.path)
 		set_btree_iter_dontneed(&iter);
@@ -447,7 +447,7 @@ again:
 
 		ob = __try_alloc_bucket(trans->c, ca, k.k->p.offset, watermark, a, s, cl);
 next:
-		citer.path->preserve = false;
+		set_btree_iter_dontneed(&citer);
 		bch2_trans_iter_exit(trans, &citer);
 		if (ob)
 			break;
@@ -502,7 +502,7 @@ again:
 			ob = try_alloc_bucket(trans, ca, watermark,
 					      alloc_cursor, s, k, cl);
 			if (ob) {
-				iter.path->preserve = false;
+				set_btree_iter_dontneed(&iter);
 				break;
 			}
 		}
@@ -697,11 +697,9 @@ static int add_new_bucket(struct bch_fs *c,
 		bch_dev_bkey_exists(c, ob->dev)->mi.durability;
 
 	BUG_ON(*nr_effective >= nr_replicas);
-	BUG_ON(flags & BCH_WRITE_ONLY_SPECIFIED_DEVS);
 
 	__clear_bit(ob->dev, devs_may_alloc->d);
-	*nr_effective	+= (flags & BCH_WRITE_ONLY_SPECIFIED_DEVS)
-		? durability : 1;
+	*nr_effective	+= durability;
 	*have_cache	|= !durability;
 
 	ob_push(c, ptrs, ob);

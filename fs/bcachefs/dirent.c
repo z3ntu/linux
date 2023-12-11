@@ -201,7 +201,8 @@ static struct bkey_i_dirent *dirent_create_key(struct btree_trans *trans,
 int bch2_dirent_create(struct btree_trans *trans, subvol_inum dir,
 		       const struct bch_hash_info *hash_info,
 		       u8 type, const struct qstr *name, u64 dst_inum,
-		       u64 *dir_offset, int flags)
+		       u64 *dir_offset,
+		       bch_str_hash_flags_t str_hash_flags)
 {
 	struct bkey_i_dirent *dirent;
 	int ret;
@@ -212,7 +213,7 @@ int bch2_dirent_create(struct btree_trans *trans, subvol_inum dir,
 		return ret;
 
 	ret = bch2_hash_set(trans, bch2_dirent_hash_desc, hash_info,
-			    dir, &dirent->k_i, flags);
+			    dir, &dirent->k_i, str_hash_flags);
 	*dir_offset = dirent->k.p.offset;
 
 	return ret;
@@ -485,20 +486,15 @@ retry:
 	return ret;
 }
 
-int bch2_empty_dir_trans(struct btree_trans *trans, subvol_inum dir)
+int bch2_empty_dir_snapshot(struct btree_trans *trans, u64 dir, u32 snapshot)
 {
 	struct btree_iter iter;
 	struct bkey_s_c k;
-	u32 snapshot;
 	int ret;
 
-	ret = bch2_subvolume_get_snapshot(trans, dir.subvol, &snapshot);
-	if (ret)
-		return ret;
-
 	for_each_btree_key_upto_norestart(trans, iter, BTREE_ID_dirents,
-			   SPOS(dir.inum, 0, snapshot),
-			   POS(dir.inum, U64_MAX), 0, k, ret)
+			   SPOS(dir, 0, snapshot),
+			   POS(dir, U64_MAX), 0, k, ret)
 		if (k.k->type == KEY_TYPE_dirent) {
 			ret = -ENOTEMPTY;
 			break;
@@ -506,6 +502,14 @@ int bch2_empty_dir_trans(struct btree_trans *trans, subvol_inum dir)
 	bch2_trans_iter_exit(trans, &iter);
 
 	return ret;
+}
+
+int bch2_empty_dir_trans(struct btree_trans *trans, subvol_inum dir)
+{
+	u32 snapshot;
+
+	return bch2_subvolume_get_snapshot(trans, dir.subvol, &snapshot) ?:
+		bch2_empty_dir_snapshot(trans, dir.inum, snapshot);
 }
 
 int bch2_readdir(struct bch_fs *c, subvol_inum inum, struct dir_context *ctx)
