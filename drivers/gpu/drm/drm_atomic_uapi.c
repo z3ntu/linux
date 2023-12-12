@@ -362,48 +362,6 @@ static s32 __user *get_out_fence_for_connector(struct drm_atomic_state *state,
 	return fence_ptr;
 }
 
-static int
-drm_atomic_replace_property_blob_from_id(struct drm_device *dev,
-					 struct drm_property_blob **blob,
-					 uint64_t blob_id,
-					 ssize_t expected_size,
-					 ssize_t expected_elem_size,
-					 bool *replaced)
-{
-	struct drm_property_blob *new_blob = NULL;
-
-	if (blob_id != 0) {
-		new_blob = drm_property_lookup_blob(dev, blob_id);
-		if (new_blob == NULL) {
-			drm_dbg_atomic(dev,
-				       "cannot find blob ID %llu\n", blob_id);
-			return -EINVAL;
-		}
-
-		if (expected_size > 0 &&
-		    new_blob->length != expected_size) {
-			drm_dbg_atomic(dev,
-				       "[BLOB:%d] length %zu different from expected %zu\n",
-				       new_blob->base.id, new_blob->length, expected_size);
-			drm_property_blob_put(new_blob);
-			return -EINVAL;
-		}
-		if (expected_elem_size > 0 &&
-		    new_blob->length % expected_elem_size != 0) {
-			drm_dbg_atomic(dev,
-				       "[BLOB:%d] length %zu not divisible by element size %zu\n",
-				       new_blob->base.id, new_blob->length, expected_elem_size);
-			drm_property_blob_put(new_blob);
-			return -EINVAL;
-		}
-	}
-
-	*replaced |= drm_property_replace_blob(blob, new_blob);
-	drm_property_blob_put(new_blob);
-
-	return 0;
-}
-
 static int drm_atomic_crtc_set_property(struct drm_crtc *crtc,
 		struct drm_crtc_state *state, struct drm_property *property,
 		uint64_t val)
