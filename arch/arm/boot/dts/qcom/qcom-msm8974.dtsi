@@ -42,6 +42,11 @@
 			qcom,acc = <&acc0>;
 			qcom,saw = <&saw0>;
 			cpu-idle-states = <&CPU_SPC>;
+			clocks = <&kraitcc 0>;
+			clock-names = "cpu";
+			clock-latency = <100000>;
+			operating-points-v2 = <&cpu_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		CPU1: cpu@1 {
@@ -53,6 +58,11 @@
 			qcom,acc = <&acc1>;
 			qcom,saw = <&saw1>;
 			cpu-idle-states = <&CPU_SPC>;
+			clocks = <&kraitcc 1>;
+			clock-names = "cpu";
+			clock-latency = <100000>;
+			operating-points-v2 = <&cpu_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		CPU2: cpu@2 {
@@ -64,6 +74,11 @@
 			qcom,acc = <&acc2>;
 			qcom,saw = <&saw2>;
 			cpu-idle-states = <&CPU_SPC>;
+			clocks = <&kraitcc 2>;
+			clock-names = "cpu";
+			clock-latency = <100000>;
+			operating-points-v2 = <&cpu_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		CPU3: cpu@3 {
@@ -75,6 +90,11 @@
 			qcom,acc = <&acc3>;
 			qcom,saw = <&saw3>;
 			cpu-idle-states = <&CPU_SPC>;
+			clocks = <&kraitcc 3>;
+			clock-names = "cpu";
+			clock-latency = <100000>;
+			operating-points-v2 = <&cpu_opp_table>;
+			#cooling-cells = <2>;
 		};
 
 		L2: l2-cache {
@@ -352,6 +372,15 @@
 			regulator;
 		};
 
+		hfpll_l2: clock-controller@f9016000 {
+			compatible = "qcom,hfpll-msm8974", "qcom,hfpll";
+			reg = <0xf9016000 0x30>;
+			#clock-cells = <0>;
+			clock-output-names = "hfpll_l2";
+			clocks = <&xo_board>; // TODO <&rpmcc RPM_SMD_XO_A_CLK_SRC> ?
+			clock-names = "xo";
+		};
+
 		timer@f9020000 {
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -421,6 +450,15 @@
 			reg = <0xf9089000 0x1000>, <0xf9009000 0x1000>;
 		};
 
+		hfpll0: clock-controller@f908a000 {
+			compatible = "qcom,hfpll-msm8974", "qcom,hfpll";
+			reg = <0xf908a000 0x30>, <0xf900a000 0x30>;
+			#clock-cells = <0>;
+			clock-output-names = "hfpll0";
+			clocks = <&xo_board>; // TODO <&rpmcc RPM_SMD_XO_A_CLK_SRC> ?
+			clock-names = "xo";
+		};
+
 		acc1: power-manager@f9098000 {
 			compatible = "qcom,kpss-acc-v2";
 			reg = <0xf9098000 0x1000>, <0xf9008000 0x1000>;
@@ -429,6 +467,15 @@
 		saw1: power-controller@f9099000 {
 			compatible = "qcom,msm8974-saw2-v2.1-cpu", "qcom,saw2";
 			reg = <0xf9099000 0x1000>, <0xf9009000 0x1000>;
+		};
+
+		hfpll1: clock-controller@f909a000 {
+			compatible = "qcom,hfpll-msm8974", "qcom,hfpll";
+			reg = <0xf909a000 0x30>, <0xf900a000 0x30>;
+			#clock-cells = <0>;
+			clock-output-names = "hfpll1";
+			clocks = <&xo_board>; // TODO <&rpmcc RPM_SMD_XO_A_CLK_SRC> ?
+			clock-names = "xo";
 		};
 
 		acc2: power-manager@f90a8000 {
@@ -441,6 +488,15 @@
 			reg = <0xf90a9000 0x1000>, <0xf9009000 0x1000>;
 		};
 
+		hfpll2: clock-controller@f90aa000 {
+			compatible = "qcom,hfpll-msm8974", "qcom,hfpll";
+			reg = <0xf90aa000 0x30>, <0xf900a000 0x30>;
+			#clock-cells = <0>;
+			clock-output-names = "hfpll2";
+			clocks = <&xo_board>; // TODO <&rpmcc RPM_SMD_XO_A_CLK_SRC> ?
+			clock-names = "xo";
+		};
+
 		acc3: power-manager@f90b8000 {
 			compatible = "qcom,kpss-acc-v2";
 			reg = <0xf90b8000 0x1000>, <0xf9008000 0x1000>;
@@ -449,6 +505,15 @@
 		saw3: power-controller@f90b9000 {
 			compatible = "qcom,msm8974-saw2-v2.1-cpu", "qcom,saw2";
 			reg = <0xf90b9000 0x1000>, <0xf9009000 0x1000>;
+		};
+
+		hfpll3: clock-controller@f90ba000 {
+			compatible = "qcom,hfpll-msm8974", "qcom,hfpll";
+			reg = <0xf90ba000 0x30>, <0xf900a000 0x30>;
+			#clock-cells = <0>;
+			clock-output-names = "hfpll3";
+			clocks = <&xo_board>; // TODO <&rpmcc RPM_SMD_XO_A_CLK_SRC> ?
+			clock-names = "xo";
 		};
 
 		sdhc_1: mmc@f9824900 {
@@ -2404,6 +2469,21 @@
 			     <GIC_PPI 4 0xf08>,
 			     <GIC_PPI 1 0xf08>;
 		clock-frequency = <19200000>;
+	};
+
+	kraitcc: clock-controller {
+		compatible = "qcom,krait-cc-v2";
+		clocks = <&hfpll0>,
+			 <&hfpll1>,
+			 <&hfpll2>,
+			 <&hfpll3>,
+			 <&hfpll_l2>;
+		clock-names = "hfpll0",
+			      "hfpll1",
+			      "hfpll2",
+			      "hfpll3",
+			      "hfpll_l2";
+		#clock-cells = <1>;
 	};
 
 	cpu_opp_table: opp-table-cpu {
