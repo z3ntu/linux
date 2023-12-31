@@ -252,6 +252,31 @@ static struct rpmpd cx_s2b_vfc = {
 };
 
 /* G(F)X */
+static struct rpmpd gfx_s7a_corner_ao;
+static struct rpmpd gfx_s7a_corner = {
+	.pd = { .name = "gfx", },
+	.peer = &gfx_s7a_corner_ao,
+	.res_type = RPMPD_SMPA,
+	.res_id = 7,
+	.key = KEY_CORNER,
+};
+
+static struct rpmpd gfx_s7a_corner_ao = {
+	.pd = { .name = "gfx_ao", },
+	.peer = &gfx_s7a_corner,
+	.active_only = true,
+	.res_type = RPMPD_SMPA,
+	.res_id = 7,
+	.key = KEY_CORNER,
+};
+
+static struct rpmpd gfx_s7a_vfc = {
+	.pd = { .name = "gfx_vfc", },
+	.res_type = RPMPD_SMPA,
+	.res_id = 7,
+	.key = KEY_FLOOR_CORNER,
+};
+
 static struct rpmpd gfx_s2b_corner = {
 	.pd = { .name = "gfx", },
 	.res_type = RPMPD_SMPB,
@@ -625,6 +650,21 @@ static struct rpmpd ssc_mx_rwsm0_vfl = {
 	.key = KEY_FLOOR_LEVEL,
 };
 
+static struct rpmpd *apq8084_rpmpds[] = {
+	[APQ8084_VDDCX] =	&cx_s2a_corner,
+	[APQ8084_VDDCX_AO] =	&cx_s2a_corner_ao,
+	[APQ8084_VDDCX_VFC] =	&cx_s2a_vfc,
+	[APQ8084_VDDGFX] =	&gfx_s7a_corner,
+	[APQ8084_VDDGFX_AO] =	&gfx_s7a_corner_ao,
+	[APQ8084_VDDGFX_VFC] =	&gfx_s7a_vfc,
+};
+
+static const struct rpmpd_desc apq8084_desc = {
+	.rpmpds = apq8084_rpmpds,
+	.num_pds = ARRAY_SIZE(apq8084_rpmpds),
+	.max_state = MAX_CORNER_RPMPD_STATE,
+};
+
 static struct rpmpd *mdm9607_rpmpds[] = {
 	[MDM9607_VDDCX] =	&cx_s3a_lvl,
 	[MDM9607_VDDCX_AO] =	&cx_s3a_lvl_ao,
@@ -914,6 +954,7 @@ static const struct rpmpd_desc qcm2290_desc = {
 };
 
 static const struct of_device_id rpmpd_match_table[] = {
+	{ .compatible = "qcom,apq8084-rpmpd", .data = &apq8084_desc },
 	{ .compatible = "qcom,mdm9607-rpmpd", .data = &mdm9607_desc },
 	{ .compatible = "qcom,msm8226-rpmpd", .data = &msm8226_desc },
 	{ .compatible = "qcom,msm8909-rpmpd", .data = &msm8916_desc },
