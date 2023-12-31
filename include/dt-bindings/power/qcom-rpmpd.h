@@ -4,6 +4,14 @@
 #ifndef _DT_BINDINGS_POWER_QCOM_RPMPD_H
 #define _DT_BINDINGS_POWER_QCOM_RPMPD_H
 
+/* APQ8084 Power Domain Indexes */
+#define APQ8084_VDDCX		0
+#define APQ8084_VDDCX_AO	1
+#define APQ8084_VDDCX_VFC	2
+#define APQ8084_VDDGFX		3
+#define APQ8084_VDDGFX_AO	4
+#define APQ8084_VDDGFX_VFC	5
+
 /* SA8775P Power Domain Indexes */
 #define SA8775P_CX	0
 #define SA8775P_CX_AO	1
