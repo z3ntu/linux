@@ -164,6 +164,35 @@
 					clocks = <&xo_board>;
 					clock-names = "xo";
 				};
+
+				rpmpd: power-controller {
+					compatible = "qcom,msm8974-rpmpd";
+					#power-domain-cells = <1>;
+					operating-points-v2 = <&rpmpd_opp_table>;
+
+					rpmpd_opp_table: opp-table {
+						compatible = "operating-points-v2";
+
+						rpmpd_opp_ret: opp1 {
+							opp-level = <1>;
+						};
+						rpmpd_opp_svs_krait: opp2 {
+							opp-level = <2>;
+						};
+						rpmpd_opp_svs_soc: opp3 {
+							opp-level = <3>;
+						};
+						rpmpd_opp_nom: opp4 {
+							opp-level = <4>;
+						};
+						rpmpd_opp_turbo: opp5 {
+							opp-level = <5>;
+						};
+						rpmpd_opp_super_turbo: opp6 {
+							opp-level = <6>;
+						};
+					};
+				};
 			};
 		};
 	};
@@ -798,6 +827,9 @@
 					      <&wcnss_smp2p_in 2 IRQ_TYPE_EDGE_RISING>,
 					      <&wcnss_smp2p_in 3 IRQ_TYPE_EDGE_RISING>;
 			interrupt-names = "wdog", "fatal", "ready", "handover", "stop-ack";
+
+			power-domains = <&rpmpd MSM8974_VDDCX>;
+			power-domain-names = "cx";
 
 			qcom,smem-states = <&wcnss_smp2p_out 0>;
 			qcom,smem-state-names = "stop";
@@ -1596,6 +1628,9 @@
 					      <&modem_smp2p_in 3 IRQ_TYPE_EDGE_RISING>;
 			interrupt-names = "wdog", "fatal", "ready", "handover", "stop-ack";
 
+			power-domains = <&rpmpd MSM8974_VDDCX>;
+			power-domain-names = "cx";
+
 			clocks = <&gcc GCC_MSS_Q6_BIMC_AXI_CLK>,
 				 <&gcc GCC_MSS_CFG_AHB_CLK>,
 				 <&gcc GCC_BOOT_ROM_AHB_CLK>,
@@ -2260,6 +2295,9 @@
 					       <&adsp_smp2p_in 2 IRQ_TYPE_EDGE_RISING>,
 					       <&adsp_smp2p_in 3 IRQ_TYPE_EDGE_RISING>;
 			interrupt-names = "wdog", "fatal", "ready", "handover", "stop-ack";
+
+			power-domains = <&rpmpd MSM8974_VDDCX>;
+			power-domain-names = "cx";
 
 			clocks = <&xo_board>;
 			clock-names = "xo";
