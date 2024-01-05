@@ -173,6 +173,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
 
 	switch (vfe->camss->res->version) {
 	case CAMSS_8x16:
+	case CAMSS_8x53:
 		switch (sink_code) {
 		case MEDIA_BUS_FMT_YUYV8_1X16:
 		{
@@ -556,13 +557,18 @@ static int vfe_set_clock_rates(struct vfe_device *vfe)
 
 				if (j == VFE_LINE_PIX) {
 					tmp = pixel_clock[j];
+					if (vfe->camss->res->version == CAMSS_8x53)
+						tmp /= 2;
 				} else {
 					struct vfe_line *l = &vfe->line[j];
 
 					bpp = vfe_get_bpp(l->formats,
 						l->nformats,
 						l->fmt[MSM_VFE_PAD_SINK].code);
-					tmp = pixel_clock[j] * bpp / 64;
+					if (vfe->camss->res->version == CAMSS_8x53)
+						tmp = pixel_clock[j] * bpp * 3 / 128;
+					else
+						tmp = pixel_clock[j] * bpp / 64;
 				}
 
 				if (min_rate < tmp)
@@ -637,13 +643,18 @@ static int vfe_check_clock_rates(struct vfe_device *vfe)
 
 				if (j == VFE_LINE_PIX) {
 					tmp = pixel_clock[j];
+					if (vfe->camss->res->version == CAMSS_8x53)
+						tmp /= 2;
 				} else {
 					struct vfe_line *l = &vfe->line[j];
 
 					bpp = vfe_get_bpp(l->formats,
 						l->nformats,
 						l->fmt[MSM_VFE_PAD_SINK].code);
-					tmp = pixel_clock[j] * bpp / 64;
+					if (vfe->camss->res->version == CAMSS_8x53)
+						tmp = pixel_clock[j] * bpp * 3 / 128;
+					else
+						tmp = pixel_clock[j] * bpp / 64;
 				}
 
 				if (min_rate < tmp)
@@ -1498,6 +1509,7 @@ int msm_vfe_subdev_init(struct camss *camss, struct vfe_device *vfe,
 
 		switch (camss->res->version) {
 		case CAMSS_8x16:
+		case CAMSS_8x53:
 			if (i == VFE_LINE_PIX) {
 				l->formats = formats_pix_8x16;
 				l->nformats = ARRAY_SIZE(formats_pix_8x16);
