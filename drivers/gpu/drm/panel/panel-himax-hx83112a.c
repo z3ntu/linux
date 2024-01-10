@@ -13,13 +13,13 @@
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>
+#include <drm/drm_probe_helper.h>
 
 struct hx83112a_panel {
 	struct drm_panel panel;
 	struct mipi_dsi_device *dsi;
 	struct regulator_bulk_data supplies[3];
 	struct gpio_desc *reset_gpio;
-	bool prepared;
 };
 
 static inline struct hx83112a_panel *to_hx83112a_panel(struct drm_panel *panel)
@@ -211,9 +211,6 @@ static int hx83112a_prepare(struct drm_panel *panel)
 	struct device *dev = &ctx->dsi->dev;
 	int ret;
 
-	if (ctx->prepared)
-		return 0;
-
 	ret = regulator_bulk_enable(ARRAY_SIZE(ctx->supplies), ctx->supplies);
 	if (ret < 0) {
 		dev_err(dev, "Failed to enable regulators: %d\n", ret);
@@ -230,7 +227,6 @@ static int hx83112a_prepare(struct drm_panel *panel)
 		return ret;
 	}
 
-	ctx->prepared = true;
 	return 0;
 }
 
@@ -238,13 +234,9 @@ static int hx83112a_unprepare(struct drm_panel *panel)
 {
 	struct hx83112a_panel *ctx = to_hx83112a_panel(panel);
 
-	if (!ctx->prepared)
-		return 0;
-
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 	regulator_bulk_disable(ARRAY_SIZE(ctx->supplies), ctx->supplies);
 
-	ctx->prepared = false;
 	return 0;
 }
 
@@ -258,27 +250,15 @@ static const struct drm_display_mode hx83112a_mode = {
 	.vsync_start = 2340 + 27,
 	.vsync_end = 2340 + 27 + 5,
 	.vtotal = 2340 + 27 + 5 + 5,
-	.width_mm = 65,
-	.height_mm = 115,
+	.width_mm = 67,
+	.height_mm = 145,
+	.type = DRM_MODE_TYPE_DRIVER,
 };
 
 static int hx83112a_get_modes(struct drm_panel *panel,
 				  struct drm_connector *connector)
 {
-	struct drm_display_mode *mode;
-
-	mode = drm_mode_duplicate(connector->dev, &hx83112a_mode);
-	if (!mode)
-		return -ENOMEM;
-
-	drm_mode_set_name(mode);
-
-	mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
-	connector->display_info.width_mm = mode->width_mm;
-	connector->display_info.height_mm = mode->height_mm;
-	drm_mode_probed_add(connector, mode);
-
-	return 1;
+	return drm_connector_helper_get_modes_fixed(connector, &hx83112a_mode);
 }
 
 static const struct drm_panel_funcs hx83112a_panel_funcs = {
@@ -332,7 +312,7 @@ static int hx83112a_probe(struct mipi_dsi_device *dsi)
 
 	ret = mipi_dsi_attach(dsi);
 	if (ret < 0) {
-		dev_err(dev, "Failed to attach to DSI host: %d\n", ret);
+		dev_err_probe(dev, ret, "Failed to attach to DSI host\n");
 		drm_panel_remove(&ctx->panel);
 		return ret;
 	}
