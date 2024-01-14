@@ -197,6 +197,10 @@
 	/* TPS61310 Flash/Torch @ 33 */
 };
 
+&gpu {
+	status = "okay";
+};
+
 &modem {
 	mx-supply = <&pm8226_l3>;
 	pll-supply = <&pm8226_l8>;
