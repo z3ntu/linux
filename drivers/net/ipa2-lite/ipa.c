@@ -829,10 +829,10 @@ static int ipa_poll_rx(struct napi_struct *napi, int budget)
 
 		skb = new_skb;
 		desc.addr = addr;
-		desc.size = IPA_RX_LEN;
-		desc.flags = DESC_FLAG_INT;
 
 skip_rx:
+		desc.size = IPA_RX_LEN;
+		desc.flags = DESC_FLAG_INT;
 		ep->skbs[ep->tail] = skb;
 		ep->fifo[ep->tail] = desc;
 		ep->tail = IPA_FIFO_NEXT_IDX(ep->tail);
