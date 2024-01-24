@@ -56,9 +56,6 @@ struct ipa_dma_obj {
 	struct device *dev;
 };
 
-#define PTR_TO_DMA_ADDR(ptr, obj) \
-	((obj).addr + (((void *)(ptr)) - (obj).virt))
-
 #define DEF_ACTION(func, arg, ...) \
 	static void action_##func(void *ptr) \
 	{ \
@@ -97,6 +94,7 @@ struct ipa {
 	u32 version, smem_size, smem_restr_bytes;
 	void *ssr_cookie;
 	void __iomem *mmio;
+	struct ipa_dma_obj system_hdr;
 };
 
 struct ipa_ndev {
@@ -120,11 +118,11 @@ static const u32 ipa_rules[] = {
 	/* EP4 filter: dummy range16, routing index 2 */
 	[FT4_EP4_OFF] = BIT(4) | (2 << 21),
 	[FT4_EP4_OFF + 1] = 0xffff00,
-	/* EP0 route: dummy range16, dest pipe 5 */
-	[RT4_EP0_OFF] = BIT(4) | (5 << 16),
+	/* EP0 route: dummy range16, dest pipe 5, system hdr */
+	[RT4_EP0_OFF] = BIT(21) | BIT(4) | (5 << 16),
 	[RT4_EP0_OFF + 1] = 0xffff00,
-	/* EP4 route: dummy range16, dest pipe 1 */
-	[RT4_EP4_OFF] = BIT(4) | (1 << 16),
+	/* EP4 route: dummy range16, dest pipe 1, system hdr */
+	[RT4_EP4_OFF] = BIT(21) | BIT(4) | (1 << 16),
 	[RT4_EP4_OFF + 1] = 0xffff00,
 	[RT4_EP4_OFF + 2] = 0,
 };
@@ -482,43 +480,47 @@ static int ipa_partition_mem(struct ipa *ipa)
 	return 0;
 }
 
+static void ipa_setup_cmd_desc(struct fifo_desc *desc, enum ipa_cmd_opcode opcode,
+			       struct ipa_dma_obj *cmd_args_obj, void *cmd_args_ptr)
+{
+	desc->addr = cmd_args_ptr - cmd_args_obj->virt + cmd_args_obj->addr;
+	desc->flags = DESC_FLAG_IMMCMD | DESC_FLAG_EOT;
+	desc->opcode = opcode;
+}
+
 static int ipa_init_sram_part(struct ipa *ipa, enum ipa_part_id mem_id)
 {
-	u32 part_offset, payload_addr, *payload, *end, val;
+	u32 part_offset, *payload, *end, val;
 	struct ipa_partition *part = ipa->layout + mem_id;
+	struct ipa_dma_obj pld, cmd_args;
 	struct ipa_ep *ep = ipa->ep + EP_CMD;
-	struct ipa_dma_obj pld, cmds;
-	struct fifo_desc desc[2];
-	int cmd_idx = 0, ret, reserved;
+	struct fifo_desc descs[3];
+	struct fifo_desc *desc = descs;
+	int ret, reserved;
 	union ipa_cmd *cmd;
 
 	if (!part->size)
 		return 0;
 
-	reserved = ipa_reserve_descs(ep, ARRAY_SIZE(desc));
+	reserved = ipa_reserve_descs(ep, ARRAY_SIZE(descs));
 	if (!reserved)
 		return -EBUSY;
 
-	ret = ipa_dma_alloc(ipa, &cmds, sizeof(*cmd) * 2 + 4);
+	ret = ipa_dma_alloc(ipa, &cmd_args, sizeof(*cmd) * ARRAY_SIZE(descs));
 	if (ret)
 		goto release_descs;
 
-	ret = ipa_dma_alloc(ipa, &pld, sizeof(u32[2]) + part->size);
+	ret = ipa_dma_alloc(ipa, &pld, part->size);
 	if (ret)
-		goto free_cmds;
+		goto free_cmd_args;
 
 	part_offset = part->offset;
-	payload_addr = ALIGN(pld.addr, 4);
-	payload = PTR_ALIGN(pld.virt, 4);
+	payload = pld.virt;
+	cmd = cmd_args.virt;
 
 	switch (mem_id) {
 	case MEM_DRV:
 		memcpy(payload, ipa_rules, sizeof(ipa_rules));
-
-		/* point hdr index to zero rule */
-		val = ipa->layout[MEM_DRV].offset - ipa->layout[MEM_MDM_HDR].offset;
-		payload[RT4_EP0_OFF] |= ((val / 4) << 22);
-		payload[RT4_EP4_OFF] |= ((val / 4) << 22);
 		break;
 	case MEM_FT_V4:
 	case MEM_FT_V6:
@@ -526,7 +528,7 @@ static int ipa_init_sram_part(struct ipa *ipa, enum ipa_part_id mem_id)
 		fallthrough;
 	case MEM_RT_V4:
 	case MEM_RT_V6:
-		end = pld.virt + pld.size - 4;
+		end = pld.virt + pld.size;
 		val = ipa->layout[MEM_DRV].offset - part_offset;
 
 		while (payload <= end)
@@ -536,7 +538,7 @@ static int ipa_init_sram_part(struct ipa *ipa, enum ipa_part_id mem_id)
 	}
 
 	if (ipa->test_mode) {
-		payload = PTR_ALIGN(pld.virt, 4);
+		payload = pld.virt;
 		val = ipa->layout[MEM_DRV].offset - part_offset + 1;
 		if (mem_id == MEM_FT_V4) {
 			payload[2 + 0] = val + FT4_EP0_OFF * 4;
@@ -547,49 +549,46 @@ static int ipa_init_sram_part(struct ipa *ipa, enum ipa_part_id mem_id)
 		}
 	}
 
-	cmd = PTR_ALIGN(cmds.virt, 4);
-	desc[cmd_idx].addr = PTR_TO_DMA_ADDR(cmd, cmds);
-	desc[cmd_idx].flags = DESC_FLAG_EOT | DESC_FLAG_IMMCMD;
-
 	switch (mem_id) {
 	case MEM_MDM_HDR:
-		desc[cmd_idx].opcode = IPA_CMD_HDR_LOCAL_INIT;
-		cmd->hdr_local_init.hdr_table_src_addr = payload_addr;
-		cmd->hdr_local_init.size_hdr_table = part->size;
+		ret = devm_ipa_dma_alloc(ipa, &ipa->system_hdr, 2048);
+		if (ret)
+			goto free_pld;
+
+		cmd->hdr_system_init.hdr_table_addr = ipa->system_hdr.addr;
+		ipa_setup_cmd_desc(desc++, IPA_CMD_HDR_SYSTEM_INIT, &cmd_args, cmd++);
+
+		cmd->hdr_local_init.hdr_table_src_addr = pld.addr;
 		cmd->hdr_local_init.hdr_table_dst_addr = part_offset;
-		cmd_idx++;
-		cmd++;
-		desc[cmd_idx].addr = PTR_TO_DMA_ADDR(cmd, cmds);
-		desc[cmd_idx].flags = DESC_FLAG_EOT | DESC_FLAG_IMMCMD;
+		cmd->hdr_local_init.size_hdr_table = part->size;
+		ipa_setup_cmd_desc(desc++, IPA_CMD_HDR_LOCAL_INIT, &cmd_args, cmd++);
 
 		fallthrough;
 	case MEM_MDM_COMP:
 	case MEM_MDM:
 	case MEM_DRV:
-		desc[cmd_idx].opcode = IPA_CMD_DMA_SHARED_MEM;
-		cmd->dma_smem.system_addr = payload_addr;
+		cmd->dma_smem.system_addr = pld.addr;
 		cmd->dma_smem.local_addr = part_offset;
 		cmd->dma_smem.size = part->size;
+		ipa_setup_cmd_desc(desc++, IPA_CMD_DMA_SHARED_MEM, &cmd_args, cmd++);
 		break;
 	case MEM_RT_V4:
 	case MEM_FT_V4:
-		if (mem_id == MEM_RT_V4)
-			desc[cmd_idx].opcode = IPA_CMD_RT_V4_INIT;
-		else
-			desc[cmd_idx].opcode = IPA_CMD_FT_V4_INIT;
 		cmd->rule_v4_init.ipv4_addr = part_offset;
 		cmd->rule_v4_init.size_ipv4_rules = part->size;
-		cmd->rule_v4_init.ipv4_rules_addr = payload_addr;
+		cmd->rule_v4_init.ipv4_rules_addr = pld.addr;
+		ipa_setup_cmd_desc(desc++, (mem_id == MEM_RT_V4) ?
+				   IPA_CMD_RT_V4_INIT : IPA_CMD_FT_V4_INIT,
+				   &cmd_args, cmd++);
 		break;
 	case MEM_RT_V6:
 	case MEM_FT_V6:
-		if (mem_id == MEM_RT_V6)
-			desc[cmd_idx].opcode = IPA_CMD_RT_V6_INIT;
-		else
-			desc[cmd_idx].opcode = IPA_CMD_FT_V6_INIT;
 		cmd->rule_v6_init.ipv6_addr = part_offset;
 		cmd->rule_v6_init.size_ipv6_rules = part->size;
-		cmd->rule_v6_init.ipv6_rules_addr = payload_addr;
+		cmd->rule_v6_init.ipv6_rules_addr = pld.addr;
+		ipa_setup_cmd_desc(desc++, (mem_id == MEM_RT_V6) ?
+				   IPA_CMD_RT_V6_INIT : IPA_CMD_FT_V6_INIT,
+				   &cmd_args, cmd++);
 		break;
 	default:
 		WARN_ON(1);
@@ -597,13 +596,13 @@ static int ipa_init_sram_part(struct ipa *ipa, enum ipa_part_id mem_id)
 		goto free_pld;
 	}
 
-	ret = ipa_submit_sync(ep, desc, cmd_idx + 1);
+	ret = ipa_submit_sync(ep, descs, desc - &descs[0]);
 
 free_pld:
 	ipa_dma_free(&pld);
 
-free_cmds:
-	ipa_dma_free(&cmds);
+free_cmd_args:
+	ipa_dma_free(&cmd_args);
 
 release_descs:
 	ipa_release_descs(ep, reserved);
@@ -1039,6 +1038,7 @@ static void ipa_ndev_setup(struct net_device *ndev)
 	ndev->min_header_len = ETH_HLEN;
 	ndev->needed_headroom = 4; /* QMAP_HDR */
 	ndev->mtu = IPA_RX_LEN - 32 - 4; /* STATUS + QMAP_HDR */
+	ndev->max_mtu = ndev->mtu;
 	ndev->needed_tailroom = 0;
 	ndev->priv_flags |= IFF_TX_SKB_SHARING;
 	ndev->tx_queue_len = 1000;

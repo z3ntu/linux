@@ -240,7 +240,7 @@ enum {
 };
 
 /* immediate command op-codes */
-enum {
+enum ipa_cmd_opcode {
 	IPA_CMD_FT_V4_INIT			= 3,
 	IPA_CMD_FT_V6_INIT			= 4,
 	IPA_CMD_RT_V4_INIT			= 7,
