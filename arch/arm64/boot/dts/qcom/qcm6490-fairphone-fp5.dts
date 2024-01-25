@@ -1312,7 +1312,7 @@
 	wcd_rx: codec@0,4 {
 		compatible = "sdw20217010d00";
 		reg = <0 4>;
-		qcom,rx-port-mapping = <1 2 3 4 5>;
+		qcom,rx-port-mapping = <1 2 3 4 5>; // TODO no clue if correct
 	};
 };
 
@@ -1322,7 +1322,8 @@
 	wcd_tx: codec@0,3 {
 		compatible = "sdw20217010d00";
 		reg = <0 3>;
-		qcom,tx-port-mapping = <2 2 3 4>;
+		qcom,tx-port-mapping = <1 2 3 4>; // TODO no clue if correct
+		//qcom,tx-port-mapping = <1 1 2 3>; // TODO no clue if correct
 	};
 };
 
