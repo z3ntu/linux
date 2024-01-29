@@ -1038,7 +1038,7 @@ static void ipa_qmi_ready(struct ipa_qmi *ipa_qmi)
 		ipa_qmi->initial_boot = false;
 	}
 
-	ipa_update_modem(ipa_qmi->dev, true);
+	ipa_modem_set_present(ipa_qmi->dev, true);
 }
 
 /* All QMI clients from the modem node are gone (modem shut down or crashed). */
@@ -1057,7 +1057,7 @@ static void ipa_server_bye(struct qmi_handle *qmi, unsigned int node)
 	ipa_qmi->indication_requested = false;
 	ipa_qmi->indication_sent = false;
 
-	ipa_update_modem(ipa_qmi->dev, false);
+	ipa_modem_set_present(ipa_qmi->dev, false);
 }
 
 static const struct qmi_ops ipa_server_ops = {

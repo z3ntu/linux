@@ -655,7 +655,7 @@ static int ipa_ssr_notifier(struct notifier_block *nb,
 	struct ipa *ipa = container_of(nb, struct ipa, ssr_nb);
 
 	if (action == QCOM_SSR_BEFORE_SHUTDOWN) {
-		ipa_update_modem(ipa->dev, false);
+		ipa_modem_set_present(ipa->dev, false);
 	} else if (action == QCOM_SSR_AFTER_SHUTDOWN) {
 		ipa_reset_modem_pipes(ipa);
 		ipa_init_sram(ipa);
@@ -1105,14 +1105,11 @@ ipa_create_netdev(struct device *dev, const char *name,
 	return ndev;
 }
 
-void ipa_update_modem(struct device *dev, bool present)
+void ipa_modem_set_present(struct device *dev, bool present)
 {
 	struct ipa *ipa = dev_get_drvdata(dev);
 
-	if (present)
-		netif_device_attach(ipa->modem);
-	else
-		netif_device_detach(ipa->modem);
+	(present ? netif_device_attach : netif_device_detach) (ipa->modem);
 }
 
 static int ipa_probe(struct platform_device *pdev)
@@ -1185,31 +1182,6 @@ static int ipa_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	if (ipa->test_mode)
-		goto skip_modem;
-
-	ipa->ssr_cookie = qcom_register_ssr_notifier("mpss", &ipa->ssr_nb);
-	if (IS_ERR(ipa->ssr_cookie))
-		return dev_err_probe(dev, PTR_ERR(ipa->ssr_cookie),
-				     "failed to register SSR notifier\n");
-
-	ret = devm_add_action_or_reset(dev, action_qcom_unregister_ssr_notifier, ipa);
-	if (ret)
-		return ret;
-
-	ipa->qmi = ipa_qmi_setup(dev, ipa->layout);
-	if (IS_ERR(ipa->qmi))
-		return PTR_ERR(ipa->qmi);
-
-	if (ipa->smem_uc_loaded[0] == 0x10ADEDFF)
-		ipa_qmi_uc_loaded(ipa->qmi);
-
-	ret = devm_add_action_or_reset(dev, action_ipa_qmi_teardown, ipa);
-	if (ret)
-		return ret;
-
-skip_modem:
-
 	pm_runtime_set_active(dev);
 	ret = devm_pm_runtime_enable(dev);
 	if (ret)
@@ -1229,14 +1201,32 @@ skip_modem:
 	if (IS_ERR(ipa->modem))
 		return PTR_ERR(ipa->modem);
 
-	if (!ipa->test_mode)
-		netif_device_detach(ipa->modem);
-
 	ipa->lan = ipa_create_netdev(dev, "ipa_lan%d", ipa->ep + EP_LAN_RX, NULL);
 	if (IS_ERR(ipa->lan))
 		return PTR_ERR(ipa->lan);
 
-	return 0;
+	if (ipa->test_mode)
+		return 0;
+	else
+		ipa_modem_set_present(dev, false);
+
+	ipa->ssr_cookie = qcom_register_ssr_notifier("mpss", &ipa->ssr_nb);
+	if (IS_ERR(ipa->ssr_cookie))
+		return dev_err_probe(dev, PTR_ERR(ipa->ssr_cookie),
+				     "failed to register SSR notifier\n");
+
+	ret = devm_add_action_or_reset(dev, action_qcom_unregister_ssr_notifier, ipa);
+	if (ret)
+		return ret;
+
+	ipa->qmi = ipa_qmi_setup(dev, ipa->layout);
+	if (IS_ERR(ipa->qmi))
+		return PTR_ERR(ipa->qmi);
+
+	if (ipa->smem_uc_loaded[0] == 0x10ADEDFF)
+		ipa_qmi_uc_loaded(ipa->qmi);
+
+	return devm_add_action_or_reset(dev, action_ipa_qmi_teardown, ipa);
 }
 
 static int ipa_remove(struct platform_device *pdev)
