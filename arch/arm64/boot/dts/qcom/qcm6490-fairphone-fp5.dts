@@ -24,6 +24,9 @@
 
 /delete-node/ &rmtfs_mem;
 
+#define ENABLE_MIC 0
+#define ENABLE_SPEAKER 1
+
 / {
 	model = "Fairphone 5";
 	compatible = "fairphone,fp5", "qcom,qcm6490";
@@ -328,6 +331,7 @@
 		};
 	};
 
+#if ENABLE_MIC
 	wcd9385: audio-codec-1 {
 		compatible = "qcom,wcd9385-codec";
 
@@ -359,6 +363,7 @@
 		qcom,mbhc-headphone-vthreshold-microvolt = <50000>;
 		#sound-dai-cells = <1>;
 	};
+#endif
 };
 
 &apps_rsc {
@@ -1255,7 +1260,7 @@
 		};
 	};
 
-#if 0
+#if ENABLE_SPEAKER
 	i2s-dai-link {
 		link-name = "I2S Playback";
 		cpu {
@@ -1274,6 +1279,7 @@
 	};
 #endif
 
+#if ENABLE_MIC
 	wcd-capture-dai-link {
 		link-name = "WCD Capture";
 
@@ -1289,6 +1295,7 @@
 			sound-dai = <&wcd9385 1>, <&swr1 0>, <&lpass_tx_macro 0>;
 		};
 	};
+#endif
 
 #if 0
 	displayport-rx-dai-link {
