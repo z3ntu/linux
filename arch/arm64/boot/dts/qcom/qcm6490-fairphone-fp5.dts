@@ -629,8 +629,8 @@
 		//status = "disabled";
 	};
 
-#if 0
-	aw882xx_smartpa@35 {
+#if 1
+	aw88261_r: aw882xx_smartpa@35 {
 		compatible = "awinic,aw882xx_smartpa";
 		reg = <0x35>;
 		irq-gpio = <&tlmm 18 0x2008>;
@@ -644,6 +644,7 @@
 		aw-re-min = <4000>;
 		aw-re-max= <30000>;
 		rename-flag = <1>;
+		#sound-dai-cells = <0>;
 		status = "okay";
 	};
 #endif
@@ -1109,7 +1110,7 @@
 		};
 
 		codec {
-			sound-dai = <&aw88261_l>; // , <&aw88261_r>;
+			sound-dai = <&aw88261_l>, <&aw88261_r>;
 		};
 	};
 
