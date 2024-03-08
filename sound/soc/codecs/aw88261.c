@@ -7,6 +7,7 @@
 // Author: Jimmy Zhang <zhangjianming@awinic.com>
 // Author: Weidong Wang <wangweidong.a@awinic.com>
 //
+#define DEBUG
 
 #include <linux/i2c.h>
 #include <linux/firmware.h>
