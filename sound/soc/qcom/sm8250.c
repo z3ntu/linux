@@ -31,6 +31,7 @@ static int sm8250_snd_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct sm8250_snd_data *data = snd_soc_card_get_drvdata(rtd->card);
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	return qcom_snd_wcd_jack_setup(rtd, &data->jack, &data->jack_setup,
 				       &data->hdmi_jack, &data->hdmi_jack_setup);
 }
@@ -57,6 +58,8 @@ static int sm8250_snd_startup(struct snd_pcm_substream *substream)
 	struct snd_soc_dai *cpu_dai = snd_soc_rtd_to_cpu(rtd, 0);
 	struct snd_soc_dai *codec_dai = snd_soc_rtd_to_codec(rtd, 0);
 
+	printk(KERN_ERR "%s:%d DBG cpu_dai->id=0x%x\n", __func__, __LINE__, cpu_dai->id);
+
 	switch (cpu_dai->id) {
 	case TERTIARY_MI2S_RX:
 		codec_dai_fmt |= SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_I2S;
@@ -75,6 +78,7 @@ static int sm8250_snd_startup(struct snd_pcm_substream *substream)
 		snd_soc_dai_set_fmt(codec_dai, codec_dai_fmt);
 		break;
 	default:
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		break;
 	}
 
