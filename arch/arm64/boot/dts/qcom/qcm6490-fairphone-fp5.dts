@@ -691,7 +691,7 @@
 		aw-re-max= <30000>;
 		rename-flag = <1>;
 		#sound-dai-cells = <0>;
-		status = "disabled";
+		//status = "disabled";
 	};
 
 #if 0
@@ -1221,6 +1221,7 @@
 		*/
 #endif
 
+#if ENABLE_MIC
 	audio-routing =
 		"AMIC1", "Analog Mic1",
 		"Analog Mic1", "MIC BIAS1",
@@ -1244,6 +1245,7 @@
 		"VA_AIF2 CAP", "VA_SWR_CLK",
 		"VA_AIF3 CAP", "VA_SWR_CLK";
 		//"EAR","HAC_RX";
+#endif
 	pinctrl-0 = <&i2s1_active>;
 	pinctrl-names = "default";
 	model = "Fairphone 5";
