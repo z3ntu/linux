@@ -93,6 +93,27 @@
 		};
 	};
 
+	sbu-mux {
+		compatible = "awinic,aw35743", "gpio-sbu-mux";
+
+		enable-gpios = <&tlmm 54 GPIO_ACTIVE_LOW>;
+		select-gpios = <&tlmm 93 GPIO_ACTIVE_HIGH>;
+
+		vcc-supply = <&vreg_bob>;
+
+		pinctrl-0 = <&aw35743_mux_default>;
+		pinctrl-names = "default";
+
+		mode-switch;
+		orientation-switch;
+
+		port {
+			sbu_mux_in: endpoint {
+				remote-endpoint = <&pm7250b_typec_sbu_out>;
+			};
+		};
+	};
+
 	msm_therm_sensor: thermal-sensor-msm {
 		compatible = "generic-adc-thermal";
 		#thermal-sensor-cells = <0>;
@@ -581,6 +602,15 @@
 	status = "okay";
 };
 
+&mdss_dp {
+	status = "okay";
+};
+
+&mdss_dp_out {
+	data-lanes = <0 1>;
+	remote-endpoint = <&usb_1_qmpphy_dp_in>;
+};
+
 &mdss_dsi0 {
 	vdda-supply = <&vreg_l22a>;
 	status = "okay";
@@ -810,6 +840,13 @@
 					 PDO_FIXED_USB_COMM |
 					 PDO_FIXED_DATA_SWAP)>;
 
+		altmodes {
+			displayport {
+				svid = /bits/ 16 <0xff01>;
+				vdo = <0x00001c46>;
+			};
+		};
+
 		ports {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -825,6 +862,14 @@
 				reg = <1>;
 				pm7250b_ss_in: endpoint {
 					remote-endpoint = <&usb_1_qmpphy_out>;
+				};
+			};
+
+			port@2 {
+				reg = <2>;
+
+				pm7250b_typec_sbu_out: endpoint {
+					remote-endpoint = <&sbu_mux_in>;
 				};
 			};
 		};
@@ -987,6 +1032,14 @@
 
 &tlmm {
 	gpio-reserved-ranges = <13 4>, <56 2>;
+
+	aw35743_mux_default: aw35743-default-state {
+		pins = "gpio54", "gpio93";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+		output-low;
+	};
 
 	qup_uart1_sleep_cts: qup-uart1-sleep-cts-state {
 		pins = "gpio61";
@@ -1152,6 +1205,10 @@
 	orientation-switch;
 
 	status = "okay";
+};
+
+&usb_1_qmpphy_dp_in {
+	remote-endpoint = <&mdss_dp_out>;
 };
 
 &usb_1_qmpphy_out {
