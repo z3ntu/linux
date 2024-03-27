@@ -1738,6 +1738,7 @@
 					reg = <1>;
 
 					usb_1_qmpphy_usb_ss_in: endpoint {
+						remote-endpoint = <&usb_1_dwc3_ss_out>;
 					};
 				};
 
@@ -1936,6 +1937,7 @@
 						reg = <1>;
 
 						usb_1_dwc3_ss_out: endpoint {
+							remote-endpoint = <&usb_1_qmpphy_usb_ss_in>;
 						};
 					};
 				};
