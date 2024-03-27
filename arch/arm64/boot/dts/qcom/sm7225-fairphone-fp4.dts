@@ -831,7 +831,7 @@
 	connector {
 		compatible = "usb-c-connector";
 
-		power-role = "dual";
+		power-role = "source";
 		data-role = "dual";
 		self-powered;
 
@@ -839,20 +839,6 @@
 					 PDO_FIXED_DUAL_ROLE |
 					 PDO_FIXED_USB_COMM |
 					 PDO_FIXED_DATA_SWAP)>;
-
-		/*
-		 * The sink should also support 9V @ 1.5A and 10V @ 1.5A but we
-		 * need charger support first for this to make sense.
-		 *
-		 *   PDO_FIXED(9000, 1500, 0)
-		 *   PDO_FIXED(10000, 1500, 0)
-		 */
-		sink-pdos = <PDO_FIXED(5000, 2000,
-				       PDO_FIXED_DUAL_ROLE |
-				       PDO_FIXED_USB_COMM |
-				       PDO_FIXED_DATA_SWAP)>;
-
-		op-sink-microwatt = <2500000>;
 
 		altmodes {
 			displayport {
