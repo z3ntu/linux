@@ -937,13 +937,25 @@
 		data-role = "dual";
 		self-powered;
 
+		/* 5V @ 0.5A */
+		source-pdos = <PDO_FIXED(5000, 500,
+					 PDO_FIXED_DUAL_ROLE |
+					 PDO_FIXED_USB_COMM |
+					 PDO_FIXED_DATA_SWAP)>;
+
 		/*
-		 * Disable USB Power Delivery for now, seems to need extra work
-		 * to support role switching while also letting the battery
-		 * charge still - without charger driver
+		 * The sink should also support 9V @ 1.5A and 10V @ 1.5A but we
+		 * need charger support first for this to make sense.
+		 *
+		 *   PDO_FIXED(9000, 1500, 0)
+		 *   PDO_FIXED(10000, 1500, 0)
 		 */
-		typec-power-opmode = "default";
-		pd-disable;
+		sink-pdos = <PDO_FIXED(5000, 2000,
+				       PDO_FIXED_DUAL_ROLE |
+				       PDO_FIXED_USB_COMM |
+				       PDO_FIXED_DATA_SWAP)>;
+
+		op-sink-microwatt = <2500000>;
 
 		ports {
 			#address-cells = <1>;
