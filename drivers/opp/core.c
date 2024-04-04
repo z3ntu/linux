@@ -2413,6 +2413,8 @@ static int _opp_attach_genpd(struct opp_table *opp_table, struct device *dev,
 		return 0;
 
 	while (*name) {
+		struct opp_table *table;
+
 		if (index >= opp_table->required_opp_count) {
 			dev_err(dev, "Index can't be greater than required-opp-count - 1, %s (%d : %d)\n",
 				*name, opp_table->required_opp_count, index);
@@ -2424,6 +2426,12 @@ static int _opp_attach_genpd(struct opp_table *opp_table, struct device *dev,
 			ret = virt_dev ? PTR_ERR(virt_dev) : -ENODEV;
 			dev_err(dev, "Couldn't attach to pm_domain: %d\n", ret);
 			goto err;
+		}
+
+		table = _find_opp_table(&pd_to_genpd(virt_dev->pm_domain)->dev);
+		if (!IS_ERR(table)) {
+			dev_pm_opp_put_opp_table(opp_table->required_opp_tables[index]);
+			opp_table->required_opp_tables[index] = table;
 		}
 
 		/*
