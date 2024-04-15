@@ -153,6 +153,7 @@ static int smsm_update_bits(void *data, u32 mask, u32 value)
 	u32 orig;
 	u32 val;
 
+	printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 	spin_lock_irqsave(&smsm->lock, flags);
 
 	/* Update the entry */
@@ -183,9 +184,11 @@ static int smsm_update_bits(void *data, u32 mask, u32 value)
 			continue;
 
 		if (hostp->mbox_chan) {
+			printk(KERN_ERR "%s:%d DBG mbox\n", __func__, __LINE__);
 			mbox_send_message(hostp->mbox_chan, NULL);
 			mbox_client_txdone(hostp->mbox_chan, 0);
 		} else if (hostp->ipc_regmap) {
+			printk(KERN_ERR "%s:%d DBG ipc_regmap\n", __func__, __LINE__);
 			regmap_write(hostp->ipc_regmap,
 				     hostp->ipc_offset,
 				     BIT(hostp->ipc_bit));
@@ -381,8 +384,13 @@ static int smsm_parse_mbox(struct qcom_smsm *smsm, unsigned host_id)
 	host->mbox_chan = mbox_request_channel(&smsm->mbox_client, host_id);
 	if (IS_ERR(host->mbox_chan)) {
 		ret = PTR_ERR(host->mbox_chan);
+		printk(KERN_ERR "%s:%d DBG host_id=%d ret=%d\n", __func__, __LINE__, host_id, ret);
 		host->mbox_chan = NULL;
+	} else {
+		printk(KERN_ERR "%s:%d DBG host_id=%d got mbox!\n", __func__, __LINE__, host_id);
 	}
+
+	// ret=-19 for mbox not declared at all
 
 	return ret;
 }
@@ -494,13 +502,16 @@ static int smsm_get_size_info(struct qcom_smsm *smsm)
 		dev_warn(smsm->dev, "no smsm size info, using defaults\n");
 		smsm->num_entries = SMSM_DEFAULT_NUM_ENTRIES;
 		smsm->num_hosts = SMSM_DEFAULT_NUM_HOSTS;
+		dev_warn(smsm->dev,
+			"using default smsm properties: %d entries %d hosts\n",
+			smsm->num_entries, smsm->num_hosts);
 		return 0;
 	}
 
 	smsm->num_entries = info->num_entries;
 	smsm->num_hosts = info->num_hosts;
 
-	dev_dbg(smsm->dev,
+	dev_warn(smsm->dev,
 		"found custom size of smsm: %d entries %d hosts\n",
 		smsm->num_entries, smsm->num_hosts);
 
@@ -563,9 +574,12 @@ static int qcom_smsm_probe(struct platform_device *pdev)
 	for (id = 0; id < smsm->num_hosts; id++) {
 		/* Try using mbox interface first, otherwise fall back to syscon */
 		ret = smsm_parse_mbox(smsm, id);
-		if (!ret)
+		if (!ret) {
+			printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 			continue;
+		}
 
+		printk(KERN_ERR "%s:%d DBG\n", __func__, __LINE__);
 		ret = smsm_parse_ipc(smsm, id);
 		if (ret < 0)
 			goto out_put;
