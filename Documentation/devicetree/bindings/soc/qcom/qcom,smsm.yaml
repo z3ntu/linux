@@ -33,6 +33,13 @@ properties:
       specifier of the column in the subscription matrix representing the local
       processor.
 
+  mboxes:
+    minItems: 1
+    maxItems: 5
+    description:
+      Reference to the mailbox representing the outgoing doorbell in APCS for
+      this client.
+
   '#size-cells':
     const: 0
 
@@ -98,15 +105,18 @@ required:
   - '#address-cells'
   - '#size-cells'
 
-anyOf:
+oneOf:
   - required:
-      - qcom,ipc-1
-  - required:
-      - qcom,ipc-2
-  - required:
-      - qcom,ipc-3
-  - required:
-      - qcom,ipc-4
+      - mboxes
+  - anyOf:
+      - required:
+          - qcom,ipc-1
+      - required:
+          - qcom,ipc-2
+      - required:
+          - qcom,ipc-3
+      - required:
+          - qcom,ipc-4
 
 additionalProperties: false
 
@@ -130,6 +140,28 @@ examples:
         };
 
         wcnss_smsm: wcnss@7 {
+            reg = <7>;
+            interrupts = <GIC_SPI 144 IRQ_TYPE_EDGE_RISING>;
+            interrupt-controller;
+            #interrupt-cells = <2>;
+        };
+    };
+  # Example using mboxes property
+  - |
+    #include <dt-bindings/interrupt-controller/arm-gic.h>
+
+    shared-memory {
+        compatible = "qcom,smsm";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        mboxes = <0>, <0>, <0>, <&apcs 19>;
+
+        apps@0 {
+            reg = <0>;
+            #qcom,smem-state-cells = <1>;
+        };
+
+        wcnss@7 {
             reg = <7>;
             interrupts = <GIC_SPI 144 IRQ_TYPE_EDGE_RISING>;
             interrupt-controller;
