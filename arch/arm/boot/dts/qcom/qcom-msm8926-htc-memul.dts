@@ -296,6 +296,32 @@
 	};
 };
 
+&pronto {
+	// TODO: .mbn would be better but squashed firmware seems broken
+	firmware-name = "qcom/msm8926/memul/wcnss.mdt";
+
+	vddmx-supply = <&pm8226_l3>;
+	vddpx-supply = <&pm8226_l6>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&wcnss_pin_a>;
+
+	status = "okay";
+
+	iris {
+		vddxo-supply = <&pm8226_l10>;
+		vddrfa-supply = <&pm8226_l24>;
+		vddpa-supply = <&pm8226_l16>;
+		vdddig-supply = <&pm8226_l24>;
+	};
+
+	smd-edge {
+		wcnss {
+			status = "okay";
+		};
+	};
+};
+
 &rpm_requests {
 	regulators {
 		compatible = "qcom,rpm-pm8226-regulators";
@@ -469,6 +495,15 @@
 	qcom,minimum-input-voltage = <4300000>;
 
 	status = "okay";
+};
+
+&tlmm {
+	wcnss_pin_a: wcnss-pin-active-state {
+		pins =  "gpio40", "gpio41", "gpio42", "gpio43", "gpio44";
+		function = "wlan";
+		drive-strength = <6>;
+		bias-pull-down;
+	};
 };
 
 &usb {
