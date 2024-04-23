@@ -158,6 +158,12 @@ void *qcom_mdt_read_metadata(const struct firmware *fw, size_t *data_len,
 	ehdr_size = phdrs[0].p_filesz;
 	hash_size = phdrs[hash_segment].p_filesz;
 
+	if (strcmp(fw_name, "qcom/msm8926/memul/wcnss.mdt") == 0) {
+		dev_warn(dev, "overriding hash_size for msm8926-htc-memul wcnss old=0x%x new=0x%x!\n", hash_size, fw->size - ehdr_size);
+		// Set hash_size to the remaining part of the loaded firmware file (fw->size == ehdr_size + hash_size)
+		hash_size = fw->size - ehdr_size;
+	}
+
 	data = kmalloc(ehdr_size + hash_size, GFP_KERNEL);
 	if (!data)
 		return ERR_PTR(-ENOMEM);
