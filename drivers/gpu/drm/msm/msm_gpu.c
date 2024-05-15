@@ -921,6 +921,7 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 		DRM_DEV_INFO(drm->dev, "%s: no IOMMU, fallback to VRAM carveout!\n", name);
 	else if (IS_ERR(gpu->aspace)) {
 		ret = PTR_ERR(gpu->aspace);
+		DRM_DEV_ERROR(drm->dev, "could not create address space: %d\n", ret);
 		goto fail;
 	}
 
