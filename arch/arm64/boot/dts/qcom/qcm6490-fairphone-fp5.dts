@@ -652,6 +652,7 @@
 			};
 		};
 #endif
+#if 0
 		port@3 {
 			csiphy3_ep: endpoint {
 				clock-lanes = <7>;
@@ -660,6 +661,7 @@
 				remote-endpoint = <&camera_s5kjn1_ep>;
 			};
 		};
+#endif
 	};
 };
 
@@ -712,7 +714,7 @@
 	status = "okay";
 };
 
-#if 1
+#if 0
 &cci1_i2c1 {
 	/* S5KJN1SQ03 @ 10 */
 
