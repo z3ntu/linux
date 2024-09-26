@@ -40,6 +40,12 @@
 		serial1 = &uart1;
 	};
 
+	battery: battery {
+		compatible = "simple-battery";
+		voltage-min-design-microvolt = <3400000>; // todo: verify
+		voltage-max-design-microvolt = <4400000>;
+	};
+
 	chosen {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -904,6 +910,11 @@
 		qcom,ratiometric;
 		qcom,hw-settle-time-us = <200>;
 	};
+};
+
+&pm7250b_qgauge {
+	monitored-battery = <&battery>;
+	status = "okay";
 };
 
 &pm7250b_typec {
