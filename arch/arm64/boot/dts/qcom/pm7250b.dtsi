@@ -201,6 +201,18 @@
 			status = "disabled";
 		};
 
+		pm7250b_qgauge: qgauge@4800 {
+			compatible = "qcom,pm7250b-qg", "qcom,pm6150-qg";
+			reg = <0x4800>;
+
+			io-channels = <&pm7250b_adc ADC5_BAT_THERM_100K_PU>,
+				      <&pm7250b_adc ADC5_BAT_ID_100K_PU>;
+			io-channel-names = "batt-therm",
+					   "batt-id";
+
+			status = "disabled";
+		};
+
 		pm7250b_gpios: gpio@c000 {
 			compatible = "qcom,pm7250b-gpio", "qcom,spmi-gpio";
 			reg = <0xc000>;
