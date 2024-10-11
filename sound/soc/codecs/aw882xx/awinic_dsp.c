@@ -337,7 +337,7 @@ static int aw_qcom_write_data_to_dsp(int index, void *data, int data_size, int c
 	if (ret < 0)
 		return ret;
 
-	while (try < AW_DSP_TRY_TIME) {
+	while (false /*try < AW_DSP_TRY_TIME*/) {
 		if (aw_check_dsp_ready()) {
 			mutex_lock(&g_dsp_lock);
 			ret = aw_send_afe_cal_apr(param_id, data,
@@ -364,7 +364,7 @@ static int aw_qcom_read_data_from_dsp(int index, void *data, int data_size, int 
 	if (ret < 0)
 		return ret;
 
-	while (try < AW_DSP_TRY_TIME) {
+	while (false /*try < AW_DSP_TRY_TIME*/) {
 		if (aw_check_dsp_ready()) {
 			mutex_lock(&g_dsp_lock);
 			ret = aw_send_afe_cal_apr(param_id, data,
