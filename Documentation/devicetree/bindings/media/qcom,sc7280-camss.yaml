@@ -94,7 +94,7 @@ properties:
       - description: IFE2 GDSC - Image Front End, Global Distributed Switch Controller.
       - description: Titan GDSC - Titan ISP Block, Global Distributed Switch Controller.
 
-  power-domains-names:
+  power-domain-names:
     items:
       - const: ife0
       - const: ife1
@@ -261,7 +261,7 @@ required:
   - interrupt-names
   - iommus
   - power-domains
-  - power-domains-names
+  - power-domain-names
   - reg
   - reg-names
   - vdda-phy-supply
@@ -394,7 +394,7 @@ examples:
                             <&camcc CAM_CC_IFE_2_GDSC>,
                             <&camcc CAM_CC_TITAN_TOP_GDSC>;
 
-            power-domains-names = "ife0", "ife1", "ife2", "top";
+            power-domain-names = "ife0", "ife1", "ife2", "top";
 
             reg = <0x0 0x0acb3000 0x0 0x1000>,
                   <0x0 0x0acba000 0x0 0x1000>,
