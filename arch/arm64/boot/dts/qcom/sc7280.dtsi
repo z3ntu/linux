@@ -4488,10 +4488,14 @@
 				      "vfe1_lite",
 				      "vfe1_lite_cphy_rx";
 
-			interconnects = <&gem_noc  MASTER_APPSS_PROC 0 &cnoc2 SLAVE_CAMERA_CFG 0>,
-					<&mmss_noc MASTER_CAMNOC_HF  0 &mc_virt SLAVE_EBI1     0>;
-
-			interconnect-names = "ahb", "hf_0";
+                       interconnect-names = "cam_ahb",
+					    "cam_hf_0_mnoc",
+					    "cam_sf_0_mnoc",
+					    "cam_sf_icp_mnoc";
+                       interconnects = <&gem_noc MASTER_APPSS_PROC 0 &cnoc2 SLAVE_CAMERA_CFG 0>,
+				       <&mmss_noc MASTER_CAMNOC_HF 0 &mc_virt SLAVE_EBI1 0>,
+				       <&mmss_noc MASTER_CAMNOC_SF 0 &mc_virt SLAVE_EBI1 0>,
+				       <&mmss_noc MASTER_CAMNOC_ICP 0 &mc_virt SLAVE_EBI1 0>;
 
 			interrupts = <GIC_SPI 464 IRQ_TYPE_EDGE_RISING>,
 				     <GIC_SPI 466 IRQ_TYPE_EDGE_RISING>,
