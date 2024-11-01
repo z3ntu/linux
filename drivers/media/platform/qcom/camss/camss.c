@@ -2131,7 +2131,8 @@ static int camss_configure_pd(struct camss *camss)
 		camss->genpd = dev_pm_domain_attach_by_name(camss->dev,
 							    camss->res->pd_name);
 		if (IS_ERR(camss->genpd)) {
-			return PTR_ERR(camss->genpd);
+			ret = PTR_ERR(camss->genpd);
+			goto fail_pm;
 		}
 	}
 
@@ -2148,7 +2149,7 @@ static int camss_configure_pd(struct camss *camss)
 			ret = -ENODEV;
 		else
 			ret = PTR_ERR(camss->genpd);
-		return ret;
+		goto fail_pm;
 	}
 	camss->genpd_link = device_link_add(camss->dev, camss->genpd,
 					    DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME |
