@@ -4525,7 +4525,21 @@
 					  "vfe_lite0",
 					  "vfe_lite1";
 
-			iommus = <&apps_smmu 0x800 0x4e0>;
+			iommus = <&apps_smmu 0x800 0x4e0>,
+				 <&apps_smmu 0x820 0x4e0>,
+				 <&apps_smmu 0x840 0x4e0>,
+				 <&apps_smmu 0x860 0x4e0>,
+				 <&apps_smmu 0x8a0 0x4e0>,
+				 <&apps_smmu 0x8c0 0x4e0>,
+				 <&apps_smmu 0x8e0 0x4e0>,
+				 <&apps_smmu 0xc00 0x4e0>,
+				 <&apps_smmu 0xc20 0x4e0>,
+				 <&apps_smmu 0xc40 0x4e0>,
+				 <&apps_smmu 0xc60 0x4e0>,
+				 <&apps_smmu 0xc80 0x4e0>,
+				 <&apps_smmu 0xca0 0x4e0>,
+				 <&apps_smmu 0xcc0 0x4e0>,
+				 <&apps_smmu 0xce0 0x4e0>;
 
 			power-domains = <&camcc CAM_CC_IFE_0_GDSC>,
 					<&camcc CAM_CC_IFE_1_GDSC>,
