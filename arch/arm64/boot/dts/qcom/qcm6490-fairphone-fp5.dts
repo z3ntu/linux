@@ -630,6 +630,17 @@
 	vdda-pll-supply = <&vreg_l6b>;
 
 	status = "okay";
+
+	ports {
+		port@1 {
+			csiphy1_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+				remote-endpoint = <&camera_imx858_ep>;
+			};
+		};
+	};
 };
 
 &cci0 {
@@ -641,7 +652,35 @@
 };
 
 &cci0_i2c1 {
-	/* IMX858 @ 29 */
+	camera@29 {
+		compatible = "sony,imx858";
+		reg = <0x29>;
+
+		dvdd-supply = <&vreg_l1p>;
+		avdd-supply = <&vreg_l4p>;
+		iovdd-supply = <&vreg_l6p>;
+		afvdd-supply = <&afvdd_2p8>; // todo needed for sensor itself?
+
+		clocks = <&camcc CAM_CC_MCLK1_CLK>;
+		assigned-clocks = <&camcc CAM_CC_MCLK1_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 21 GPIO_ACTIVE_LOW>;
+		//pinctrl-names = "default";
+		//pinctrl-0 = <&cam_mclk1_default>;
+
+		orientation = <1>; /* Rear facing */
+		rotation = <270>;
+
+		port {
+			camera_imx858_ep: endpoint {
+				data-lanes = <1 2 3 4>;
+				bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+				link-frequencies = /bits/ 64 <600000000>;
+				remote-endpoint = <&csiphy1_ep>;
+			};
+		};
+	};
 };
 
 &cci1 {
