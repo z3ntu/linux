@@ -661,7 +661,7 @@ static int imx858_update_exp_gain(struct imx858 *imx858, u32 exposure, u32 gain)
 
 	lpfr = imx858->vblank + imx858->cur_mode->height;
 
-	dev_dbg(imx858->dev, "Set exp %u, analog gain %u, lpfr %u",
+	dev_dbg(imx858->dev, "Set exp %u, analog gain %u, lpfr %u\n",
 		exposure, gain, lpfr);
 
 	ret = imx858_write_reg(imx858, IMX858_REG_HOLD, 1, 1);
@@ -708,7 +708,7 @@ static int imx858_set_ctrl(struct v4l2_ctrl *ctrl)
 	case V4L2_CID_VBLANK:
 		imx858->vblank = imx858->vblank_ctrl->val;
 
-		dev_dbg(imx858->dev, "Received vblank %u, new lpfr %u",
+		dev_dbg(imx858->dev, "Received vblank %u, new lpfr %u\n",
 			imx858->vblank,
 			imx858->vblank + imx858->cur_mode->height);
 
@@ -727,7 +727,7 @@ static int imx858_set_ctrl(struct v4l2_ctrl *ctrl)
 		exposure = ctrl->val;
 		analog_gain = imx858->again_ctrl->val;
 
-		dev_dbg(imx858->dev, "Received exp %u, analog gain %u",
+		dev_dbg(imx858->dev, "Received exp %u, analog gain %u\n",
 			exposure, analog_gain);
 
 		ret = imx858_update_exp_gain(imx858, exposure, analog_gain);
@@ -736,7 +736,7 @@ static int imx858_set_ctrl(struct v4l2_ctrl *ctrl)
 
 		break;
 	default:
-		dev_err(imx858->dev, "Invalid control %d", ctrl->id);
+		dev_err(imx858->dev, "Invalid control %d\n", ctrl->id);
 		ret = -EINVAL;
 	}
 
@@ -917,14 +917,14 @@ static int imx858_start_streaming(struct imx858 *imx858)
 	ret = imx858_write_regs(imx858, reg_list->regs,
 				reg_list->num_of_regs);
 	if (ret) {
-		dev_err(imx858->dev, "fail to write initial registers");
+		dev_err(imx858->dev, "fail to write initial registers\n");
 		return ret;
 	}
 
 	/* Setup handler will write actual exposure and gain */
 	ret =  __v4l2_ctrl_handler_setup(imx858->sd.ctrl_handler);
 	if (ret) {
-		dev_err(imx858->dev, "fail to setup handler");
+		dev_err(imx858->dev, "fail to setup handler\n");
 		return ret;
 	}
 
@@ -935,7 +935,7 @@ static int imx858_start_streaming(struct imx858 *imx858)
 	ret = imx858_write_reg(imx858, IMX858_REG_MODE_SELECT,
 			       1, IMX858_MODE_STREAMING);
 	if (ret) {
-		dev_err(imx858->dev, "fail to start streaming");
+		dev_err(imx858->dev, "fail to start streaming\n");
 		return ret;
 	}
 
@@ -1009,7 +1009,7 @@ static int imx858_detect(struct imx858 *imx858)
 		return ret;
 
 	if (val != IMX858_ID) {
-		dev_err(imx858->dev, "chip id mismatch: %x!=%x",
+		dev_err(imx858->dev, "chip id mismatch: %x!=%x\n",
 			IMX858_ID, val);
 		return -ENXIO;
 	}
@@ -1041,7 +1041,7 @@ static int imx858_parse_hw_config(struct imx858 *imx858)
 	imx858->reset_gpio = devm_gpiod_get_optional(imx858->dev, "reset",
 						     GPIOD_OUT_LOW);
 	if (IS_ERR(imx858->reset_gpio)) {
-		dev_err(imx858->dev, "failed to get reset gpio %ld",
+		dev_err(imx858->dev, "failed to get reset gpio %ld\n",
 			PTR_ERR(imx858->reset_gpio));
 		return PTR_ERR(imx858->reset_gpio);
 	}
@@ -1049,13 +1049,13 @@ static int imx858_parse_hw_config(struct imx858 *imx858)
 	/* Get sensor input clock */
 	imx858->inclk = devm_clk_get(imx858->dev, NULL);
 	if (IS_ERR(imx858->inclk)) {
-		dev_err(imx858->dev, "could not get inclk");
+		dev_err(imx858->dev, "could not get inclk\n");
 		return PTR_ERR(imx858->inclk);
 	}
 
 	rate = clk_get_rate(imx858->inclk);
 	if (rate != IMX858_INCLK_RATE) {
-		dev_err(imx858->dev, "inclk frequency mismatch");
+		dev_err(imx858->dev, "inclk frequency mismatch\n");
 		return -EINVAL;
 	}
 
@@ -1080,14 +1080,14 @@ static int imx858_parse_hw_config(struct imx858 *imx858)
 
 	if (bus_cfg.bus.mipi_csi2.num_data_lanes != IMX858_NUM_DATA_LANES) {
 		dev_err(imx858->dev,
-			"number of CSI2 data lanes %d is not supported",
+			"number of CSI2 data lanes %d is not supported\n",
 			bus_cfg.bus.mipi_csi2.num_data_lanes);
 		ret = -EINVAL;
 		goto done_endpoint_free;
 	}
 
 	if (!bus_cfg.nr_of_link_frequencies) {
-		dev_err(imx858->dev, "no link frequencies defined");
+		dev_err(imx858->dev, "no link frequencies defined\n");
 		ret = -EINVAL;
 		goto done_endpoint_free;
 	}
@@ -1148,7 +1148,7 @@ static int imx858_power_on(struct device *dev)
 
 	ret = clk_prepare_enable(imx858->inclk);
 	if (ret) {
-		dev_err(imx858->dev, "fail to enable inclk");
+		dev_err(imx858->dev, "fail to enable inclk\n");
 		goto error_reset;
 	}
 
@@ -1259,7 +1259,7 @@ static int imx858_init_controls(struct imx858 *imx858)
 		imx858->hblank_ctrl->flags |= V4L2_CTRL_FLAG_READ_ONLY;
 
 	if (ctrl_hdlr->error) {
-		dev_err(imx858->dev, "control init failed: %d",
+		dev_err(imx858->dev, "control init failed: %d\n",
 			ctrl_hdlr->error);
 		v4l2_ctrl_handler_free(ctrl_hdlr);
 		return ctrl_hdlr->error;
@@ -1297,7 +1297,7 @@ static int imx858_probe(struct i2c_client *client)
 
 	ret = imx858_parse_hw_config(imx858);
 	if (ret) {
-		dev_err(imx858->dev, "HW configuration is not supported");
+		dev_err(imx858->dev, "HW configuration is not supported\n");
 		return ret;
 	}
 
@@ -1305,14 +1305,14 @@ static int imx858_probe(struct i2c_client *client)
 
 	ret = imx858_power_on(imx858->dev);
 	if (ret) {
-		dev_err(imx858->dev, "failed to power-on the sensor");
+		dev_err(imx858->dev, "failed to power-on the sensor\n");
 		goto error_mutex_destroy;
 	}
 
 	/* Check module identity */
 	ret = imx858_detect(imx858);
 	if (ret) {
-		dev_err(imx858->dev, "failed to find sensor: %d", ret);
+		dev_err(imx858->dev, "failed to find sensor: %d\n", ret);
 		goto error_power_off;
 	}
 
@@ -1322,7 +1322,7 @@ static int imx858_probe(struct i2c_client *client)
 
 	ret = imx858_init_controls(imx858);
 	if (ret) {
-		dev_err(imx858->dev, "failed to init controls: %d", ret);
+		dev_err(imx858->dev, "failed to init controls: %d\n", ret);
 		goto error_power_off;
 	}
 
@@ -1336,14 +1336,14 @@ static int imx858_probe(struct i2c_client *client)
 	imx858->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&imx858->sd.entity, 1, &imx858->pad);
 	if (ret) {
-		dev_err(imx858->dev, "failed to init entity pads: %d", ret);
+		dev_err(imx858->dev, "failed to init entity pads: %d\n", ret);
 		goto error_handler_free;
 	}
 
 	ret = v4l2_async_register_subdev_sensor(&imx858->sd);
 	if (ret < 0) {
 		dev_err(imx858->dev,
-			"failed to register async subdev: %d", ret);
+			"failed to register async subdev: %d\n", ret);
 		goto error_media_entity;
 	}
 
