@@ -1026,9 +1026,7 @@ static int imx858_detect(struct imx858 *imx858)
 static int imx858_parse_hw_config(struct imx858 *imx858)
 {
 	struct fwnode_handle *fwnode = dev_fwnode(imx858->dev);
-	struct v4l2_fwnode_endpoint bus_cfg = {
-		.bus_type = V4L2_MBUS_CSI2_DPHY
-	};
+	struct v4l2_fwnode_endpoint bus_cfg = {};
 	struct fwnode_handle *ep;
 	unsigned long rate;
 	unsigned int i;
@@ -1077,6 +1075,12 @@ static int imx858_parse_hw_config(struct imx858 *imx858)
 	fwnode_handle_put(ep);
 	if (ret)
 		return ret;
+
+	if (bus_cfg.bus_type != V4L2_MBUS_CSI2_DPHY) {
+		dev_err(imx858->dev, "selected bus-type is not supported\n");
+		ret = -EINVAL;
+		goto done_endpoint_free;
+	}
 
 	if (bus_cfg.bus.mipi_csi2.num_data_lanes != IMX858_NUM_DATA_LANES) {
 		dev_err(imx858->dev,
@@ -1193,12 +1197,18 @@ static int imx858_power_off(struct device *dev)
  */
 static int imx858_init_controls(struct imx858 *imx858)
 {
+	struct v4l2_fwnode_device_properties props;
 	struct v4l2_ctrl_handler *ctrl_hdlr = &imx858->ctrl_handler;
 	const struct imx858_mode *mode = imx858->cur_mode;
 	u32 lpfr;
 	int ret;
 
-	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 6);
+	/* set properties from fwnode (e.g. rotation, orientation) */
+	ret = v4l2_fwnode_device_parse(imx858->dev, &props);
+	if (ret)
+		return ret;
+
+	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 8);
 	if (ret)
 		return ret;
 
@@ -1257,6 +1267,8 @@ static int imx858_init_controls(struct imx858 *imx858)
 						1, mode->hblank);
 	if (imx858->hblank_ctrl)
 		imx858->hblank_ctrl->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+
+	v4l2_ctrl_new_fwnode_properties(ctrl_hdlr, &imx858_ctrl_ops, &props);
 
 	if (ctrl_hdlr->error) {
 		dev_err(imx858->dev, "control init failed: %d\n",
