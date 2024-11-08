@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Sony imx858 Camera Sensor Driver
+ * A V4L2 driver for Sony IMX858 cameras.
+ * Copyright (C) 2024 Luca Weiss <luca.weiss@fairphone.com>
  *
+ * Based on Sony imx412 camera driver
  * Copyright (C) 2021 Intel Corporation
  */
 #include <asm/unaligned.h>
@@ -1291,7 +1293,6 @@ static int imx858_init_controls(struct imx858 *imx858)
 static int imx858_probe(struct i2c_client *client)
 {
 	struct imx858 *imx858;
-	const char *name;
 	int ret;
 
 	imx858 = devm_kzalloc(&client->dev, sizeof(*imx858), GFP_KERNEL);
@@ -1299,9 +1300,6 @@ static int imx858_probe(struct i2c_client *client)
 		return -ENOMEM;
 
 	imx858->dev = &client->dev;
-	name = device_get_match_data(&client->dev);
-	if (!name)
-		return -ENODEV;
 
 	/* Initialize subdev */
 	v4l2_i2c_subdev_init(&imx858->sd, client, &imx858_subdev_ops);
@@ -1342,8 +1340,6 @@ static int imx858_probe(struct i2c_client *client)
 	imx858->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	imx858->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 
-	v4l2_i2c_subdev_set_name(&imx858->sd, client, name, NULL);
-
 	/* Initialize source pad */
 	imx858->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&imx858->sd.entity, 1, &imx858->pad);
@@ -1377,12 +1373,6 @@ error_mutex_destroy:
 	return ret;
 }
 
-/**
- * imx858_remove() - I2C client device unbinding
- * @client: pointer to I2C client device
- *
- * Return: 0 if successful, error code otherwise.
- */
 static void imx858_remove(struct i2c_client *client)
 {
 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
@@ -1405,10 +1395,9 @@ static const struct dev_pm_ops imx858_pm_ops = {
 };
 
 static const struct of_device_id imx858_of_match[] = {
-	{ .compatible = "sony,imx858", .data = "imx858" },
-	{ }
+	{ .compatible = "sony,imx858" },
+	{ /* sentinel */ }
 };
-
 MODULE_DEVICE_TABLE(of, imx858_of_match);
 
 static struct i2c_driver imx858_driver = {
@@ -1423,5 +1412,5 @@ static struct i2c_driver imx858_driver = {
 
 module_i2c_driver(imx858_driver);
 
-MODULE_DESCRIPTION("Sony imx858 sensor driver");
+MODULE_DESCRIPTION("Sony IMX858 sensor driver");
 MODULE_LICENSE("GPL");
