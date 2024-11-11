@@ -659,7 +659,6 @@
 		dvdd-supply = <&vreg_l1p>;
 		avdd-supply = <&vreg_l4p>;
 		iovdd-supply = <&vreg_l6p>;
-		afvdd-supply = <&afvdd_2p8>; // todo needed for sensor itself?
 
 		clocks = <&camcc CAM_CC_MCLK1_CLK>;
 		assigned-clocks = <&camcc CAM_CC_MCLK1_CLK>;
