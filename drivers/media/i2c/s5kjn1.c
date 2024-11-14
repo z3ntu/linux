@@ -65,7 +65,7 @@
  */
 struct s5kjn1_reg {
 	u16 address;
-	u8 val;
+	u16 val;
 };
 
 /**
@@ -590,7 +590,7 @@ static int s5kjn1_write_regs(struct s5kjn1 *s5kjn1,
 	int ret;
 
 	for (i = 0; i < len; i++) {
-		ret = s5kjn1_write_reg(s5kjn1, regs[i].address, 1, regs[i].val);
+		ret = s5kjn1_write_reg(s5kjn1, regs[i].address, 2, regs[i].val);
 		if (ret)
 			return ret;
 	}
