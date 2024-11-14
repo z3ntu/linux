@@ -1,1073 +1,1128 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * A V4L2 driver for Sony S5KJN1 cameras.
- * Copyright (C) 2023 Matti Lehtimäki
+ * A V4L2 driver for Samsung S5KJN1 cameras.
+ * Copyright (C) 2024 Luca Weiss <luca.weiss@fairphone.com>
  *
- * Based on Sony imx219 camera driver
- * Copyright (C) 2019 Raspberry Pi (Trading) Ltd
- * Copyright (C) 2018 Intel Corporation
- * Copyright (C) 2018 Qtechnology A/S
- *
+ * Based on Sony imx412 camera driver
+ * Copyright (C) 2021 Intel Corporation
  */
+#include <asm/unaligned.h>
 
 #include <linux/clk.h>
 #include <linux/delay.h>
-#include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
-#include <linux/minmax.h>
 #include <linux/module.h>
 #include <linux/pm_runtime.h>
 #include <linux/regulator/consumer.h>
 
-#include <media/v4l2-cci.h>
 #include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-event.h>
 #include <media/v4l2-fwnode.h>
-#include <media/v4l2-mediabus.h>
+#include <media/v4l2-subdev.h>
+
+/* Streaming Mode */
+#define S5KJN1_REG_MODE_SELECT	0x0100
+#define S5KJN1_MODE_STANDBY	0x00
+#define S5KJN1_MODE_STREAMING	0x01
+
+/* Lines per frame */
+#define S5KJN1_REG_LPFR		0x0340
 
 /* Chip ID */
-#define S5KJN1_REG_CHIP_ID		CCI_REG16(0x0000)
-#define S5KJN1_CHIP_ID			0x38e1
-
-#define S5KJN1_REG_MODE_SELECT		CCI_REG8(0x0100)
-#define S5KJN1_MODE_STANDBY		0x00
-#define S5KJN1_MODE_STREAMING		0x01
-
-/* Group hold register */
-#define S5KJN1_REG_HOLD			CCI_REG8(0x0104)
-#define S5KJN1_HOLD_DISABLE		0x00
-#define S5KJN1_HOLD_ENABLE		0x01
-
-/* Analog gain control */
-#define S5KJN1_REG_ANALOG_GAIN		CCI_REG8(0x0204)
-#define S5KJN1_ANA_GAIN_MIN		0x20
-#define S5KJN1_ANA_GAIN_MAX		0x200
-#define S5KJN1_ANA_GAIN_DEFAULT		0xc0
-#define S5KJN1_ANA_GAIN_STEP		1
-
-/* Digital gain control */
-#define S5KJN1_REG_DIGITAL_GAIN		CCI_REG16(0x020e)
-#define S5KJN1_DGTL_GAIN_MIN		0x0100
-#define S5KJN1_DGTL_GAIN_MAX		0x0fff
-#define S5KJN1_DGTL_GAIN_DEFAULT	0x0100
-#define S5KJN1_DGTL_GAIN_STEP		1
+#define S5KJN1_REG_ID		0x0016
+#define S5KJN1_ID		0x858
 
 /* Exposure control */
-#define S5KJN1_REG_EXPOSURE		CCI_REG16(0x0202)
-#define S5KJN1_EXPOSURE_MIN		0
-#define S5KJN1_EXPOSURE_MAX		0xffcc
-#define S5KJN1_EXPOSURE_STEP		1
-#define S5KJN1_EXPOSURE_DEFAULT		0x0f00
+#define S5KJN1_REG_EXPOSURE_CIT	0x0202
+#define S5KJN1_EXPOSURE_MIN	8
+#define S5KJN1_EXPOSURE_OFFSET	22
+#define S5KJN1_EXPOSURE_STEP	1
+#define S5KJN1_EXPOSURE_DEFAULT	0x0648
 
-/* V_TIMING internal */
-#define S5KJN1_REG_VTS			CCI_REG16(0x0340)
-#define S5KJN1_VTS_MAX			0xffff
+/* Analog gain control */
+#define S5KJN1_REG_AGAIN	0x0204
+#define S5KJN1_AGAIN_MIN	0
+#define S5KJN1_AGAIN_MAX	978
+#define S5KJN1_AGAIN_STEP	1
+#define S5KJN1_AGAIN_DEFAULT	0
 
-#define S5KJN1_VBLANK_MIN		4
+/* Group hold register */
+#define S5KJN1_REG_HOLD		0x0104
 
-/* HBLANK control - read only */
-#define S5KJN1_PPL_DEFAULT		0x11e8
+/* Input clock rate */
+#define S5KJN1_INCLK_RATE	24000000
 
-#define S5KJN1_REG_ORIENTATION		CCI_REG8(0x0101)
+/* CSI2 HW configuration */
+#define S5KJN1_LINK_FREQ	600000000
+#define S5KJN1_NUM_DATA_LANES	4
 
-/* Test Pattern Control */
-#define S5KJN1_REG_TEST_PATTERN		CCI_REG16(0x0600)
-#define S5KJN1_TEST_PATTERN_DISABLE	0
-#define S5KJN1_TEST_PATTERN_SOLID_COLOR	1
-#define S5KJN1_TEST_PATTERN_COLOR_BARS	2
-#define S5KJN1_TEST_PATTERN_GREY_COLOR	3
-#define S5KJN1_TEST_PATTERN_PN9		4
+#define S5KJN1_REG_MIN		0x00
+#define S5KJN1_REG_MAX		0xffff
 
-#define S5KJN1_REG_TP_WINDOW_WIDTH	CCI_REG16(0x0624)
-#define S5KJN1_REG_TP_WINDOW_HEIGHT	CCI_REG16(0x0626)
-
-/* External clock frequency is 24.0M */
-#define S5KJN1_XCLK_FREQ		24000000
-
-//TODO
-/* Pixel rate is fixed for all the modes */
-#define S5KJN1_PIXEL_RATE		1176690000
-
-
-#define S5KJN1_DEFAULT_LINK_FREQ	828000000 // TODO?
-
-/* S5KJN1 native and active pixel array size. */
-#define S5KJN1_NATIVE_WIDTH		4080U
-#define S5KJN1_NATIVE_HEIGHT		3072U
-#define S5KJN1_PIXEL_ARRAY_LEFT		9U
-#define S5KJN1_PIXEL_ARRAY_TOP		0U
-#define S5KJN1_PIXEL_ARRAY_WIDTH	4064U
-#define S5KJN1_PIXEL_ARRAY_HEIGHT	3072U
-
-struct s5kjn1_reg_list {
-	unsigned int num_of_regs;
-	const struct cci_reg_sequence *regs;
+/**
+ * struct s5kjn1_reg - s5kjn1 sensor register
+ * @address: Register address
+ * @val: Register value
+ */
+struct s5kjn1_reg {
+	u16 address;
+	u8 val;
 };
 
-/* Mode : resolution and related config&values */
+/**
+ * struct s5kjn1_reg_list - s5kjn1 sensor register list
+ * @num_of_regs: Number of registers in the list
+ * @regs: Pointer to register list
+ */
+struct s5kjn1_reg_list {
+	u32 num_of_regs;
+	const struct s5kjn1_reg *regs;
+};
+
+/**
+ * struct s5kjn1_mode - s5kjn1 sensor mode structure
+ * @width: Frame width
+ * @height: Frame height
+ * @code: Format code
+ * @hblank: Horizontal blanking in lines
+ * @vblank: Vertical blanking in lines
+ * @vblank_min: Minimum vertical blanking in lines
+ * @vblank_max: Maximum vertical blanking in lines
+ * @pclk: Sensor pixel clock
+ * @link_freq_idx: Link frequency index
+ * @reg_list: Register list for sensor mode
+ */
 struct s5kjn1_mode {
-	/* Frame width */
-	unsigned int width;
-	/* Frame height */
-	unsigned int height;
-
-	/* V-timing */
-	unsigned int vts_def;
-
-	/* Default register values */
+	u32 width;
+	u32 height;
+	u32 code;
+	u32 hblank;
+	u32 vblank;
+	u32 vblank_min;
+	u32 vblank_max;
+	u64 pclk;
+	u32 link_freq_idx;
 	struct s5kjn1_reg_list reg_list;
 };
 
-static const struct cci_reg_sequence mode_4080x3072_regs[] = {
-	{ CCI_REG16(0x6028), 0x2400 }, //Global, Analog setting
-	{ CCI_REG16(0x602A), 0x1354 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x6F12), 0x7017 },
-	{ CCI_REG16(0x602A), 0x13B2 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x1236 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x1A0A },
-	{ CCI_REG16(0x6F12), 0x4C0A },
-	{ CCI_REG16(0x602A), 0x2210 },
-	{ CCI_REG16(0x6F12), 0x3401 },
-	{ CCI_REG16(0x602A), 0x2176 },
-	{ CCI_REG16(0x6F12), 0x6400 },
-	{ CCI_REG16(0x602A), 0x222E },
-	{ CCI_REG16(0x6F12), 0x0001 },
-	{ CCI_REG16(0x602A), 0x06B6 },
-	{ CCI_REG16(0x6F12), 0x0A00 },
-	{ CCI_REG16(0x602A), 0x06BC },
-	{ CCI_REG16(0x6F12), 0x1001 },
-	{ CCI_REG16(0x602A), 0x2140 },
-	{ CCI_REG16(0x6F12), 0x0101 },
-	{ CCI_REG16(0x602A), 0x1A0E },
-	{ CCI_REG16(0x6F12), 0x9600 },
-	{ CCI_REG16(0x6028), 0x4000 },
-	{ CCI_REG16(0xF44E), 0x0011 },
-	{ CCI_REG16(0xF44C), 0x0B0B },
-	{ CCI_REG16(0xF44A), 0x0006 },
-	{ CCI_REG16(0x0118), 0x0002 },
-	{ CCI_REG16(0x011A), 0x0001 },
-
-	{ CCI_REG16(0x6028), 0x2400 }, // Mode setting
-	{ CCI_REG16(0x602A), 0x1A28 },
-	{ CCI_REG16(0x6F12), 0x4C00 },
-	{ CCI_REG16(0x602A), 0x065A },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x139E },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x139C },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x13A0 },
-	{ CCI_REG16(0x6F12), 0x0A00 },
-	{ CCI_REG16(0x6F12), 0x0120 },
-	{ CCI_REG16(0x602A), 0x2072 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x1A64 },
-	{ CCI_REG16(0x6F12), 0x0301 },
-	{ CCI_REG16(0x6F12), 0xFF00 },
-	{ CCI_REG16(0x602A), 0x19E6 },
-	{ CCI_REG16(0x6F12), 0x0200 },
-	{ CCI_REG16(0x602A), 0x1A30 },
-	{ CCI_REG16(0x6F12), 0x3401 },
-	{ CCI_REG16(0x602A), 0x19FC },
-	{ CCI_REG16(0x6F12), 0x0B00 },
-	{ CCI_REG16(0x602A), 0x19F4 },
-	{ CCI_REG16(0x6F12), 0x0606 },
-	{ CCI_REG16(0x602A), 0x19F8 },
-	{ CCI_REG16(0x6F12), 0x1010 },
-	{ CCI_REG16(0x602A), 0x1B26 },
-	{ CCI_REG16(0x6F12), 0x6F80 },
-	{ CCI_REG16(0x6F12), 0xA060 },
-	{ CCI_REG16(0x602A), 0x1A3C },
-	{ CCI_REG16(0x6F12), 0x6207 },
-	{ CCI_REG16(0x602A), 0x1A48 },
-	{ CCI_REG16(0x6F12), 0x6207 },
-	{ CCI_REG16(0x602A), 0x1444 },
-	{ CCI_REG16(0x6F12), 0x2000 },
-	{ CCI_REG16(0x6F12), 0x2000 },
-	{ CCI_REG16(0x602A), 0x144C },
-	{ CCI_REG16(0x6F12), 0x3F00 },
-	{ CCI_REG16(0x6F12), 0x3F00 },
-	{ CCI_REG16(0x602A), 0x7F6C },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x6F12), 0x2F00 },
-	{ CCI_REG16(0x6F12), 0xFA00 },
-	{ CCI_REG16(0x6F12), 0x2400 },
-	{ CCI_REG16(0x6F12), 0xE500 },
-	{ CCI_REG16(0x602A), 0x0650 },
-	{ CCI_REG16(0x6F12), 0x0600 },
-	{ CCI_REG16(0x602A), 0x0654 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x1A46 },
-	{ CCI_REG16(0x6F12), 0x8A00 },
-	{ CCI_REG16(0x602A), 0x1A52 },
-	{ CCI_REG16(0x6F12), 0xBF00 },
-	{ CCI_REG16(0x602A), 0x0674 },
-	{ CCI_REG16(0x6F12), 0x0500 },
-	{ CCI_REG16(0x6F12), 0x0500 },
-	{ CCI_REG16(0x6F12), 0x0500 },
-	{ CCI_REG16(0x6F12), 0x0500 },
-	{ CCI_REG16(0x602A), 0x0668 },
-	{ CCI_REG16(0x6F12), 0x0800 },
-	{ CCI_REG16(0x6F12), 0x0800 },
-	{ CCI_REG16(0x6F12), 0x0800 },
-	{ CCI_REG16(0x6F12), 0x0800 },
-	{ CCI_REG16(0x602A), 0x0684 },
-	{ CCI_REG16(0x6F12), 0x4001 },
-	{ CCI_REG16(0x602A), 0x0688 },
-	{ CCI_REG16(0x6F12), 0x4001 },
-	{ CCI_REG16(0x602A), 0x147C },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x1480 },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x19F6 },
-	{ CCI_REG16(0x6F12), 0x0904 },
-	{ CCI_REG16(0x602A), 0x0812 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x1A02 },
-	{ CCI_REG16(0x6F12), 0x1800 },
-	{ CCI_REG16(0x602A), 0x2148 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x2042 },
-	{ CCI_REG16(0x6F12), 0x1A00 },
-	{ CCI_REG16(0x602A), 0x0874 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x09C0 },
-	{ CCI_REG16(0x6F12), 0x2008 },
-	{ CCI_REG16(0x602A), 0x09C4 },
-	{ CCI_REG16(0x6F12), 0x2000 },
-	{ CCI_REG16(0x602A), 0x19FE },
-	{ CCI_REG16(0x6F12), 0x0E1C },
-	{ CCI_REG16(0x602A), 0x4D92 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x84C8 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x4D94 },
-	{ CCI_REG16(0x6F12), 0x0005 },
-	{ CCI_REG16(0x6F12), 0x000A },
-	{ CCI_REG16(0x6F12), 0x0010 },
-	{ CCI_REG16(0x6F12), 0x0810 },
-	{ CCI_REG16(0x6F12), 0x000A },
-	{ CCI_REG16(0x6F12), 0x0040 },
-	{ CCI_REG16(0x6F12), 0x0810 },
-	{ CCI_REG16(0x6F12), 0x0810 },
-	{ CCI_REG16(0x6F12), 0x8002 },
-	{ CCI_REG16(0x6F12), 0xFD03 },
-	{ CCI_REG16(0x6F12), 0x0010 },
-	{ CCI_REG16(0x6F12), 0x1510 },
-	{ CCI_REG16(0x602A), 0x3570 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x3574 },
-	{ CCI_REG16(0x6F12), 0x1201 },
-	{ CCI_REG16(0x602A), 0x21E4 },
-	{ CCI_REG16(0x6F12), 0x0400 },
-	{ CCI_REG16(0x602A), 0x21EC },
-	{ CCI_REG16(0x6F12), 0x1F04 },
-	{ CCI_REG16(0x602A), 0x2080 },
-	{ CCI_REG16(0x6F12), 0x0101 },
-	{ CCI_REG16(0x6F12), 0xFF00 },
-	{ CCI_REG16(0x6F12), 0x7F01 },
-	{ CCI_REG16(0x6F12), 0x0001 },
-	{ CCI_REG16(0x6F12), 0x8001 },
-	{ CCI_REG16(0x6F12), 0xD244 },
-	{ CCI_REG16(0x6F12), 0xD244 },
-	{ CCI_REG16(0x6F12), 0x14F4 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x20BA },
-	{ CCI_REG16(0x6F12), 0x141C },
-	{ CCI_REG16(0x6F12), 0x111C },
-	{ CCI_REG16(0x6F12), 0x54F4 },
-	{ CCI_REG16(0x602A), 0x120E },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x212E },
-	{ CCI_REG16(0x6F12), 0x0200 },
-	{ CCI_REG16(0x602A), 0x13AE },
-	{ CCI_REG16(0x6F12), 0x0101 },
-	{ CCI_REG16(0x602A), 0x0718 },
-	{ CCI_REG16(0x6F12), 0x0001 },
-	{ CCI_REG16(0x602A), 0x0710 },
-	{ CCI_REG16(0x6F12), 0x0002 },
-	{ CCI_REG16(0x6F12), 0x0804 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x1B5C },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x0786 },
-	{ CCI_REG16(0x6F12), 0x7701 },
-	{ CCI_REG16(0x602A), 0x2022 },
-	{ CCI_REG16(0x6F12), 0x0500 },
-	{ CCI_REG16(0x6F12), 0x0500 },
-	{ CCI_REG16(0x602A), 0x1360 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x1376 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x6F12), 0x6038 },
-	{ CCI_REG16(0x6F12), 0x7038 },
-	{ CCI_REG16(0x6F12), 0x8038 },
-	{ CCI_REG16(0x602A), 0x1386 },
-	{ CCI_REG16(0x6F12), 0x0B00 },
-	{ CCI_REG16(0x602A), 0x06FA },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x4A94 },
-	{ CCI_REG16(0x6F12), 0x0900 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0300 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0300 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0900 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x0A76 },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x0AEE },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x0B66 },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x0BDE },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x0BE8 },
-	{ CCI_REG16(0x6F12), 0x3000 },
-	{ CCI_REG16(0x6F12), 0x3000 },
-	{ CCI_REG16(0x602A), 0x0C56 },
-	{ CCI_REG16(0x6F12), 0x1000 },
-	{ CCI_REG16(0x602A), 0x0C60 },
-	{ CCI_REG16(0x6F12), 0x3000 },
-	{ CCI_REG16(0x6F12), 0x3000 },
-	{ CCI_REG16(0x602A), 0x0CB6 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x0CF2 },
-	{ CCI_REG16(0x6F12), 0x0001 },
-	{ CCI_REG16(0x602A), 0x0CF0 },
-	{ CCI_REG16(0x6F12), 0x0101 },
-	{ CCI_REG16(0x602A), 0x11B8 },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x11F6 },
-	{ CCI_REG16(0x6F12), 0x0020 },
-	{ CCI_REG16(0x602A), 0x4A74 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0xD8FF },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0xD8FF },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x218E },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x2268 },
-	{ CCI_REG16(0x6F12), 0xF279 },
-	{ CCI_REG16(0x602A), 0x5006 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x602A), 0x500E },
-	{ CCI_REG16(0x6F12), 0x0100 },
-	{ CCI_REG16(0x602A), 0x4E70 },
-	{ CCI_REG16(0x6F12), 0x2062 },
-	{ CCI_REG16(0x6F12), 0x5501 },
-	{ CCI_REG16(0x602A), 0x06DC },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6F12), 0x0000 },
-	{ CCI_REG16(0x6028), 0x4000 },
-	{ CCI_REG16(0xF46A), 0xAE80 },
-	{ CCI_REG16(0x0344), 0x0000 }, //x_addr_start
-	{ CCI_REG16(0x0346), 0x0000 }, //y_addr_start
-	{ CCI_REG16(0x0348), 0x1FFF }, //x_addr_end
-	{ CCI_REG16(0x034A), 0x181F }, //y_addr_end
-	{ CCI_REG16(0x034C), 0x0FF0 }, //output width
-	{ CCI_REG16(0x034E), 0x0C00 }, //output height
-	{ CCI_REG16(0x0350), 0x0008 },
-	{ CCI_REG16(0x0352), 0x0008 },
-	{ CCI_REG16(0x0900), 0x0122 },
-	{ CCI_REG16(0x0380), 0x0002 },
-	{ CCI_REG16(0x0382), 0x0002 },
-	{ CCI_REG16(0x0384), 0x0002 },
-	{ CCI_REG16(0x0386), 0x0002 },
-	{ CCI_REG16(0x0110), 0x1002 },
-	{ CCI_REG16(0x0114), 0x0301 },
-	{ CCI_REG16(0x0116), 0x3000 },
-	{ CCI_REG16(0x0136), 0x1800 },
-	{ CCI_REG16(0x013E), 0x0000 },
-	{ CCI_REG16(0x0300), 0x0006 },
-	{ CCI_REG16(0x0302), 0x0001 },
-	{ CCI_REG16(0x0304), 0x0004 },
-	{ CCI_REG16(0x0306), 0x008C },
-	{ CCI_REG16(0x0308), 0x0008 },
-	{ CCI_REG16(0x030A), 0x0001 },
-	{ CCI_REG16(0x030C), 0x0000 },
-	{ CCI_REG16(0x030E), 0x0004 },
-	{ CCI_REG16(0x0310), 0x008A },
-	{ CCI_REG16(0x0312), 0x0000 },
-	{ CCI_REG16(0x080E), 0x0000 },
-	{ CCI_REG16(0x0340), 0x0FD6 },
-	{ CCI_REG16(0x0342), 0x11E8 },
-	{ CCI_REG16(0x0702), 0x0000 },
-	{ CCI_REG16(0x0202), 0x0f00 },
-	{ CCI_REG16(0x0200), 0x0100 },
-	{ CCI_REG16(0x0D00), 0x0101 },
-	{ CCI_REG16(0x0D02), 0x0101 },
-	{ CCI_REG16(0x0D04), 0x0102 },
-	{ CCI_REG16(0x6226), 0x0000 },
-
-	//{0x0100, 0x0100},	// Streaming on
-	{ CCI_REG16(0xffff), 0x00 },
+static const char * const s5kjn1_supply_names[] = {
+	"iovdd",	/* Digital I/O power */
+	"avdd",		/* Analog power */
+	"dvdd",		/* Digital core power */
 };
 
-static const s64 s5kjn1_link_freq_menu[] = {
-	S5KJN1_DEFAULT_LINK_FREQ
-};
-
-static const char * const s5kjn1_test_pattern_menu[] = {
-	"Disabled",
-	"Color Bars",
-	"Solid Color",
-	"Grey Color Bars",
-	"PN9"
-};
-
-static const int s5kjn1_test_pattern_val[] = {
-	S5KJN1_TEST_PATTERN_DISABLE,
-	S5KJN1_TEST_PATTERN_COLOR_BARS,
-	S5KJN1_TEST_PATTERN_SOLID_COLOR,
-	S5KJN1_TEST_PATTERN_GREY_COLOR,
-	S5KJN1_TEST_PATTERN_PN9,
-};
-
-/* regulator supplies */
-static const char * const s5kjn1_supply_name[] = {
-	/* Supplies can be enabled in any order */
-	"dovdd", /* Digital I/O power */
-	"dvdd", /* Digital core power */
-	"avdd", /* Analog power */
-};
-
-#define S5KJN1_NUM_SUPPLIES ARRAY_SIZE(s5kjn1_supply_name)
-
-/*
- * The supported formats.
- * This table MUST contain 4 entries per format, to cover the various flip
- * combinations in the order
- * - no flip
- * - h flip
- * - v flip
- * - h&v flips
+/**
+ * struct s5kjn1 - s5kjn1 sensor device structure
+ * @dev: Pointer to generic device
+ * @client: Pointer to i2c client
+ * @sd: V4L2 sub-device
+ * @pad: Media pad. Only one pad supported
+ * @reset_gpio: Sensor reset gpio
+ * @inclk: Sensor input clock
+ * @supplies: Regulator supplies
+ * @ctrl_handler: V4L2 control handler
+ * @link_freq_ctrl: Pointer to link frequency control
+ * @pclk_ctrl: Pointer to pixel clock control
+ * @hblank_ctrl: Pointer to horizontal blanking control
+ * @vblank_ctrl: Pointer to vertical blanking control
+ * @exp_ctrl: Pointer to exposure control
+ * @again_ctrl: Pointer to analog gain control
+ * @vblank: Vertical blanking in lines
+ * @cur_mode: Pointer to current selected sensor mode
+ * @mutex: Mutex for serializing sensor controls
  */
-static const u32 s5kjn1_mbus_formats[] = {
-	MEDIA_BUS_FMT_SRGGB10_1X10,
-	MEDIA_BUS_FMT_SGRBG10_1X10,
-	MEDIA_BUS_FMT_SGBRG10_1X10,
-	MEDIA_BUS_FMT_SBGGR10_1X10,
-
-	//MEDIA_BUS_FMT_SRGGB8_1X8,
-	//MEDIA_BUS_FMT_SGRBG8_1X8,
-	//MEDIA_BUS_FMT_SGBRG8_1X8,
-	//MEDIA_BUS_FMT_SBGGR8_1X8,
+struct s5kjn1 {
+	struct device *dev;
+	struct i2c_client *client;
+	struct v4l2_subdev sd;
+	struct media_pad pad;
+	struct gpio_desc *reset_gpio;
+	struct clk *inclk;
+	struct regulator_bulk_data supplies[ARRAY_SIZE(s5kjn1_supply_names)];
+	struct v4l2_ctrl_handler ctrl_handler;
+	struct v4l2_ctrl *link_freq_ctrl;
+	struct v4l2_ctrl *pclk_ctrl;
+	struct v4l2_ctrl *hblank_ctrl;
+	struct v4l2_ctrl *vblank_ctrl;
+	struct {
+		struct v4l2_ctrl *exp_ctrl;
+		struct v4l2_ctrl *again_ctrl;
+	};
+	u32 vblank;
+	const struct s5kjn1_mode *cur_mode;
+	struct mutex mutex;
 };
 
-/*
- * Initialisation delay between XCLR low->high and the moment when the sensor
- * can start capture (i.e. can leave software stanby) must be not less than:
- *   t4 + max(t5, t6 + <time to initialize the sensor register over I2C>)
- * where
- *   t4 is fixed, and is max 200uS,
- *   t5 is fixed, and is 6000uS,
- *   t6 depends on the sensor external clock, and is max 32000 clock periods.
- * As per sensor datasheet, the external clock must be from 6MHz to 27MHz.
- * So for any acceptable external clock t6 is always within the range of
- * 1185 to 5333 uS, and is always less than t5.
- * For this reason this is always safe to wait (t4 + t5) = 6200 uS, then
- * initialize the sensor over I2C, and then exit the software standby.
- *
- * This start-up time can be optimized a bit more, if we start the writes
- * over I2C after (t4+t6), but before (t4+t5) expires. But then sensor
- * initialization over I2C may complete before (t4+t5) expires, and we must
- * ensure that capture is not started before (t4+t5).
- *
- * This delay doesn't account for the power supply startup time. If needed,
- * this should be taken care of via the regulator framework. E.g. in the
- * case of DT for regulator-fixed one should define the startup-delay-us
- * property.
- */
-#define S5KJN1_XCLR_MIN_DELAY_US	6200
-#define S5KJN1_XCLR_DELAY_RANGE_US	1000
+static const s64 link_freq[] = {
+	S5KJN1_LINK_FREQ,
+};
 
-/* Mode configs */
-static const struct s5kjn1_mode supported_modes[] = {
-	{
-		.width = 4080,
-		.height = 3072,
-		.vts_def = 0x0fd6,
-		.reg_list = {
-			.num_of_regs = ARRAY_SIZE(mode_4080x3072_regs),
-			.regs = mode_4080x3072_regs,
-		},
+/* Sensor mode registers */
+static const struct s5kjn1_reg mode_2048x1536_regs[] = {
+	// common registers
+	{0x0136, 0x18},
+	{0x0137, 0x00},
+	{0x3304, 0x00},
+	{0x33f0, 0x01},
+	{0x33f1, 0x05},
+	{0x0111, 0x02},
+	{0x1200, 0x02},
+	{0x1201, 0x02},
+	{0x130b, 0x00},
+	{0x1340, 0x00},
+	{0x3bc0, 0xbf},
+	{0x3bc4, 0xbf},
+	{0x3bc8, 0xbf},
+	{0x3bcc, 0xbf},
+	{0x558f, 0x00},
+	{0x5e2e, 0x00},
+	{0x5e2f, 0x32},
+	{0x5e32, 0x08},
+	{0x5e33, 0xcd},
+	{0x5e64, 0x00},
+	{0x5e65, 0x32},
+	{0x5e68, 0x0b},
+	{0x5e69, 0x97},
+	{0x61e8, 0x50},
+	{0x61e9, 0x00},
+	{0x61ea, 0x50},
+	{0x61eb, 0x00},
+	{0x7220, 0xff},
+	{0x7221, 0xff},
+	{0x7222, 0xff},
+	{0x7223, 0xff},
+	{0x7755, 0x09},
+	{0x775b, 0x01},
+	{0x7a28, 0x2d},
+	{0x7a29, 0x30},
+	{0x7a2a, 0x30},
+	{0x7a2b, 0x0e},
+	{0x7a2c, 0x10},
+	{0x7a2d, 0x10},
+	{0x7a2e, 0x0e},
+	{0x7a2f, 0x0f},
+	{0x7a30, 0x0f},
+	{0x7a31, 0x10},
+	{0x7a32, 0x10},
+	{0x7a33, 0x10},
+	{0x7a34, 0x0e},
+	{0x7a35, 0x12},
+	{0x7a36, 0x15},
+	{0x7a3a, 0x2d},
+	{0x7a3b, 0x30},
+	{0x7a3c, 0x31},
+	{0x7a3d, 0x2b},
+	{0x7a3e, 0x2d},
+	{0x7a3f, 0x2e},
+	{0x7a40, 0x2e},
+	{0x7a41, 0x2f},
+	{0x7a42, 0x2f},
+	{0x7a43, 0x2e},
+	{0x7a44, 0x2f},
+	{0x7a45, 0x2e},
+	{0x7a46, 0x2f},
+	{0x7a47, 0x31},
+	{0x7a48, 0x34},
+	{0x7a4c, 0x2f},
+	{0x7a4d, 0x31},
+	{0x7a4e, 0x31},
+	{0x7a4f, 0x2d},
+	{0x7a50, 0x2f},
+	{0x7a51, 0x31},
+	{0x7a52, 0x2f},
+	{0x7a53, 0x31},
+	{0x7a54, 0x31},
+	{0x7a55, 0x2f},
+	{0x7a56, 0x30},
+	{0x7a57, 0x30},
+	{0x7a58, 0x30},
+	{0x7a59, 0x31},
+	{0x7a5a, 0x36},
+	{0x7a5b, 0x31},
+	{0x7a5c, 0x33},
+	{0x7a5e, 0x2f},
+	{0x7a5f, 0x33},
+	{0x7a60, 0x32},
+	{0x7a61, 0x2d},
+	{0x7a62, 0x30},
+	{0x7a63, 0x31},
+	{0x7a64, 0x30},
+	{0x7a65, 0x30},
+	{0x7a66, 0x30},
+	{0x7a67, 0x30},
+	{0x7a68, 0x31},
+	{0x7a69, 0x31},
+	{0x7a6a, 0x30},
+	{0x7a6b, 0x30},
+	{0x7a6c, 0x37},
+	{0x7a6d, 0x32},
+	{0x7a6e, 0x33},
+	{0x7a70, 0x2f},
+	{0x7a71, 0x30},
+	{0x7a72, 0x31},
+	{0x7a73, 0x31},
+	{0x7a74, 0x32},
+	{0x7a75, 0x32},
+	{0x7a76, 0x31},
+	{0x7a77, 0x31},
+	{0x7a78, 0x32},
+	{0x7a79, 0x32},
+	{0x7a7a, 0x31},
+	{0x7a7b, 0x33},
+	{0x7a7c, 0x33},
+	{0x7a7d, 0x34},
+	{0x7a7f, 0x2f},
+	{0x7a80, 0x31},
+	{0x7a81, 0x32},
+	{0x7a82, 0x31},
+	{0x7a83, 0x31},
+	{0x7a84, 0x31},
+	{0x7a85, 0x31},
+	{0x7a86, 0x32},
+	{0x7a87, 0x31},
+	{0x7a88, 0x31},
+	{0x7a89, 0x32},
+	{0x7a8a, 0x34},
+	{0x7a8b, 0x33},
+	{0x7a8c, 0x35},
+	{0x7a90, 0x02},
+	{0x7a92, 0x01},
+	{0x7a95, 0x01},
+	{0x7a98, 0x03},
+	{0x7aa2, 0x02},
+	{0x7aa5, 0x05},
+	{0x7aaa, 0x08},
+	{0x7aab, 0x02},
+	{0x7ab4, 0x18},
+	{0x7ab7, 0x06},
+	{0x7abc, 0x03},
+	{0x7abd, 0x02},
+	{0x7ace, 0x06},
+	{0x7acf, 0x07},
+	{0x7aec, 0x01},
+	{0x7b27, 0x09},
+	{0x7b28, 0x08},
+	{0x7b39, 0x06},
+	{0x7b3a, 0x07},
+	{0x7b48, 0x07},
+	{0x7b49, 0x09},
+	{0x7b57, 0x05},
+	{0x7b58, 0x06},
+	{0x7c18, 0x2d},
+	{0x7c1e, 0x2d},
+	{0x7c22, 0x23},
+	{0x7c23, 0x1e},
+	{0x7d5d, 0x19},
+	{0x7d5e, 0x19},
+	{0x7d5f, 0x19},
+	{0x7d60, 0x19},
+	{0x7d61, 0x19},
+	{0x7d62, 0x19},
+	{0x7d64, 0x19},
+	{0x7d65, 0x19},
+	{0x7d66, 0x19},
+	{0x7d67, 0x19},
+	{0x7d68, 0x19},
+	{0x7d69, 0x19},
+	{0x7d6b, 0x19},
+	{0x7d6c, 0x19},
+	{0x7d6d, 0x19},
+	{0x7d6e, 0x19},
+	{0x7d6f, 0x19},
+	{0x7d70, 0x19},
+	{0x7d72, 0x19},
+	{0x7d73, 0x19},
+	{0x7d74, 0x19},
+	{0x7d75, 0x19},
+	{0x7d76, 0x19},
+	{0x7d77, 0x19},
+	{0x7d79, 0x19},
+	{0x7d7a, 0x19},
+	{0x7d7b, 0x19},
+	{0x7d7c, 0x19},
+	{0x7d7d, 0x19},
+	{0x7d7f, 0x19},
+	{0x7d80, 0x19},
+	{0x7d81, 0x19},
+	{0x7d82, 0x19},
+	{0x7d83, 0x19},
+	{0x90b4, 0x0b},
+	{0x90b5, 0x2c},
+	{0x90b8, 0x0c},
+	{0x90b9, 0x3c},
+	{0x90e7, 0x01},
+	{0x920c, 0x90},
+	{0x920e, 0x53},
+	{0x920f, 0x0c},
+	{0x9210, 0xa0},
+	{0x9212, 0xdd},
+	{0x9213, 0xda},
+	{0x9214, 0xa0},
+	{0x9216, 0xeb},
+	{0x9217, 0x96},
+	{0x9218, 0xa0},
+	{0x921a, 0xdd},
+	{0x921b, 0xd7},
+	{0x9674, 0x21},
+	{0x9675, 0x5c},
+	{0x96af, 0x01},
+	{0x9739, 0x00},
+	{0x973a, 0x13},
+	{0x973b, 0x04},
+	{0x973d, 0x00},
+	{0x973e, 0x1c},
+	{0x973f, 0xf4},
+	{0x9741, 0x00},
+	{0x9742, 0x32},
+	{0x9743, 0x48},
+	{0xa2c3, 0x18},
+	{0xa2f5, 0x04},
+	{0xa722, 0x00},
+	{0xad01, 0x0a},
+	{0xad02, 0x0a},
+	{0xad0e, 0x02},
+	{0xdda9, 0x4e},
+
+	// res3 2048*1536@60fps (4:3) 4x4
+	{0x0112, 0x0a},
+	{0x0113, 0x0a},
+	{0x0114, 0x03},
+	{0x3239, 0x00},
+	{0x0342, 0x0f},
+	{0x0343, 0xb8},
+	{0x3850, 0x03},
+	{0x3851, 0xf0},
+	{0x0340, 0x06},
+	{0x0341, 0x32},
+	{0x0344, 0x00},
+	{0x0345, 0x00},
+	{0x0346, 0x00},
+	{0x0347, 0x00},
+	{0x0348, 0x1f},
+	{0x0349, 0xff},
+	{0x034a, 0x17},
+	{0x034b, 0xff},
+	{0x0900, 0x01},
+	{0x0901, 0x44},
+	{0x0902, 0x00},
+	{0x3005, 0x02},
+	{0x3006, 0x02},
+	{0x3140, 0x0a},
+	{0x3144, 0x00},
+	{0x3148, 0x04},
+	{0x31c0, 0x43},
+	{0x31c1, 0x43},
+	{0x3205, 0x00},
+	{0x0408, 0x00},
+	{0x0409, 0x00},
+	{0x040a, 0x00},
+	{0x040b, 0x00},
+	{0x040c, 0x08},
+	{0x040d, 0x00},
+	{0x040e, 0x06},
+	{0x040f, 0x00},
+	{0x034c, 0x08},
+	{0x034d, 0x00},
+	{0x034e, 0x06},
+	{0x034f, 0x00},
+	{0x0301, 0x05},
+	{0x0303, 0x04},
+	{0x0305, 0x04},
+	{0x0306, 0x01},
+	{0x0307, 0x40},
+	{0x030b, 0x02},
+	{0x030d, 0x02},
+	{0x030e, 0x00},
+	{0x030f, 0xc2},
+	{0x3104, 0x01},
+	{0x324c, 0x01},
+	{0x3803, 0x01},
+	{0x3804, 0x01},
+	{0x3805, 0x01},
+	{0x3806, 0x01},
+	{0x38a0, 0x01},
+	{0x38a1, 0x5e},
+	{0x38a2, 0x00},
+	{0x38a3, 0x00},
+	{0x38a4, 0x00},
+	{0x38a5, 0x00},
+	{0x38a8, 0x01},
+	{0x38a9, 0x5e},
+	{0x38aa, 0x00},
+	{0x38ab, 0x00},
+	{0x38ac, 0x00},
+	{0x38ad, 0x00},
+	{0x38d0, 0x00},
+	{0x38d1, 0xd2},
+	{0x38d2, 0x00},
+	{0x38d3, 0xd2},
+	{0x38e0, 0x00},
+	{0x38e1, 0x00},
+	{0x38e2, 0x00},
+	{0x38e3, 0x00},
+	{0x38e4, 0x00},
+	{0x38e5, 0x00},
+	{0x38e6, 0x00},
+	{0x38e7, 0x00},
+	{0x3b00, 0x00},
+	{0x3b01, 0x00},
+	{0x3b04, 0x00},
+	{0x3b05, 0x00},
+	{0x3b06, 0x00},
+	{0x3b07, 0x00},
+	{0x3b0a, 0x00},
+	{0x3b0b, 0x00},
+	{0x0202, 0x03},
+	{0x0203, 0xe8},
+	{0x0204, 0x01},
+	{0x0205, 0x34},
+	{0x020e, 0x01},
+	{0x020f, 0x00},
+	{0x3103, 0x00},
+	{0x3422, 0x01},
+	{0x3423, 0xfc},
+	{0x3190, 0x00},
+	{0x0224, 0x01},
+	{0x0225, 0xf4},
+	{0x0216, 0x00},
+	{0x0217, 0x00},
+	{0x0218, 0x01},
+	{0x0219, 0x00},
+	{0x0e00, 0x00},
+	{0x30a4, 0x00},
+	{0x30a6, 0x00},
+	{0x30c6, 0x01},
+	{0x30c8, 0x01},
+	{0x30f2, 0x01},
+	{0x30f3, 0x01},
+	{0x30a5, 0x30},
+	{0x30a7, 0x30},
+	{0x30c7, 0x30},
+	{0x30c9, 0x30},
+	{0x30a2, 0x00},
+	{0x30c4, 0x01},
+	{0x30f1, 0x01},
+	{0x30a3, 0x30},
+	{0x30c5, 0x30},
+};
+
+/* Supported sensor mode configurations */
+static const struct s5kjn1_mode supported_mode = {
+	.width = 2048,
+	.height = 1536,
+	.hblank = 456, // FIXME
+	.vblank = 506, // FIXME
+	.vblank_min = 506, // FIXME
+	.vblank_max = 32420, // FIXME
+	.pclk = 619200000, // outputPixelClock?
+	.link_freq_idx = 0,
+	.code = MEDIA_BUS_FMT_SRGGB10_1X10,
+	.reg_list = {
+		.num_of_regs = ARRAY_SIZE(mode_2048x1536_regs),
+		.regs = mode_2048x1536_regs,
 	},
 };
 
-struct s5kjn1 {
-	struct v4l2_subdev sd;
-	struct media_pad pad;
-
-	struct regmap *regmap;
-	struct clk *xclk; /* system clock to S5KJN1 */
-	u32 xclk_freq;
-
-	struct gpio_desc *pwdn_gpio;
-	struct gpio_desc *reset_gpio;
-	struct regulator_bulk_data supplies[S5KJN1_NUM_SUPPLIES];
-
-	struct v4l2_ctrl_handler ctrl_handler;
-	/* V4L2 Controls */
-	struct v4l2_ctrl *pixel_rate;
-	struct v4l2_ctrl *link_freq;
-	struct v4l2_ctrl *exposure;
-	struct v4l2_ctrl *vflip;
-	struct v4l2_ctrl *hflip;
-	struct v4l2_ctrl *vblank;
-	struct v4l2_ctrl *hblank;
-
-	/* Current mode */
-	const struct s5kjn1_mode *mode;
-};
-
-static inline struct s5kjn1 *to_s5kjn1(struct v4l2_subdev *_sd)
+/**
+ * to_s5kjn1() - s5kjn1 V4L2 sub-device to s5kjn1 device.
+ * @subdev: pointer to s5kjn1 V4L2 sub-device
+ *
+ * Return: pointer to s5kjn1 device
+ */
+static inline struct s5kjn1 *to_s5kjn1(struct v4l2_subdev *subdev)
 {
-	return container_of(_sd, struct s5kjn1, sd);
+	return container_of(subdev, struct s5kjn1, sd);
 }
 
-/* Get bayer order based on flip setting. */
-static u32 s5kjn1_get_format_code(struct s5kjn1 *s5kjn1, u32 code)
+/**
+ * s5kjn1_read_reg() - Read registers.
+ * @s5kjn1: pointer to s5kjn1 device
+ * @reg: register address
+ * @len: length of bytes to read. Max supported bytes is 4
+ * @val: pointer to register value to be filled.
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_read_reg(struct s5kjn1 *s5kjn1, u16 reg, u32 len, u32 *val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
+	struct i2c_msg msgs[2] = {0};
+	u8 addr_buf[2] = {0};
+	u8 data_buf[4] = {0};
+	int ret;
+
+	if (WARN_ON(len > 4))
+		return -EINVAL;
+
+	put_unaligned_be16(reg, addr_buf);
+
+	/* Write register address */
+	msgs[0].addr = client->addr;
+	msgs[0].flags = 0;
+	msgs[0].len = ARRAY_SIZE(addr_buf);
+	msgs[0].buf = addr_buf;
+
+	/* Read data from register */
+	msgs[1].addr = client->addr;
+	msgs[1].flags = I2C_M_RD;
+	msgs[1].len = len;
+	msgs[1].buf = &data_buf[4 - len];
+
+	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
+	if (ret != ARRAY_SIZE(msgs))
+		return -EIO;
+
+	*val = get_unaligned_be32(data_buf);
+
+	return 0;
+}
+
+/**
+ * s5kjn1_write_reg() - Write register
+ * @s5kjn1: pointer to s5kjn1 device
+ * @reg: register address
+ * @len: length of bytes. Max supported bytes is 4
+ * @val: register value
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_write_reg(struct s5kjn1 *s5kjn1, u16 reg, u32 len, u32 val)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
+	u8 buf[6] = {0};
+
+	if (WARN_ON(len > 4))
+		return -EINVAL;
+
+	put_unaligned_be16(reg, buf);
+	put_unaligned_be32(val << (8 * (4 - len)), buf + 2);
+	if (i2c_master_send(client, buf, len + 2) != len + 2)
+		return -EIO;
+
+	return 0;
+}
+
+/**
+ * s5kjn1_write_regs() - Write a list of registers
+ * @s5kjn1: pointer to s5kjn1 device
+ * @regs: list of registers to be written
+ * @len: length of registers array
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_write_regs(struct s5kjn1 *s5kjn1,
+			     const struct s5kjn1_reg *regs, u32 len)
 {
 	unsigned int i;
+	int ret;
 
-	for (i = 0; i < ARRAY_SIZE(s5kjn1_mbus_formats); i++)
-		if (s5kjn1_mbus_formats[i] == code)
-			break;
+	for (i = 0; i < len; i++) {
+		ret = s5kjn1_write_reg(s5kjn1, regs[i].address, 1, regs[i].val);
+		if (ret)
+			return ret;
+	}
 
-	if (i >= ARRAY_SIZE(s5kjn1_mbus_formats))
-		i = 0;
-
-	i = (i & ~3) | (s5kjn1->vflip->val ? 2 : 0) |
-	    (s5kjn1->hflip->val ? 1 : 0);
-
-	return s5kjn1_mbus_formats[i];
+	return 0;
 }
 
-/* -----------------------------------------------------------------------------
- * Controls
+/**
+ * s5kjn1_update_controls() - Update control ranges based on streaming mode
+ * @s5kjn1: pointer to s5kjn1 device
+ * @mode: pointer to s5kjn1_mode sensor mode
+ *
+ * Return: 0 if successful, error code otherwise.
  */
+static int s5kjn1_update_controls(struct s5kjn1 *s5kjn1,
+				  const struct s5kjn1_mode *mode)
+{
+	int ret;
 
+	ret = __v4l2_ctrl_s_ctrl(s5kjn1->link_freq_ctrl, mode->link_freq_idx);
+	if (ret)
+		return ret;
+
+	ret = __v4l2_ctrl_s_ctrl(s5kjn1->hblank_ctrl, mode->hblank);
+	if (ret)
+		return ret;
+
+	return __v4l2_ctrl_modify_range(s5kjn1->vblank_ctrl, mode->vblank_min,
+					mode->vblank_max, 1, mode->vblank);
+}
+
+/**
+ * s5kjn1_update_exp_gain() - Set updated exposure and gain
+ * @s5kjn1: pointer to s5kjn1 device
+ * @exposure: updated exposure value
+ * @gain: updated analog gain value
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_update_exp_gain(struct s5kjn1 *s5kjn1, u32 exposure, u32 gain)
+{
+	u32 lpfr;
+	int ret;
+
+	lpfr = s5kjn1->vblank + s5kjn1->cur_mode->height;
+
+	dev_dbg(s5kjn1->dev, "Set exp %u, analog gain %u, lpfr %u\n",
+		exposure, gain, lpfr);
+
+	ret = s5kjn1_write_reg(s5kjn1, S5KJN1_REG_HOLD, 1, 1);
+	if (ret)
+		return ret;
+
+	ret = s5kjn1_write_reg(s5kjn1, S5KJN1_REG_LPFR, 2, lpfr);
+	if (ret)
+		goto error_release_group_hold;
+
+	ret = s5kjn1_write_reg(s5kjn1, S5KJN1_REG_EXPOSURE_CIT, 2, exposure);
+	if (ret)
+		goto error_release_group_hold;
+
+	ret = s5kjn1_write_reg(s5kjn1, S5KJN1_REG_AGAIN, 2, gain);
+
+error_release_group_hold:
+	s5kjn1_write_reg(s5kjn1, S5KJN1_REG_HOLD, 1, 0);
+
+	return ret;
+}
+
+/**
+ * s5kjn1_set_ctrl() - Set subdevice control
+ * @ctrl: pointer to v4l2_ctrl structure
+ *
+ * Supported controls:
+ * - V4L2_CID_VBLANK
+ * - cluster controls:
+ *   - V4L2_CID_ANALOGUE_GAIN
+ *   - V4L2_CID_EXPOSURE
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
 static int s5kjn1_set_ctrl(struct v4l2_ctrl *ctrl)
 {
 	struct s5kjn1 *s5kjn1 =
 		container_of(ctrl->handler, struct s5kjn1, ctrl_handler);
-	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
-	const struct v4l2_mbus_framefmt *format;
-	struct v4l2_subdev_state *state;
-	int ret = 0;
-
-	state = v4l2_subdev_get_locked_active_state(&s5kjn1->sd);
-	format = v4l2_subdev_state_get_format(state, 0);
-	dev_info(&client->dev, "s5kjn1_set_ctrl %x\n", ctrl->id);
-
-	if (ctrl->id == V4L2_CID_VBLANK) {
-		int exposure_max, exposure_def;
-
-		/* Update max exposure while meeting expected vblanking */
-		exposure_max = format->height + ctrl->val - 4;
-		exposure_def = (exposure_max < S5KJN1_EXPOSURE_DEFAULT) ?
-			exposure_max : S5KJN1_EXPOSURE_DEFAULT;
-		__v4l2_ctrl_modify_range(s5kjn1->exposure,
-					 s5kjn1->exposure->minimum,
-					 exposure_max, s5kjn1->exposure->step,
-					 exposure_def);
-	}
-
-	/*
-	 * Applying V4L2 control value only happens
-	 * when power is up for streaming
-	 */
-	if (pm_runtime_get_if_in_use(&client->dev) == 0)
-		return 0;
+	u32 analog_gain;
+	u32 exposure;
+	int ret;
 
 	switch (ctrl->id) {
-	case V4L2_CID_ANALOGUE_GAIN:
-		cci_write(s5kjn1->regmap, S5KJN1_REG_ANALOG_GAIN,
-			  ctrl->val, &ret);
+	case V4L2_CID_VBLANK:
+		s5kjn1->vblank = s5kjn1->vblank_ctrl->val;
+
+		dev_dbg(s5kjn1->dev, "Received vblank %u, new lpfr %u\n",
+			s5kjn1->vblank,
+			s5kjn1->vblank + s5kjn1->cur_mode->height);
+
+		ret = __v4l2_ctrl_modify_range(s5kjn1->exp_ctrl,
+					       S5KJN1_EXPOSURE_MIN,
+					       s5kjn1->vblank +
+					       s5kjn1->cur_mode->height -
+					       S5KJN1_EXPOSURE_OFFSET,
+					       1, S5KJN1_EXPOSURE_DEFAULT);
 		break;
 	case V4L2_CID_EXPOSURE:
-		cci_write(s5kjn1->regmap, S5KJN1_REG_EXPOSURE,
-			  ctrl->val, &ret);
-		break;
-	case V4L2_CID_DIGITAL_GAIN:
-//		cci_write(s5kjn1->regmap, S5KJN1_REG_DIGITAL_GAIN,
-//			  ctrl->val, &ret);
-		break;
-	case V4L2_CID_TEST_PATTERN:
-		cci_write(s5kjn1->regmap, S5KJN1_REG_TEST_PATTERN,
-			  s5kjn1_test_pattern_val[ctrl->val], &ret);
-		break;
-	case V4L2_CID_HFLIP:
-	case V4L2_CID_VFLIP:
-		cci_write(s5kjn1->regmap, S5KJN1_REG_ORIENTATION,
-			  s5kjn1->hflip->val | s5kjn1->vflip->val << 1, &ret);
-		break;
-	case V4L2_CID_VBLANK:
-//		cci_write(s5kjn1->regmap, S5KJN1_REG_VTS,
-//			  format->height + ctrl->val, &ret);
+		/* Set controls only if sensor is in power on state */
+		if (!pm_runtime_get_if_in_use(s5kjn1->dev))
+			return 0;
+
+		exposure = ctrl->val;
+		analog_gain = s5kjn1->again_ctrl->val;
+
+		dev_dbg(s5kjn1->dev, "Received exp %u, analog gain %u\n",
+			exposure, analog_gain);
+
+		ret = s5kjn1_update_exp_gain(s5kjn1, exposure, analog_gain);
+
+		pm_runtime_put(s5kjn1->dev);
+
 		break;
 	default:
-		dev_info(&client->dev,
-			 "ctrl(id:0x%x,val:0x%x) is not handled\n",
-			 ctrl->id, ctrl->val);
+		dev_err(s5kjn1->dev, "Invalid control %d\n", ctrl->id);
 		ret = -EINVAL;
-		break;
 	}
-
-	pm_runtime_put(&client->dev);
 
 	return ret;
 }
 
+/* V4l2 subdevice control ops*/
 static const struct v4l2_ctrl_ops s5kjn1_ctrl_ops = {
 	.s_ctrl = s5kjn1_set_ctrl,
 };
 
-/* Initialize control handlers */
-static int s5kjn1_init_controls(struct s5kjn1 *s5kjn1)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
-	const struct s5kjn1_mode *mode = &supported_modes[0];
-	struct v4l2_ctrl_handler *ctrl_hdlr;
-	struct v4l2_fwnode_device_properties props;
-	int exposure_max, exposure_def, hblank;
-	int ret;
-	dev_err(&client->dev, "s5kjn1_init_controls\n");
-
-	ctrl_hdlr = &s5kjn1->ctrl_handler;
-	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 12);
-	if (ret)
-		return ret;
-
-	/* By default, PIXEL_RATE is read only */
-	s5kjn1->pixel_rate = v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops,
-					       V4L2_CID_PIXEL_RATE,
-					       S5KJN1_PIXEL_RATE,
-					       S5KJN1_PIXEL_RATE, 1,
-					       S5KJN1_PIXEL_RATE);
-
-	s5kjn1->link_freq =
-		v4l2_ctrl_new_int_menu(ctrl_hdlr, &s5kjn1_ctrl_ops,
-				       V4L2_CID_LINK_FREQ,
-				       ARRAY_SIZE(s5kjn1_link_freq_menu) - 1, 0,
-				       s5kjn1_link_freq_menu);
-	if (s5kjn1->link_freq)
-		s5kjn1->link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
-
-	/* Initial vblank/hblank/exposure parameters based on current mode */
-	s5kjn1->vblank = v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops,
-					   V4L2_CID_VBLANK, S5KJN1_VBLANK_MIN,
-					   S5KJN1_VTS_MAX - mode->height, 1,
-					   mode->vts_def - mode->height);
-	hblank = S5KJN1_PPL_DEFAULT - mode->width;
-	s5kjn1->hblank = v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops,
-					   V4L2_CID_HBLANK, hblank, hblank,
-					   1, hblank);
-	if (s5kjn1->hblank)
-		s5kjn1->hblank->flags |= V4L2_CTRL_FLAG_READ_ONLY;
-	exposure_max = mode->vts_def - 4;
-	exposure_def = (exposure_max < S5KJN1_EXPOSURE_DEFAULT) ?
-		exposure_max : S5KJN1_EXPOSURE_DEFAULT;
-	s5kjn1->exposure = v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops,
-					     V4L2_CID_EXPOSURE,
-					     S5KJN1_EXPOSURE_MIN, exposure_max,
-					     S5KJN1_EXPOSURE_STEP,
-					     exposure_def);
-
-	v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
-			  S5KJN1_ANA_GAIN_MIN, S5KJN1_ANA_GAIN_MAX,
-			  S5KJN1_ANA_GAIN_STEP, S5KJN1_ANA_GAIN_DEFAULT);
-
-	v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops, V4L2_CID_DIGITAL_GAIN,
-			  S5KJN1_DGTL_GAIN_MIN, S5KJN1_DGTL_GAIN_MAX,
-			  S5KJN1_DGTL_GAIN_STEP, S5KJN1_DGTL_GAIN_DEFAULT);
-
-	s5kjn1->hflip = v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops,
-					  V4L2_CID_HFLIP, 0, 1, 1, 0);
-	if (s5kjn1->hflip)
-		s5kjn1->hflip->flags |= V4L2_CTRL_FLAG_MODIFY_LAYOUT;
-
-	s5kjn1->vflip = v4l2_ctrl_new_std(ctrl_hdlr, &s5kjn1_ctrl_ops,
-					  V4L2_CID_VFLIP, 0, 1, 1, 0);
-	if (s5kjn1->vflip)
-		s5kjn1->vflip->flags |= V4L2_CTRL_FLAG_MODIFY_LAYOUT;
-
-	v4l2_ctrl_new_std_menu_items(ctrl_hdlr, &s5kjn1_ctrl_ops,
-				     V4L2_CID_TEST_PATTERN,
-				     ARRAY_SIZE(s5kjn1_test_pattern_menu) - 1,
-				     0, 0, s5kjn1_test_pattern_menu);
-
-	if (ctrl_hdlr->error) {
-		ret = ctrl_hdlr->error;
-		dev_err(&client->dev, "%s control init failed (%d)\n",
-			__func__, ret);
-		goto error;
-	}
-
-	ret = v4l2_fwnode_device_parse(&client->dev, &props);
-	if (ret)
-		goto error;
-
-	ret = v4l2_ctrl_new_fwnode_properties(ctrl_hdlr, &s5kjn1_ctrl_ops,
-					      &props);
-	if (ret)
-		goto error;
-
-	s5kjn1->sd.ctrl_handler = ctrl_hdlr;
-	dev_info(&client->dev, "s5kjn1_init_controls ok\n");
-
-	return 0;
-
-error:
-	v4l2_ctrl_handler_free(ctrl_hdlr);
-	dev_info(&client->dev, "s5kjn1_init_controls failed %i\n", ret);
-
-	return ret;
-}
-
-static void s5kjn1_free_controls(struct s5kjn1 *s5kjn1)
-{
-	v4l2_ctrl_handler_free(s5kjn1->sd.ctrl_handler);
-}
-
-/* -----------------------------------------------------------------------------
- * Subdev operations
+/**
+ * s5kjn1_enum_mbus_code() - Enumerate V4L2 sub-device mbus codes
+ * @sd: pointer to s5kjn1 V4L2 sub-device structure
+ * @sd_state: V4L2 sub-device configuration
+ * @code: V4L2 sub-device code enumeration need to be filled
+ *
+ * Return: 0 if successful, error code otherwise.
  */
-
-static int s5kjn1_start_streaming(struct s5kjn1 *s5kjn1,
-				  struct v4l2_subdev_state *state)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
-	const struct s5kjn1_reg_list *reg_list;
-	int ret;
-	dev_info(&client->dev, "s5kjn1_start_streaming\n");
-
-	ret = pm_runtime_resume_and_get(&client->dev);
-	if (ret < 0)
-		return ret;
-
-	/* Send all registers that are common to all modes */
-/*
-	ret = cci_multi_reg_write(s5kjn1->regmap, s5kjn1_common_regs,
-				  ARRAY_SIZE(s5kjn1_common_regs), NULL);
-	if (ret) {
-		dev_err(&client->dev, "%s failed to send mfg header\n", __func__);
-		goto err_rpm_put;
-	}
-*/
-	ret = cci_write(s5kjn1->regmap, CCI_REG16(0x6028), 0x4000, NULL);
-	ret = cci_write(s5kjn1->regmap, CCI_REG16(0x0000), 0x0003, NULL);
-	ret = cci_write(s5kjn1->regmap, CCI_REG16(0x0000), 0x38e1, NULL);
-	ret = cci_write(s5kjn1->regmap, CCI_REG16(0x001e), 0x0007, NULL);
-	ret = cci_write(s5kjn1->regmap, CCI_REG16(0x6028), 0x4000, NULL);
-	ret = cci_write(s5kjn1->regmap, CCI_REG16(0x6010), 0x0001, NULL);
-
-	usleep_range(5000, 5100);
-
-	ret = cci_write(s5kjn1->regmap, CCI_REG16(0x6226), 0x0001, NULL);
-	usleep_range(10000, 10100);
-/*
-	{ CCI_REG16(0x6028), 0x4000 }, // Page pointer HW
-	{ CCI_REG16(0x0000), 0x0003 }, // Setfile Version
-	{ CCI_REG16(0x0000), 0x38E1 }, // JN1( Sensor ID)
-	{ CCI_REG16(0x001E), 0x0007 }, // V07
-
-	{ CCI_REG16(0x6028), 0x4000 }, // Init setting
-	{ CCI_REG16(0x6010), 0x0001 },
-//	{ CCI_REG16(0xeeee), 5 }, //Delay 5ms
-	{ CCI_REG16(0x6226), 0x0001 },
-//	{ CCI_REG16(0xeeee), 10 }, //Delay 10ms
-*/
-
-	/* Apply default values of current mode */
-	reg_list = &s5kjn1->mode->reg_list;
-	ret = cci_multi_reg_write(s5kjn1->regmap, reg_list->regs,
-				  reg_list->num_of_regs, NULL);
-	if (ret) {
-		dev_err(&client->dev, "%s failed to set mode\n", __func__);
-		goto err_rpm_put;
-	}
-
-	/* Apply customized values from user */
-	ret =  __v4l2_ctrl_handler_setup(s5kjn1->sd.ctrl_handler);
-	if (ret)
-		goto err_rpm_put;
-
-	/* set stream on register */
-	ret = cci_write(s5kjn1->regmap, S5KJN1_REG_MODE_SELECT,
-			S5KJN1_MODE_STREAMING, NULL);
-	if (ret)
-		goto err_rpm_put;
-
-	/* vflip and hflip cannot change during streaming */
-	__v4l2_ctrl_grab(s5kjn1->vflip, true);
-	__v4l2_ctrl_grab(s5kjn1->hflip, true);
-
-	dev_info(&client->dev, "s5kjn1_start_streaming ok\n");
-	return 0;
-
-err_rpm_put:
-	pm_runtime_put(&client->dev);
-	dev_info(&client->dev, "s5kjn1_start_streaming failed %i\n", ret);
-	return ret;
-}
-
-static void s5kjn1_stop_streaming(struct s5kjn1 *s5kjn1)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
-	int ret;
-	dev_info(&client->dev, "s5kjn1_stop_streaming\n");
-
-	/* set stream off register */
-	ret = cci_write(s5kjn1->regmap, S5KJN1_REG_MODE_SELECT,
-			S5KJN1_MODE_STANDBY, NULL);
-	if (ret)
-		dev_err(&client->dev, "%s failed to set stream\n", __func__);
-
-	__v4l2_ctrl_grab(s5kjn1->vflip, false);
-	__v4l2_ctrl_grab(s5kjn1->hflip, false);
-
-	pm_runtime_put(&client->dev);
-}
-
-static int s5kjn1_set_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
-	struct v4l2_subdev_state *state;
-	int ret = 0;
-	dev_info(sd->dev, "s5kjn1_set_stream\n");
-
-	state = v4l2_subdev_lock_and_get_active_state(sd);
-
-	if (enable)
-		ret = s5kjn1_start_streaming(s5kjn1, state);
-	else
-		s5kjn1_stop_streaming(s5kjn1);
-
-	v4l2_subdev_unlock_state(state);
-	return ret;
-}
-
-static void s5kjn1_update_pad_format(struct s5kjn1 *s5kjn1,
-				     const struct s5kjn1_mode *mode,
-				     struct v4l2_mbus_framefmt *fmt, u32 code)
-{
-	/* Bayer order varies with flips */
-	fmt->code = s5kjn1_get_format_code(s5kjn1, code);
-	fmt->width = mode->width;
-	fmt->height = mode->height;
-	fmt->field = V4L2_FIELD_NONE;
-	fmt->colorspace = V4L2_COLORSPACE_RAW;
-	fmt->ycbcr_enc = V4L2_YCBCR_ENC_601;
-	fmt->quantization = V4L2_QUANTIZATION_FULL_RANGE;
-	fmt->xfer_func = V4L2_XFER_FUNC_NONE;
-}
-
 static int s5kjn1_enum_mbus_code(struct v4l2_subdev *sd,
-				 struct v4l2_subdev_state *state,
+				 struct v4l2_subdev_state *sd_state,
 				 struct v4l2_subdev_mbus_code_enum *code)
 {
-	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
-	dev_info(sd->dev, "s5kjn1_enum_mbus_code\n");
-
-	if (code->index >= (ARRAY_SIZE(s5kjn1_mbus_formats) / 4))
+	if (code->index > 0)
 		return -EINVAL;
 
-	code->code = s5kjn1_get_format_code(s5kjn1, s5kjn1_mbus_formats[code->index * 4]);
+	code->code = supported_mode.code;
 
 	return 0;
 }
 
+/**
+ * s5kjn1_enum_frame_size() - Enumerate V4L2 sub-device frame sizes
+ * @sd: pointer to s5kjn1 V4L2 sub-device structure
+ * @sd_state: V4L2 sub-device configuration
+ * @fsize: V4L2 sub-device size enumeration need to be filled
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
 static int s5kjn1_enum_frame_size(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_state *state,
-				  struct v4l2_subdev_frame_size_enum *fse)
+				  struct v4l2_subdev_state *sd_state,
+				  struct v4l2_subdev_frame_size_enum *fsize)
+{
+	if (fsize->index > 0)
+		return -EINVAL;
+
+	if (fsize->code != supported_mode.code)
+		return -EINVAL;
+
+	fsize->min_width = supported_mode.width;
+	fsize->max_width = fsize->min_width;
+	fsize->min_height = supported_mode.height;
+	fsize->max_height = fsize->min_height;
+
+	return 0;
+}
+
+/**
+ * s5kjn1_fill_pad_format() - Fill subdevice pad format
+ *                            from selected sensor mode
+ * @s5kjn1: pointer to s5kjn1 device
+ * @mode: pointer to s5kjn1_mode sensor mode
+ * @fmt: V4L2 sub-device format need to be filled
+ */
+static void s5kjn1_fill_pad_format(struct s5kjn1 *s5kjn1,
+				   const struct s5kjn1_mode *mode,
+				   struct v4l2_subdev_format *fmt)
+{
+	fmt->format.width = mode->width;
+	fmt->format.height = mode->height;
+	fmt->format.code = mode->code;
+	fmt->format.field = V4L2_FIELD_NONE;
+	fmt->format.colorspace = V4L2_COLORSPACE_RAW;
+	fmt->format.ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
+	fmt->format.quantization = V4L2_QUANTIZATION_DEFAULT;
+	fmt->format.xfer_func = V4L2_XFER_FUNC_NONE;
+}
+
+/**
+ * s5kjn1_get_pad_format() - Get subdevice pad format
+ * @sd: pointer to s5kjn1 V4L2 sub-device structure
+ * @sd_state: V4L2 sub-device configuration
+ * @fmt: V4L2 sub-device format need to be set
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_get_pad_format(struct v4l2_subdev *sd,
+				 struct v4l2_subdev_state *sd_state,
+				 struct v4l2_subdev_format *fmt)
 {
 	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
-	u32 code;
-	dev_info(sd->dev, "s5kjn1_enum_frame_size\n");
 
-	if (fse->index >= ARRAY_SIZE(supported_modes))
-		return -EINVAL;
+	mutex_lock(&s5kjn1->mutex);
 
-	code = s5kjn1_get_format_code(s5kjn1, fse->code);
-	if (fse->code != code)
-		return -EINVAL;
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+		struct v4l2_mbus_framefmt *framefmt;
 
-	fse->min_width = supported_modes[fse->index].width;
-	fse->max_width = fse->min_width;
-	fse->min_height = supported_modes[fse->index].height;
-	fse->max_height = fse->min_height;
+		framefmt = v4l2_subdev_state_get_format(sd_state, fmt->pad);
+		fmt->format = *framefmt;
+	} else {
+		s5kjn1_fill_pad_format(s5kjn1, s5kjn1->cur_mode, fmt);
+	}
+
+	mutex_unlock(&s5kjn1->mutex);
 
 	return 0;
 }
 
+/**
+ * s5kjn1_set_pad_format() - Set subdevice pad format
+ * @sd: pointer to s5kjn1 V4L2 sub-device structure
+ * @sd_state: V4L2 sub-device configuration
+ * @fmt: V4L2 sub-device format need to be set
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
 static int s5kjn1_set_pad_format(struct v4l2_subdev *sd,
-				 struct v4l2_subdev_state *state,
+				 struct v4l2_subdev_state *sd_state,
 				 struct v4l2_subdev_format *fmt)
 {
 	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
 	const struct s5kjn1_mode *mode;
-	struct v4l2_mbus_framefmt *format;
-	struct v4l2_rect *crop;
-	unsigned int bin_h, bin_v;
-	dev_info(sd->dev, "s5kjn1_set_pad_format\n");
+	int ret = 0;
 
-	mode = v4l2_find_nearest_size(supported_modes,
-				      ARRAY_SIZE(supported_modes),
-				      width, height,
-				      fmt->format.width, fmt->format.height);
+	mutex_lock(&s5kjn1->mutex);
 
-	s5kjn1_update_pad_format(s5kjn1, mode, &fmt->format, fmt->format.code);
+	mode = &supported_mode;
+	s5kjn1_fill_pad_format(s5kjn1, mode, fmt);
 
-	format = v4l2_subdev_state_get_format(state, 0);
-	*format = fmt->format;
+	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+		struct v4l2_mbus_framefmt *framefmt;
 
-	/*
-	 * Use binning to maximize the crop rectangle size, and centre it in the
-	 * sensor.
-	 */
-	bin_h = min(S5KJN1_PIXEL_ARRAY_WIDTH / format->width, 2U);
-	bin_v = min(S5KJN1_PIXEL_ARRAY_HEIGHT / format->height, 2U);
-
-	crop = v4l2_subdev_state_get_crop(state, 0);
-	crop->width = format->width * bin_h;
-	crop->height = format->height * bin_v;
-	crop->left = (S5KJN1_NATIVE_WIDTH - crop->width) / 2;
-	crop->top = (S5KJN1_NATIVE_HEIGHT - crop->height) / 2;
-
-	if (fmt->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
-		int exposure_max;
-		int exposure_def;
-		int hblank;
-
-		s5kjn1->mode = mode;
-
-		/* Update limits and set FPS to default */
-		__v4l2_ctrl_modify_range(s5kjn1->vblank, S5KJN1_VBLANK_MIN,
-					 S5KJN1_VTS_MAX - mode->height, 1,
-					 mode->vts_def - mode->height);
-		__v4l2_ctrl_s_ctrl(s5kjn1->vblank,
-				   mode->vts_def - mode->height);
-		/* Update max exposure while meeting expected vblanking */
-		exposure_max = mode->vts_def - 4;
-		exposure_def = (exposure_max < S5KJN1_EXPOSURE_DEFAULT) ?
-			exposure_max : S5KJN1_EXPOSURE_DEFAULT;
-		__v4l2_ctrl_modify_range(s5kjn1->exposure,
-					 s5kjn1->exposure->minimum,
-					 exposure_max, s5kjn1->exposure->step,
-					 exposure_def);
-		/*
-		 * Currently PPL is fixed to S5KJN1_PPL_DEFAULT, so hblank
-		 * depends on mode->width only, and is not changeble in any
-		 * way other than changing the mode.
-		 */
-		hblank = S5KJN1_PPL_DEFAULT - mode->width;
-		__v4l2_ctrl_modify_range(s5kjn1->hblank, hblank, hblank, 1,
-					 hblank);
+		framefmt = v4l2_subdev_state_get_format(sd_state, fmt->pad);
+		*framefmt = fmt->format;
+	} else {
+		ret = s5kjn1_update_controls(s5kjn1, mode);
+		if (!ret)
+			s5kjn1->cur_mode = mode;
 	}
 
-	return 0;
+	mutex_unlock(&s5kjn1->mutex);
+
+	return ret;
 }
 
-static int s5kjn1_get_selection(struct v4l2_subdev *sd,
-				struct v4l2_subdev_state *state,
-				struct v4l2_subdev_selection *sel)
-{
-	dev_info(sd->dev, "s5kjn1_get_selection\n");
-	switch (sel->target) {
-	case V4L2_SEL_TGT_CROP: {
-		sel->r = *v4l2_subdev_state_get_crop(state, 0);
-		return 0;
-	}
-
-	case V4L2_SEL_TGT_NATIVE_SIZE:
-		sel->r.top = 0;
-		sel->r.left = 0;
-		sel->r.width = S5KJN1_NATIVE_WIDTH;
-		sel->r.height = S5KJN1_NATIVE_HEIGHT;
-
-		return 0;
-
-	case V4L2_SEL_TGT_CROP_DEFAULT:
-	case V4L2_SEL_TGT_CROP_BOUNDS:
-		sel->r.top = S5KJN1_PIXEL_ARRAY_TOP;
-		sel->r.left = S5KJN1_PIXEL_ARRAY_LEFT;
-		sel->r.width = S5KJN1_PIXEL_ARRAY_WIDTH;
-		sel->r.height = S5KJN1_PIXEL_ARRAY_HEIGHT;
-
-		return 0;
-	}
-
-	return -EINVAL;
-}
-
+/**
+ * s5kjn1_init_state() - Initialize sub-device state
+ * @sd: pointer to s5kjn1 V4L2 sub-device structure
+ * @sd_state: V4L2 sub-device configuration
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
 static int s5kjn1_init_state(struct v4l2_subdev *sd,
-			     struct v4l2_subdev_state *state)
+			     struct v4l2_subdev_state *sd_state)
 {
-	struct v4l2_subdev_format fmt = {
-		.which = V4L2_SUBDEV_FORMAT_TRY,
-		.pad = 0,
-		.format = {
-			.code = MEDIA_BUS_FMT_SGBRG10_1X10,
-			.width = supported_modes[0].width,
-			.height = supported_modes[0].height,
-		},
-	};
+	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
+	struct v4l2_subdev_format fmt = { 0 };
 
-	s5kjn1_set_pad_format(sd, state, &fmt);
+	fmt.which = sd_state ? V4L2_SUBDEV_FORMAT_TRY : V4L2_SUBDEV_FORMAT_ACTIVE;
+	s5kjn1_fill_pad_format(s5kjn1, &supported_mode, &fmt);
+
+	return s5kjn1_set_pad_format(sd, sd_state, &fmt);
+}
+
+/**
+ * s5kjn1_start_streaming() - Start sensor stream
+ * @s5kjn1: pointer to s5kjn1 device
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_start_streaming(struct s5kjn1 *s5kjn1)
+{
+	const struct s5kjn1_reg_list *reg_list;
+	int ret;
+
+	/* Write sensor mode registers */
+	reg_list = &s5kjn1->cur_mode->reg_list;
+	ret = s5kjn1_write_regs(s5kjn1, reg_list->regs,
+				reg_list->num_of_regs);
+	if (ret) {
+		dev_err(s5kjn1->dev, "fail to write initial registers\n");
+		return ret;
+	}
+
+	/* Setup handler will write actual exposure and gain */
+	ret =  __v4l2_ctrl_handler_setup(s5kjn1->sd.ctrl_handler);
+	if (ret) {
+		dev_err(s5kjn1->dev, "fail to setup handler\n");
+		return ret;
+	}
+
+	/* Delay is required before streaming*/
+	usleep_range(7400, 8000);
+
+	/* Start streaming */
+	ret = s5kjn1_write_reg(s5kjn1, S5KJN1_REG_MODE_SELECT,
+			       1, S5KJN1_MODE_STREAMING);
+	if (ret) {
+		dev_err(s5kjn1->dev, "fail to start streaming\n");
+		return ret;
+	}
 
 	return 0;
 }
 
-static const struct v4l2_subdev_core_ops s5kjn1_core_ops = {
-	.subscribe_event = v4l2_ctrl_subdev_subscribe_event,
-	.unsubscribe_event = v4l2_event_subdev_unsubscribe,
-};
+/**
+ * s5kjn1_stop_streaming() - Stop sensor stream
+ * @s5kjn1: pointer to s5kjn1 device
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_stop_streaming(struct s5kjn1 *s5kjn1)
+{
+	return s5kjn1_write_reg(s5kjn1, S5KJN1_REG_MODE_SELECT,
+				1, S5KJN1_MODE_STANDBY);
+}
 
+/**
+ * s5kjn1_set_stream() - Enable sensor streaming
+ * @sd: pointer to s5kjn1 subdevice
+ * @enable: set to enable sensor streaming
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_set_stream(struct v4l2_subdev *sd, int enable)
+{
+	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
+	int ret;
+
+	mutex_lock(&s5kjn1->mutex);
+
+	if (enable) {
+		ret = pm_runtime_resume_and_get(s5kjn1->dev);
+		if (ret)
+			goto error_unlock;
+
+		ret = s5kjn1_start_streaming(s5kjn1);
+		if (ret)
+			goto error_power_off;
+	} else {
+		s5kjn1_stop_streaming(s5kjn1);
+		pm_runtime_put(s5kjn1->dev);
+	}
+
+	mutex_unlock(&s5kjn1->mutex);
+
+	return 0;
+
+error_power_off:
+	pm_runtime_put(s5kjn1->dev);
+error_unlock:
+	mutex_unlock(&s5kjn1->mutex);
+
+	return ret;
+}
+
+/**
+ * s5kjn1_detect() - Detect s5kjn1 sensor
+ * @s5kjn1: pointer to s5kjn1 device
+ *
+ * Return: 0 if successful, -EIO if sensor id does not match
+ */
+static int s5kjn1_detect(struct s5kjn1 *s5kjn1)
+{
+	int ret;
+	u32 val;
+
+	ret = s5kjn1_read_reg(s5kjn1, S5KJN1_REG_ID, 2, &val);
+	if (ret)
+		return ret;
+
+	if (val != S5KJN1_ID) {
+		dev_err(s5kjn1->dev, "chip id mismatch: %x!=%x\n",
+			S5KJN1_ID, val);
+		return -ENXIO;
+	}
+
+	return 0;
+}
+
+/**
+ * s5kjn1_parse_hw_config() - Parse HW configuration and check if supported
+ * @s5kjn1: pointer to s5kjn1 device
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
+static int s5kjn1_parse_hw_config(struct s5kjn1 *s5kjn1)
+{
+	struct fwnode_handle *fwnode = dev_fwnode(s5kjn1->dev);
+	struct v4l2_fwnode_endpoint bus_cfg = {};
+	struct fwnode_handle *ep;
+	unsigned long rate;
+	unsigned int i;
+	int ret;
+
+	if (!fwnode)
+		return -ENXIO;
+
+	/* Request optional reset pin */
+	s5kjn1->reset_gpio = devm_gpiod_get_optional(s5kjn1->dev, "reset",
+						     GPIOD_OUT_LOW);
+	if (IS_ERR(s5kjn1->reset_gpio)) {
+		dev_err(s5kjn1->dev, "failed to get reset gpio %ld\n",
+			PTR_ERR(s5kjn1->reset_gpio));
+		return PTR_ERR(s5kjn1->reset_gpio);
+	}
+
+	/* Get sensor input clock */
+	s5kjn1->inclk = devm_clk_get(s5kjn1->dev, NULL);
+	if (IS_ERR(s5kjn1->inclk)) {
+		dev_err(s5kjn1->dev, "could not get inclk\n");
+		return PTR_ERR(s5kjn1->inclk);
+	}
+
+	rate = clk_get_rate(s5kjn1->inclk);
+	if (rate != S5KJN1_INCLK_RATE) {
+		dev_err(s5kjn1->dev, "inclk frequency mismatch\n");
+		return -EINVAL;
+	}
+
+	/* Get optional DT defined regulators */
+	for (i = 0; i < ARRAY_SIZE(s5kjn1_supply_names); i++)
+		s5kjn1->supplies[i].supply = s5kjn1_supply_names[i];
+
+	ret = devm_regulator_bulk_get(s5kjn1->dev,
+				      ARRAY_SIZE(s5kjn1_supply_names),
+				      s5kjn1->supplies);
+	if (ret)
+		return ret;
+
+	ep = fwnode_graph_get_next_endpoint(fwnode, NULL);
+	if (!ep)
+		return -ENXIO;
+
+	ret = v4l2_fwnode_endpoint_alloc_parse(ep, &bus_cfg);
+	fwnode_handle_put(ep);
+	if (ret)
+		return ret;
+
+	if (bus_cfg.bus_type != V4L2_MBUS_CSI2_DPHY) {
+		dev_err(s5kjn1->dev, "selected bus-type is not supported\n");
+		ret = -EINVAL;
+		goto done_endpoint_free;
+	}
+
+	if (bus_cfg.bus.mipi_csi2.num_data_lanes != S5KJN1_NUM_DATA_LANES) {
+		dev_err(s5kjn1->dev,
+			"number of CSI2 data lanes %d is not supported\n",
+			bus_cfg.bus.mipi_csi2.num_data_lanes);
+		ret = -EINVAL;
+		goto done_endpoint_free;
+	}
+
+	if (!bus_cfg.nr_of_link_frequencies) {
+		dev_err(s5kjn1->dev, "no link frequencies defined\n");
+		ret = -EINVAL;
+		goto done_endpoint_free;
+	}
+
+	for (i = 0; i < bus_cfg.nr_of_link_frequencies; i++)
+		if (bus_cfg.link_frequencies[i] == S5KJN1_LINK_FREQ)
+			goto done_endpoint_free;
+
+	ret = -EINVAL;
+
+done_endpoint_free:
+	v4l2_fwnode_endpoint_free(&bus_cfg);
+
+	return ret;
+}
+
+/* V4l2 subdevice ops */
 static const struct v4l2_subdev_video_ops s5kjn1_video_ops = {
 	.s_stream = s5kjn1_set_stream,
 };
 
 static const struct v4l2_subdev_pad_ops s5kjn1_pad_ops = {
 	.enum_mbus_code = s5kjn1_enum_mbus_code,
-	.get_fmt = v4l2_subdev_get_fmt,
-	.set_fmt = s5kjn1_set_pad_format,
-	.get_selection = s5kjn1_get_selection,
 	.enum_frame_size = s5kjn1_enum_frame_size,
+	.get_fmt = s5kjn1_get_pad_format,
+	.set_fmt = s5kjn1_set_pad_format,
 };
 
 static const struct v4l2_subdev_ops s5kjn1_subdev_ops = {
-	.core = &s5kjn1_core_ops,
 	.video = &s5kjn1_video_ops,
 	.pad = &s5kjn1_pad_ops,
 };
@@ -1076,154 +1131,167 @@ static const struct v4l2_subdev_internal_ops s5kjn1_internal_ops = {
 	.init_state = s5kjn1_init_state,
 };
 
-/* -----------------------------------------------------------------------------
- * Power management
+/**
+ * s5kjn1_power_on() - Sensor power on sequence
+ * @dev: pointer to i2c device
+ *
+ * Return: 0 if successful, error code otherwise.
  */
-
 static int s5kjn1_power_on(struct device *dev)
 {
 	struct v4l2_subdev *sd = dev_get_drvdata(dev);
 	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
 	int ret;
 
-	dev_info(dev, "s5kjn1_power_on\n");
-	ret = regulator_bulk_enable(S5KJN1_NUM_SUPPLIES,
+	ret = regulator_bulk_enable(ARRAY_SIZE(s5kjn1_supply_names),
 				    s5kjn1->supplies);
-	if (ret) {
-		dev_err(dev, "%s: failed to enable regulators\n",
-			__func__);
+	if (ret < 0) {
+		dev_err(dev, "failed to enable regulators\n");
 		return ret;
 	}
 
-	ret = clk_prepare_enable(s5kjn1->xclk);
+	gpiod_set_value_cansleep(s5kjn1->reset_gpio, 0);
+
+	ret = clk_prepare_enable(s5kjn1->inclk);
 	if (ret) {
-		dev_err(dev, "%s: failed to enable clock\n",
-			__func__);
-		goto reg_off;
+		dev_err(s5kjn1->dev, "fail to enable inclk\n");
+		goto error_reset;
 	}
 
-	gpiod_set_value_cansleep(s5kjn1->reset_gpio, 0);
-	//FIXME
-	usleep_range(S5KJN1_XCLR_MIN_DELAY_US,
-		     S5KJN1_XCLR_MIN_DELAY_US + S5KJN1_XCLR_DELAY_RANGE_US);
-
-	if (!IS_ERR(s5kjn1->pwdn_gpio))
-		gpiod_set_value_cansleep(s5kjn1->pwdn_gpio, 1);
+	usleep_range(1000, 1200);
 
 	return 0;
 
-reg_off:
-	regulator_bulk_disable(S5KJN1_NUM_SUPPLIES, s5kjn1->supplies);
+error_reset:
+	gpiod_set_value_cansleep(s5kjn1->reset_gpio, 1);
+	regulator_bulk_disable(ARRAY_SIZE(s5kjn1_supply_names),
+			       s5kjn1->supplies);
 
 	return ret;
 }
 
+/**
+ * s5kjn1_power_off() - Sensor power off sequence
+ * @dev: pointer to i2c device
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
 static int s5kjn1_power_off(struct device *dev)
 {
 	struct v4l2_subdev *sd = dev_get_drvdata(dev);
 	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
-	dev_info(dev, "s5kjn1_power_off\n");
 
-	if (!IS_ERR(s5kjn1->pwdn_gpio))
-		gpiod_set_value_cansleep(s5kjn1->pwdn_gpio, 0);
+	clk_disable_unprepare(s5kjn1->inclk);
 
 	gpiod_set_value_cansleep(s5kjn1->reset_gpio, 1);
-	regulator_bulk_disable(S5KJN1_NUM_SUPPLIES, s5kjn1->supplies);
-	clk_disable_unprepare(s5kjn1->xclk);
+
+	regulator_bulk_disable(ARRAY_SIZE(s5kjn1_supply_names),
+			       s5kjn1->supplies);
 
 	return 0;
 }
 
-/* -----------------------------------------------------------------------------
- * Probe & remove
+/**
+ * s5kjn1_init_controls() - Initialize sensor subdevice controls
+ * @s5kjn1: pointer to s5kjn1 device
+ *
+ * Return: 0 if successful, error code otherwise.
  */
-
-static int s5kjn1_get_regulators(struct s5kjn1 *s5kjn1)
+static int s5kjn1_init_controls(struct s5kjn1 *s5kjn1)
 {
-	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
-	unsigned int i;
-
-	for (i = 0; i < S5KJN1_NUM_SUPPLIES; i++)
-		s5kjn1->supplies[i].supply = s5kjn1_supply_name[i];
-
-	return devm_regulator_bulk_get(&client->dev,
-				       S5KJN1_NUM_SUPPLIES,
-				       s5kjn1->supplies);
-}
-
-/* Verify chip ID */
-static int s5kjn1_identify_module(struct s5kjn1 *s5kjn1)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&s5kjn1->sd);
+	struct v4l2_fwnode_device_properties props;
+	struct v4l2_ctrl_handler *ctrl_hdlr = &s5kjn1->ctrl_handler;
+	const struct s5kjn1_mode *mode = s5kjn1->cur_mode;
+	u32 lpfr;
 	int ret;
-	u64 val;
 
-	ret = cci_read(s5kjn1->regmap, S5KJN1_REG_CHIP_ID, &val, NULL);
-	if (ret) {
-		dev_err(&client->dev, "failed to read chip id %x\n",
-			S5KJN1_CHIP_ID);
+	/* set properties from fwnode (e.g. rotation, orientation) */
+	ret = v4l2_fwnode_device_parse(s5kjn1->dev, &props);
+	if (ret)
 		return ret;
+
+	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 8);
+	if (ret)
+		return ret;
+
+	/* Serialize controls with sensor device */
+	ctrl_hdlr->lock = &s5kjn1->mutex;
+
+	/* Initialize exposure and gain */
+	lpfr = mode->vblank + mode->height;
+	s5kjn1->exp_ctrl = v4l2_ctrl_new_std(ctrl_hdlr,
+					     &s5kjn1_ctrl_ops,
+					     V4L2_CID_EXPOSURE,
+					     S5KJN1_EXPOSURE_MIN,
+					     lpfr - S5KJN1_EXPOSURE_OFFSET,
+					     S5KJN1_EXPOSURE_STEP,
+					     S5KJN1_EXPOSURE_DEFAULT);
+
+	s5kjn1->again_ctrl = v4l2_ctrl_new_std(ctrl_hdlr,
+					       &s5kjn1_ctrl_ops,
+					       V4L2_CID_ANALOGUE_GAIN,
+					       S5KJN1_AGAIN_MIN,
+					       S5KJN1_AGAIN_MAX,
+					       S5KJN1_AGAIN_STEP,
+					       S5KJN1_AGAIN_DEFAULT);
+
+	v4l2_ctrl_cluster(2, &s5kjn1->exp_ctrl);
+
+	s5kjn1->vblank_ctrl = v4l2_ctrl_new_std(ctrl_hdlr,
+						&s5kjn1_ctrl_ops,
+						V4L2_CID_VBLANK,
+						mode->vblank_min,
+						mode->vblank_max,
+						1, mode->vblank);
+
+	/* Read only controls */
+	s5kjn1->pclk_ctrl = v4l2_ctrl_new_std(ctrl_hdlr,
+					      &s5kjn1_ctrl_ops,
+					      V4L2_CID_PIXEL_RATE,
+					      mode->pclk, mode->pclk,
+					      1, mode->pclk);
+
+	s5kjn1->link_freq_ctrl = v4l2_ctrl_new_int_menu(ctrl_hdlr,
+							&s5kjn1_ctrl_ops,
+							V4L2_CID_LINK_FREQ,
+							ARRAY_SIZE(link_freq) -
+							1,
+							mode->link_freq_idx,
+							link_freq);
+	if (s5kjn1->link_freq_ctrl)
+		s5kjn1->link_freq_ctrl->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+
+	s5kjn1->hblank_ctrl = v4l2_ctrl_new_std(ctrl_hdlr,
+						&s5kjn1_ctrl_ops,
+						V4L2_CID_HBLANK,
+						S5KJN1_REG_MIN,
+						S5KJN1_REG_MAX,
+						1, mode->hblank);
+	if (s5kjn1->hblank_ctrl)
+		s5kjn1->hblank_ctrl->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+
+	v4l2_ctrl_new_fwnode_properties(ctrl_hdlr, &s5kjn1_ctrl_ops, &props);
+
+	if (ctrl_hdlr->error) {
+		dev_err(s5kjn1->dev, "control init failed: %d\n",
+			ctrl_hdlr->error);
+		v4l2_ctrl_handler_free(ctrl_hdlr);
+		return ctrl_hdlr->error;
 	}
 
-	if (val != S5KJN1_CHIP_ID) {
-		dev_err(&client->dev, "chip id mismatch: %x!=%llx\n",
-			S5KJN1_CHIP_ID, val);
-		return -EIO;
-	}
+	s5kjn1->sd.ctrl_handler = ctrl_hdlr;
 
 	return 0;
 }
 
-static int s5kjn1_check_hwcfg(struct device *dev, struct s5kjn1 *s5kjn1)
-{
-	struct fwnode_handle *endpoint;
-	struct v4l2_fwnode_endpoint ep_cfg = {
-		.bus_type = V4L2_MBUS_CSI2_DPHY
-	};
-	int ret = -EINVAL;
-
-	endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(dev), NULL);
-	if (!endpoint) {
-		dev_err(dev, "endpoint node not found\n");
-		return -EINVAL;
-	}
-
-	if (v4l2_fwnode_endpoint_alloc_parse(endpoint, &ep_cfg)) {
-		dev_err(dev, "could not parse endpoint\n");
-		goto error_out;
-	}
-
-	/* Check the number of MIPI CSI2 data lanes */
-	if (ep_cfg.bus.mipi_csi2.num_data_lanes != 4) {
-		dev_err(dev, "only 4 data lanes are currently supported\n");
-		goto error_out;
-	}
-
-	/* Check the link frequency set in device tree */
-	if (!ep_cfg.nr_of_link_frequencies) {
-		dev_err(dev, "link-frequency property not found in DT\n");
-		goto error_out;
-	}
-
-	if (ep_cfg.nr_of_link_frequencies != 1 ||
-	   (ep_cfg.link_frequencies[0] != S5KJN1_DEFAULT_LINK_FREQ)) {
-		dev_err(dev, "Link frequency not supported: %lld\n",
-			ep_cfg.link_frequencies[0]);
-		goto error_out;
-	}
-
-	ret = 0;
-
-error_out:
-	v4l2_fwnode_endpoint_free(&ep_cfg);
-	fwnode_handle_put(endpoint);
-
-	return ret;
-}
-
+/**
+ * s5kjn1_probe() - I2C client device binding
+ * @client: pointer to i2c client device
+ *
+ * Return: 0 if successful, error code otherwise.
+ */
 static int s5kjn1_probe(struct i2c_client *client)
 {
-	struct device *dev = &client->dev;
 	struct s5kjn1 *s5kjn1;
 	int ret;
 
@@ -1231,132 +1299,76 @@ static int s5kjn1_probe(struct i2c_client *client)
 	if (!s5kjn1)
 		return -ENOMEM;
 
+	s5kjn1->dev = &client->dev;
+
+	/* Initialize subdev */
 	v4l2_i2c_subdev_init(&s5kjn1->sd, client, &s5kjn1_subdev_ops);
 	s5kjn1->sd.internal_ops = &s5kjn1_internal_ops;
 
-	/* Check the hardware configuration in device tree */
-	if (s5kjn1_check_hwcfg(dev, s5kjn1))
-		return -EINVAL;
-
-	s5kjn1->regmap = devm_cci_regmap_init_i2c(client, 16);
-	if (IS_ERR(s5kjn1->regmap)) {
-		ret = PTR_ERR(s5kjn1->regmap);
-		dev_err(dev, "failed to initialize CCI: %d\n", ret);
-		return ret;
-	}
-
-	/* Get system clock (xclk) */
-	s5kjn1->xclk = devm_clk_get(dev, NULL);
-	if (IS_ERR(s5kjn1->xclk)) {
-		dev_err(dev, "failed to get xclk\n");
-		return PTR_ERR(s5kjn1->xclk);
-	}
-
-	s5kjn1->xclk_freq = clk_get_rate(s5kjn1->xclk);
-	if (s5kjn1->xclk_freq != S5KJN1_XCLK_FREQ) {
-		dev_err(dev, "xclk frequency not supported: %d Hz\n",
-			s5kjn1->xclk_freq);
-		return -EINVAL;
-	}
-
-	ret = s5kjn1_get_regulators(s5kjn1);
+	ret = s5kjn1_parse_hw_config(s5kjn1);
 	if (ret) {
-		dev_err(dev, "failed to get regulators\n");
+		dev_err(s5kjn1->dev, "HW configuration is not supported\n");
 		return ret;
 	}
 
-	/* Request optional enable pin */
-	s5kjn1->reset_gpio = devm_gpiod_get_optional(dev, "reset",
-						     GPIOD_OUT_LOW);
+	mutex_init(&s5kjn1->mutex);
 
+	ret = s5kjn1_power_on(s5kjn1->dev);
+	if (ret) {
+		dev_err(s5kjn1->dev, "failed to power-on the sensor\n");
+		goto error_mutex_destroy;
+	}
 
-	/* Request optional enable pin */
-	s5kjn1->pwdn_gpio = devm_gpiod_get_optional(dev, "pwdn",
-						    GPIOD_OUT_HIGH);
-	/*
-	 * The sensor must be powered for s5kjn1_identify_module()
-	 * to be able to read the CHIP_ID register
-	 */
-	ret = s5kjn1_power_on(dev);
-	if (ret)
-		return ret;
-
-	ret = s5kjn1_identify_module(s5kjn1);
-	if (ret)
+	/* Check module identity */
+	ret = s5kjn1_detect(s5kjn1);
+	if (ret) {
+		dev_err(s5kjn1->dev, "failed to find sensor: %d\n", ret);
 		goto error_power_off;
+	}
 
 	/* Set default mode to max resolution */
-	s5kjn1->mode = &supported_modes[0];
-
-	/*
-	 * Sensor doesn't enter LP-11 state upon power up until and unless
-	 * streaming is started, so upon power up switch the modes to:
-	 * streaming -> standby
-	 */
-	ret = cci_write(s5kjn1->regmap, S5KJN1_REG_MODE_SELECT,
-			S5KJN1_MODE_STREAMING, NULL);
-	if (ret < 0)
-		goto error_power_off;
-
-	usleep_range(100, 110);
-
-	/* put sensor back to standby mode */
-	ret = cci_write(s5kjn1->regmap, S5KJN1_REG_MODE_SELECT,
-			S5KJN1_MODE_STANDBY, NULL);
-	if (ret < 0)
-		goto error_power_off;
-
-	usleep_range(100, 110);
+	s5kjn1->cur_mode = &supported_mode;
+	s5kjn1->vblank = s5kjn1->cur_mode->vblank;
 
 	ret = s5kjn1_init_controls(s5kjn1);
-	if (ret)
+	if (ret) {
+		dev_err(s5kjn1->dev, "failed to init controls: %d\n", ret);
 		goto error_power_off;
+	}
 
 	/* Initialize subdev */
-	s5kjn1->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE |
-			    V4L2_SUBDEV_FL_HAS_EVENTS;
+	s5kjn1->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	s5kjn1->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 
 	/* Initialize source pad */
 	s5kjn1->pad.flags = MEDIA_PAD_FL_SOURCE;
-
 	ret = media_entity_pads_init(&s5kjn1->sd.entity, 1, &s5kjn1->pad);
 	if (ret) {
-		dev_err(dev, "failed to init entity pads: %d\n", ret);
+		dev_err(s5kjn1->dev, "failed to init entity pads: %d\n", ret);
 		goto error_handler_free;
-	}
-
-	s5kjn1->sd.state_lock = s5kjn1->ctrl_handler.lock;
-	ret = v4l2_subdev_init_finalize(&s5kjn1->sd);
-	if (ret < 0) {
-		dev_err(dev, "subdev init error: %d\n", ret);
-		goto error_media_entity;
 	}
 
 	ret = v4l2_async_register_subdev_sensor(&s5kjn1->sd);
 	if (ret < 0) {
-		dev_err(dev, "failed to register sensor sub-device: %d\n", ret);
-		goto error_subdev_cleanup;
+		dev_err(s5kjn1->dev,
+			"failed to register async subdev: %d\n", ret);
+		goto error_media_entity;
 	}
 
-	/* Enable runtime PM and turn off the device */
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
-	pm_runtime_idle(dev);
+	pm_runtime_set_active(s5kjn1->dev);
+	pm_runtime_enable(s5kjn1->dev);
+	pm_runtime_idle(s5kjn1->dev);
 
 	return 0;
 
-error_subdev_cleanup:
-	v4l2_subdev_cleanup(&s5kjn1->sd);
-
 error_media_entity:
 	media_entity_cleanup(&s5kjn1->sd.entity);
-
 error_handler_free:
-	s5kjn1_free_controls(s5kjn1);
-
+	v4l2_ctrl_handler_free(s5kjn1->sd.ctrl_handler);
 error_power_off:
-	s5kjn1_power_off(dev);
+	s5kjn1_power_off(s5kjn1->dev);
+error_mutex_destroy:
+	mutex_destroy(&s5kjn1->mutex);
 
 	return ret;
 }
@@ -1367,37 +1379,38 @@ static void s5kjn1_remove(struct i2c_client *client)
 	struct s5kjn1 *s5kjn1 = to_s5kjn1(sd);
 
 	v4l2_async_unregister_subdev(sd);
-	v4l2_subdev_cleanup(sd);
 	media_entity_cleanup(&sd->entity);
-	s5kjn1_free_controls(s5kjn1);
+	v4l2_ctrl_handler_free(sd->ctrl_handler);
 
 	pm_runtime_disable(&client->dev);
 	if (!pm_runtime_status_suspended(&client->dev))
 		s5kjn1_power_off(&client->dev);
 	pm_runtime_set_suspended(&client->dev);
-}
 
-static const struct of_device_id s5kjn1_dt_ids[] = {
-	{ .compatible = "samsung,s5kjn1" },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(of, s5kjn1_dt_ids);
+	mutex_destroy(&s5kjn1->mutex);
+}
 
 static const struct dev_pm_ops s5kjn1_pm_ops = {
 	SET_RUNTIME_PM_OPS(s5kjn1_power_off, s5kjn1_power_on, NULL)
 };
 
-static struct i2c_driver s5kjn1_i2c_driver = {
-	.driver = {
-		.name = "s5kjn1",
-		.of_match_table	= s5kjn1_dt_ids,
-		.pm = &s5kjn1_pm_ops,
-	},
+static const struct of_device_id s5kjn1_of_match[] = {
+	{ .compatible = "sony,s5kjn1" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, s5kjn1_of_match);
+
+static struct i2c_driver s5kjn1_driver = {
 	.probe = s5kjn1_probe,
 	.remove = s5kjn1_remove,
+	.driver = {
+		.name = "s5kjn1",
+		.pm = &s5kjn1_pm_ops,
+		.of_match_table = s5kjn1_of_match,
+	},
 };
 
-module_i2c_driver(s5kjn1_i2c_driver);
+module_i2c_driver(s5kjn1_driver);
 
-MODULE_DESCRIPTION("Sony S5KJN1 sensor driver");
-MODULE_LICENSE("GPL v2");
+MODULE_DESCRIPTION("Samsung S5KJN1 sensor driver");
+MODULE_LICENSE("GPL");
