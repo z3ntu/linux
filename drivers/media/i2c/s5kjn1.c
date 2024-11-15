@@ -1003,7 +1003,9 @@ static int s5kjn1_detect(struct s5kjn1 *s5kjn1)
 static int s5kjn1_parse_hw_config(struct s5kjn1 *s5kjn1)
 {
 	struct fwnode_handle *fwnode = dev_fwnode(s5kjn1->dev);
-	struct v4l2_fwnode_endpoint bus_cfg = {};
+	struct v4l2_fwnode_endpoint bus_cfg = {
+		.bus_type = V4L2_MBUS_CSI2_DPHY
+	};
 	struct fwnode_handle *ep;
 	unsigned long rate;
 	unsigned int i;
@@ -1052,12 +1054,6 @@ static int s5kjn1_parse_hw_config(struct s5kjn1 *s5kjn1)
 	fwnode_handle_put(ep);
 	if (ret)
 		return ret;
-
-	if (bus_cfg.bus_type != V4L2_MBUS_CSI2_DPHY) {
-		dev_err(s5kjn1->dev, "selected bus-type is not supported\n");
-		ret = -EINVAL;
-		goto done_endpoint_free;
-	}
 
 	if (bus_cfg.bus.mipi_csi2.num_data_lanes != S5KJN1_NUM_DATA_LANES) {
 		dev_err(s5kjn1->dev,
