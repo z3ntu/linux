@@ -670,10 +670,11 @@
 		reg = <0x1a>;
 
 		/*
-		vana1-supply = <&pm8008_l5>;
+		// names maybe avdd2v8, avdd1v8, dvdd, dovdd (+af_vdd + ois_vdd)
+		vana1-supply = <&vreg_l5p>;
 		vana2-supply = <&ois_avdd0_1p8>;
 		vdig-supply = <&ois_dvdd_1p1>;
-		vif-supply = <&pm8008_l6>;
+		vif-supply = <&vreg_l6p>;
 		*/
 
 		clocks = <&camcc CAM_CC_MCLK0_CLK>;
