@@ -157,7 +157,7 @@ static const s64 link_freq[] = {
 };
 
 /* Sensor mode registers */
-static const struct s5kjn1_reg mode_1920x1080_regs[] = {
+static const struct s5kjn1_reg mode_2040x1536_regs[] = {
 	// common registers
 	{ 0x6028, 0x4000 },
 	{ 0x0000, 0x0002 },
@@ -199,7 +199,7 @@ static const struct s5kjn1_reg mode_1920x1080_regs[] = {
 	{ 0x0118, 0x0002 },
 	{ 0x011a, 0x0001 },
 
-	// Res 4 MIPI 4-Lane 1920x1080 10-bit 120fps 1980Mbps/lane for HFR
+	// Res 5 MIPI 4-Lane 2040x1536 10-bit 30fps 800Mbps/lane for small Video
 	{ 0x6028, 0x2400 },
 	{ 0x602a, 0x1a28 },
 	{ 0x6f12, 0x4c00 },
@@ -360,7 +360,7 @@ static const struct s5kjn1_reg mode_1920x1080_regs[] = {
 	{ 0x602a, 0x1386 },
 	{ 0x6f12, 0x0b00 },
 	{ 0x602a, 0x06fa },
-	{ 0x6f12, 0x1000 },
+	{ 0x6f12, 0x0000 },
 	{ 0x602a, 0x4a94 },
 	{ 0x6f12, 0x0c00 },
 	{ 0x6f12, 0x0000 },
@@ -439,12 +439,12 @@ static const struct s5kjn1_reg mode_1920x1080_regs[] = {
 	{ 0x6f12, 0x0000 },
 	{ 0x6028, 0x4000 },
 	{ 0xf46a, 0xae80 },
-	{ 0x0344, 0x00f0 },
-	{ 0x0346, 0x0390 },
-	{ 0x0348, 0x1f0f },
-	{ 0x034a, 0x148f },
-	{ 0x034c, 0x0780 },
-	{ 0x034e, 0x0438 },
+	{ 0x0344, 0x0000 },
+	{ 0x0346, 0x0000 },
+	{ 0x0348, 0x1fff },
+	{ 0x034a, 0x181f },
+	{ 0x034c, 0x07f8 },
+	{ 0x034e, 0x0600 },
 	{ 0x0350, 0x0004 },
 	{ 0x0352, 0x0004 },
 	{ 0x0900, 0x0144 },
@@ -464,25 +464,26 @@ static const struct s5kjn1_reg mode_1920x1080_regs[] = {
 	{ 0x0308, 0x0008 },
 	{ 0x030a, 0x0001 },
 	{ 0x030c, 0x0000 },
-	{ 0x030e, 0x0004 },
-	{ 0x0310, 0x00a5 },
-	{ 0x0312, 0x0000 },
+	{ 0x030e, 0x0003 },
+	{ 0x0310, 0x0064 },
+	{ 0x0312, 0x0001 },
 	{ 0x080e, 0x0000 },
-	{ 0x0340, 0x0970 },
-	{ 0x0342, 0x0810 },
+	{ 0x0340, 0x101c },
+	{ 0x0342, 0x12f0 },
 	{ 0x0702, 0x0000 },
 	{ 0x0202, 0x0100 },
 	{ 0x0200, 0x0100 },
 	{ 0x0d00, 0x0101 },
 	{ 0x0d02, 0x0001 },
 	{ 0x0d04, 0x0102 },
+	{ 0x011e, 0x0100 },
 	{ 0x6226, 0x0000 },
 };
 
 /* Supported sensor mode configurations */
 static const struct s5kjn1_mode supported_mode = {
-	.width = 1920,
-	.height = 1080,
+	.width = 2040,
+	.height = 1536,
 	.hblank = 456, // FIXME
 	.vblank = 506, // FIXME
 	.vblank_min = 506, // FIXME
@@ -491,8 +492,8 @@ static const struct s5kjn1_mode supported_mode = {
 	.link_freq_idx = 0,
 	.code = MEDIA_BUS_FMT_SRGGB10_1X10,
 	.reg_list = {
-		.num_of_regs = ARRAY_SIZE(mode_1920x1080_regs),
-		.regs = mode_1920x1080_regs,
+		.num_of_regs = ARRAY_SIZE(mode_2040x1536_regs),
+		.regs = mode_2040x1536_regs,
 	},
 };
 
