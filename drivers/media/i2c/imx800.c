@@ -1117,7 +1117,7 @@ static int imx800_power_on(struct device *dev)
 		goto error_reset;
 	}
 
-	usleep_range(1000, 1200);
+	usleep_range(10000, 10200);
 
 	return 0;
 
