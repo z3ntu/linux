@@ -1132,7 +1132,8 @@ static int s5kjn1_power_on(struct device *dev)
 		goto error_reset;
 	}
 
-	usleep_range(1000, 1200);
+	/* At least 45000 MCLK cycles */
+	usleep_range(10000, 10200);
 
 	return 0;
 
