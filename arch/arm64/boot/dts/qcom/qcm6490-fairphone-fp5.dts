@@ -632,6 +632,7 @@
 	status = "okay";
 
 	ports {
+		#if 1
 		port@0 {
 			csiphy0_ep: endpoint {
 				data-lanes = <0 1 2>;
@@ -639,7 +640,9 @@
 				remote-endpoint = <&camera_imx800_ep>;
 			};
 		};
+		#endif
 
+		#if 0
 		port@1 {
 			csiphy1_ep: endpoint {
 				clock-lanes = <7>;
@@ -657,6 +660,7 @@
 				remote-endpoint = <&camera_s5kjn1_ep>;
 			};
 		};
+		#endif
 	};
 };
 
@@ -665,6 +669,7 @@
 };
 
 &cci0_i2c0 {
+	#if 1
 	imx800@1a {
 		compatible = "sony,imx800";
 		reg = <0x1a>;
@@ -692,14 +697,16 @@
 			camera_imx800_ep: endpoint {
 				data-lanes = <1 2 3>;
 				bus-type = <MEDIA_BUS_TYPE_CSI2_CPHY>;
-				link-frequencies = /bits/ 64 <600000000>;
+				link-frequencies = /bits/ 64 <130000000>;
 				remote-endpoint = <&csiphy0_ep>;
 			};
 		};
 	};
+	#endif
 };
 
 &cci0_i2c1 {
+	#if 0
 	camera@29 {
 		compatible = "sony,imx858";
 		reg = <0x29>;
@@ -728,6 +735,7 @@
 			};
 		};
 	};
+	#endif
 };
 
 &cci1 {
@@ -735,6 +743,7 @@
 };
 
 &cci1_i2c1 {
+	#if 0
 	camera@10 {
 		compatible = "samsung,s5kjn1";
 		reg = <0x10>;
@@ -762,6 +771,7 @@
 			};
 		};
 	};
+	#endif
 };
 
 &gcc {
