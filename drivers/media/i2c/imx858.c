@@ -573,6 +573,8 @@ static int imx858_read_reg(struct imx858 *imx858, u16 reg, u32 len, u32 *val)
 
 	*val = get_unaligned_be32(data_buf);
 
+	printk(KERN_ERR "%s:%d DBG reg=0x%x len=%d data_buf[0]=0x%x data_buf[1]=0x%x data_buf[2]=0x%x data_buf[3]=0x%x val=0x%x\n", __func__, __LINE__, reg, len, data_buf[0], data_buf[1], data_buf[2], data_buf[3], *val);
+
 	return 0;
 }
 
