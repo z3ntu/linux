@@ -52,7 +52,7 @@
 #define IMX800_INCLK_RATE	24000000
 
 /* CSI2 HW configuration */
-#define IMX800_LINK_FREQ	600000000
+#define IMX800_LINK_FREQ	130000000
 #define IMX800_NUM_DATA_LANES	3 // how many data lanes does 3+3+3 pin C-PHY have?
 
 #define IMX800_REG_MIN		0x00
