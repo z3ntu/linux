@@ -579,7 +579,6 @@ int msm_csiphy_subdev_init(struct camss *camss,
 	csiphy->camss = camss;
 	csiphy->id = id;
 	csiphy->cfg.combo_mode = 0;
-	csiphy->cfg.is_3phase = 1;
 	csiphy->res = &res->csiphy;
 
 	/* Memory */

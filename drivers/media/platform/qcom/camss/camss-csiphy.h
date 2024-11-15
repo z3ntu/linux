@@ -38,7 +38,6 @@ struct csiphy_csi2_cfg {
 
 struct csiphy_config {
 	u8 combo_mode;
-	u8 is_3phase;
 	u8 csid_id;
 	struct csiphy_csi2_cfg *csi2;
 };
