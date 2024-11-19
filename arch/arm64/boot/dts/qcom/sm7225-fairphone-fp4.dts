@@ -620,8 +620,8 @@
 		assigned-clocks = <&camcc CAMCC_MCLK1_CLK>;
 		assigned-clock-rates = <24000000>;
 
-		dovdd-supply = <&pm8008_l6>;
-		avdd-supply = <&pm8008_l3>;
+		dovdd-supply = <&vreg_l6p>;
+		avdd-supply = <&vreg_l3p>;
 		dvdd-supply = <&vreg_imx576_dvdd>;
 
 		port {
