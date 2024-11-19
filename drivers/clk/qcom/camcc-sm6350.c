@@ -18,6 +18,7 @@
 #include "gdsc.h"
 
 enum {
+	DT_IFACE,
 	DT_BI_TCXO,
 };
 
