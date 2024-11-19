@@ -899,7 +899,11 @@ static const struct camss_subdev_resources csid_res_6350[] = {
 				{ 320000000, 404000000, 480000000, 600000000 } },
 		.reg = { "csid0" },
 		.interrupt = { "csid0" },
-		.ops = &csid_ops_gen2
+		.csid = {
+			.hw_ops = &csid_ops_gen2,
+			.parent_dev_ops = &vfe_parent_dev_ops,
+			.formats = &csid_formats_gen2
+		}
 	},
 	/* CSID1 */
 	{
@@ -910,7 +914,11 @@ static const struct camss_subdev_resources csid_res_6350[] = {
 				{ 320000000, 404000000, 480000000, 600000000 } },
 		.reg = { "csid1" },
 		.interrupt = { "csid1" },
-		.ops = &csid_ops_gen2
+		.csid = {
+			.hw_ops = &csid_ops_gen2,
+			.parent_dev_ops = &vfe_parent_dev_ops,
+			.formats = &csid_formats_gen2
+		}
 	},
 	/* CSID2 */
 	{
@@ -921,7 +929,11 @@ static const struct camss_subdev_resources csid_res_6350[] = {
 				{ 320000000, 404000000, 480000000, 600000000 } },
 		.reg = { "csid2" },
 		.interrupt = { "csid2" },
-		.ops = &csid_ops_gen2
+		.csid = {
+			.hw_ops = &csid_ops_gen2,
+			.parent_dev_ops = &vfe_parent_dev_ops,
+			.formats = &csid_formats_gen2
+		}
 	},
 	/* CSID3 (lite) */
 	{
@@ -932,8 +944,12 @@ static const struct camss_subdev_resources csid_res_6350[] = {
 				{ 400000000, 480000000 } },
 		.reg = { "csid_lite" },
 		.interrupt = { "csid_lite" },
-		.is_lite = true,
-		.ops = &csid_ops_gen2
+		.csid = {
+			.is_lite = true,
+			.hw_ops = &csid_ops_gen2,
+			.parent_dev_ops = &vfe_parent_dev_ops,
+			.formats = &csid_formats_gen2
+		}
 	}
 };
 
