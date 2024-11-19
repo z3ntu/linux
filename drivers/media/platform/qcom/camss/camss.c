@@ -2673,6 +2673,7 @@ static const struct camss_resources sm6350_resources = {
 	.csiphy_num = ARRAY_SIZE(csiphy_res_6350),
 	.csid_num = ARRAY_SIZE(csid_res_6350),
 	.vfe_num = ARRAY_SIZE(vfe_res_6350),
+	.link_entities = camss_link_entities,
 };
 
 static const struct camss_resources sm8250_resources = {
