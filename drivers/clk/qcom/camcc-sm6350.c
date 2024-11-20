@@ -1747,6 +1747,7 @@ static struct gdsc titan_top_gdsc = {
 	},
 	//.flags = POLL_CFG_GDSCR,
 	.pwrsts = PWRSTS_OFF_ON,
+	.flags = ALWAYS_ON,
 };
 
 static struct clk_hw *camcc_sm6350_hws[] = {

@@ -259,40 +259,34 @@
 		regulator-always-on; // FIXME
 	};
 
-	//fake-reg-mclk0 {
-	//	compatible = "regulator-fixed-clock";
-	//	regulator-name = "fake-reg-mclk0";
-	//	pinctrl-names = "default";
-	//	pinctrl-0 = <&cam_mclk0_default>;
-	//	clocks = <&camcc CAMCC_MCLK0_CLK>;
-	//	regulator-always-on;
-	//};
+	fake-reg-mclk0 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk0";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk0_default>;
+		clocks = <&camcc CAMCC_MCLK0_CLK>;
+		regulator-always-on;
+	};
 
-	//fake-reg-mclk1 {
-	//	compatible = "regulator-fixed-clock";
-	//	regulator-name = "fake-reg-mclk1";
-	//	pinctrl-names = "default";
-	//	pinctrl-0 = <&cam_mclk1_default>;
-	//	clocks = <&camcc CAMCC_MCLK1_CLK>;
-	//	regulator-always-on;
-	//};
+	fake-reg-mclk1 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk1";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk1_default>;
+		clocks = <&camcc CAMCC_MCLK1_CLK>;
+		regulator-always-on;
+		assigned-clocks = <&camcc CAMCC_MCLK1_CLK>;
+		assigned-clock-rates = <24000000>;
+	};
 
-	//fake-reg-mclk2 {
-	//	compatible = "regulator-fixed-clock";
-	//	regulator-name = "fake-reg-mclk2";
-	//	pinctrl-names = "default";
-	//	pinctrl-0 = <&cam_mclk2_default>;
-	//	clocks = <&camcc CAMCC_MCLK2_CLK>;
-	//	regulator-always-on;
-	//};
-
-	/* FIXME Some issue that this clock doesn't want to get turned off, keep it forced on as a workaround */
-	//fake-reg-cam2 {
-	//	compatible = "regulator-fixed-clock";
-	//	regulator-name = "fake-reg-cam2";
-	//	clocks = <&gcc GCC_CAMERA_AXI_CLK>;
-	//	regulator-always-on;
-	//};
+	fake-reg-mclk2 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk2";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk2_default>;
+		clocks = <&camcc CAMCC_MCLK2_CLK>;
+		regulator-always-on;
+	};
 };
 
 &adsp {
@@ -580,7 +574,7 @@
 			};
 		};
 #endif
-
+#if 0
 		port@3 {
 			reg = <3>;
 			csiphy3_ep: endpoint {
@@ -589,6 +583,7 @@
 				link-frequencies = /bits/ 64 <600000000>;
 			};
 		};
+#endif
 	};
 };
 
@@ -611,6 +606,7 @@
 &cci1_i2c0 {
 	/* IMX576 @ 0x10 */
 
+	#if 0
 	camera@10 {
 		compatible = "sony,imx412"; // sony,imx576
 		reg = <0x10>;
@@ -624,8 +620,8 @@
 		assigned-clock-rates = <24000000>;
 
 		reset-gpios = <&tlmm 35 GPIO_ACTIVE_LOW>;
-		pinctrl-0 = <&cam_mclk1_default>;
-		pinctrl-names = "default";
+		//pinctrl-0 = <&cam_mclk1_default>;
+		//pinctrl-names = "default";
 
 		orientation = <1>; /* Rear facing */
 		rotation = <0>; // FIXME
@@ -639,6 +635,7 @@
 			};
 		};
 	};
+	#endif
 };
 
 &cdsp {
