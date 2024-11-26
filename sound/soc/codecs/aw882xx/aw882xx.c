@@ -357,24 +357,24 @@ static int aw882xx_fade_in_out(struct aw882xx *aw882xx, bool fade_in)
 						i -= aw882xx->fade_step) {
 			if (i < (int32_t)aw882xx->fade_step)
 				i = aw882xx->db_offset;
-			printk(KERN_ERR "%s:%d DBG i=%d\n", __func__, __LINE__, i);
+			aw_dev_dbg(aw882xx->dev, "%s:%d DBG i=%d\n", __func__, __LINE__, i);
 			aw882xx_set_volume(aw882xx, i);
 			usleep_range(1400, 1600);
 		}
 		if (i != (int32_t)aw882xx->db_offset) {
-			printk(KERN_ERR "%s:%d DBG db_offset=%u\n", __func__, __LINE__, (int32_t)aw882xx->db_offset);
+			aw_dev_dbg(aw882xx->dev, "%s:%d DBG db_offset=%u\n", __func__, __LINE__, (int32_t)aw882xx->db_offset);
 			aw882xx_set_volume(aw882xx, aw882xx->db_offset);
 		}
 	} else {
 		/*volume down*/
 		aw882xx_get_volume(aw882xx, &start_volume);
 		for (i = start_volume; i <= AW_FADE_OUT_TARGET_VOL; i += aw882xx->fade_step) {
-			printk(KERN_ERR "%s:%d DBG i=%d\n", __func__, __LINE__, i);
+			aw_dev_dbg(aw882xx->dev, "%s:%d DBG i=%d\n", __func__, __LINE__, i);
 			aw882xx_set_volume(aw882xx, i);
 			usleep_range(1400, 1600);
 		}
 		if (i != AW_FADE_OUT_TARGET_VOL) {
-			printk(KERN_ERR "%s:%d DBG AW_FADE_OUT_TARGET_VOL=%d\n", __func__, __LINE__, AW_FADE_OUT_TARGET_VOL);
+			aw_dev_dbg(aw882xx->dev, "%s:%d DBG AW_FADE_OUT_TARGET_VOL=%d\n", __func__, __LINE__, AW_FADE_OUT_TARGET_VOL);
 			aw882xx_set_volume(aw882xx, AW_FADE_OUT_TARGET_VOL);
 		}
 	}
@@ -384,7 +384,7 @@ static int aw882xx_fade_in_out(struct aw882xx *aw882xx, bool fade_in)
 static void aw882xx_run_mute(struct aw882xx *aw882xx, bool mute)
 {
 	aw_dev_dbg(aw882xx->dev, "%s: enter\n", __func__);
-	printk(KERN_ERR "%s:%d DBG mute=%d\n", __func__, __LINE__, mute);
+	aw_dev_dbg(aw882xx->dev, "%s:%d DBG mute=%d\n", __func__, __LINE__, mute);
 
 	//mute = true; // FIXME
 
