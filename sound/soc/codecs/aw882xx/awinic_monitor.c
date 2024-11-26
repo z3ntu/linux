@@ -322,7 +322,7 @@ static void aw882xx_monitor_set_gain(struct aw882xx *aw882xx,
 	}
 
 	gain_db = aw882xx_reg_val_to_db(gain);
-	printk(KERN_ERR "%s:%d DBG gain_db=%u\n", __func__, __LINE__, gain_db);
+	aw_dev_dbg(aw882xx->dev, "%s:%d DBG gain_db=%u\n", __func__, __LINE__, gain_db);
 
 	/*add offset*/
 	set_volume = gain_db + aw882xx->db_offset;
@@ -334,7 +334,7 @@ static void aw882xx_monitor_set_gain(struct aw882xx *aw882xx,
 		return;
 	}
 
-	printk(KERN_ERR "%s:%d DBG set_volume=%u\n", __func__, __LINE__, set_volume);
+	aw_dev_dbg(aw882xx->dev, "%s:%d DBG set_volume=%u\n", __func__, __LINE__, set_volume);
 	ret = aw882xx_set_volume(aw882xx, set_volume);
 	if (ret < 0) {
 		aw_dev_err(aw882xx->dev, "%s: set volume failed\n", __func__);

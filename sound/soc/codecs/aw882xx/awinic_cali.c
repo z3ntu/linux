@@ -36,7 +36,7 @@ static DEFINE_MUTEX(g_aw_dsp_msg_lock);
 /*write cali to persist file example*/
 #define AWINIC_CALI_FILE  "/mnt/vendor/persist/factory/audio/aw_cali.bin"
 #define AW_INT_DEC_DIGIT 10
-static int aw882xx_write_cali_re_to_file(int32_t cali_re, int channel)
+static int aw882xx_write_cali_re_to_file(struct aw882xx *aw882xx, int32_t cali_re, int channel)
 {
 	//struct file *fp = NULL;
 	char buf[50] = {0};
@@ -58,6 +58,7 @@ static int aw882xx_write_cali_re_to_file(int32_t cali_re, int channel)
 	//fs = get_fs();
 	//set_fs(KERNEL_DS);
 
+	aw_dev_dbg(aw882xx->dev, "%s:%d ignoring vfs_write for cali!\n", __func__, __LINE__);
 	//vfs_write(fp, buf, strlen(buf), &pos);
 
 	//set_fs(fs);
@@ -69,7 +70,7 @@ static int aw882xx_write_cali_re_to_file(int32_t cali_re, int channel)
 	return 0;
 }
 
-static int aw882xx_get_cali_re_from_file(int32_t *cali_re, int channel)
+static int aw882xx_get_cali_re_from_file(struct aw882xx *aw882xx, int32_t *cali_re, int channel)
 {
 	//struct file *fp = NULL;
 	/*struct inode *node;*/
@@ -105,6 +106,34 @@ static int aw882xx_get_cali_re_from_file(int32_t *cali_re, int channel)
 	//set_fs(KERNEL_DS);
 
 	//vfs_read(fp, buf, f_size, &pos);
+	aw_dev_dbg(aw882xx->dev, "%s:%d DBG f_size=%d pos=%lld\n", __func__, __LINE__, f_size, pos);
+	if (pos == 0) {
+		int i = 0;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x36;
+		buf[i++] = 0x31;
+		buf[i++] = 0x37;
+		buf[i++] = 0x30;
+	} else if (pos == 10) {
+		int i = 0;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x20;
+		buf[i++] = 0x37;
+		buf[i++] = 0x30;
+		buf[i++] = 0x39;
+		buf[i++] = 0x36;
+	} else {
+		WARN_ON(1);
+	}
 
 	//set_fs(fs);
 
@@ -126,20 +155,20 @@ static int aw882xx_get_cali_re_from_file(int32_t *cali_re, int channel)
 #endif
 
  /*custom need add to set/get cali_re form/to nv*/
-int aw882xx_set_cali_re_to_nvram(int32_t cali_re, int32_t channel)
+int aw882xx_set_cali_re_to_nvram(struct aw882xx *aw882xx, int32_t cali_re, int32_t channel)
 {
 	/*custom add, if success return value is 0, else -1*/
 #ifdef AW_CALI_STORE_EXAMPLE
-	return aw882xx_write_cali_re_to_file(cali_re, channel);
+	return aw882xx_write_cali_re_to_file(aw882xx, cali_re, channel);
 #else
 	return -EBUSY;
 #endif
 }
-int aw882xx_get_cali_re_from_nvram(int32_t *cali_re, int32_t channel)
+int aw882xx_get_cali_re_from_nvram(struct aw882xx *aw882xx, int32_t *cali_re, int32_t channel)
 {
 	/*custom add, if success return value is 0 , else -1*/
 #ifdef AW_CALI_STORE_EXAMPLE
-	return aw882xx_get_cali_re_from_file(cali_re, channel);
+	return aw882xx_get_cali_re_from_file(aw882xx, cali_re, channel);
 #else
 	return -EBUSY;
 #endif
@@ -152,7 +181,7 @@ static int aw882xx_store_cali_re(struct aw882xx *aw882xx, int32_t cali_re)
 	if (aw882xx == NULL)
 		return -EINVAL;
 	aw882xx->cali.cali_re = cali_re;
-	return aw882xx_set_cali_re_to_nvram(cali_re, chan_info->channel);
+	return aw882xx_set_cali_re_to_nvram(aw882xx, cali_re, chan_info->channel);
 }
 
 void aw882xx_load_cali_re(struct aw_cali *cali)
@@ -163,7 +192,7 @@ void aw882xx_load_cali_re(struct aw_cali *cali)
 			container_of(cali, struct aw882xx, cali);
 	struct aw882xx_chan_info *chan_info = &aw882xx->chan_info;
 
-	ret = aw882xx_get_cali_re_from_nvram(&cali_re, chan_info->channel);
+	ret = aw882xx_get_cali_re_from_nvram(aw882xx, &cali_re, chan_info->channel);
 	if (ret < 0) {
 		aw_dev_err(aw882xx->dev, "%s: get cali re from nv failed: %d\n",
 			 __func__, ret);
