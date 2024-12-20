@@ -200,7 +200,7 @@ static int qcom_qg_probe(struct platform_device *pdev)
 	chip->dev = &pdev->dev;
 
 	/* Regmap */
-	chip->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	chip->regmap = dev_get_regmap(chip->dev->parent, NULL);
 	if (!chip->regmap)
 		return dev_err_probe(chip->dev, -ENODEV,
 				     "Failed to locate the regmap\n");
@@ -212,18 +212,18 @@ static int qcom_qg_probe(struct platform_device *pdev)
 				     "Couldn't read base address\n");
 
 	/* ADC for Battery ID & THERM */
-	chip->batt_id_chan = devm_iio_channel_get(&pdev->dev, "batt-id");
+	chip->batt_id_chan = devm_iio_channel_get(chip->dev, "batt-id");
 	if (IS_ERR(chip->batt_id_chan))
 		return dev_err_probe(chip->dev, PTR_ERR(chip->batt_id_chan),
 				     "Couldn't get batt-id IIO channel\n");
 
-	chip->batt_therm_chan = devm_iio_channel_get(&pdev->dev, "batt-therm");
+	chip->batt_therm_chan = devm_iio_channel_get(chip->dev, "batt-therm");
 	if (IS_ERR(chip->batt_therm_chan))
 		return dev_err_probe(chip->dev, PTR_ERR(chip->batt_therm_chan),
 				     "Couldn't get batt-therm IIO channel\n");
 
 	psy_cfg.drv_data = chip;
-	psy_cfg.of_node = pdev->dev.of_node;
+	psy_cfg.of_node = chip->dev->of_node;
 
 	/* Power supply */
 	chip->batt_psy =
