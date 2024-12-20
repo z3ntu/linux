@@ -156,6 +156,14 @@
 				label = "chg_mid";
 			};
 
+			adc-chan@2a {
+				reg = <ADC5_BAT_THERM_30K_PU>;
+				qcom,hw-settle-time = <200>;
+				qcom,pre-scaling = <1 1>;
+				qcom,ratiometric;
+				label = "bat_therm_30k";
+			};
+
 			channel@4a {
 				reg = <ADC5_BAT_THERM_100K_PU>;
 				qcom,hw-settle-time = <200>;
@@ -205,7 +213,7 @@
 			compatible = "qcom,pm7250b-qg", "qcom,pm6150-qg";
 			reg = <0x4800>;
 
-			io-channels = <&pm7250b_adc ADC5_BAT_THERM_100K_PU>,
+			io-channels = <&pm7250b_adc ADC5_BAT_THERM_30K_PU>,
 				      <&pm7250b_adc ADC5_BAT_ID_100K_PU>;
 			io-channel-names = "batt-therm",
 					   "batt-id";
