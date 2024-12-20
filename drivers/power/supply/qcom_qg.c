@@ -7,14 +7,12 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/nvmem-consumer.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/platform_device.h>
 #include <linux/power_supply.h>
 #include <linux/regmap.h>
-
-/* SRAM */
-#define QG_SRAM_BASE	0xb600
 
 /* BATT offsets */
 #define QG_S2_NORMAL_AVG_V_DATA0_REG	0x80 /* 2-byte 0x80-0x81 */
@@ -33,6 +31,8 @@ struct qcom_qg_chip {
 
 	struct iio_channel *batt_therm_chan;
 	struct iio_channel *batt_id_chan;
+
+	struct nvmem_device *sdam;
 
 	struct power_supply *batt_psy;
 	struct power_supply_battery_info *batt_info;
@@ -77,9 +77,8 @@ static int qcom_qg_get_capacity(struct qcom_qg_chip *chip, int *val)
 {
 	int ret, temp, ocv;
 
-	ret = regmap_raw_read(chip->regmap,
-			QG_SRAM_BASE + QG_SDAM_OCV_OFFSET, &ocv, 4);
-	if (ret) {
+	ret = nvmem_device_read(chip->sdam, QG_SDAM_OCV_OFFSET, 4, &ocv);
+	if (ret < 0) {
 		dev_err(chip->dev,
 			"Failed to get open-circuit voltage: %d\n", ret);
 		return ret;
@@ -139,8 +138,9 @@ static int qcom_qg_get_property(struct power_supply *psy,
 				QG_S2_NORMAL_AVG_V_DATA0_REG, &val->intval);
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_OCV:
-		ret = regmap_raw_read(chip->regmap,
-			QG_SRAM_BASE + QG_SDAM_OCV_OFFSET, &val->intval, 4);
+		ret = nvmem_device_read(chip->sdam, QG_SDAM_OCV_OFFSET, 4, &val->intval);
+		if (ret < 0)
+			return ret;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		ret = qcom_qg_get_current(chip,
@@ -154,9 +154,11 @@ static int qcom_qg_get_property(struct power_supply *psy,
 		val->intval = chip->batt_info->charge_full_design_uah;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
-		ret = regmap_raw_read(chip->regmap, QG_SRAM_BASE +
-				QG_SDAM_LEARNED_CAPACITY_OFFSET, &val->intval, 2);
-		if (!ret) val->intval *= 1000; /* mah to uah */
+		ret = nvmem_device_read(chip->sdam,
+				QG_SDAM_LEARNED_CAPACITY_OFFSET, 2, &val->intval);
+		if (ret < 0)
+			return ret;
+		val->intval *= 1000; /* mAh to uAh */
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
 		ret = qcom_qg_get_capacity(chip, &val->intval);
@@ -209,6 +211,12 @@ static int qcom_qg_probe(struct platform_device *pdev)
 	if (IS_ERR(chip->batt_therm_chan))
 		return dev_err_probe(chip->dev, PTR_ERR(chip->batt_therm_chan),
 				     "Couldn't get batt-therm IIO channel\n");
+
+	/* NVMEM for SDAM access */
+	chip->sdam = devm_nvmem_device_get(chip->dev, NULL);
+	if (IS_ERR(chip->sdam))
+		return dev_err_probe(chip->dev, PTR_ERR(chip->sdam),
+				     "Couldn't get SDAM nvmem device\n");
 
 	psy_cfg.drv_data = chip;
 	psy_cfg.of_node = chip->dev->of_node;
