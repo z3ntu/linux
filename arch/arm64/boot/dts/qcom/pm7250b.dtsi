@@ -50,6 +50,24 @@
 			status = "disabled";
 		};
 
+		pm7250b_charger: charger@1000 {
+			compatible = "qcom,pm7250b-charger", "qcom,pm8150b-charger";
+			reg = <0x1000>;
+			interrupts = <PM7250B_SID 0x13 0x4 IRQ_TYPE_EDGE_BOTH>,
+				     <PM7250B_SID 0x12 0x2 IRQ_TYPE_EDGE_BOTH>,
+				     <PM7250B_SID 0x16 0x1 IRQ_TYPE_EDGE_RISING>,
+				     <PM7250B_SID 0x13 0x7 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "usbin-plugin",
+					  "bat-ov",
+					  "wdog-bark",
+					  "usbin-icl-change";
+			io-channels = <&pm7250b_adc ADC5_USB_IN_I>,
+				      <&pm7250b_adc ADC5_USB_IN_V_16>;
+			io-channel-names = "usb_in_i_uv",
+					   "usb_in_v_div_16";
+			status = "disabled";
+		};
+
 		pm7250b_typec: typec@1500 {
 			compatible = "qcom,pm7250b-typec", "qcom,pm8150b-typec";
 			reg = <0x1500>,
