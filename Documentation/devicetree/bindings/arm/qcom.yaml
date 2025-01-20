@@ -34,6 +34,7 @@ description: |
         ipq8074
         ipq9574
         mdm9615
+        milos
         msm8226
         msm8660
         msm8916
@@ -154,6 +155,11 @@ properties:
               - qcom,apq8084-mtp
               - qcom,apq8084-sbc
           - const: qcom,apq8084
+
+      - items:
+          - enum:
+              - fairphone,fp6
+          - const: qcom,milos
 
       - items:
           - enum:
