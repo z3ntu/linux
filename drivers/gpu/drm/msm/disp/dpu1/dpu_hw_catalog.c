@@ -568,6 +568,26 @@ static const struct dpu_vbif_cfg sdm845_vbif[] = {
 	},
 };
 
+static const struct dpu_vbif_cfg milos_vbif[] = {
+	{
+	.name = "vbif_rt", .id = VBIF_RT, // OK
+	.base = 0, .len = 0x1074, // OK
+	.features = BIT(DPU_VBIF_QOS_REMAP), // TODO
+	.xin_halt_timeout = 0x4000, // TODO
+	.qos_rp_remap_size = 0x40, // TODO
+	.qos_rt_tbl = { // TODO
+		.npriority_lvl = ARRAY_SIZE(sm8650_rt_pri_lvl),
+		.priority_lvl = sm8650_rt_pri_lvl,
+		},
+	.qos_nrt_tbl = { // TODO
+		.npriority_lvl = ARRAY_SIZE(sdm845_nrt_pri_lvl),
+		.priority_lvl = sdm845_nrt_pri_lvl,
+		},
+	.memtype_count = 16, // OK
+	.memtype = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, // OK?
+	},
+};
+
 static const struct dpu_vbif_cfg sm8550_vbif[] = {
 	{
 	.name = "vbif_rt", .id = VBIF_RT,
@@ -738,3 +758,4 @@ static const struct dpu_qos_lut_entry sc7180_qos_nrt[] = {
 #include "catalog/dpu_9_2_x1e80100.h"
 
 #include "catalog/dpu_10_0_sm8650.h"
+#include "catalog/dpu_10_2_milos.h"
