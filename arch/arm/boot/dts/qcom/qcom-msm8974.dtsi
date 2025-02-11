@@ -1968,6 +1968,8 @@
 				interconnects = <&mmssnoc MNOC_MAS_MDP_PORT0 &bimc BIMC_SLV_EBI_CH0>;
 				interconnect-names = "mdp0-mem";
 
+				iommus = <&mdp_iommu 1>;
+
 				ports {
 					#address-cells = <1>;
 					#size-cells = <0>;
@@ -2131,6 +2133,56 @@
 			};
 		};
 
+		mdp_iommu: iommu@fd928000 {
+			compatible = "qcom,msm8974-iommu",
+			             "qcom,msm-iommu-v1";
+			reg = <0xfd928000 0x7000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			#iommu-cells = <1>;
+			ranges = <0 0xfd92f000 0x9000>;
+
+			clocks = <&mmcc MDSS_AHB_CLK>,
+			         <&mmcc MDSS_AXI_CLK>;
+			clock-names = "iface",
+			              "bus";
+
+			qcom,iommu-secure-id = <1>;
+
+			interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
+			power-domains = <&mmcc MDSS_GDSC>;
+
+			qcom,iommu-bfb-regs = <0x204c 0x2050 0x2514 0x2540
+					0x256c 0x20ac 0x215c 0x220c 0x2314
+					0x2394 0x2414 0x2008 0x200c 0x2010
+					0x2014 0x2018 0x201c 0x2020>;
+			qcom,iommu-bfb-data = <0xffffffff 0x00 0x04 0x10
+					0x00 0x6800 0x6221 0x16231 0x00
+					0x34 0x74 0x00 0x00 0x00 0x00 0x00
+					0x00 0x00>;
+
+			// mdp_0
+			iommu-ctx@1000 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x1000 0x1000>;
+				interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			// mdp_1
+			iommu-ctx@2000 {
+				compatible = "qcom,msm-iommu-v1-sec";
+				reg = <0x2000 0x1000>;
+				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			// mdp_2
+			iommu-ctx@3000 {
+				compatible = "qcom,msm-iommu-v1-sec";
+				reg = <0x3000 0x1000>;
+				interrupts = <GIC_SPI 46 IRQ_TYPE_LEVEL_HIGH>;
+			};
+		};
+
 		cci: cci@fda0c000 {
 			compatible = "qcom,msm8974-cci";
 			#address-cells = <1>;
@@ -2186,7 +2238,7 @@
 					<&ocmemnoc OCMEM_VNOC_MAS_GFX3D &ocmemnoc OCMEM_SLV_OCMEM>;
 			interconnect-names = "gfx-mem", "ocmem";
 
-			// iommus = <&gpu_iommu 0>;
+			iommus = <&gpu_iommu 1>, <&gpu_iommu 2>;
 
 			status = "disabled";
 
@@ -2204,6 +2256,54 @@
 				opp-27000000 {
 					opp-hz = /bits/ 64 <27000000>;
 				};
+			};
+		};
+
+		gpu_iommu: iommu@fdb10000 {
+			compatible = "qcom,msm8974-iommu", "qcom,msm-iommu-v1";
+
+			#address-cells = <1>;
+			#size-cells = <1>;
+			#iommu-cells = <1>;
+
+			reg = <0xfdb10000 0x7000>;
+			clocks = <&mmcc OXILICX_AHB_CLK>,
+				 <&mmcc OXILICX_AXI_CLK>,
+				 <&mmcc OXILI_GFX3D_CLK>;
+			clock-names = "iface", "bus", "alt";
+
+			interrupts = <GIC_SPI 38 IRQ_TYPE_LEVEL_HIGH>;
+
+			ranges = <0 0xfdb17000 0x9000>;
+//			qcom,iommu-secure-id = <0>;
+
+			power-domains = <&mmcc OXILICX_GDSC>;
+
+			qcom,iommu-bfb-regs = <0x204c 0x2050 0x2514 0x2540
+					0x256c 0x20ac 0x215c 0x220c 0x2314
+					0x2394 0x2414 0x2008>;
+			qcom,iommu-bfb-data = <0x03 0x00 0x04 0x10 0x00 0x00
+					0x00 0x20 0x00 0x01 0x81 0x00>;
+
+			// gfx3d_user:
+			kgsl-ctx@1000 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x1000 0x1000>;
+				interrupts = <GIC_SPI 241 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			// gfx3d_priv:
+			kgsl-ctx@2000 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x2000 0x1000>;
+				interrupts = <GIC_SPI 241 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			// gfx3d_spare:
+			kgsl-ctx@3000 {
+				compatible = "qcom,msm-iommu-v1-ns";
+				reg = <0x3000 0x1000>;
+				interrupts = <GIC_SPI 241 IRQ_TYPE_LEVEL_HIGH>;
 			};
 		};
 
