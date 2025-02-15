@@ -237,7 +237,6 @@ static irqreturn_t qcom_iommu_fault2(int irq, void *dev)
 	return IRQ_HANDLED;
 }
 
-
 static void qcom_iommu_halt(struct qcom_iommu_dev *qcom_iommu)
 {
 	u32 val;
@@ -262,19 +261,6 @@ static void qcom_iommu_unhalt(struct qcom_iommu_dev *qcom_iommu)
 }
 
 static int qcom_iommu_non_secure_init(struct qcom_iommu_dev *qcom_iommu);
-
-static void qcom_iommu_release_smg(struct qcom_iommu_dev *qcom_iommu)
-{
-	int smrs;
-	u32 reg;
-	int i;
-
-	reg = readl(qcom_iommu->local_base + ARM_SMMU_GR0_ID0);
-	smrs = reg & ARM_SMMU_ID0_NUMSMRG;
-
-	for (; i < smrs; i++)
-		writel(0, qcom_iommu->local_base + ARM_SMMU_GR0_SMR(i));
-}
 
 static int qcom_iommu_init_domain(struct iommu_domain *domain,
 				  struct qcom_iommu_dev *qcom_iommu,
@@ -328,13 +314,13 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 	domain->geometry.force_aperture = true;
 
 	if (qcom_iommu->sec_id) {
-		dev_err(qcom_iommu->dev, "%s() restore_sec(%d)\n", __func__,
-		        qcom_iommu->sec_id);
-		ret = qcom_scm_restore_sec_cfg(qcom_iommu->sec_id, 0);
-		if (ret) {
-			dev_err(qcom_iommu->dev, "secure init failed: %d\n", ret);
-			return -ENODEV;
-		}
+		//dev_err(qcom_iommu->dev, "%s() restore_sec(%d)\n", __func__,
+		//        qcom_iommu->sec_id);
+		//ret = qcom_scm_restore_sec_cfg(qcom_iommu->sec_id, 0);
+		//if (ret) {
+		//	dev_err(qcom_iommu->dev, "secure init failed: %d\n", ret);
+		//	return -ENODEV;
+		//}
 	} else {
 		dev_err(qcom_iommu->dev, "non-secure iommu initialization\n");
 		qcom_iommu_halt(qcom_iommu);
@@ -353,6 +339,15 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
 
 		// printk(KERN_ERR "%s() reset\n", __func__);
+
+		if (!ctx->secure_init) {
+			ret = qcom_scm_restore_sec_cfg(qcom_iommu->sec_id, ctx->asid);
+			if (ret) {
+				dev_err(qcom_iommu->dev, "secure init failed: %d\n", ret);
+				goto out_clear_iommu;
+			}
+			ctx->secure_init = true;
+		}
 
 		/* Secured QSMMU-500/QSMMU-v2 contexts cannot be programmed */
 		if (ctx->secured_ctx) {
