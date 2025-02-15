@@ -263,21 +263,6 @@ static void qcom_iommu_unhalt(struct qcom_iommu_dev *qcom_iommu)
 
 static int qcom_iommu_non_secure_init(struct qcom_iommu_dev *qcom_iommu);
 
-static void qcom_iommu_reset_context(struct qcom_iommu_ctx *ctx)
-{
-	iommu_writel(ctx, ARM_SMMU_CB_ACTLR, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_FAR, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_FSRRESTORE, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR1, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_PAR, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR0, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_SCTLR, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_S1_TLBIALL, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_TCR, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_TTBR0, 0);
-	iommu_writel(ctx, ARM_SMMU_CB_TTBR1, 0);
-}
-
 static void qcom_iommu_release_smg(struct qcom_iommu_dev *qcom_iommu)
 {
 	int smrs;
@@ -369,6 +354,12 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 
 		// printk(KERN_ERR "%s() reset\n", __func__);
 
+		/* Secured QSMMU-500/QSMMU-v2 contexts cannot be programmed */
+		if (ctx->secured_ctx) {
+			ctx->domain = domain;
+			continue;
+		}
+
 /*
 		// printk("ARM_SMMU_CB_ACTLR %X\n", iommu_readl(ctx, ARM_SMMU_CB_ACTLR));
 		// printk("ARM_SMMU_CB_TTBCR2 %X\n", iommu_readl(ctx, ARM_SMMU_CB_TTBCR2));
@@ -381,15 +372,19 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 		// printk("ARM_SMMU_GR1_CBAR(2) %X\n", iommu_readl(ctx, ARM_SMMU_GR1_CBAR(2)));
 */
 
-		/* Reset context */
-		qcom_iommu_reset_context(ctx);
+		/* Disable context bank before programming */
+		iommu_writel(ctx, ARM_SMMU_CB_SCTLR, 0);
+
+		/* Clear context bank fault address fault status registers */
+		iommu_writel(ctx, ARM_SMMU_CB_FAR, 0);
+		iommu_writel(ctx, ARM_SMMU_CB_FSR, ARM_SMMU_CB_FSR_FAULT);
 
 		// printk(KERN_ERR "%s() actlr\n", __func__);
 
 		iommu_writel(ctx, ARM_SMMU_CB_ACTLR,
-                     ARM_SMMU_CB_ACTLR_BPRCOSH |
-                     ARM_SMMU_CB_ACTLR_BPRCISH |
-                     ARM_SMMU_CB_ACTLR_BPRCNSH);
+				ARM_SMMU_CB_ACTLR_BPRCOSH |
+				ARM_SMMU_CB_ACTLR_BPRCISH |
+				ARM_SMMU_CB_ACTLR_BPRCNSH);
 
 
 		// printk(KERN_ERR "%s() ttbr\n", __func__);
@@ -879,8 +874,8 @@ static int qcom_iommu_ctx_probe(struct platform_device *pdev)
 	/* clear IRQs before registering fault handler, just in case the
 	 * boot-loader left us a surprise:
 	 */
-//	if (!ctx->secured_ctx)
-//		iommu_writel(ctx, ARM_SMMU_CB_FSR, iommu_readl(ctx, ARM_SMMU_CB_FSR));
+	//if (!ctx->secured_ctx)
+	//	iommu_writel(ctx, ARM_SMMU_CB_FSR, iommu_readl(ctx, ARM_SMMU_CB_FSR));
 
 	ret = devm_request_irq(dev, irq,
 			       qcom_iommu_fault,
