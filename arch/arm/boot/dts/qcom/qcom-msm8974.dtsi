@@ -1968,7 +1968,7 @@
 				interconnects = <&mmssnoc MNOC_MAS_MDP_PORT0 &bimc BIMC_SLV_EBI_CH0>;
 				interconnect-names = "mdp0-mem";
 
-				iommus = <&mdp_iommu 0>;
+				iommus = <&mdp_iommu 0>, <&mdp_iommu 1>; //, <&mdp_iommu 2>;
 
 				ports {
 					#address-cells = <1>;
