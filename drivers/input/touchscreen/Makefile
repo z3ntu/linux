@@ -120,3 +120,14 @@ obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
 obj-$(CONFIG_TOUCHSCREEN_IQS7211)	+= iqs7211.o
 obj-$(CONFIG_TOUCHSCREEN_ZINITIX)	+= zinitix.o
 obj-$(CONFIG_TOUCHSCREEN_HIMAX_HX83112B)	+= himax_hx83112b.o
+
+eswin_ts-y := \
+	eswin_touch/eswin_eph861x.o \
+	eswin_touch/eswin_eph861x_bootloader.o \
+	eswin_touch/eswin_eph861x_comms.o \
+	eswin_touch/eswin_eph861x_eswin.o \
+	eswin_touch/eswin_eph861x_i2c.o \
+	eswin_touch/eswin_eph861x_spi.o \
+	eswin_touch/eswin_eph861x_tlv_command.o \
+	eswin_touch/eswin_eph861x_tlv_report.o
+obj-y += eswin_ts.o
