@@ -42,7 +42,7 @@
 #include <linux/dmapool.h>
 #include <linux/pinctrl/consumer.h>
 
-#include <linux/soc/qcom/panel_event_notifier.h>
+//#include <linux/soc/qcom/panel_event_notifier.h>
 #include "eswin_eph861x_project_config.h"
 #include "eswin_eph861x_types.h"
 #include "eswin_eph861x_comms.h"
@@ -58,7 +58,7 @@
 /* Touchscreen absolute values */
 #define EPH_MAX_HEIGHT_WIDTH      255u
 
-#if defined(CONFIG_DRM)
+#if 0
 static struct drm_panel *active_panel;
 static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		 struct panel_event_notification *event, void *client_data);
@@ -1561,12 +1561,12 @@ static void eph_input_close(struct input_dev *inputdev)
     }
 }
 
-#if defined(CONFIG_DRM) //|| defined(CONFIG_BOARD_CLOUDRIPPER)
+#if 0
 static int eph_dev_enter_lp_mode(struct eph_data *ephdata);
 static int eph_dev_enter_normal_mode(struct eph_data *ephdata);
 #endif
 
-#if defined(CONFIG_DRM)
+#if 0
 static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		 struct panel_event_notification *notification, void *client_data)
 {
@@ -1903,7 +1903,7 @@ ic_reset:
     return;
 }
 
-#if defined(CONFIG_DRM)
+#if 0
 static int eph_check_dt(struct device_node *np)
 {
 	int i;
@@ -1988,7 +1988,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     int device_info_read_retry = 0;
     struct device *dev = &commsdevice->dev;
 
-    struct device_node *node = commsdevice->dev.of_node;
+    //struct device_node *node = commsdevice->dev.of_node;
     dev_dbg(dev, "%s >>>\n", __func__);
     pr_err("eph_probe----11--100000ms--\n");
 
@@ -2005,7 +2005,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     {
         return PTR_ERR(ephplatform);
     }
-#if defined(CONFIG_DRM)
+#if 0
 	ret_val = eph_check_dt(node);
 	if (ret_val == -EPROBE_DEFER)
     {
@@ -2028,6 +2028,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
         return -ENOMEM;
     }
 
+#if 0
     ephdata->bl = backlight_device_get_by_type(BACKLIGHT_RAW);
 
     if (ephdata->bl) {
@@ -2038,6 +2039,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
         ret_val = -EPROBE_DEFER;
         goto err_free_mem;
     }
+#endif
 
     INIT_WORK(&ephdata->force_baseline_work, eph_trigger_baseline_work);
     INIT_DELAYED_WORK(&ephdata->heartbeat_work, heartbeat_work_handler);
@@ -2152,7 +2154,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
         goto err_free_irq;
     }
 
-#if defined(CONFIG_DRM)
+#if 0
     eph_register_for_panel_events(node, ephdata);
     // ephdata->notifier.notifier_call = eph_notifier_callback;
     // ret_val = msm_drm_register_client(&ephdata->notifier);
@@ -2216,7 +2218,7 @@ static void eph_remove(struct comms_device *commsdevice)
     sysfs_remove_group(&commsdevice->dev.kobj, &eph_fw_attr_group);
     eph_sysfs_mem_access_remove(ephdata);
 
-#if defined(CONFIG_DRM)
+#if 0
     if (ephdata->notifier_cookie)
 			panel_event_notifier_unregister(ephdata->notifier_cookie);
 // #elif defined(CONFIG_BOARD_CLOUDRIPPER)
@@ -2261,7 +2263,7 @@ static void eph_remove(struct comms_device *commsdevice)
 #endif
 }
 
-#if defined(CONFIG_DRM) //|| defined(CONFIG_BOARD_CLOUDRIPPER)
+#if 0
 int eph_enable_report_event(struct device *dev, int enable)
 {
     int ret = 0;
