@@ -170,8 +170,8 @@ const struct eph_platform_data *eph_platform_data_get_from_device_tree(struct co
         return (struct eph_platform_data *)ERR_PTR(-ENOMEM);
     }
 
-    ephplatform->gpio_reset = of_get_named_gpio_flags(devnode, "eswin,reset-gpio", 0, NULL);
-    ephplatform->gpio_chg_irq = of_get_named_gpio_flags(devnode, "eswin,irq-gpio", 0, NULL);
+    ephplatform->gpio_reset = of_get_named_gpio(devnode, "eswin,reset-gpio", 0);
+    ephplatform->gpio_chg_irq = of_get_named_gpio(devnode, "eswin,irq-gpio", 0);
 
     /* returns pointer to already allocated memory containing the string */
     ret_val = of_property_read_string(devnode, "eswin,regulator_dvdd", &ephplatform->regulator_dvdd);
