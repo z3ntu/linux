@@ -603,13 +603,6 @@ static int eph_input_device_initialize(struct eph_data *ephdata)
     /* direct device, e.g. touchscreen */
     mt_flags |= INPUT_MT_DIRECT;
 
-    /* multi touch */
-    ret_val = input_mt_init_slots(ephdata->inputdev, CONFIG_SUPPORTED_TOUCHES, mt_flags);
-    if (ret_val)
-    {
-        dev_err(dev, "Error %d initialising slots\n", ret_val);
-        return ret_val;
-    }
 
     /* reports co-ordinates of the tool */
     /* Height appears to always be Y */
@@ -624,6 +617,13 @@ static int eph_input_device_initialize(struct eph_data *ephdata)
     input_set_abs_params(ephdata->inputdev, ABS_MT_TOUCH_MINOR, 0, (EPH_MAX_HEIGHT_WIDTH*max_resoultion), 0, 0);
     input_set_abs_params(ephdata->inputdev, ABS_MT_PRESSURE, 0, 255, 0, 0);
 
+    /* multi touch */
+    ret_val = input_mt_init_slots(ephdata->inputdev, CONFIG_SUPPORTED_TOUCHES, mt_flags);
+    if (ret_val)
+    {
+        dev_err(dev, "Error %d initialising slots\n", ret_val);
+        return ret_val;
+    }
 
     input_set_drvdata(ephdata->inputdev, ephdata);
 
