@@ -27,57 +27,56 @@
 #include <sound/tlv.h>
 
 /* Chip ID */
-#define AW8898_REG_ID				0x00
+#define AW8898_ID				0x00
+#define AW8898_CHIP_ID				0x1702
 
 /* System Status */
-#define AW8898_REG_SYSST			0x01
-#define AW8898_BIT_SYSST_PLLS			BIT(0)
+#define AW8898_SYSST				0x01
+#define AW8898_SYSST_PLLS			BIT(0)
 
 /* System Interrupt Mask */
-#define AW8898_REG_SYSINTM			0x03
-#define AW8898_BIT_SYSINTM_OCDM			BIT(3)
-#define AW8898_BIT_SYSINTM_OTHM			BIT(1)
-#define AW8898_BIT_SYSINTM_PLLM			BIT(0)
+#define AW8898_SYSINTM				0x03
+#define AW8898_SYSINTM_OCDM			BIT(3)
+#define AW8898_SYSINTM_OTHM			BIT(1)
+#define AW8898_SYSINTM_PLLM			BIT(0)
 
 /* System Control */
-#define AW8898_REG_SYSCTRL			0x04
-#define AW8898_BIT_SYSCTRL_MODE_MASK		GENMASK(7, 7)
-#define AW8898_BIT_SYSCTRL_RCV_MODE		(1<<7)
-#define AW8898_BIT_SYSCTRL_SPK_MODE		(0<<7)
-#define AW8898_BIT_SYSCTRL_PW_MASK		GENMASK(0, 0)
-#define AW8898_BIT_SYSCTRL_PW_PDN		(1<<0)
-#define AW8898_BIT_SYSCTRL_PW_ACTIVE		(0<<0)
+#define AW8898_SYSCTRL				0x04
+#define AW8898_SYSCTRL_MODE_MASK		GENMASK(7, 7)
+#define AW8898_SYSCTRL_RCV_MODE			(1<<7)
+#define AW8898_SYSCTRL_SPK_MODE			(0<<7)
+#define AW8898_SYSCTRL_PW_MASK			GENMASK(0, 0)
+#define AW8898_SYSCTRL_PW_PDN			(1<<0)
+#define AW8898_SYSCTRL_PW_ACTIVE		(0<<0)
 
 /* I2S Interface Control */
-#define AW8898_REG_I2SCTRL			0x05
-#define AW8898_BIT_I2SCTRL_FMS_MASK		GENMASK(7, 6)
-#define AW8898_BIT_I2SCTRL_FMS_32BIT		(3<< 6)
-#define AW8898_BIT_I2SCTRL_FMS_24BIT		(2<< 6)
-#define AW8898_BIT_I2SCTRL_FMS_20BIT		(1<< 6)
-#define AW8898_BIT_I2SCTRL_FMS_16BIT		(0<< 6)
-#define AW8898_BIT_I2SCTRL_SR_MASK		GENMASK(3, 0)
-#define AW8898_BIT_I2SCTRL_SR_48K		(8<<0)
-#define AW8898_BIT_I2SCTRL_SR_44P1K		(7<<0)
-#define AW8898_BIT_I2SCTRL_SR_32K		(6<<0)
-#define AW8898_BIT_I2SCTRL_SR_16K		(3<<0)
-#define AW8898_BIT_I2SCTRL_SR_8K		(0<<0)
+#define AW8898_I2SCTRL				0x05
+#define AW8898_I2SCTRL_FMS_MASK			GENMASK(7, 6)
+#define AW8898_I2SCTRL_FMS_32BIT		(3<< 6)
+#define AW8898_I2SCTRL_FMS_24BIT		(2<< 6)
+#define AW8898_I2SCTRL_FMS_20BIT		(1<< 6)
+#define AW8898_I2SCTRL_FMS_16BIT		(0<< 6)
+#define AW8898_I2SCTRL_SR_MASK			GENMASK(3, 0)
+#define AW8898_I2SCTRL_SR_48K			(8<<0)
+#define AW8898_I2SCTRL_SR_44P1K			(7<<0)
+#define AW8898_I2SCTRL_SR_32K			(6<<0)
+#define AW8898_I2SCTRL_SR_16K			(3<<0)
+#define AW8898_I2SCTRL_SR_8K			(0<<0)
 
 /* PWM Control */
-#define AW8898_REG_PWMCTRL			0x08
-#define AW8898_BIT_PWMCTRL_HMUTE_MASK		GENMASK(0, 0)
-#define AW8898_BIT_PWMCTRL_HMUTE_ENABLE		(1<<0)
-#define AW8898_BIT_PWMCTRL_HMUTE_DISABLE	(0<<0)
+#define AW8898_PWMCTRL				0x08
+#define AW8898_PWMCTRL_HMUTE_MASK		GENMASK(0, 0)
+#define AW8898_PWMCTRL_HMUTE_ENABLE		(1<<0)
+#define AW8898_PWMCTRL_HMUTE_DISABLE		(0<<0)
 
 /* Hardware AGC Configuration 7 */
-#define AW8898_REG_HAGCCFG7			0x0f
-#define AW8898_BIT_HAGCCFG7_VOL_MASK		GENMASK(15, 8)
+#define AW8898_HAGCCFG7				0x0f
+#define AW8898_HAGCCFG7_VOL_MASK		GENMASK(15, 8)
 #define AW8898_VOLUME_MAX			(0)
 #define AW8898_VOLUME_MIN			(-255)
 #define AW8898_VOL_REG_SHIFT			(8)
 
-#define AW8898_CHIP_ID 0x1702
-
-#define AW8898_MAX_REGISTER 0xff
+#define AW8898_MAX_REGISTER			0xff
 
 static int aw8898_spk_control = 0;
 static int aw8898_rcv_control = 0;
@@ -115,39 +114,39 @@ struct aw8898_container {
 static void aw8898_run_mute(struct aw8898 *aw8898, bool mute)
 {
 	if (mute) {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_PWMCTRL,
-				      AW8898_BIT_PWMCTRL_HMUTE_MASK,
-				      AW8898_BIT_PWMCTRL_HMUTE_ENABLE);
+		regmap_update_bits(aw8898->regmap, AW8898_PWMCTRL,
+				      AW8898_PWMCTRL_HMUTE_MASK,
+				      AW8898_PWMCTRL_HMUTE_ENABLE);
 	} else {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_PWMCTRL,
-				      AW8898_BIT_PWMCTRL_HMUTE_MASK,
-				      AW8898_BIT_PWMCTRL_HMUTE_DISABLE);
+		regmap_update_bits(aw8898->regmap, AW8898_PWMCTRL,
+				      AW8898_PWMCTRL_HMUTE_MASK,
+				      AW8898_PWMCTRL_HMUTE_DISABLE);
 	}
 }
 
 static void aw8898_run_pwd(struct aw8898 *aw8898, bool pwd)
 {
 	if (pwd) {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_SYSCTRL,
-				      AW8898_BIT_SYSCTRL_PW_MASK,
-				      AW8898_BIT_SYSCTRL_PW_PDN);
+		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
+				      AW8898_SYSCTRL_PW_MASK,
+				      AW8898_SYSCTRL_PW_PDN);
 	} else {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_SYSCTRL,
-				      AW8898_BIT_SYSCTRL_PW_MASK,
-				      AW8898_BIT_SYSCTRL_PW_ACTIVE);
+		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
+				      AW8898_SYSCTRL_PW_MASK,
+				      AW8898_SYSCTRL_PW_ACTIVE);
 	}
 }
 
 static void aw8898_spk_rcv_mode(struct aw8898 *aw8898)
 {
 	if (aw8898->spk_rcv_mode == AW8898_SPEAKER_MODE) {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_SYSCTRL,
-				      AW8898_BIT_SYSCTRL_MODE_MASK,
-				      AW8898_BIT_SYSCTRL_SPK_MODE);
+		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
+				      AW8898_SYSCTRL_MODE_MASK,
+				      AW8898_SYSCTRL_SPK_MODE);
 	} else if (aw8898->spk_rcv_mode == AW8898_RECEIVER_MODE) {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_SYSCTRL,
-				      AW8898_BIT_SYSCTRL_MODE_MASK,
-				      AW8898_BIT_SYSCTRL_RCV_MODE);
+		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
+				      AW8898_SYSCTRL_MODE_MASK,
+				      AW8898_SYSCTRL_RCV_MODE);
 	}
 }
 
@@ -162,8 +161,8 @@ static void aw8898_start(struct aw8898 *aw8898)
 	aw8898_run_pwd(aw8898, false);
 	msleep(2);
 	for (i = 0; i < iis_check_max; i++) {
-		regmap_read(aw8898->regmap, AW8898_REG_SYSST, &reg_val);
-		if (reg_val & AW8898_BIT_SYSST_PLLS) {
+		regmap_read(aw8898->regmap, AW8898_SYSST, &reg_val);
+		if (reg_val & AW8898_SYSST_PLLS) {
 			aw8898_run_mute(aw8898, false);
 			pr_debug("%s iis signal check pass!\n", __func__);
 			return;
@@ -289,7 +288,7 @@ static const char *const rcv_function[] = { "Off", "On" };
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 50, 0);
 
 struct soc_mixer_control aw8898_mixer = {
-	.reg = AW8898_REG_HAGCCFG7,
+	.reg = AW8898_HAGCCFG7,
 	.shift = AW8898_VOL_REG_SHIFT,
 	.max = AW8898_VOLUME_MAX,
 	.min = AW8898_VOLUME_MIN,
@@ -319,9 +318,9 @@ static int aw8898_volume_get(struct snd_kcontrol *kcontrol,
 	struct soc_mixer_control *mc =
 		(struct soc_mixer_control *)kcontrol->private_value;
 
-	regmap_read(aw8898->regmap, AW8898_REG_HAGCCFG7, &reg_val);
+	regmap_read(aw8898->regmap, AW8898_HAGCCFG7, &reg_val);
 	ucontrol->value.integer.value[0] = (value >> mc->shift) &
-					   (AW8898_BIT_HAGCCFG7_VOL_MASK);
+					   (AW8898_HAGCCFG7_VOL_MASK);
 	return 0;
 }
 
@@ -344,18 +343,18 @@ static int aw8898_volume_put(struct snd_kcontrol *kcontrol,
 	}
 
 	//smartpa have clk
-	regmap_read(aw8898->regmap, AW8898_REG_SYSST, &reg_value);
-	if (!(reg_value & AW8898_BIT_SYSST_PLLS)) {
+	regmap_read(aw8898->regmap, AW8898_SYSST, &reg_value);
+	if (!(reg_value & AW8898_SYSST_PLLS)) {
 		pr_err("%s: NO I2S CLK ,cat not write reg \n", __func__);
 		return 0;
 	}
 	//cal real value
-	value = value << mc->shift & AW8898_BIT_HAGCCFG7_VOL_MASK;
-	regmap_read(aw8898->regmap, AW8898_REG_HAGCCFG7, &reg_value);
+	value = value << mc->shift & AW8898_HAGCCFG7_VOL_MASK;
+	regmap_read(aw8898->regmap, AW8898_HAGCCFG7, &reg_value);
 	value = value | (reg_value & 0x00ff);
 
 	//write value
-	regmap_write(aw8898->regmap, AW8898_REG_HAGCCFG7, value);
+	regmap_write(aw8898->regmap, AW8898_HAGCCFG7, value);
 
 	return 0;
 }
@@ -504,29 +503,29 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
 	//match rate
 	switch (rate) {
 	case 8000:
-		reg_value = AW8898_BIT_I2SCTRL_SR_8K;
+		reg_value = AW8898_I2SCTRL_SR_8K;
 		break;
 	case 16000:
-		reg_value = AW8898_BIT_I2SCTRL_SR_16K;
+		reg_value = AW8898_I2SCTRL_SR_16K;
 		break;
 	case 32000:
-		reg_value = AW8898_BIT_I2SCTRL_SR_32K;
+		reg_value = AW8898_I2SCTRL_SR_32K;
 		break;
 	case 44100:
-		reg_value = AW8898_BIT_I2SCTRL_SR_44P1K;
+		reg_value = AW8898_I2SCTRL_SR_44P1K;
 		break;
 	case 48000:
-		reg_value = AW8898_BIT_I2SCTRL_SR_48K;
+		reg_value = AW8898_I2SCTRL_SR_48K;
 		break;
 	default:
-		reg_value = AW8898_BIT_I2SCTRL_SR_48K;
+		reg_value = AW8898_I2SCTRL_SR_48K;
 		pr_err("%s: rate can not support\n", __func__);
 		break;
 	}
 	//set chip rate
 	if (-1 != reg_value) {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_I2SCTRL,
-				      AW8898_BIT_I2SCTRL_SR_MASK, reg_value);
+		regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
+				      AW8898_I2SCTRL_SR_MASK, reg_value);
 	}
 
 	//get bit width
@@ -534,27 +533,27 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
 	pr_debug("%s: width = %d \n", __func__, width);
 	switch (width) {
 	case 16:
-		reg_value = AW8898_BIT_I2SCTRL_FMS_16BIT;
+		reg_value = AW8898_I2SCTRL_FMS_16BIT;
 		break;
 	case 20:
-		reg_value = AW8898_BIT_I2SCTRL_FMS_20BIT;
+		reg_value = AW8898_I2SCTRL_FMS_20BIT;
 		break;
 	case 24:
-		reg_value = AW8898_BIT_I2SCTRL_FMS_24BIT;
+		reg_value = AW8898_I2SCTRL_FMS_24BIT;
 		break;
 	case 32:
-		reg_value = AW8898_BIT_I2SCTRL_FMS_32BIT;
+		reg_value = AW8898_I2SCTRL_FMS_32BIT;
 		break;
 	default:
-		reg_value = AW8898_BIT_I2SCTRL_FMS_16BIT;
+		reg_value = AW8898_I2SCTRL_FMS_16BIT;
 		pr_err("%s: width can not support\n", __func__);
 		break;
 	}
 
 	//set width
 	if (-1 != reg_value) {
-		regmap_update_bits(aw8898->regmap, AW8898_REG_I2SCTRL,
-				      AW8898_BIT_I2SCTRL_FMS_MASK, reg_value);
+		regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
+				      AW8898_I2SCTRL_FMS_MASK, reg_value);
 	}
 
 	return 0;
@@ -677,10 +676,10 @@ static int aw8898_check_chipid(struct aw8898 *aw8898)
 	unsigned int reg;
 	int ret;
 
-	ret = regmap_read(aw8898->regmap, AW8898_REG_ID, &reg);
+	ret = regmap_read(aw8898->regmap, AW8898_ID, &reg);
 	if (ret < 0) {
 		dev_err(&aw8898->client->dev,
-			"Failed to read register AW8898_REG_ID: %d\n", ret);
+			"Failed to read register AW8898_ID: %d\n", ret);
 		return ret;
 	}
 
