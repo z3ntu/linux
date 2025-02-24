@@ -25,16 +25,59 @@
 #include <linux/syscalls.h>
 #include <linux/interrupt.h>
 #include <sound/tlv.h>
-#include "aw8898_reg.h"
+
+/* Chip ID */
+#define AW8898_REG_ID				0x00
+
+/* System Status */
+#define AW8898_REG_SYSST			0x01
+#define AW8898_BIT_SYSST_PLLS			BIT(0)
+
+/* System Interrupt Mask */
+#define AW8898_REG_SYSINTM			0x03
+#define AW8898_BIT_SYSINTM_OCDM			BIT(3)
+#define AW8898_BIT_SYSINTM_OTHM			BIT(1)
+#define AW8898_BIT_SYSINTM_PLLM			BIT(0)
+
+/* System Control */
+#define AW8898_REG_SYSCTRL			0x04
+#define AW8898_BIT_SYSCTRL_MODE_MASK		GENMASK(7, 7)
+#define AW8898_BIT_SYSCTRL_RCV_MODE		(1<<7)
+#define AW8898_BIT_SYSCTRL_SPK_MODE		(0<<7)
+#define AW8898_BIT_SYSCTRL_PW_MASK		GENMASK(0, 0)
+#define AW8898_BIT_SYSCTRL_PW_PDN		(1<<0)
+#define AW8898_BIT_SYSCTRL_PW_ACTIVE		(0<<0)
+
+/* I2S Interface Control */
+#define AW8898_REG_I2SCTRL			0x05
+#define AW8898_BIT_I2SCTRL_FMS_MASK		GENMASK(7, 6)
+#define AW8898_BIT_I2SCTRL_FMS_32BIT		(3<< 6)
+#define AW8898_BIT_I2SCTRL_FMS_24BIT		(2<< 6)
+#define AW8898_BIT_I2SCTRL_FMS_20BIT		(1<< 6)
+#define AW8898_BIT_I2SCTRL_FMS_16BIT		(0<< 6)
+#define AW8898_BIT_I2SCTRL_SR_MASK		GENMASK(3, 0)
+#define AW8898_BIT_I2SCTRL_SR_48K		(8<<0)
+#define AW8898_BIT_I2SCTRL_SR_44P1K		(7<<0)
+#define AW8898_BIT_I2SCTRL_SR_32K		(6<<0)
+#define AW8898_BIT_I2SCTRL_SR_16K		(3<<0)
+#define AW8898_BIT_I2SCTRL_SR_8K		(0<<0)
+
+/* PWM Control */
+#define AW8898_REG_PWMCTRL			0x08
+#define AW8898_BIT_PWMCTRL_HMUTE_MASK		GENMASK(0, 0)
+#define AW8898_BIT_PWMCTRL_HMUTE_ENABLE		(1<<0)
+#define AW8898_BIT_PWMCTRL_HMUTE_DISABLE	(0<<0)
+
+/* Hardware AGC Configuration 7 */
+#define AW8898_REG_HAGCCFG7			0x0f
+#define AW8898_BIT_HAGCCFG7_VOL_MASK		GENMASK(15, 8)
+#define AW8898_VOLUME_MAX			(0)
+#define AW8898_VOLUME_MIN			(-255)
+#define AW8898_VOL_REG_SHIFT			(8)
 
 #define AW8898_CHIP_ID 0x1702
 
 #define AW8898_MAX_REGISTER 0xff
-
-#define AW8898_RATES SNDRV_PCM_RATE_8000_48000
-#define AW8898_FORMATS						\
-	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |	\
-	 SNDRV_PCM_FMTBIT_S32_LE)
 
 static int aw8898_spk_control = 0;
 static int aw8898_rcv_control = 0;
@@ -566,22 +609,24 @@ static const struct snd_soc_dai_ops aw8898_dai_ops = {
 	.shutdown	= aw8898_shutdown,
 };
 
+#define AW8898_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | \
+			SNDRV_PCM_FMTBIT_S32_LE)
+
 static struct snd_soc_dai_driver aw8898_dai[] = {
 	{
 		.name = "aw8898-amplifier",
-		//.id = 1,
 		.playback = {
 			.stream_name = "Playback",
 			.channels_min = 1,
 			.channels_max = 2,
-			.rates = AW8898_RATES,
+			.rates = SNDRV_PCM_RATE_8000_48000,
 			.formats = AW8898_FORMATS,
 		},
 		.capture = {
 			.stream_name = "Capture",
 			.channels_min = 1,
 			.channels_max = 2,
-			.rates = AW8898_RATES,
+			.rates = SNDRV_PCM_RATE_8000_48000,
 			.formats = AW8898_FORMATS,
 		},
 		.ops = &aw8898_dai_ops,
@@ -607,48 +652,8 @@ static int aw8898_component_probe(struct snd_soc_component *component)
 	return 0;
 }
 
-static unsigned int aw8898_codec_read(struct snd_soc_component *component,
-				      unsigned int reg)
-{
-	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
-	unsigned int value = 0;
-	int ret;
-	pr_debug("%s:enter \n", __func__);
-
-	if (aw8898_reg_access[reg] & REG_RD_ACCESS) {
-		ret = regmap_read(aw8898->regmap, reg, &value);
-		if (ret < 0) {
-			pr_debug("%s: read register failed \n", __func__);
-			return ret;
-		}
-	} else {
-		pr_debug("%s:Register 0x%x NO read access\n", __func__, reg);
-		return -1;
-	}
-	return value;
-}
-
-static int aw8898_codec_write(struct snd_soc_component *component,
-			      unsigned int reg, unsigned int value)
-{
-	int ret;
-	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
-	pr_debug("%s:enter ,reg is 0x%x value is 0x%x\n", __func__, reg, value);
-
-	if (aw8898_reg_access[reg] & REG_WR_ACCESS) {
-		ret = regmap_write(aw8898->regmap, reg, value);
-		return ret;
-	} else {
-		pr_debug("%s: Register 0x%x NO write access \n", __func__, reg);
-	}
-
-	return -1;
-}
-
 static struct snd_soc_component_driver soc_component_dev_aw8898 = {
 	.probe = aw8898_component_probe,
-	//.read = aw8898_codec_read,
-	//.write = aw8898_codec_write,
 };
 
 static const struct regmap_config aw8898_regmap = {
