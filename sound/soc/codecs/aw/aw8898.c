@@ -33,25 +33,22 @@
 #include <linux/syscalls.h>
 #include <linux/interrupt.h>
 #include <sound/tlv.h>
-#include "aw8898.h"
 #include "aw8898_reg.h"
 
-/******************************************************
- *
- * Marco
- *
- ******************************************************/
-#define AW8898_I2C_NAME "aw8898_smartpa"
+#define AW8898_FLAG_START_ON_MUTE   (1 << 0)
+#define AW8898_FLAG_SKIP_INTERRUPTS     (1 << 1)
+#define AW8898_FLAG_SAAM_AVAILABLE      (1 << 2)
+#define AW8898_FLAG_STEREO_DEVICE       (1 << 3)
+#define AW8898_FLAG_MULTI_MIC_INPUTS    (1 << 4)
 
-
-#define AW8898_VERSION "v1.1.3"
+#define AW8898_MAX_REGISTER             0xff
 
 #define AW8898_RATES SNDRV_PCM_RATE_8000_48000
 #define AW8898_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | \
                                     SNDRV_PCM_FMTBIT_S24_LE | \
                                     SNDRV_PCM_FMTBIT_S32_LE)
 
-//#define AWINIC_I2C_REGMAP
+#define AWINIC_I2C_REGMAP
 
 #define AW_I2C_RETRIES 5
 #define AW_I2C_RETRY_DELAY 5  // 5ms
@@ -64,10 +61,37 @@ static int aw8898_rcv_control = 0;
 #define AW8898_MAX_FIRMWARE_LOAD_CNT 20
 static char *aw8898_cfg_name = "aw8898_cfg.bin";
 
-#ifdef AW8898_VBAT_MONITOR
-static int aw8898_vbat_monitor_start(struct aw8898 *aw8898);
-static int aw8898_vbat_monitor_stop(struct aw8898 *aw8898);
-#endif
+enum aw8898_mode_spk_rcv{
+    AW8898_SPEAKER_MODE = 0,
+    AW8898_RECEIVER_MODE = 1,
+};
+
+struct aw8898 {
+    struct regmap *regmap;
+    struct i2c_client *i2c;
+    struct snd_soc_component *component;
+    struct device *dev;
+    struct mutex cfg_lock;
+    int sysclk;
+    int rate;
+    int pstream;
+    int cstream;
+
+    int reset_gpio;
+    int irq_gpio;
+
+    u8 reg;
+
+    unsigned int flags;
+    unsigned int init;
+    unsigned int spk_rcv_mode;
+};
+
+struct aw8898_container{
+    int len;
+    unsigned char data[];
+};
+
  /******************************************************
  *
  * aw8898 i2c write/read
@@ -269,9 +293,6 @@ static void aw8898_start(struct aw8898 *aw8898)
         if(reg_val & AW8898_BIT_SYSST_PLLS) {
               aw8898_run_mute(aw8898, false);
               pr_debug("%s iis signal check pass!\n", __func__);
-#ifdef AW8898_VBAT_MONITOR
-            aw8898_vbat_monitor_start(aw8898);
-#endif
             return;
         }
         msleep(2);
@@ -285,9 +306,6 @@ static void aw8898_stop(struct aw8898 *aw8898)
 
     aw8898_run_mute(aw8898, true);
     aw8898_run_pwd(aw8898, true);
-#ifdef AW8898_VBAT_MONITOR
-    aw8898_vbat_monitor_stop(aw8898);
-#endif
 }
 
 static void aw8898_container_update(struct aw8898 *aw8898,
@@ -387,21 +405,16 @@ static void aw8898_smartpa_cfg(struct aw8898 *aw8898, bool flag)
     }
 }
 
-/******************************************************
- *
- * kcontrol
- *
- ******************************************************/
- static const char *const spk_function[] = { "Off", "On" };
- static const char *const rcv_function[] = { "Off", "On" };
- static const DECLARE_TLV_DB_SCALE(digital_gain,0,50,0);
+static const char *const spk_function[] = { "Off", "On" };
+static const char *const rcv_function[] = { "Off", "On" };
+static const DECLARE_TLV_DB_SCALE(digital_gain,0,50,0);
 
- struct soc_mixer_control aw8898_mixer ={
-    .reg    = AW8898_REG_HAGCCFG7,
-    .shift  = AW8898_VOL_REG_SHIFT,
-    .max    = AW8898_VOLUME_MAX,
-    .min    = AW8898_VOLUME_MIN,
- };
+struct soc_mixer_control aw8898_mixer ={
+   .reg    = AW8898_REG_HAGCCFG7,
+   .shift  = AW8898_VOL_REG_SHIFT,
+   .max    = AW8898_VOLUME_MAX,
+   .min    = AW8898_VOLUME_MIN,
+};
 
 static int aw8898_volume_info(struct snd_kcontrol *kcontrol,struct snd_ctl_elem_info *uinfo)
 {
@@ -547,55 +560,6 @@ static void aw8898_add_codec_controls(struct aw8898 *aw8898)
     snd_soc_add_component_controls(aw8898->component, &aw8898_volume,1);
 }
 
-/******************************************************
- *
- * DAPM Widget & Route
- *
- ******************************************************/
-#if 0
-static struct snd_soc_dapm_widget aw8898_dapm_widgets_common[] = {
-    /* Stream widgets */
-    SND_SOC_DAPM_AIF_IN("AIF_IN", "AW89xx_AIF_Playback", 0, SND_SOC_NOPM, 0, 0),
-    SND_SOC_DAPM_AIF_OUT("AIF_OUT", "AW89xx_AIF_Capture", 0, SND_SOC_NOPM, 0, 0),
-
-    SND_SOC_DAPM_OUTPUT("OUTL"),
-    SND_SOC_DAPM_INPUT("AEC_Loopback"),
-};
-
-static const struct snd_soc_dapm_route aw8898_dapm_routes_common[] = {
-    { "OUTL", NULL, "AIF_IN" },
-    { "AIF_OUT", NULL, "AEC_Loopback" },
-};
-
-static void aw8898_add_widgets(struct aw8898 *aw8898)
-{
-    //struct snd_soc_dapm_context *dapm = &aw8898->codec->dapm;
-    struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(aw8898->codec);
-    struct snd_soc_dapm_widget *widgets;
-
-    pr_info("%s enter\n", __func__);
-    widgets = devm_kzalloc(&aw8898->i2c->dev,
-            sizeof(struct snd_soc_dapm_widget) *
-            ARRAY_SIZE(aw8898_dapm_widgets_common),
-            GFP_KERNEL);
-    if (!widgets)
-        return;
-
-    memcpy(widgets, aw8898_dapm_widgets_common,
-            sizeof(struct snd_soc_dapm_widget) *
-            ARRAY_SIZE(aw8898_dapm_widgets_common));
-
-    snd_soc_dapm_new_controls(dapm, widgets,
-            ARRAY_SIZE(aw8898_dapm_widgets_common));
-    snd_soc_dapm_add_routes(dapm, aw8898_dapm_routes_common,
-            ARRAY_SIZE(aw8898_dapm_routes_common));
-}
-#endif
-/******************************************************
- *
- * Digital Audio Interface
- *
- ******************************************************/
 static int aw8898_startup(struct snd_pcm_substream *substream,
         struct snd_soc_dai *dai)
 {
@@ -818,23 +782,6 @@ static int aw8898_probe(struct snd_soc_component *component)
     return ret;
 }
 
-static void aw8898_remove(struct snd_soc_component *component)
-{
-    //struct aw8898 *aw8898 = snd_soc_component_get_drvdata(codec);
-    pr_info("%s enter\n", __func__);
-
-    //aw8898_inputdev_unregister(aw8898);
-}
-
-/*
-struct regmap *aw8898_get_regmap(struct device *dev)
-{
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-
-    return aw8898->regmap;
-}
-*/
-
 static unsigned int aw8898_codec_read(struct snd_soc_component *component,unsigned int reg)
 {
     struct aw8898 *aw8898=snd_soc_component_get_drvdata(component);
@@ -870,59 +817,21 @@ static int aw8898_codec_write(struct snd_soc_component *component,unsigned int r
 
     return -1;
 }
-/*
-static int aw8898_codec_readable(struct snd_soc_codec *codec,unsigned int reg)
-{
-    return aw8898_reg_access[reg]&REG_RD_ACCESS;
-}
-*/
+
 static struct snd_soc_component_driver soc_codec_dev_aw8898 = {
     .probe = aw8898_probe,
-    .remove = aw8898_remove,
-    //.get_regmap = aw8898_get_regmap,
     .read = aw8898_codec_read,
     .write= aw8898_codec_write,
 };
-
-/*****************************************************
- *
- * regmap
- *
- *****************************************************/
-static bool aw8898_writeable_register(struct device *dev, unsigned int reg)
-{
-    /* enable read access for all registers */
-    return 1;
-}
-
-static bool aw8898_readable_register(struct device *dev, unsigned int reg)
-{
-    /* enable read access for all registers */
-    return 1;
-}
-
-static bool aw8898_volatile_register(struct device *dev, unsigned int reg)
-{
-    /* enable read access for all registers */
-    return 1;
-}
 
 static const struct regmap_config aw8898_regmap = {
     .reg_bits = 8,
     .val_bits = 16,
 
     .max_register = AW8898_MAX_REGISTER,
-    .writeable_reg = aw8898_writeable_register,
-    .readable_reg = aw8898_readable_register,
-    .volatile_reg = aw8898_volatile_register,
     .cache_type = REGCACHE_RBTREE,
 };
 
-/******************************************************
- *
- * irq
- *
- ******************************************************/
 static void aw8898_interrupt_setup(struct aw8898 *aw8898)
 {
     unsigned int reg_val;
@@ -1027,7 +936,6 @@ static int aw8898_read_chipid(struct aw8898 *aw8898)
             pr_info("%s aw8898 detected\n", __func__);
             aw8898->flags |= AW8898_FLAG_SKIP_INTERRUPTS;
             aw8898->flags |= AW8898_FLAG_START_ON_MUTE;
-            aw8898->chipid = AW8898_ID;
             pr_info("%s aw8898->flags=0x%x\n", __func__, aw8898->flags);
             return 0;
         default:
@@ -1042,337 +950,6 @@ static int aw8898_read_chipid(struct aw8898 *aw8898)
     return -EINVAL;
 }
 
-/*****************************************************
- *
- * vbat monitor
- *
- *****************************************************/
-#ifdef AW8898_VBAT_MONITOR
-static int aw8898_vbat_monitor_stop(struct aw8898 *aw8898)
-{
-    pr_info("%s enter\n", __func__);
-
-    if(hrtimer_active(&aw8898->vbat_monitor_timer)) {
-        pr_info("%s: cancel vbat monitor\n", __func__);
-        hrtimer_cancel(&aw8898->vbat_monitor_timer);
-    }
-    return 0;
-}
-
-static int aw8898_vbat_monitor_start(struct aw8898 *aw8898)
-{
-    int ram_timer_val = 30000;
-
-    pr_info("%s enter\n", __func__);
-
-    if(hrtimer_active(&aw8898->vbat_monitor_timer)) {
-    } else {
-        pr_info("%s: start vbat monitor\n", __func__);
-        hrtimer_start(&aw8898->vbat_monitor_timer,
-                ktime_set(ram_timer_val/1000, (ram_timer_val%1000)*1000000),
-                HRTIMER_MODE_REL);
-    }
-    return 0;
-}
-
-static enum hrtimer_restart aw8898_vbat_monitor_timer_func(struct hrtimer *timer)
-{
-    struct aw8898 *aw8898 = container_of(timer, struct aw8898, vbat_monitor_timer);
-
-    pr_info("%s enter\n", __func__);
-
-    schedule_work(&aw8898->vbat_monitor_work);
-
-    return HRTIMER_NORESTART;
-}
-
-static int aw8898_get_sys_battery_info(char *dev)
-{
-    int fd;
-    int eCheck;
-    int nReadSize;
-    char buf[64],*pvalue;
-    mm_segment_t oldfs;
-
-    oldfs = get_fs();
-    set_fs(KERNEL_DS);
-    fd = sys_open(dev, O_RDONLY, 0);
-    if (fd < 0) {
-        pr_err("%s: open fail dev:%s fd:%d\n", __func__, dev, fd);
-        set_fs(oldfs);
-        return fd;
-    }
-
-    nReadSize = sys_read(fd, buf, sizeof(buf) - 1);
-    pr_debug("%s: nReadSize:%d\n", __func__, nReadSize);
-
-    eCheck = simple_strtoul(buf,&pvalue,10);
-    pr_debug("%s: eCheck = %d\n", __func__, eCheck);
-
-    set_fs(oldfs);
-    sys_close(fd);
-
-    if (eCheck > 0)
-        return eCheck;
-    else
-        return 0;
-}
-
-static void aw8898_vbat_monitor_work_routine(struct work_struct *work)
-{
-    struct aw8898 *aw8898 = container_of(work, struct aw8898, vbat_monitor_work);
-    unsigned int reg_val = 0;
-    int sys_vbat_vol = 0;
-
-    pr_info("%s enter\n", __func__);
-
-    aw8898_i2c_read(aw8898, AW8898_REG_PWMCTRL, &reg_val);
-    if((reg_val&AW8898_BIT_PWMCTRL_HMUTE_ENABLE) == AW8898_BIT_PWMCTRL_HMUTE_DISABLE) {
-        sys_vbat_vol = aw8898_get_sys_battery_info(SYS_BAT_DEV);
-        pr_info("%s: get sys battery = %d\n", __func__, sys_vbat_vol);
-        if((sys_vbat_vol < AW8898_SYS_VBAT_LIMIT) && (sys_vbat_vol > AW8898_SYS_VBAT_MIN)) {
-            aw8898_i2c_write_bits(aw8898, AW8898_REG_GENCTRL,
-                AW8898_BIT_GENCTRL_BST_ILIMIT_MASK, (aw8898->bst_ilimit<<4));
-        }
-        aw8898_vbat_monitor_start(aw8898);
-    }
-}
-
-static int aw8898_vbat_monitor_init(struct aw8898 *aw8898)
-{
-    pr_info("%s enter\n", __func__);
-
-    aw8898->bst_ilimit = 0x00;
-
-    hrtimer_init(&aw8898->vbat_monitor_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-    aw8898->vbat_monitor_timer.function = aw8898_vbat_monitor_timer_func;
-    INIT_WORK(&aw8898->vbat_monitor_work, aw8898_vbat_monitor_work_routine);
-    return 0;
-}
-#endif
-/******************************************************
- *
- * sys bin attribute
- *
- *****************************************************/
-static ssize_t aw8898_reg_write(struct file *filp, struct kobject *kobj,
-        struct bin_attribute *bin_attr,
-        char *buf, loff_t off, size_t count)
-{
-    struct device *dev = container_of(kobj, struct device, kobj);
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-
-    if (count != 1) {
-        pr_info("invalid register address");
-        return -EINVAL;
-    }
-
-    aw8898->reg = buf[0];
-
-    return 1;
-}
-
-static ssize_t aw8898_rw_write(struct file *filp, struct kobject *kobj,
-        struct bin_attribute *bin_attr,
-        char *buf, loff_t off, size_t count)
-{
-    struct device *dev = container_of(kobj, struct device, kobj);
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-    u8 *data;
-    int ret;
-    int retries = AW_I2C_RETRIES;
-
-    data = kmalloc(count+1, GFP_KERNEL);
-    if (data == NULL) {
-        pr_err("can not allocate memory\n");
-        return  -ENOMEM;
-    }
-
-    data[0] = aw8898->reg;
-    memcpy(&data[1], buf, count);
-
-    retry:
-    ret = i2c_master_send(aw8898->i2c, data, count+1);
-    if (ret < 0) {
-        pr_warn("i2c error, retries left: %d\n", retries);
-        if (retries) {
-              retries--;
-              msleep(AW_I2C_RETRY_DELAY);
-              goto retry;
-        }
-    }
-
-    kfree(data);
-    return ret;
-}
-
-static ssize_t aw8898_rw_read(struct file *filp, struct kobject *kobj,
-        struct bin_attribute *bin_attr,
-        char *buf, loff_t off, size_t count)
-{
-    struct device *dev = container_of(kobj, struct device, kobj);
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-    struct i2c_msg msgs[] = {
-        {
-            .addr = aw8898->i2c->addr,
-            .flags = 0,
-            .len = 1,
-            .buf = &aw8898->reg,
-        },
-        {
-            .addr = aw8898->i2c->addr,
-            .flags = I2C_M_RD,
-            .len = count,
-            .buf = buf,
-        },
-    };
-    int ret;
-    int retries = AW_I2C_RETRIES;
-    retry:
-    ret = i2c_transfer(aw8898->i2c->adapter, msgs, ARRAY_SIZE(msgs));
-    if (ret < 0) {
-        pr_warn("i2c error, retries left: %d\n", retries);
-        if (retries) {
-            retries--;
-            msleep(AW_I2C_RETRY_DELAY);
-            goto retry;
-        }
-        return ret;
-    }
-    /* ret contains the number of i2c messages send */
-    return 1 + ((ret > 1) ? count : 0);
-}
-
-static struct bin_attribute dev_attr_rw = {
-    .attr = {
-        .name = "rw",
-        .mode = S_IRUSR | S_IWUSR,
-    },
-    .size = 0,
-    .read = aw8898_rw_read,
-    .write = aw8898_rw_write,
-};
-
-static struct bin_attribute dev_attr_regaddr = {
-    .attr = {
-        .name = "regaddr",
-        .mode = S_IWUSR,
-    },
-    .size = 0,
-    .read = NULL,
-    .write = aw8898_reg_write,
-};
-
-/******************************************************
- *
- * sys group attribute: reg
- *
- ******************************************************/
-static ssize_t aw8898_reg_store(struct device *dev, struct device_attribute *attr,
-        const char *buf, size_t count)
-{
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-
-    unsigned int databuf[2] = {0};
-
-    if(2 == sscanf(buf, "%x %x", &databuf[0], &databuf[1])) {
-        aw8898_i2c_write(aw8898, databuf[0], databuf[1]);
-    }
-
-    return count;
-}
-
-static ssize_t aw8898_reg_show(struct device *dev, struct device_attribute *attr,
-        char *buf)
-{
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-    ssize_t len = 0;
-    unsigned char i = 0;
-    unsigned int reg_val = 0;
-    for(i = 0; i < AW8898_REG_MAX; i ++) {
-    if(!(aw8898_reg_access[i]&REG_RD_ACCESS))
-       continue;
-        aw8898_i2c_read(aw8898, i, &reg_val);
-        len += snprintf(buf+len, PAGE_SIZE-len, "reg:0x%02x=0x%04x \n", i, reg_val);
-    }
-    return len;
-}
-
-static ssize_t aw8898_spk_rcv_store(struct device *dev, struct device_attribute *attr,
-        const char *buf, size_t count)
-{
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-
-    unsigned int databuf[2] = {0};
-
-    if(1 == sscanf(buf, "%d", &databuf[0])) {
-        aw8898->spk_rcv_mode = databuf[0];
-    }
-
-    return count;
-}
-
-static ssize_t aw8898_spk_rcv_show(struct device *dev, struct device_attribute *attr,
-        char *buf)
-{
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-    ssize_t len = 0;
-    if(aw8898->spk_rcv_mode == AW8898_SPEAKER_MODE) {
-        len += snprintf(buf+len, PAGE_SIZE-len, "aw8898 spk_rcv: %d, speaker mode\n", aw8898->spk_rcv_mode);
-    } else if (aw8898->spk_rcv_mode == AW8898_RECEIVER_MODE) {
-        len += snprintf(buf+len, PAGE_SIZE-len, "aw8898 spk_rcv: %d, receiver mode\n", aw8898->spk_rcv_mode);
-    } else {
-        len += snprintf(buf+len, PAGE_SIZE-len, "aw8898 spk_rcv: %d, unknown mode\n", aw8898->spk_rcv_mode);
-    }
-
-    return len;
-}
-
-static ssize_t aw8898_bst_ilimit_store(struct device *dev, struct device_attribute *attr,
-        const char *buf, size_t count)
-{
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-
-    unsigned int databuf[2] = {0};
-
-    if(1 == sscanf(buf, "%x", &databuf[0])) {
-        aw8898->bst_ilimit = databuf[0];
-    }
-
-    return count;
-}
-
-static ssize_t aw8898_bst_ilimit_show(struct device *dev, struct device_attribute *attr,
-        char *buf)
-{
-    struct aw8898 *aw8898 = dev_get_drvdata(dev);
-    ssize_t len = 0;
-
-    len += snprintf(buf+len, PAGE_SIZE-len, "aw8898 bst_ilimit=0x%02x\n", aw8898->bst_ilimit);
-
-    return len;
-}
-static DEVICE_ATTR(reg, S_IWUSR | S_IRUGO, aw8898_reg_show, aw8898_reg_store);
-static DEVICE_ATTR(spk_rcv, S_IWUSR | S_IRUGO, aw8898_spk_rcv_show, aw8898_spk_rcv_store);
-static DEVICE_ATTR(bst_ilimit, S_IWUSR | S_IRUGO, aw8898_bst_ilimit_show, aw8898_bst_ilimit_store);
-
-static struct attribute *aw8898_attributes[] = {
-    &dev_attr_reg.attr,
-    &dev_attr_spk_rcv.attr,
-    &dev_attr_bst_ilimit.attr,
-    NULL
-};
-
-static struct attribute_group aw8898_attribute_group = {
-    .attrs = aw8898_attributes
-};
-
-
-/******************************************************
- *
- * i2c driver
- *
- ******************************************************/
 static int aw8898_i2c_probe(struct i2c_client *i2c)
 {
     struct snd_soc_dai_driver *dai;
@@ -1489,32 +1066,12 @@ static int aw8898_i2c_probe(struct i2c_client *i2c)
         aw8898->flags |= AW8898_FLAG_SKIP_INTERRUPTS;
     }
 
-    /* Register the sysfs files for climax backdoor access */
-    ret = device_create_bin_file(&i2c->dev, &dev_attr_rw);
-    if (ret)
-        dev_info(&i2c->dev, "%s error creating sysfs files: rw\n", __func__);
-    ret = device_create_bin_file(&i2c->dev, &dev_attr_regaddr);
-    if (ret)
-        dev_info(&i2c->dev, "%s error creating sysfs files: regaddr\n", __func__);
-
     dev_set_drvdata(&i2c->dev, aw8898);
-    ret = sysfs_create_group(&i2c->dev.kobj, &aw8898_attribute_group);
-    if (ret < 0) {
-        dev_info(&i2c->dev, "%s error creating sysfs attr files\n", __func__);
-        goto err_sysfs;
-    }
 
-#ifdef AW8898_VBAT_MONITOR
-    aw8898_vbat_monitor_init(aw8898);
-#endif
     pr_info("%s probe completed successfully!\n", __func__);
 
     return 0;
 
-err_sysfs:
-    device_remove_bin_file(&i2c->dev, &dev_attr_regaddr);
-    device_remove_bin_file(&i2c->dev, &dev_attr_rw);
-    devm_free_irq(&i2c->dev, gpio_to_irq(aw8898->irq_gpio), aw8898);
 err_irq:
 err_register_codec:
     devm_kfree(&i2c->dev, dai);
@@ -1535,13 +1092,11 @@ static void aw8898_i2c_remove(struct i2c_client *i2c)
 
     pr_info("%s enter\n", __func__);
 
-    device_remove_bin_file(&i2c->dev, &dev_attr_regaddr);
-    device_remove_bin_file(&i2c->dev, &dev_attr_rw);
     devm_free_irq(&i2c->dev, gpio_to_irq(aw8898->irq_gpio), aw8898);
 }
 
 static const struct i2c_device_id aw8898_i2c_id[] = {
-    { AW8898_I2C_NAME, 0 },
+    { "aw8898_smartpa", 0 },
     { }
 };
 MODULE_DEVICE_TABLE(i2c, aw8898_i2c_id);
@@ -1553,7 +1108,7 @@ static struct of_device_id aw8898_dt_match[] = {
 
 static struct i2c_driver aw8898_i2c_driver = {
     .driver = {
-        .name = AW8898_I2C_NAME,
+        .name = "aw8898_smartpa",
         .owner = THIS_MODULE,
         .of_match_table = of_match_ptr(aw8898_dt_match),
     },
@@ -1566,8 +1121,6 @@ static struct i2c_driver aw8898_i2c_driver = {
 static int __init aw8898_i2c_init(void)
 {
     int ret = 0;
-
-    pr_info("aw8898 driver version %s\n", AW8898_VERSION);
 
     ret = i2c_add_driver(&aw8898_i2c_driver);
     if(ret){
