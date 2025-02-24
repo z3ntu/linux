@@ -27,17 +27,14 @@
 #include <sound/tlv.h>
 #include "aw8898_reg.h"
 
+#define AW8898_CHIP_ID 0x1702
+
 #define AW8898_MAX_REGISTER 0xff
 
 #define AW8898_RATES SNDRV_PCM_RATE_8000_48000
 #define AW8898_FORMATS						\
 	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |	\
 	 SNDRV_PCM_FMTBIT_S32_LE)
-
-#define AW_I2C_RETRIES 5
-#define AW_I2C_RETRY_DELAY 5 // 5ms
-#define AW_READ_CHIPID_RETRIES 5
-#define AW_READ_CHIPID_RETRY_DELAY 5
 
 static int aw8898_spk_control = 0;
 static int aw8898_rcv_control = 0;
@@ -51,16 +48,15 @@ enum aw8898_mode_spk_rcv {
 
 struct aw8898 {
 	struct regmap *regmap;
-	struct i2c_client *i2c;
+	struct i2c_client *client;
 	struct snd_soc_component *component;
-	struct device *dev;
 	struct mutex cfg_lock;
 	int sysclk;
 	int rate;
 	int pstream;
 	int cstream;
 
-	int reset_gpio;
+	struct gpio_desc *reset;
 
 	u8 reg;
 
@@ -72,46 +68,6 @@ struct aw8898_container {
 	int len;
 	unsigned char data[];
 };
-
-static int aw8898_i2c_write(struct aw8898 *aw8898, unsigned char reg_addr,
-			    unsigned int reg_data)
-{
-	int ret = -1;
-	unsigned char cnt = 0;
-
-	while (cnt < AW_I2C_RETRIES) {
-		ret = regmap_write(aw8898->regmap, reg_addr, reg_data);
-		if (ret < 0) {
-			pr_err("%s: regmap_write cnt=%d error=%d\n", __func__,
-			       cnt, ret);
-		} else {
-			break;
-		}
-		cnt++;
-	}
-
-	return ret;
-}
-
-static int aw8898_i2c_read(struct aw8898 *aw8898, unsigned char reg_addr,
-			   unsigned int *reg_data)
-{
-	int ret = -1;
-	unsigned char cnt = 0;
-
-	while (cnt < AW_I2C_RETRIES) {
-		ret = regmap_read(aw8898->regmap, reg_addr, reg_data);
-		if (ret < 0) {
-			pr_err("%s: regmap_read cnt=%d error=%d\n", __func__,
-			       cnt, ret);
-		} else {
-			break;
-		}
-		cnt++;
-	}
-
-	return ret;
-}
 
 static void aw8898_run_mute(struct aw8898 *aw8898, bool mute)
 {
@@ -149,7 +105,6 @@ static void aw8898_spk_rcv_mode(struct aw8898 *aw8898)
 		regmap_update_bits(aw8898->regmap, AW8898_REG_SYSCTRL,
 				      AW8898_BIT_SYSCTRL_MODE_MASK,
 				      AW8898_BIT_SYSCTRL_RCV_MODE);
-	} else {
 	}
 }
 
@@ -164,7 +119,7 @@ static void aw8898_start(struct aw8898 *aw8898)
 	aw8898_run_pwd(aw8898, false);
 	msleep(2);
 	for (i = 0; i < iis_check_max; i++) {
-		aw8898_i2c_read(aw8898, AW8898_REG_SYSST, &reg_val);
+		regmap_read(aw8898->regmap, AW8898_REG_SYSST, &reg_val);
 		if (reg_val & AW8898_BIT_SYSST_PLLS) {
 			aw8898_run_mute(aw8898, false);
 			pr_debug("%s iis signal check pass!\n", __func__);
@@ -200,7 +155,7 @@ static void aw8898_container_update(struct aw8898 *aw8898,
 			  aw8898_cont->data[i + 2];
 		pr_info("%s: reg=0x%04x, val = 0x%04x\n", __func__, reg_addr,
 			reg_val);
-		aw8898_i2c_write(aw8898, (unsigned char)reg_addr,
+		regmap_write(aw8898->regmap, (unsigned char)reg_addr,
 				 (unsigned int)reg_val);
 	}
 
@@ -253,7 +208,7 @@ static int aw8898_load_cfg(struct aw8898 *aw8898)
 	pr_info("%s enter\n", __func__);
 
 	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
-				       aw8898_cfg_name, aw8898->dev, GFP_KERNEL,
+				       aw8898_cfg_name, &aw8898->client->dev, GFP_KERNEL,
 				       aw8898, aw8898_cfg_loaded);
 }
 
@@ -321,7 +276,7 @@ static int aw8898_volume_get(struct snd_kcontrol *kcontrol,
 	struct soc_mixer_control *mc =
 		(struct soc_mixer_control *)kcontrol->private_value;
 
-	aw8898_i2c_read(aw8898, AW8898_REG_HAGCCFG7, &reg_val);
+	regmap_read(aw8898->regmap, AW8898_REG_HAGCCFG7, &reg_val);
 	ucontrol->value.integer.value[0] = (value >> mc->shift) &
 					   (AW8898_BIT_HAGCCFG7_VOL_MASK);
 	return 0;
@@ -346,18 +301,18 @@ static int aw8898_volume_put(struct snd_kcontrol *kcontrol,
 	}
 
 	//smartpa have clk
-	aw8898_i2c_read(aw8898, AW8898_REG_SYSST, &reg_value);
+	regmap_read(aw8898->regmap, AW8898_REG_SYSST, &reg_value);
 	if (!(reg_value & AW8898_BIT_SYSST_PLLS)) {
 		pr_err("%s: NO I2S CLK ,cat not write reg \n", __func__);
 		return 0;
 	}
 	//cal real value
 	value = value << mc->shift & AW8898_BIT_HAGCCFG7_VOL_MASK;
-	aw8898_i2c_read(aw8898, AW8898_REG_HAGCCFG7, &reg_value);
+	regmap_read(aw8898->regmap, AW8898_REG_HAGCCFG7, &reg_value);
 	value = value | (reg_value & 0x00ff);
 
 	//write value
-	aw8898_i2c_write(aw8898, AW8898_REG_HAGCCFG7, value);
+	regmap_write(aw8898->regmap, AW8898_REG_HAGCCFG7, value);
 
 	return 0;
 }
@@ -443,16 +398,6 @@ static struct snd_kcontrol_new aw8898_controls[] = {
 		     aw8898_rcv_get, aw8898_rcv_set),
 };
 
-static void aw8898_add_codec_controls(struct aw8898 *aw8898)
-{
-	pr_info("%s enter\n", __func__);
-
-	snd_soc_add_component_controls(aw8898->component, aw8898_controls,
-				       ARRAY_SIZE(aw8898_controls));
-
-	snd_soc_add_component_controls(aw8898->component, &aw8898_volume, 1);
-}
-
 static int aw8898_startup(struct snd_pcm_substream *substream,
 			  struct snd_soc_dai *dai)
 {
@@ -470,7 +415,6 @@ static int aw8898_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	pr_info("%s: fmt=0x%x\n", __func__, fmt);
 
-	/* Supported mode: regular I2S, slave, or PDM */
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
 		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) !=
@@ -614,27 +558,27 @@ static void aw8898_shutdown(struct snd_pcm_substream *substream,
 }
 
 static const struct snd_soc_dai_ops aw8898_dai_ops = {
-	.startup = aw8898_startup,
-	.set_fmt = aw8898_set_fmt,
-	.set_sysclk = aw8898_set_dai_sysclk,
-	.hw_params = aw8898_hw_params,
-	.mute_stream = aw8898_mute,
-	.shutdown = aw8898_shutdown,
+	.startup	= aw8898_startup,
+	.set_fmt	= aw8898_set_fmt,
+	.set_sysclk	= aw8898_set_dai_sysclk,
+	.hw_params	= aw8898_hw_params,
+	.mute_stream	= aw8898_mute,
+	.shutdown	= aw8898_shutdown,
 };
 
 static struct snd_soc_dai_driver aw8898_dai[] = {
 	{
-		.name = "aw8898-aif",
-		.id = 1,
+		.name = "aw8898-amplifier",
+		//.id = 1,
 		.playback = {
-			.stream_name = "Speaker_Playback",
+			.stream_name = "Playback",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = AW8898_RATES,
 			.formats = AW8898_FORMATS,
 		},
 		.capture = {
-			.stream_name = "Speaker_Capture",
+			.stream_name = "Capture",
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = AW8898_RATES,
@@ -647,30 +591,20 @@ static struct snd_soc_dai_driver aw8898_dai[] = {
 	},
 };
 
-/*****************************************************
- *
- * codec driver
- *
- *****************************************************/
-static int aw8898_probe(struct snd_soc_component *component)
+static int aw8898_component_probe(struct snd_soc_component *component)
 {
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
-	int ret = 0;
-
-	pr_info("%s enter\n", __func__);
 
 	aw8898->component = component;
 
-	//aw8898_add_widgets(aw8898);
+	// FIXME regulator_bulk_enable
 
-	aw8898_add_codec_controls(aw8898);
+	snd_soc_add_component_controls(component, aw8898_controls,
+				       ARRAY_SIZE(aw8898_controls));
 
-	if (component->dev->of_node)
-		dev_set_name(component->dev, "%s", "aw8898_smartpa");
+	snd_soc_add_component_controls(component, &aw8898_volume, 1);
 
-	pr_info("%s exit\n", __func__);
-
-	return ret;
+	return 0;
 }
 
 static unsigned int aw8898_codec_read(struct snd_soc_component *component,
@@ -682,7 +616,7 @@ static unsigned int aw8898_codec_read(struct snd_soc_component *component,
 	pr_debug("%s:enter \n", __func__);
 
 	if (aw8898_reg_access[reg] & REG_RD_ACCESS) {
-		ret = aw8898_i2c_read(aw8898, reg, &value);
+		ret = regmap_read(aw8898->regmap, reg, &value);
 		if (ret < 0) {
 			pr_debug("%s: read register failed \n", __func__);
 			return ret;
@@ -702,7 +636,7 @@ static int aw8898_codec_write(struct snd_soc_component *component,
 	pr_debug("%s:enter ,reg is 0x%x value is 0x%x\n", __func__, reg, value);
 
 	if (aw8898_reg_access[reg] & REG_WR_ACCESS) {
-		ret = aw8898_i2c_write(aw8898, reg, value);
+		ret = regmap_write(aw8898->regmap, reg, value);
 		return ret;
 	} else {
 		pr_debug("%s: Register 0x%x NO write access \n", __func__, reg);
@@ -711,10 +645,10 @@ static int aw8898_codec_write(struct snd_soc_component *component,
 	return -1;
 }
 
-static struct snd_soc_component_driver soc_codec_dev_aw8898 = {
-	.probe = aw8898_probe,
-	.read = aw8898_codec_read,
-	.write = aw8898_codec_write,
+static struct snd_soc_component_driver soc_component_dev_aw8898 = {
+	.probe = aw8898_component_probe,
+	//.read = aw8898_codec_read,
+	//.write = aw8898_codec_write,
 };
 
 static const struct regmap_config aw8898_regmap = {
@@ -725,221 +659,100 @@ static const struct regmap_config aw8898_regmap = {
 	.cache_type = REGCACHE_RBTREE,
 };
 
-static int aw8898_parse_dt(struct device *dev, struct aw8898 *aw8898,
-			   struct device_node *np)
+static void aw8898_reset(struct aw8898 *aw8898)
 {
-	aw8898->reset_gpio = of_get_named_gpio(np, "reset-gpio", 0);
-	if (aw8898->reset_gpio < 0) {
-		dev_err(dev,
-			"%s: no reset gpio provided, will not HW reset device\n",
-			__func__);
-		return -1;
-	} else {
-		dev_info(dev, "%s: reset gpio provided ok\n", __func__);
-	}
-
-	return 0;
+	gpiod_set_value_cansleep(aw8898->reset, 1);
+	msleep(1);
+	gpiod_set_value_cansleep(aw8898->reset, 0);
+	msleep(1);
 }
 
-static int aw8898_hw_reset(struct aw8898 *aw8898)
+static int aw8898_check_chipid(struct aw8898 *aw8898)
 {
-	pr_info("%s enter\n", __func__);
+	unsigned int reg;
+	int ret;
 
-	if (aw8898 && gpio_is_valid(aw8898->reset_gpio)) {
-		gpio_set_value_cansleep(aw8898->reset_gpio, 0);
-		msleep(1);
-		gpio_set_value_cansleep(aw8898->reset_gpio, 1);
-		msleep(1);
-	} else {
-		dev_err(aw8898->dev, "%s:  failed\n", __func__);
-	}
-	return 0;
-}
-
-/*****************************************************
- *
- * check chip id
- *
- *****************************************************/
-static int aw8898_read_chipid(struct aw8898 *aw8898)
-{
-	int ret = -1;
-	unsigned int cnt = 0;
-	unsigned int reg = 0;
-
-	while (cnt < AW_READ_CHIPID_RETRIES) {
-		ret = aw8898_i2c_read(aw8898, AW8898_REG_ID, &reg);
-		if (ret < 0) {
-			dev_err(aw8898->dev,
-				"%s: failed to read register AW8898_REG_ID: %d\n",
-				__func__, ret);
-			return -EIO;
-		}
-		switch (reg) {
-		case 0x1702:
-			pr_info("%s aw8898 detected\n", __func__);
-			return 0;
-		default:
-			pr_info("%s unsupported device revision (0x%x)\n",
-				__func__, reg);
-			break;
-		}
-		cnt++;
-
-		msleep(AW_READ_CHIPID_RETRY_DELAY);
-	}
-
-	return -EINVAL;
-}
-
-static int aw8898_i2c_probe(struct i2c_client *i2c)
-{
-	struct snd_soc_dai_driver *dai;
-	struct aw8898 *aw8898;
-	struct device_node *np = i2c->dev.of_node;
-	int ret = -1;
-
-	pr_info("%s enter\n", __func__);
-
-	if (!i2c_check_functionality(i2c->adapter, I2C_FUNC_I2C)) {
-		dev_err(&i2c->dev, "check_functionality failed\n");
-		return -EIO;
-	}
-
-	aw8898 = devm_kzalloc(&i2c->dev, sizeof(struct aw8898), GFP_KERNEL);
-	if (aw8898 == NULL)
-		return -ENOMEM;
-
-	aw8898->dev = &i2c->dev;
-	aw8898->i2c = i2c;
-
-	/* aw8898 regmap */
-	aw8898->regmap = devm_regmap_init_i2c(i2c, &aw8898_regmap);
-	if (IS_ERR(aw8898->regmap)) {
-		ret = PTR_ERR(aw8898->regmap);
-		dev_err(&i2c->dev, "%s: failed to allocate register map: %d\n",
-			__func__, ret);
-		goto err_regmap;
-	}
-
-	i2c_set_clientdata(i2c, aw8898);
-	mutex_init(&aw8898->cfg_lock);
-
-	/* aw8898 rst & int */
-	if (np) {
-		ret = aw8898_parse_dt(&i2c->dev, aw8898, np);
-		if (ret) {
-			dev_err(&i2c->dev,
-				"%s: failed to parse device tree node\n",
-				__func__);
-			goto err_parse_dt;
-		}
-	} else {
-		aw8898->reset_gpio = -1;
-	}
-
-	if (gpio_is_valid(aw8898->reset_gpio)) {
-		ret = devm_gpio_request_one(&i2c->dev, aw8898->reset_gpio,
-					    GPIOF_OUT_INIT_LOW, "aw8898_rst");
-		if (ret) {
-			dev_err(&i2c->dev, "%s: rst request failed\n",
-				__func__);
-			goto err_gpio_request;
-		}
-	}
-
-	/* hardware reset */
-	aw8898_hw_reset(aw8898);
-
-	/* aw8898 chip id */
-	ret = aw8898_read_chipid(aw8898);
+	ret = regmap_read(aw8898->regmap, AW8898_REG_ID, &reg);
 	if (ret < 0) {
-		dev_err(&i2c->dev, "%s: aw8898_read_chipid failed ret=%d\n",
-			__func__, ret);
-		goto err_id;
-	}
-
-	/* aw8898 device name */
-	if (i2c->dev.of_node) {
-		dev_set_name(&i2c->dev, "%s", "aw8898_smartpa");
-	} else {
-		dev_err(&i2c->dev, "%s failed to set device name: %d\n",
-			__func__, ret);
-	}
-
-	/* register codec */
-	dai = devm_kzalloc(&i2c->dev, sizeof(aw8898_dai), GFP_KERNEL);
-	if (!dai) {
-		goto err_dai_kzalloc;
-	}
-	memcpy(dai, aw8898_dai, sizeof(aw8898_dai));
-	pr_info("%s dai->name(%s)\n", __func__, dai->name);
-
-	ret = devm_snd_soc_register_component(&i2c->dev, &soc_codec_dev_aw8898,
-					      dai, ARRAY_SIZE(aw8898_dai));
-	if (ret < 0) {
-		dev_err(&i2c->dev, "%s failed to register aw8898: %d\n",
-			__func__, ret);
-		goto err_register_codec;
-	}
-
-	dev_set_drvdata(&i2c->dev, aw8898);
-
-	pr_info("%s probe completed successfully!\n", __func__);
-
-	return 0;
-
-err_register_codec:
-	devm_kfree(&i2c->dev, dai);
-	dai = NULL;
-err_dai_kzalloc:
-err_id:
-err_gpio_request:
-err_parse_dt:
-err_regmap:
-	devm_kfree(&i2c->dev, aw8898);
-	aw8898 = NULL;
-	return ret;
-}
-
-static const struct i2c_device_id aw8898_i2c_id[] = { { "aw8898_smartpa", 0 },
-						      {} };
-MODULE_DEVICE_TABLE(i2c, aw8898_i2c_id);
-
-static struct of_device_id aw8898_dt_match[] = {
-	{ .compatible = "awinic,aw8898_smartpa" },
-	{},
-};
-
-static struct i2c_driver aw8898_i2c_driver = {
-	.driver = {
-		.name = "aw8898_smartpa",
-		.owner = THIS_MODULE,
-		.of_match_table = of_match_ptr(aw8898_dt_match),
-	},
-	.probe = aw8898_i2c_probe,
-	.id_table = aw8898_i2c_id,
-};
-
-static int __init aw8898_i2c_init(void)
-{
-	int ret = 0;
-
-	ret = i2c_add_driver(&aw8898_i2c_driver);
-	if (ret) {
-		pr_err("fail to add aw8898 device into i2c\n");
+		dev_err(&aw8898->client->dev,
+			"Failed to read register AW8898_REG_ID: %d\n", ret);
 		return ret;
 	}
 
+	if (reg != AW8898_CHIP_ID) {
+		dev_err(&aw8898->client->dev, "Unexpected chip ID: 0x%x\n",
+			reg);
+		return -EINVAL;
+	}
+
 	return 0;
 }
-module_init(aw8898_i2c_init);
 
-static void __exit aw8898_i2c_exit(void)
+static int aw8898_probe(struct i2c_client *client)
 {
-	i2c_del_driver(&aw8898_i2c_driver);
-}
-module_exit(aw8898_i2c_exit);
+	struct aw8898 *aw8898;
+	int ret;
 
-MODULE_DESCRIPTION("ASoC AW8898 Smart PA Driver");
-MODULE_LICENSE("GPL v2");
+	aw8898 = devm_kzalloc(&client->dev, sizeof(*aw8898), GFP_KERNEL);
+	if (!aw8898)
+		return -ENOMEM;
+
+	i2c_set_clientdata(client, aw8898);
+	aw8898->client = client;
+
+	/* aw8898 regmap */
+	aw8898->regmap = devm_regmap_init_i2c(client, &aw8898_regmap);
+	if (IS_ERR(aw8898->regmap))
+		return dev_err_probe(&client->dev, PTR_ERR(aw8898->regmap),
+				     "failed to allocate register map\n");
+
+	mutex_init(&aw8898->cfg_lock);
+
+	aw8898->reset = devm_gpiod_get(&client->dev, "reset", GPIOD_OUT_HIGH);
+	if (IS_ERR(aw8898->reset))
+		return dev_err_probe(&client->dev, PTR_ERR(aw8898->reset),
+				     "failed to get reset GPIO\n");
+
+	aw8898_reset(aw8898);
+
+	ret = aw8898_check_chipid(aw8898);
+	if (ret)
+		return dev_err_probe(&client->dev, ret, "Chip ID check failed\n");
+
+	// FIXME regulator_bulk
+
+	dev_set_drvdata(&client->dev, aw8898);
+
+	ret = devm_snd_soc_register_component(&client->dev, &soc_component_dev_aw8898,
+					      aw8898_dai, ARRAY_SIZE(aw8898_dai));
+	if (ret < 0)
+		return dev_err_probe(&client->dev, ret, "Failed to register component\n");
+
+	return 0;
+}
+
+static const struct i2c_device_id aw8898_id[] = {
+	{ "aw8898" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(i2c, aw8898_id);
+
+static struct of_device_id aw8898_of_match[] = {
+	{ .compatible = "awinic,aw8898" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, aw8898_of_match);
+
+static struct i2c_driver aw8898_driver = {
+	.driver = {
+		.name = "aw8898_smartpa",
+		.of_match_table = of_match_ptr(aw8898_of_match),
+	},
+	.probe = aw8898_probe,
+	.id_table = aw8898_id,
+};
+
+module_i2c_driver(aw8898_driver);
+
+MODULE_DESCRIPTION("AW8898 Audio amplifier driver");
+MODULE_LICENSE("GPL");
