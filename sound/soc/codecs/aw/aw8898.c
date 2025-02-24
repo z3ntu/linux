@@ -30,8 +30,8 @@
 #define AW8898_MAX_REGISTER 0xff
 
 #define AW8898_RATES SNDRV_PCM_RATE_8000_48000
-#define AW8898_FORMATS                                       \
-	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | \
+#define AW8898_FORMATS						\
+	(SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE |	\
 	 SNDRV_PCM_FMTBIT_S32_LE)
 
 #define AW_I2C_RETRIES 5
@@ -912,13 +912,13 @@ static struct of_device_id aw8898_dt_match[] = {
 };
 
 static struct i2c_driver aw8898_i2c_driver = {
-    .driver = {
-        .name = "aw8898_smartpa",
-        .owner = THIS_MODULE,
-        .of_match_table = of_match_ptr(aw8898_dt_match),
-    },
-    .probe = aw8898_i2c_probe,
-    .id_table = aw8898_i2c_id,
+	.driver = {
+		.name = "aw8898_smartpa",
+		.owner = THIS_MODULE,
+		.of_match_table = of_match_ptr(aw8898_dt_match),
+	},
+	.probe = aw8898_i2c_probe,
+	.id_table = aw8898_i2c_id,
 };
 
 static int __init aw8898_i2c_init(void)
