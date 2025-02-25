@@ -67,10 +67,10 @@
 
 #define AW8898_MAX_REGISTER			0xff
 
+#define AW8898_CFG_NAME				"aw8898_cfg.bin"
+
 static int aw8898_spk_control = 0;
 static int aw8898_rcv_control = 0;
-
-static char *aw8898_cfg_name = "aw8898_cfg.bin";
 
 enum aw8898_mode_spk_rcv {
 	AW8898_SPEAKER_MODE,
@@ -103,6 +103,7 @@ static void aw8898_run_mute(struct aw8898 *aw8898, bool mute)
 			   AW8898_PWMCTRL_HMUTE_MASK, val);
 }
 
+// TODO invert - make clearer, maybe aw8898_set_power([...], bool on)
 static void aw8898_run_pwd(struct aw8898 *aw8898, bool pwd)
 {
 	unsigned int val = AW8898_SYSCTRL_PW_ACTIVE;
@@ -155,6 +156,7 @@ static void aw8898_stop(struct aw8898 *aw8898)
 	aw8898_run_pwd(aw8898, true);
 }
 
+// FIXME clean up
 static void aw8898_container_update(struct aw8898 *aw8898,
 				    struct aw8898_container *aw8898_cont)
 {
@@ -178,6 +180,7 @@ static void aw8898_container_update(struct aw8898 *aw8898,
 	pr_debug("%s exit\n", __func__);
 }
 
+// FIXME clean up
 static void aw8898_cfg_loaded(const struct firmware *cont, void *context)
 {
 	struct aw8898 *aw8898 = context;
@@ -185,12 +188,12 @@ static void aw8898_cfg_loaded(const struct firmware *cont, void *context)
 	unsigned int i = 0;
 
 	if (!cont) {
-		pr_err("%s: failed to read %s\n", __func__, aw8898_cfg_name);
+		pr_err("%s: failed to read %s\n", __func__, AW8898_CFG_NAME);
 		release_firmware(cont);
 		return;
 	}
 
-	pr_info("%s: loaded %s - size: %zu\n", __func__, aw8898_cfg_name,
+	pr_info("%s: loaded %s - size: %zu\n", __func__, AW8898_CFG_NAME,
 		cont ? cont->size : 0);
 
 	for (i = 0; i < cont->size; i++) {
@@ -221,19 +224,21 @@ static void aw8898_cfg_loaded(const struct firmware *cont, void *context)
 
 static void aw8898_cold_start(struct aw8898 *aw8898)
 {
-	int ret;
+	int err;
 
-	ret = request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
-				      aw8898_cfg_name, &aw8898->client->dev, GFP_KERNEL,
+	err = request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
+				      AW8898_CFG_NAME, &aw8898->client->dev, GFP_KERNEL,
 				      aw8898, aw8898_cfg_loaded);
-	if (ret)
-		dev_err(&aw8898->client->dev, "cfg loading requested failed: %d\n", ret);
+	if (err)
+		dev_err(&aw8898->client->dev, "cfg loading requested failed: %d\n", err);
 }
 
+// FIXME clean up
 static const char *const spk_function[] = { "Off", "On" };
 static const char *const rcv_function[] = { "Off", "On" };
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 50, 0);
 
+// FIXME clean up
 struct soc_mixer_control aw8898_mixer = {
 	.reg = AW8898_HAGCCFG7,
 	.shift = AW8898_VOL_REG_SHIFT,
@@ -241,6 +246,7 @@ struct soc_mixer_control aw8898_mixer = {
 	.min = AW8898_VOLUME_MIN,
 };
 
+// FIXME clean up
 static int aw8898_volume_info(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_info *uinfo)
 {
@@ -318,6 +324,7 @@ static struct snd_kcontrol_new aw8898_volume = {
 	.private_value = (unsigned long)&aw8898_mixer,
 };
 
+// FIXME clean up
 static int aw8898_spk_get(struct snd_kcontrol *kcontrol,
 			  struct snd_ctl_elem_value *ucontrol)
 {
@@ -380,7 +387,7 @@ static const struct soc_enum aw8898_snd_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(rcv_function), rcv_function),
 };
 
-// FIXME
+// FIXME - see sound/soc/codecs/wsa884x.c
 static struct snd_kcontrol_new aw8898_controls[] = {
 	SOC_ENUM_EXT("aw8898_speaker_switch", aw8898_snd_enum[0],
 		     aw8898_spk_get, aw8898_spk_set),
@@ -516,7 +523,8 @@ static const struct snd_soc_dai_ops aw8898_dai_ops = {
 	.shutdown	= aw8898_shutdown,
 };
 
-#define AW8898_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | \
+#define AW8898_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | \
+			SNDRV_PCM_FMTBIT_S24_LE | \
 			SNDRV_PCM_FMTBIT_S32_LE)
 
 static struct snd_soc_dai_driver aw8898_dai[] = {
@@ -612,7 +620,6 @@ static int aw8898_probe(struct i2c_client *client)
 	i2c_set_clientdata(client, aw8898);
 	aw8898->client = client;
 
-	/* aw8898 regmap */
 	aw8898->regmap = devm_regmap_init_i2c(client, &aw8898_regmap);
 	if (IS_ERR(aw8898->regmap))
 		return dev_err_probe(&client->dev, PTR_ERR(aw8898->regmap),
@@ -657,7 +664,7 @@ MODULE_DEVICE_TABLE(of, aw8898_of_match);
 
 static struct i2c_driver aw8898_driver = {
 	.driver = {
-		.name = "aw8898_smartpa",
+		.name = "aw8898",
 		.of_match_table = of_match_ptr(aw8898_of_match),
 	},
 	.probe = aw8898_probe,
