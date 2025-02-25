@@ -6,24 +6,13 @@
  * Copyright (c) 2025 Luca Weiss <luca@lucaweiss.eu>
  */
 
-#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/firmware.h>
+#include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
-#include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
-#include <linux/of_gpio.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/firmware.h>
-#include <linux/i2c.h>
-#include <linux/version.h>
-#include <linux/input.h>
-#include <linux/timer.h>
-#include <linux/workqueue.h>
-#include <linux/hrtimer.h>
-#include <linux/syscalls.h>
-#include <linux/interrupt.h>
 #include <sound/tlv.h>
 
 /* Chip ID */
@@ -89,21 +78,13 @@ enum aw8898_mode_spk_rcv {
 };
 
 struct aw8898 {
+	struct snd_soc_component *component;
 	struct regmap *regmap;
 	struct i2c_client *client;
-	struct snd_soc_component *component;
 	struct mutex cfg_lock;
-	int sysclk;
-	int rate;
-	int pstream;
-	int cstream;
-
 	struct gpio_desc *reset;
-
-	u8 reg;
-
-	unsigned int init;
 	unsigned int spk_rcv_mode;
+	bool init;
 };
 
 struct aw8898_container {
@@ -113,30 +94,27 @@ struct aw8898_container {
 
 static void aw8898_run_mute(struct aw8898 *aw8898, bool mute)
 {
-	if (mute) {
-		regmap_update_bits(aw8898->regmap, AW8898_PWMCTRL,
-				      AW8898_PWMCTRL_HMUTE_MASK,
-				      AW8898_PWMCTRL_HMUTE_ENABLE);
-	} else {
-		regmap_update_bits(aw8898->regmap, AW8898_PWMCTRL,
-				      AW8898_PWMCTRL_HMUTE_MASK,
-				      AW8898_PWMCTRL_HMUTE_DISABLE);
-	}
+	unsigned int val = AW8898_PWMCTRL_HMUTE_DISABLE;
+
+	if (mute)
+		val = AW8898_PWMCTRL_HMUTE_ENABLE;
+
+	regmap_update_bits(aw8898->regmap, AW8898_PWMCTRL,
+			   AW8898_PWMCTRL_HMUTE_MASK, val);
 }
 
 static void aw8898_run_pwd(struct aw8898 *aw8898, bool pwd)
 {
-	if (pwd) {
-		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
-				      AW8898_SYSCTRL_PW_MASK,
-				      AW8898_SYSCTRL_PW_PDN);
-	} else {
-		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
-				      AW8898_SYSCTRL_PW_MASK,
-				      AW8898_SYSCTRL_PW_ACTIVE);
-	}
+	unsigned int val = AW8898_SYSCTRL_PW_ACTIVE;
+
+	if (pwd)
+		val = AW8898_SYSCTRL_PW_PDN;
+
+	regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
+			   AW8898_SYSCTRL_PW_MASK, val);
 }
 
+// FIXME clean up
 static void aw8898_spk_rcv_mode(struct aw8898 *aw8898)
 {
 	if (aw8898->spk_rcv_mode == AW8898_SPEAKER_MODE) {
@@ -152,31 +130,27 @@ static void aw8898_spk_rcv_mode(struct aw8898 *aw8898)
 
 static void aw8898_start(struct aw8898 *aw8898)
 {
-	unsigned int reg_val = 0;
-	unsigned int iis_check_max = 5;
-	unsigned int i = 0;
-
-	pr_debug("%s enter\n", __func__);
+	unsigned int val;
+	int err;
 
 	aw8898_run_pwd(aw8898, false);
+
 	msleep(2);
-	for (i = 0; i < iis_check_max; i++) {
-		regmap_read(aw8898->regmap, AW8898_SYSST, &reg_val);
-		if (reg_val & AW8898_SYSST_PLLS) {
-			aw8898_run_mute(aw8898, false);
-			pr_debug("%s iis signal check pass!\n", __func__);
-			return;
-		}
-		msleep(2);
+
+	err = regmap_read_poll_timeout(aw8898->regmap, AW8898_SYSST,
+				       val, val & AW8898_SYSST_PLLS,
+				       2000, 1 * USEC_PER_SEC);
+	if (err) {
+		dev_err(&aw8898->client->dev, "iis signal check error: %d\n", err);
+		aw8898_run_pwd(aw8898, true);
+		return;
 	}
-	aw8898_run_pwd(aw8898, true);
-	pr_err("%s: iis signal check error\n", __func__);
+
+	aw8898_run_mute(aw8898, false);
 }
 
 static void aw8898_stop(struct aw8898 *aw8898)
 {
-	pr_debug("%s enter\n", __func__);
-
 	aw8898_run_mute(aw8898, true);
 	aw8898_run_pwd(aw8898, true);
 }
@@ -184,9 +158,9 @@ static void aw8898_stop(struct aw8898 *aw8898)
 static void aw8898_container_update(struct aw8898 *aw8898,
 				    struct aw8898_container *aw8898_cont)
 {
-	int i = 0;
-	int reg_addr = 0;
-	int reg_val = 0;
+	int i;
+	int reg_addr;
+	int reg_val;
 
 	pr_debug("%s enter\n", __func__);
 
@@ -238,49 +212,22 @@ static void aw8898_cfg_loaded(const struct firmware *cont, void *context)
 
 	kfree(aw8898_cfg);
 
-	aw8898->init = 1;
+	aw8898->init = true;
 	pr_info("%s: cfg update complete\n", __func__);
 
 	aw8898_spk_rcv_mode(aw8898);
 	aw8898_start(aw8898);
 }
 
-static int aw8898_load_cfg(struct aw8898 *aw8898)
-{
-	pr_info("%s enter\n", __func__);
-
-	return request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
-				       aw8898_cfg_name, &aw8898->client->dev, GFP_KERNEL,
-				       aw8898, aw8898_cfg_loaded);
-}
-
 static void aw8898_cold_start(struct aw8898 *aw8898)
 {
-	int ret = -1;
+	int ret;
 
-	pr_info("%s enter\n", __func__);
-
-	ret = aw8898_load_cfg(aw8898);
-	if (ret) {
-		pr_err("%s: cfg loading requested failed: %d\n", __func__, ret);
-	}
-}
-
-static void aw8898_smartpa_cfg(struct aw8898 *aw8898, bool flag)
-{
-	pr_info("%s, flag = %d\n", __func__, flag);
-
-	if (flag == true) {
-		if (aw8898->init == 0) {
-			pr_info("%s, init = %d\n", __func__, aw8898->init);
-			aw8898_cold_start(aw8898);
-		} else {
-			aw8898_spk_rcv_mode(aw8898);
-			aw8898_start(aw8898);
-		}
-	} else {
-		aw8898_stop(aw8898);
-	}
+	ret = request_firmware_nowait(THIS_MODULE, FW_ACTION_UEVENT,
+				      aw8898_cfg_name, &aw8898->client->dev, GFP_KERNEL,
+				      aw8898, aw8898_cfg_loaded);
+	if (ret)
+		dev_err(&aw8898->client->dev, "cfg loading requested failed: %d\n", ret);
 }
 
 static const char *const spk_function[] = { "Off", "On" };
@@ -433,6 +380,7 @@ static const struct soc_enum aw8898_snd_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(rcv_function), rcv_function),
 };
 
+// FIXME
 static struct snd_kcontrol_new aw8898_controls[] = {
 	SOC_ENUM_EXT("aw8898_speaker_switch", aw8898_snd_enum[0],
 		     aw8898_spk_get, aw8898_spk_set),
@@ -445,7 +393,6 @@ static int aw8898_startup(struct snd_pcm_substream *substream,
 {
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
 
-	pr_info("%s: enter\n", __func__);
 	aw8898_run_pwd(aw8898, false);
 
 	return 0;
@@ -455,34 +402,21 @@ static int aw8898_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 {
 	struct snd_soc_component *component = dai->component;
 
-	pr_info("%s: fmt=0x%x\n", __func__, fmt);
-
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
-		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) !=
-		    SND_SOC_DAIFMT_CBS_CFS) {
-			dev_err(component->dev,
-				"%s: invalid codec master mode\n", __func__);
+		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
+				!= SND_SOC_DAIFMT_CBC_CFC) {
+			dev_err(component->dev, "invalid codec master mode: %d\n",
+				fmt & SND_SOC_DAIFMT_MASTER_MASK);
 			return -EINVAL;
 		}
 		break;
 	default:
-		dev_err(component->dev, "%s: unsupported DAI format %d\n",
-			__func__, fmt & SND_SOC_DAIFMT_FORMAT_MASK);
+		dev_err(component->dev, "unsupported DAI format %d\n",
+			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
 		return -EINVAL;
 	}
-	return 0;
-}
 
-static int aw8898_set_dai_sysclk(struct snd_soc_dai *codec_dai, int clk_id,
-				 unsigned int freq, int dir)
-{
-	struct aw8898 *aw8898 =
-		snd_soc_component_get_drvdata(codec_dai->component);
-
-	pr_info("%s: freq=%d\n", __func__, freq);
-
-	aw8898->sysclk = freq;
 	return 0;
 }
 
@@ -490,71 +424,56 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
 			    struct snd_pcm_hw_params *params,
 			    struct snd_soc_dai *dai)
 {
+	struct snd_soc_component *component = dai->component;
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
-	unsigned int rate = 0;
-	int reg_value = 0;
-	int width = 0;
-	/* Supported */
+	unsigned int reg;
 
-	//get rate param
-	aw8898->rate = rate = params_rate(params);
-	pr_debug("%s: requested rate: %d, sample size: %d\n", __func__, rate,
-		 snd_pcm_format_width(params_format(params)));
-	//match rate
-	switch (rate) {
+	switch (params_rate(params)) {
 	case 8000:
-		reg_value = AW8898_I2SCTRL_SR_8K;
+		reg = AW8898_I2SCTRL_SR_8K;
 		break;
 	case 16000:
-		reg_value = AW8898_I2SCTRL_SR_16K;
+		reg = AW8898_I2SCTRL_SR_16K;
 		break;
 	case 32000:
-		reg_value = AW8898_I2SCTRL_SR_32K;
+		reg = AW8898_I2SCTRL_SR_32K;
 		break;
 	case 44100:
-		reg_value = AW8898_I2SCTRL_SR_44P1K;
+		reg = AW8898_I2SCTRL_SR_44P1K;
 		break;
 	case 48000:
-		reg_value = AW8898_I2SCTRL_SR_48K;
+		reg = AW8898_I2SCTRL_SR_48K;
 		break;
 	default:
-		reg_value = AW8898_I2SCTRL_SR_48K;
-		pr_err("%s: rate can not support\n", __func__);
-		break;
-	}
-	//set chip rate
-	if (-1 != reg_value) {
-		regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
-				      AW8898_I2SCTRL_SR_MASK, reg_value);
+		dev_err(component->dev, "Not supported sample rate: %d\n",
+			params_rate(params));
+		return -EINVAL;
 	}
 
-	//get bit width
-	width = params_width(params);
-	pr_debug("%s: width = %d \n", __func__, width);
-	switch (width) {
+	regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
+			   AW8898_I2SCTRL_SR_MASK, reg);
+
+	switch (params_width(params)) {
 	case 16:
-		reg_value = AW8898_I2SCTRL_FMS_16BIT;
+		reg = AW8898_I2SCTRL_FMS_16BIT;
 		break;
 	case 20:
-		reg_value = AW8898_I2SCTRL_FMS_20BIT;
+		reg = AW8898_I2SCTRL_FMS_20BIT;
 		break;
 	case 24:
-		reg_value = AW8898_I2SCTRL_FMS_24BIT;
+		reg = AW8898_I2SCTRL_FMS_24BIT;
 		break;
 	case 32:
-		reg_value = AW8898_I2SCTRL_FMS_32BIT;
+		reg = AW8898_I2SCTRL_FMS_32BIT;
 		break;
 	default:
-		reg_value = AW8898_I2SCTRL_FMS_16BIT;
-		pr_err("%s: width can not support\n", __func__);
-		break;
+		dev_err(component->dev, "Not supported sample size: %d\n",
+			params_width(params));
+		return -EINVAL;
 	}
 
-	//set width
-	if (-1 != reg_value) {
-		regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
-				      AW8898_I2SCTRL_FMS_MASK, reg_value);
-	}
+	regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
+			   AW8898_I2SCTRL_FMS_MASK, reg);
 
 	return 0;
 }
@@ -563,29 +482,20 @@ static int aw8898_mute(struct snd_soc_dai *dai, int mute, int stream)
 {
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
 
-	pr_info("%s: mute state=%d\n", __func__, mute);
+	mutex_lock(&aw8898->cfg_lock);
 
 	if (mute) {
-		if (stream == SNDRV_PCM_STREAM_PLAYBACK)
-			aw8898->pstream = 0;
-		else
-			aw8898->cstream = 0;
-		if (aw8898->pstream != 0 || aw8898->cstream != 0)
-			return 0;
-
-		mutex_lock(&aw8898->cfg_lock);
-		aw8898_smartpa_cfg(aw8898, false);
-		mutex_unlock(&aw8898->cfg_lock);
+		aw8898_stop(aw8898);
 	} else {
-		if (stream == SNDRV_PCM_STREAM_PLAYBACK)
-			aw8898->pstream = 1;
-		else
-			aw8898->cstream = 1;
-
-		mutex_lock(&aw8898->cfg_lock);
-		aw8898_smartpa_cfg(aw8898, true);
-		mutex_unlock(&aw8898->cfg_lock);
+		if (!aw8898->init) {
+			aw8898_cold_start(aw8898);
+		} else {
+			aw8898_spk_rcv_mode(aw8898);
+			aw8898_start(aw8898);
+		}
 	}
+
+	mutex_unlock(&aw8898->cfg_lock);
 
 	return 0;
 }
@@ -595,14 +505,12 @@ static void aw8898_shutdown(struct snd_pcm_substream *substream,
 {
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
 
-	aw8898->rate = 0;
 	aw8898_run_pwd(aw8898, true);
 }
 
 static const struct snd_soc_dai_ops aw8898_dai_ops = {
 	.startup	= aw8898_startup,
 	.set_fmt	= aw8898_set_fmt,
-	.set_sysclk	= aw8898_set_dai_sysclk,
 	.hw_params	= aw8898_hw_params,
 	.mute_stream	= aw8898_mute,
 	.shutdown	= aw8898_shutdown,
