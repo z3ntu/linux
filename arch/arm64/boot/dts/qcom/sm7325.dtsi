@@ -18,7 +18,12 @@
 &cpu6 { compatible = "qcom,kryo670"; };
 &cpu7 { compatible = "qcom,kryo670"; };
 
-&lpass_audiocc { status = "disabled"; };
+&lpass_audiocc {
+	compatible = "qcom,sm7325-lpassaudiocc",
+		     "qcom,qcm6490-lpassaudiocc";
+	/delete-property/ power-domains;
+ };
+
 &lpass_cpu { status = "disabled"; };
 
 &lpass_dmic01_clk {
@@ -110,18 +115,4 @@
 
 	/delete-property/ power-domains;
 	/delete-property/ power-domain-names;
-};
-
-&swr0 {
-	label = "RX";
-
-	/delete-property/ resets;
-	/delete-property/ reset-names;
-};
-
-&swr1 {
-	label = "TX";
-
-	/delete-property/ resets;
-	/delete-property/ reset-names;
 };
