@@ -1090,6 +1090,20 @@
 		};
 	};
 
+	quin-mi2s-tx-dai-link {
+		link-name = "Dummy I2S Capture";
+
+		cpu {
+			sound-dai = <&q6afedai QUINARY_MI2S_TX>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+
+		/* codec {}; */
+	};
+
 	usb-dai-link {
 		link-name = "USB Playback";
 
