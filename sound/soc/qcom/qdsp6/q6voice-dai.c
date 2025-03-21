@@ -249,6 +249,13 @@ static const struct snd_kcontrol_new quinary_mi2s_rx_mixer_controls[] = {
 		       q6voice_get_mixer_playback, q6voice_put_mixer_playback),
 };
 
+static const struct snd_kcontrol_new usb_rx_mixer_controls[] = {
+	SOC_SINGLE_EXT("CS-Voice", USB_RX, CS_VOICE, 1, 0,
+		       q6voice_get_mixer_playback, q6voice_put_mixer_playback),
+	SOC_SINGLE_EXT("VoiceMMode1", USB_RX, VOICEMMODE1, 1, 0,
+		       q6voice_get_mixer_playback, q6voice_put_mixer_playback),
+};
+
 static const struct snd_soc_dapm_widget q6voice_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_IN("CS-VOICE_DL1", "CS-VOICE Playback", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("CS-VOICE_UL1", "CS-VOICE Capture", 0, SND_SOC_NOPM, 0, 0),
@@ -275,6 +282,9 @@ static const struct snd_soc_dapm_widget q6voice_dapm_widgets[] = {
 	SND_SOC_DAPM_MIXER("QUIN_MI2S_RX Voice Mixer", SND_SOC_NOPM, 0, 0,
 			   quinary_mi2s_rx_mixer_controls,
 			   ARRAY_SIZE(quinary_mi2s_rx_mixer_controls)),
+	SND_SOC_DAPM_MIXER("USB_RX Voice Mixer", SND_SOC_NOPM, 0, 0,
+			   usb_rx_mixer_controls,
+			   ARRAY_SIZE(usb_rx_mixer_controls)),
 };
 
 static const struct snd_soc_dapm_route q6voice_dapm_routes[] = {
@@ -296,17 +306,20 @@ static const struct snd_soc_dapm_route q6voice_dapm_routes[] = {
 	{ "TERT_MI2S_RX Voice Mixer",	"CS-Voice",	"CS-VOICE_DL1" },
 	{ "QUAT_MI2S_RX Voice Mixer",	"CS-Voice",	"CS-VOICE_DL1" },
 	{ "QUIN_MI2S_RX Voice Mixer",	"CS-Voice",	"CS-VOICE_DL1" },
+	{ "USB_RX Voice Mixer",		"CS-Voice",	"CS-VOICE_DL1" },
 	{ "PRI_MI2S_RX Voice Mixer",	"VoiceMMode1",	"VOICEMMODE1_DL1" },
 	{ "SEC_MI2S_RX Voice Mixer",	"VoiceMMode1",	"VOICEMMODE1_DL1" },
 	{ "TERT_MI2S_RX Voice Mixer",	"VoiceMMode1",	"VOICEMMODE1_DL1" },
 	{ "QUAT_MI2S_RX Voice Mixer",	"VoiceMMode1",	"VOICEMMODE1_DL1" },
 	{ "QUIN_MI2S_RX Voice Mixer",	"VoiceMMode1",	"VOICEMMODE1_DL1" },
+	{ "USB_RX Voice Mixer",		"VoiceMMode1",	"VOICEMMODE1_DL1" },
 
 	{ "PRI_MI2S_RX",		NULL,		"PRI_MI2S_RX Voice Mixer" },
 	{ "SEC_MI2S_RX",		NULL,		"SEC_MI2S_RX Voice Mixer" },
 	{ "TERT_MI2S_RX",		NULL,		"TERT_MI2S_RX Voice Mixer" },
 	{ "QUAT_MI2S_RX",		NULL,		"QUAT_MI2S_RX Voice Mixer" },
 	{ "QUIN_MI2S_RX",		NULL,		"QUIN_MI2S_RX Voice Mixer" },
+	{ "USB_RX",			NULL,		"USB_RX Voice Mixer" },
 };
 
 static unsigned int q6voice_reg_read(struct snd_soc_component *component,
