@@ -1416,6 +1416,29 @@
 							#sound-dai-cells = <0>;
 						};
 					};
+
+					q6mvm: apr-service@9 {
+						compatible = "qcom,q6mvm";
+						reg = <APR_SVC_ADSP_MVM>;
+						qcom,protection-domain = "avs/audio", "msm/adsp/audio_pd";
+
+						q6voicedai: dais {
+							compatible = "qcom,q6voice-dais";
+							#sound-dai-cells = <1>;
+						};
+					};
+
+					q6cvs: apr-service@a {
+						compatible = "qcom,q6cvs";
+						reg = <APR_SVC_ADSP_CVS>;
+						qcom,protection-domain = "avs/audio", "msm/adsp/audio_pd";
+					};
+
+					q6cvp: apr-service@b {
+						compatible = "qcom,q6cvp";
+						reg = <APR_SVC_ADSP_CVP>;
+						qcom,protection-domain = "avs/audio", "msm/adsp/audio_pd";
+					};
 				};
 
 				fastrpc {
