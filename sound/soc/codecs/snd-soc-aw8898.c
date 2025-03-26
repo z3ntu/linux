@@ -61,8 +61,8 @@
 /* Hardware AGC Configuration 7 */
 #define AW8898_HAGCCFG7				0x0f
 #define AW8898_HAGCCFG7_VOL_MASK		GENMASK(15, 8)
-#define AW8898_VOLUME_MAX			(0)
-#define AW8898_VOLUME_MIN			(-255)
+#define AW8898_VOLUME_MAX			(255)
+#define AW8898_VOLUME_MIN			(0)
 #define AW8898_VOL_REG_SHIFT			(8)
 
 #define AW8898_MAX_REGISTER			0xff
@@ -237,97 +237,6 @@ static void aw8898_cold_start(struct aw8898 *aw8898)
 		dev_err(&aw8898->client->dev, "cfg loading requested failed: %d\n", err);
 }
 
-// FIXME clean up
-static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 50, 0);
-
-// FIXME clean up
-struct soc_mixer_control aw8898_mixer = {
-	.reg = AW8898_HAGCCFG7,
-	.shift = AW8898_VOL_REG_SHIFT,
-	.max = AW8898_VOLUME_MAX,
-	.min = AW8898_VOLUME_MIN,
-};
-
-// FIXME clean up
-static int aw8898_volume_info(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_info *uinfo)
-{
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-
-	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
-	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = mc->max - mc->min;
-	return 0;
-}
-
-// FIXME clean up
-static int aw8898_volume_get(struct snd_kcontrol *kcontrol,
-			     struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-		snd_soc_kcontrol_component(kcontrol);
-	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
-	unsigned int reg_val = 0;
-	unsigned int value = 0;
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-
-	regmap_read(aw8898->regmap, AW8898_HAGCCFG7, &reg_val);
-	ucontrol->value.integer.value[0] = (value >> mc->shift) &
-					   (AW8898_HAGCCFG7_VOL_MASK);
-	return 0;
-}
-
-// FIXME clean up
-static int aw8898_volume_put(struct snd_kcontrol *kcontrol,
-			     struct snd_ctl_elem_value *ucontrol)
-{
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	struct snd_soc_component *component =
-		snd_soc_kcontrol_component(kcontrol);
-	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
-	unsigned int value = 0;
-	unsigned int reg_value = 0;
-
-	//value is right
-	value = ucontrol->value.integer.value[0];
-	if (value > (mc->max - mc->min) || value < 0) {
-		pr_err("%s:value over range \n", __func__);
-		return -1;
-	}
-
-	//smartpa have clk
-	regmap_read(aw8898->regmap, AW8898_SYSST, &reg_value);
-	if (!(reg_value & AW8898_SYSST_PLLS)) {
-		pr_err("%s: NO I2S CLK ,cat not write reg \n", __func__);
-		return 0;
-	}
-	//cal real value
-	value = value << mc->shift & AW8898_HAGCCFG7_VOL_MASK;
-	regmap_read(aw8898->regmap, AW8898_HAGCCFG7, &reg_value);
-	value = value | (reg_value & 0x00ff);
-
-	//write value
-	regmap_write(aw8898->regmap, AW8898_HAGCCFG7, value);
-
-	return 0;
-}
-
-static struct snd_kcontrol_new aw8898_volume = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-	.name = "aw8898_rx_volume",
-	.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ |
-		  SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.tlv.p = (digital_gain),
-	.info = aw8898_volume_info,
-	.get = aw8898_volume_get,
-	.put = aw8898_volume_put,
-	.private_value = (unsigned long)&aw8898_mixer,
-};
-
 static int aw8898_dev_mode_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -355,9 +264,13 @@ static int aw8898_dev_mode_put(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
+static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 50, 0);
+//static const DECLARE_TLV_DB_SCALE(digital_gain, -4050, 150, 0);
+
 static struct snd_kcontrol_new aw8898_controls[] = {
 	SOC_ENUM_EXT("AMP MODE", aw8898_dev_mode_enum,
-		     aw8898_dev_mode_get, aw8898_dev_mode_put)
+		     aw8898_dev_mode_get, aw8898_dev_mode_put),
+	SOC_SINGLE_RANGE_TLV("RX Volume", AW8898_HAGCCFG7, AW8898_VOL_REG_SHIFT, AW8898_VOLUME_MIN, AW8898_VOLUME_MAX, 1, digital_gain),
 };
 
 static int aw8898_startup(struct snd_pcm_substream *substream,
@@ -526,8 +439,6 @@ static int aw8898_component_probe(struct snd_soc_component *component)
 
 	snd_soc_add_component_controls(component, aw8898_controls,
 				       ARRAY_SIZE(aw8898_controls));
-
-	snd_soc_add_component_controls(component, &aw8898_volume, 1);
 
 	return 0;
 }
