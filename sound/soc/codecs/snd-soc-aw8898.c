@@ -69,21 +69,13 @@
 
 #define AW8898_CFG_NAME				"aw8898_cfg.bin"
 
-static int aw8898_spk_control = 0;
-static int aw8898_rcv_control = 0;
-
-enum aw8898_mode_spk_rcv {
-	AW8898_SPEAKER_MODE,
-	AW8898_RECEIVER_MODE,
-};
-
 struct aw8898 {
 	struct snd_soc_component *component;
 	struct regmap *regmap;
 	struct i2c_client *client;
 	struct mutex cfg_lock;
 	struct gpio_desc *reset;
-	unsigned int spk_rcv_mode;
+	int dev_mode;
 	bool init;
 };
 
@@ -91,6 +83,18 @@ struct aw8898_container {
 	int len;
 	unsigned char data[];
 };
+
+static const char * const aw8898_dev_mode_text[] = {
+	"Speaker", "Receiver"
+};
+
+enum aw8898_mode {
+	AW8898_SPEAKER,
+	AW8898_RECEIVER,
+};
+
+static const struct soc_enum aw8898_dev_mode_enum =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(aw8898_dev_mode_text), aw8898_dev_mode_text);
 
 static void aw8898_run_mute(struct aw8898 *aw8898, bool mute)
 {
@@ -118,11 +122,11 @@ static void aw8898_run_pwd(struct aw8898 *aw8898, bool pwd)
 // FIXME clean up
 static void aw8898_spk_rcv_mode(struct aw8898 *aw8898)
 {
-	if (aw8898->spk_rcv_mode == AW8898_SPEAKER_MODE) {
+	if (aw8898->dev_mode == AW8898_SPEAKER) {
 		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
 				      AW8898_SYSCTRL_MODE_MASK,
 				      AW8898_SYSCTRL_SPK_MODE);
-	} else if (aw8898->spk_rcv_mode == AW8898_RECEIVER_MODE) {
+	} else if (aw8898->dev_mode == AW8898_RECEIVER) {
 		regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
 				      AW8898_SYSCTRL_MODE_MASK,
 				      AW8898_SYSCTRL_RCV_MODE);
@@ -234,8 +238,6 @@ static void aw8898_cold_start(struct aw8898 *aw8898)
 }
 
 // FIXME clean up
-static const char *const spk_function[] = { "Off", "On" };
-static const char *const rcv_function[] = { "Off", "On" };
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 50, 0);
 
 // FIXME clean up
@@ -260,6 +262,7 @@ static int aw8898_volume_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+// FIXME clean up
 static int aw8898_volume_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
@@ -277,6 +280,7 @@ static int aw8898_volume_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+// FIXME clean up
 static int aw8898_volume_put(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
@@ -324,75 +328,36 @@ static struct snd_kcontrol_new aw8898_volume = {
 	.private_value = (unsigned long)&aw8898_mixer,
 };
 
-// FIXME clean up
-static int aw8898_spk_get(struct snd_kcontrol *kcontrol,
-			  struct snd_ctl_elem_value *ucontrol)
+static int aw8898_dev_mode_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
 {
-	pr_debug("%s: aw8898_spk_control=%d\n", __func__, aw8898_spk_control);
-	ucontrol->value.integer.value[0] = aw8898_spk_control;
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
+
+	ucontrol->value.enumerated.item[0] = aw8898->dev_mode;
+
 	return 0;
 }
 
-static int aw8898_spk_set(struct snd_kcontrol *kcontrol,
-			  struct snd_ctl_elem_value *ucontrol)
+static int aw8898_dev_mode_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *component =
-		snd_soc_kcontrol_component(kcontrol);
+	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
 
-	pr_debug("%s: ucontrol->value.integer.value[0]=%ld\n ", __func__,
-		 ucontrol->value.integer.value[0]);
-	if (ucontrol->value.integer.value[0] == aw8898_spk_control)
-		return 1;
+	if (aw8898->dev_mode == ucontrol->value.enumerated.item[0])
+		return 0;
 
-	aw8898_spk_control = ucontrol->value.integer.value[0];
-
-	aw8898->spk_rcv_mode = AW8898_SPEAKER_MODE;
+	aw8898->dev_mode = ucontrol->value.enumerated.item[0];
 
 	aw8898_spk_rcv_mode(aw8898);
 
-	return 0;
+	return 1;
 }
 
-static int aw8898_rcv_get(struct snd_kcontrol *kcontrol,
-			  struct snd_ctl_elem_value *ucontrol)
-{
-	pr_debug("%s: aw8898_rcv_control=%d\n", __func__, aw8898_rcv_control);
-	ucontrol->value.integer.value[0] = aw8898_rcv_control;
-	return 0;
-}
-
-static int aw8898_rcv_set(struct snd_kcontrol *kcontrol,
-			  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-		snd_soc_kcontrol_component(kcontrol);
-	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
-	pr_debug("%s: ucontrol->value.integer.value[0]=%ld\n ", __func__,
-		 ucontrol->value.integer.value[0]);
-	if (ucontrol->value.integer.value[0] == aw8898_rcv_control)
-		return 1;
-
-	aw8898_rcv_control = ucontrol->value.integer.value[0];
-
-	aw8898->spk_rcv_mode = AW8898_RECEIVER_MODE;
-
-	aw8898_spk_rcv_mode(aw8898);
-
-	return 0;
-}
-
-static const struct soc_enum aw8898_snd_enum[] = {
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spk_function), spk_function),
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(rcv_function), rcv_function),
-};
-
-// FIXME - see sound/soc/codecs/wsa884x.c
 static struct snd_kcontrol_new aw8898_controls[] = {
-	SOC_ENUM_EXT("aw8898_speaker_switch", aw8898_snd_enum[0],
-		     aw8898_spk_get, aw8898_spk_set),
-	SOC_ENUM_EXT("aw8898_receiver_switch", aw8898_snd_enum[1],
-		     aw8898_rcv_get, aw8898_rcv_set),
+	SOC_ENUM_EXT("AMP MODE", aw8898_dev_mode_enum,
+		     aw8898_dev_mode_get, aw8898_dev_mode_put)
 };
 
 static int aw8898_startup(struct snd_pcm_substream *substream,
