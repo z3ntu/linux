@@ -187,7 +187,7 @@
 		compatible = "awinic,aw8898";
 		reg = <0x34>;
 
-		reset-gpio = <&tlmm 21 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&tlmm 21 GPIO_ACTIVE_LOW>;
 		interrupt-parent = <&tlmm>;
 		interrupts = <20 IRQ_TYPE_LEVEL_HIGH>;
 
