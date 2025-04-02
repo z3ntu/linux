@@ -79,7 +79,7 @@ struct aw8898 {
 	bool init;
 };
 
-struct aw8898_container {
+struct aw8898_cfg {
 	int len;
 	unsigned char data[];
 };
@@ -161,66 +161,51 @@ static void aw8898_stop(struct aw8898 *aw8898)
 }
 
 // FIXME clean up
-static void aw8898_container_update(struct aw8898 *aw8898,
-				    struct aw8898_container *aw8898_cont)
+static void aw8898_cfg_update(struct aw8898 *aw8898,
+				    struct aw8898_cfg *aw8898_cfg)
 {
+	unsigned int addr, val;
 	int i;
-	int reg_addr;
-	int reg_val;
 
-	pr_debug("%s enter\n", __func__);
-
-	for (i = 0; i < aw8898_cont->len; i += 4) {
-		reg_addr = (aw8898_cont->data[i + 1] << 8) +
-			   aw8898_cont->data[i + 0];
-		reg_val = (aw8898_cont->data[i + 3] << 8) +
-			  aw8898_cont->data[i + 2];
-		pr_info("%s: reg=0x%04x, val = 0x%04x\n", __func__, reg_addr,
-			reg_val);
-		regmap_write(aw8898->regmap, (unsigned char)reg_addr,
-				 (unsigned int)reg_val);
+	for (i = 0; i < aw8898_cfg->len; i += 4) {
+		addr = (aw8898_cfg->data[i + 1] << 8) +
+			   aw8898_cfg->data[i + 0];
+		val = (aw8898_cfg->data[i + 3] << 8) +
+			  aw8898_cfg->data[i + 2];
+		dev_dbg(&aw8898->client->dev, "cfg reg=0x%04x, val = 0x%04x\n", addr, val);
+		regmap_write(aw8898->regmap, addr, val);
 	}
-
-	pr_debug("%s exit\n", __func__);
 }
 
 // FIXME clean up
-static void aw8898_cfg_loaded(const struct firmware *cont, void *context)
+static void aw8898_cfg_loaded(const struct firmware *fw, void *context)
 {
 	struct aw8898 *aw8898 = context;
-	struct aw8898_container *aw8898_cfg;
-	unsigned int i = 0;
+	struct aw8898_cfg *aw8898_cfg;
 
-	if (!cont) {
+	if (!fw) {
 		pr_err("%s: failed to read %s\n", __func__, AW8898_CFG_NAME);
-		release_firmware(cont);
 		return;
 	}
 
-	pr_info("%s: loaded %s - size: %zu\n", __func__, AW8898_CFG_NAME,
-		cont ? cont->size : 0);
+	dev_dbg(&aw8898->client->dev, "loaded %s - size: %zu\n", AW8898_CFG_NAME, fw->size);
 
-	for (i = 0; i < cont->size; i++) {
-		pr_info("%s: addr:0x%04x, data:0x%02x\n", __func__, i,
-			*(cont->data + i));
-	}
-
-	aw8898_cfg = kzalloc(cont->size + sizeof(int), GFP_KERNEL);
+	aw8898_cfg = kzalloc(fw->size + sizeof(int), GFP_KERNEL);
 	if (!aw8898_cfg) {
-		release_firmware(cont);
-		pr_err("%s: error allocating memory\n", __func__);
+		release_firmware(fw);
 		return;
 	}
-	aw8898_cfg->len = cont->size;
-	memcpy(aw8898_cfg->data, cont->data, cont->size);
-	release_firmware(cont);
 
-	aw8898_container_update(aw8898, aw8898_cfg);
+	aw8898_cfg->len = fw->size;
+	memcpy(aw8898_cfg->data, fw->data, fw->size);
+
+	release_firmware(fw);
+
+	aw8898_cfg_update(aw8898, aw8898_cfg);
 
 	kfree(aw8898_cfg);
 
 	aw8898->init = true;
-	pr_info("%s: cfg update complete\n", __func__);
 
 	aw8898_spk_rcv_mode(aw8898);
 	aw8898_start(aw8898);
@@ -264,13 +249,19 @@ static int aw8898_dev_mode_put(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
-static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 50, 0);
-//static const DECLARE_TLV_DB_SCALE(digital_gain, -4050, 150, 0);
+/*
+ * -127.5 dB min, 0.5 dB steps, no mute
+ * Note: The official datasheet claims to be able to attenuate between 0 dB and
+ * -96 dB with 0.5 dB/step, but the register values are 0-255 so this doesn't
+ * really line up. It's a best guess.
+ */
+static const DECLARE_TLV_DB_SCALE(vol_tlv, -12750, 50, 0);
 
 static struct snd_kcontrol_new aw8898_controls[] = {
-	SOC_ENUM_EXT("AMP MODE", aw8898_dev_mode_enum,
+	SOC_ENUM_EXT("Amp Mode", aw8898_dev_mode_enum,
 		     aw8898_dev_mode_get, aw8898_dev_mode_put),
-	SOC_SINGLE_RANGE_TLV("RX Volume", AW8898_HAGCCFG7, AW8898_VOL_REG_SHIFT, AW8898_VOLUME_MIN, AW8898_VOLUME_MAX, 1, digital_gain),
+	SOC_SINGLE_RANGE_TLV("RX Volume", AW8898_HAGCCFG7, AW8898_VOL_REG_SHIFT,
+			     AW8898_VOLUME_MIN, AW8898_VOLUME_MAX, 1, vol_tlv),
 };
 
 static int aw8898_startup(struct snd_pcm_substream *substream,
@@ -457,6 +448,7 @@ static const struct regmap_config aw8898_regmap = {
 
 static void aw8898_reset(struct aw8898 *aw8898)
 {
+	// TODO Use reset_control?
 	gpiod_set_value_cansleep(aw8898->reset, 1);
 	msleep(1);
 	gpiod_set_value_cansleep(aw8898->reset, 0);
