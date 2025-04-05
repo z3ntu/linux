@@ -69,22 +69,11 @@
 
 #define AW8898_CFG_NAME				"aw8898_cfg.bin"
 
-struct aw8898 {
-	struct snd_soc_component *component;
-	struct regmap *regmap;
-	struct i2c_client *client;
-	struct mutex cfg_lock;
-	struct gpio_desc *reset;
-	enum aw8898_mode dev_mode;
-	bool cfg_loaded;
-};
-
-struct aw8898_cfg {
-	int len;
-	struct {
-		__le16 addr;
-		__le16 val;
-	} __packed data[];
+#define AW8898_NUM_SUPPLIES	3
+static const char *aw8898_supply_names[AW8898_NUM_SUPPLIES] = {
+	"vdd",		/* Battery power */
+	"vddio",	/* Digital IO power */
+	"dvdd",		/* Digital power */
 };
 
 static const char * const aw8898_dev_mode_text[] = {
@@ -98,6 +87,25 @@ enum aw8898_mode {
 
 static const struct soc_enum aw8898_dev_mode_enum =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(aw8898_dev_mode_text), aw8898_dev_mode_text);
+
+struct aw8898 {
+	struct snd_soc_component *component;
+	struct regmap *regmap;
+	struct i2c_client *client;
+	struct mutex cfg_lock;
+	struct gpio_desc *reset;
+	struct regulator_bulk_data supplies[AW8898_NUM_SUPPLIES];
+	enum aw8898_mode dev_mode;
+	bool cfg_loaded;
+};
+
+struct aw8898_cfg {
+	int len;
+	struct {
+		__le16 addr;
+		__le16 val;
+	} __packed data[];
+};
 
 static void aw8898_set_mute(struct aw8898 *aw8898, bool mute)
 {
@@ -421,10 +429,16 @@ static struct snd_soc_dai_driver aw8898_dai[] = {
 static int aw8898_component_probe(struct snd_soc_component *component)
 {
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
+	int ret;
 
 	aw8898->component = component;
 
-	// FIXME regulator_bulk_enable
+	ret = regulator_bulk_enable(ARRAY_SIZE(aw8898->supplies),
+				    aw8898->supplies);
+	if (ret) {
+		dev_err(component->dev, "Failed to enable supplies: %d\n", ret);
+		return ret;
+	}
 
 	snd_soc_add_component_controls(component, aw8898_controls,
 				       ARRAY_SIZE(aw8898_controls));
@@ -492,6 +506,15 @@ static int aw8898_probe(struct i2c_client *client)
 
 	mutex_init(&aw8898->cfg_lock);
 
+	for (int i = 0; i < ARRAY_SIZE(aw8898->supplies); i++)
+		aw8898->supplies[i].supply = aw8898_supply_names[i];
+
+	ret = devm_regulator_bulk_get(&client->dev, ARRAY_SIZE(aw8898->supplies),
+				      aw8898->supplies);
+	if (ret)
+		return dev_err_probe(&client->dev, ret,
+				     "Failed to get regulators\n");
+
 	aw8898->reset = devm_gpiod_get(&client->dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(aw8898->reset))
 		return dev_err_probe(&client->dev, PTR_ERR(aw8898->reset),
@@ -502,8 +525,6 @@ static int aw8898_probe(struct i2c_client *client)
 	ret = aw8898_check_chipid(aw8898);
 	if (ret)
 		return dev_err_probe(&client->dev, ret, "Chip ID check failed\n");
-
-	// FIXME regulator_bulk
 
 	dev_set_drvdata(&client->dev, aw8898);
 
