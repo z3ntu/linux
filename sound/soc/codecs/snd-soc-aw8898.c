@@ -447,8 +447,22 @@ static int aw8898_component_probe(struct snd_soc_component *component)
 	return 0;
 }
 
+static void aw8898_component_remove(struct snd_soc_component *component)
+{
+	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(component);
+	int ret;
+
+	ret = regulator_bulk_disable(ARRAY_SIZE(aw8898->supplies),
+				     aw8898->supplies);
+
+	if (ret)
+		dev_err(component->dev, "Failed to disable supplies: %d\n",
+			ret);
+};
+
 static struct snd_soc_component_driver soc_component_dev_aw8898 = {
 	.probe = aw8898_component_probe,
+	.remove = aw8898_component_remove,
 };
 
 static const struct regmap_config aw8898_regmap = {
