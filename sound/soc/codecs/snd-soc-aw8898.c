@@ -8,8 +8,8 @@
 
 #include <linux/device.h>
 #include <linux/firmware.h>
+#include <linux/gpio/consumer.h>
 #include <linux/i2c.h>
-#include <linux/reset.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
@@ -74,7 +74,7 @@ struct aw8898 {
 	struct regmap *regmap;
 	struct i2c_client *client;
 	struct mutex cfg_lock;
-	struct reset_control *reset;
+	struct gpio_desc *reset;
 	int dev_mode;
 	bool init;
 };
@@ -448,9 +448,9 @@ static const struct regmap_config aw8898_regmap = {
 
 static void aw8898_reset(struct aw8898 *aw8898)
 {
-	reset_control_assert(aw8898->reset);
+	gpiod_set_value_cansleep(aw8898->reset, 1);
 	msleep(1);
-	reset_control_deassert(aw8898->reset);
+	gpiod_set_value_cansleep(aw8898->reset, 0);
 	msleep(1);
 }
 
@@ -494,10 +494,10 @@ static int aw8898_probe(struct i2c_client *client)
 
 	mutex_init(&aw8898->cfg_lock);
 
-	aw8898->reset = devm_reset_control_get_exclusive(&client->dev, NULL);
+	aw8898->reset = devm_gpiod_get(&client->dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(aw8898->reset))
 		return dev_err_probe(&client->dev, PTR_ERR(aw8898->reset),
-				     "failed to get reset\n");
+				     "failed to get reset GPIO\n");
 
 	aw8898_reset(aw8898);
 
