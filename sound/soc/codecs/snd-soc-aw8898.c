@@ -77,7 +77,8 @@ static const char *aw8898_supply_names[AW8898_NUM_SUPPLIES] = {
 };
 
 static const char * const aw8898_dev_mode_text[] = {
-	"Speaker", "Receiver"
+	"Speaker",
+	"Receiver",
 };
 
 enum aw8898_mode {
@@ -167,7 +168,7 @@ static void aw8898_stop(struct aw8898 *aw8898)
 	aw8898_set_power(aw8898, false);
 }
 
-static void aw8898_cfg_update(struct aw8898 *aw8898,
+static void aw8898_cfg_write(struct aw8898 *aw8898,
 			      struct aw8898_cfg *aw8898_cfg)
 {
 	for (int i = 0; i < aw8898_cfg->len; i++) {
@@ -188,7 +189,7 @@ static void aw8898_fw_loaded(const struct firmware *fw, void *context)
 		return;
 	}
 
-	dev_dbg(&aw8898->client->dev, "loaded %s - size: %zu\n", AW8898_CFG_NAME, fw->size);
+	dev_dbg(&aw8898->client->dev, "Loaded %s - size: %zu\n", AW8898_CFG_NAME, fw->size);
 
 	if (fw->size % 4 != 0) {
 		dev_err(&aw8898->client->dev, "Invalid firmware size %zu\n", fw->size);
@@ -207,7 +208,7 @@ static void aw8898_fw_loaded(const struct firmware *fw, void *context)
 
 	release_firmware(fw);
 
-	aw8898_cfg_update(aw8898, aw8898_cfg);
+	aw8898_cfg_write(aw8898, aw8898_cfg);
 
 	kfree(aw8898_cfg);
 
@@ -225,7 +226,7 @@ static void aw8898_cold_start(struct aw8898 *aw8898)
 				      AW8898_CFG_NAME, &aw8898->client->dev, GFP_KERNEL,
 				      aw8898, aw8898_fw_loaded);
 	if (err)
-		dev_err(&aw8898->client->dev, "cfg loading requested failed: %d\n", err);
+		dev_err(&aw8898->client->dev, "Firmware load request failed: %d\n", err);
 }
 
 static int aw8898_dev_mode_get(struct snd_kcontrol *kcontrol,
@@ -288,13 +289,13 @@ static int aw8898_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_I2S:
 		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
 				!= SND_SOC_DAIFMT_CBC_CFC) {
-			dev_err(component->dev, "invalid codec master mode: %d\n",
+			dev_err(component->dev, "Invalid codec master mode: %d\n",
 				fmt & SND_SOC_DAIFMT_MASTER_MASK);
 			return -EINVAL;
 		}
 		break;
 	default:
-		dev_err(component->dev, "unsupported DAI format %d\n",
+		dev_err(component->dev, "Unsupported DAI format %d\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
 		return -EINVAL;
 	}
@@ -502,7 +503,7 @@ static int aw8898_probe(struct i2c_client *client)
 	aw8898->regmap = devm_regmap_init_i2c(client, &aw8898_regmap);
 	if (IS_ERR(aw8898->regmap))
 		return dev_err_probe(&client->dev, PTR_ERR(aw8898->regmap),
-				     "failed to allocate register map\n");
+				     "Failed to allocate register map\n");
 
 	mutex_init(&aw8898->cfg_lock);
 
@@ -518,7 +519,7 @@ static int aw8898_probe(struct i2c_client *client)
 	aw8898->reset = devm_gpiod_get(&client->dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(aw8898->reset))
 		return dev_err_probe(&client->dev, PTR_ERR(aw8898->reset),
-				     "failed to get reset GPIO\n");
+				     "Failed to get reset GPIO\n");
 
 	aw8898_reset(aw8898);
 
