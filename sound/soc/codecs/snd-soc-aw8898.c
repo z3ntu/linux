@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2025 Luca Weiss <luca@lucaweiss.eu>
  */
+#define DEBUG
 
 #include <linux/device.h>
 #include <linux/firmware.h>
@@ -21,42 +22,36 @@
 
 /* System Status */
 #define AW8898_SYSST				0x01
-#define AW8898_SYSST_PLLS			BIT(0)
-
-/* System Interrupt Mask */
-#define AW8898_SYSINTM				0x03
-#define AW8898_SYSINTM_OCDM			BIT(3)
-#define AW8898_SYSINTM_OTHM			BIT(1)
-#define AW8898_SYSINTM_PLLM			BIT(0)
+#define AW8898_SYSST_PLLS			GENMASK(0, 0)
 
 /* System Control */
 #define AW8898_SYSCTRL				0x04
 #define AW8898_SYSCTRL_MODE_MASK		GENMASK(7, 7)
-#define AW8898_SYSCTRL_RCV_MODE			(1<<7)
-#define AW8898_SYSCTRL_SPK_MODE			(0<<7)
+#define AW8898_SYSCTRL_RCV_MODE			(1)
+#define AW8898_SYSCTRL_SPK_MODE			(0)
 #define AW8898_SYSCTRL_PW_MASK			GENMASK(0, 0)
-#define AW8898_SYSCTRL_PW_PDN			(1<<0)
-#define AW8898_SYSCTRL_PW_ACTIVE		(0<<0)
+#define AW8898_SYSCTRL_PW_PDN			(1)
+#define AW8898_SYSCTRL_PW_ACTIVE		(0)
 
 /* I2S Interface Control */
 #define AW8898_I2SCTRL				0x05
 #define AW8898_I2SCTRL_FMS_MASK			GENMASK(7, 6)
-#define AW8898_I2SCTRL_FMS_32BIT		(3<< 6)
-#define AW8898_I2SCTRL_FMS_24BIT		(2<< 6)
-#define AW8898_I2SCTRL_FMS_20BIT		(1<< 6)
-#define AW8898_I2SCTRL_FMS_16BIT		(0<< 6)
+#define AW8898_I2SCTRL_FMS_32BIT		(3)
+#define AW8898_I2SCTRL_FMS_24BIT		(2)
+#define AW8898_I2SCTRL_FMS_20BIT		(1)
+#define AW8898_I2SCTRL_FMS_16BIT		(0)
 #define AW8898_I2SCTRL_SR_MASK			GENMASK(3, 0)
-#define AW8898_I2SCTRL_SR_48K			(8<<0)
-#define AW8898_I2SCTRL_SR_44P1K			(7<<0)
-#define AW8898_I2SCTRL_SR_32K			(6<<0)
-#define AW8898_I2SCTRL_SR_16K			(3<<0)
-#define AW8898_I2SCTRL_SR_8K			(0<<0)
+#define AW8898_I2SCTRL_SR_48K			(8)
+#define AW8898_I2SCTRL_SR_44P1K			(7)
+#define AW8898_I2SCTRL_SR_32K			(6)
+#define AW8898_I2SCTRL_SR_16K			(3)
+#define AW8898_I2SCTRL_SR_8K			(0)
 
 /* PWM Control */
 #define AW8898_PWMCTRL				0x08
 #define AW8898_PWMCTRL_HMUTE_MASK		GENMASK(0, 0)
-#define AW8898_PWMCTRL_HMUTE_ENABLE		(1<<0)
-#define AW8898_PWMCTRL_HMUTE_DISABLE		(0<<0)
+#define AW8898_PWMCTRL_HMUTE_ENABLE		(1)
+#define AW8898_PWMCTRL_HMUTE_DISABLE		(0)
 
 /* Hardware AGC Configuration 7 */
 #define AW8898_HAGCCFG7				0x0f
@@ -116,7 +111,8 @@ static void aw8898_set_mute(struct aw8898 *aw8898, bool mute)
 		val = AW8898_PWMCTRL_HMUTE_ENABLE;
 
 	regmap_update_bits(aw8898->regmap, AW8898_PWMCTRL,
-			   AW8898_PWMCTRL_HMUTE_MASK, val);
+			   AW8898_PWMCTRL_HMUTE_MASK,
+			   FIELD_PREP(AW8898_PWMCTRL_HMUTE_MASK, val));
 }
 
 static void aw8898_set_power(struct aw8898 *aw8898, bool on)
@@ -127,7 +123,8 @@ static void aw8898_set_power(struct aw8898 *aw8898, bool on)
 		val = AW8898_SYSCTRL_PW_ACTIVE;
 
 	regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
-			   AW8898_SYSCTRL_PW_MASK, val);
+			   AW8898_SYSCTRL_PW_MASK,
+			   FIELD_PREP(AW8898_SYSCTRL_PW_MASK, val));
 }
 
 static void aw8898_update_dev_mode(struct aw8898 *aw8898)
@@ -138,7 +135,8 @@ static void aw8898_update_dev_mode(struct aw8898 *aw8898)
 		mode = AW8898_SYSCTRL_RCV_MODE;
 
 	regmap_update_bits(aw8898->regmap, AW8898_SYSCTRL,
-			   AW8898_SYSCTRL_MODE_MASK, mode);
+			   AW8898_SYSCTRL_MODE_MASK,
+			   FIELD_PREP(AW8898_SYSCTRL_MODE_MASK, mode));
 }
 
 static void aw8898_start(struct aw8898 *aw8898)
@@ -309,23 +307,23 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_soc_component *component = dai->component;
 	struct aw8898 *aw8898 = snd_soc_component_get_drvdata(dai->component);
-	unsigned int reg;
+	unsigned int val;
 
 	switch (params_rate(params)) {
 	case 8000:
-		reg = AW8898_I2SCTRL_SR_8K;
+		val = AW8898_I2SCTRL_SR_8K;
 		break;
 	case 16000:
-		reg = AW8898_I2SCTRL_SR_16K;
+		val = AW8898_I2SCTRL_SR_16K;
 		break;
 	case 32000:
-		reg = AW8898_I2SCTRL_SR_32K;
+		val = AW8898_I2SCTRL_SR_32K;
 		break;
 	case 44100:
-		reg = AW8898_I2SCTRL_SR_44P1K;
+		val = AW8898_I2SCTRL_SR_44P1K;
 		break;
 	case 48000:
-		reg = AW8898_I2SCTRL_SR_48K;
+		val = AW8898_I2SCTRL_SR_48K;
 		break;
 	default:
 		dev_err(component->dev, "Unsupported sample rate: %d\n",
@@ -334,20 +332,21 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
-			   AW8898_I2SCTRL_SR_MASK, reg);
+			   AW8898_I2SCTRL_SR_MASK,
+			   FIELD_PREP(AW8898_I2SCTRL_SR_MASK, val));
 
 	switch (params_width(params)) {
 	case 16:
-		reg = AW8898_I2SCTRL_FMS_16BIT;
+		val = AW8898_I2SCTRL_FMS_16BIT;
 		break;
 	case 20:
-		reg = AW8898_I2SCTRL_FMS_20BIT;
+		val = AW8898_I2SCTRL_FMS_20BIT;
 		break;
 	case 24:
-		reg = AW8898_I2SCTRL_FMS_24BIT;
+		val = AW8898_I2SCTRL_FMS_24BIT;
 		break;
 	case 32:
-		reg = AW8898_I2SCTRL_FMS_32BIT;
+		val = AW8898_I2SCTRL_FMS_32BIT;
 		break;
 	default:
 		dev_err(component->dev, "Unsupported sample size: %d\n",
@@ -356,7 +355,8 @@ static int aw8898_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	regmap_update_bits(aw8898->regmap, AW8898_I2SCTRL,
-			   AW8898_I2SCTRL_FMS_MASK, reg);
+			   AW8898_I2SCTRL_FMS_MASK,
+			   FIELD_PREP(AW8898_I2SCTRL_FMS_MASK, val));
 
 	return 0;
 }
