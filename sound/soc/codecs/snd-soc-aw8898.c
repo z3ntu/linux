@@ -55,10 +55,9 @@
 
 /* Hardware AGC Configuration 7 */
 #define AW8898_HAGCCFG7				0x0f
-#define AW8898_HAGCCFG7_VOL_MASK		GENMASK(15, 8)
+#define AW8898_HAGCCFG7_VOL_REG_SHIFT		(8) /* bits 15-8 */
 #define AW8898_VOLUME_MAX			(255)
 #define AW8898_VOLUME_MIN			(0)
-#define AW8898_VOL_REG_SHIFT			(8)
 
 #define AW8898_MAX_REGISTER			0xff
 
@@ -265,7 +264,8 @@ static const DECLARE_TLV_DB_SCALE(vol_tlv, -12750, 50, 0);
 static struct snd_kcontrol_new aw8898_controls[] = {
 	SOC_ENUM_EXT("Amp Mode", aw8898_dev_mode_enum,
 		     aw8898_dev_mode_get, aw8898_dev_mode_put),
-	SOC_SINGLE_RANGE_TLV("RX Volume", AW8898_HAGCCFG7, AW8898_VOL_REG_SHIFT,
+	SOC_SINGLE_RANGE_TLV("RX Volume", AW8898_HAGCCFG7,
+			     AW8898_HAGCCFG7_VOL_REG_SHIFT,
 			     AW8898_VOLUME_MIN, AW8898_VOLUME_MAX, 1, vol_tlv),
 };
 
