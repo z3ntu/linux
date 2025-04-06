@@ -170,6 +170,7 @@ static void aw8898_cfg_write(struct aw8898 *aw8898,
 	for (int i = 0; i < aw8898_cfg->len; i++) {
 		unsigned int addr = __le32_to_cpu(aw8898_cfg->data[i].addr);
 		unsigned int val = __le32_to_cpu(aw8898_cfg->data[i].val);
+
 		dev_dbg(&aw8898->client->dev, "cfg reg = 0x%04x, val = 0x%04x\n", addr, val);
 		regmap_write(aw8898->regmap, addr, val);
 	}
@@ -436,7 +437,8 @@ static int aw8898_component_probe(struct snd_soc_component *component)
 	ret = regulator_bulk_enable(ARRAY_SIZE(aw8898->supplies),
 				    aw8898->supplies);
 	if (ret) {
-		dev_err(component->dev, "Failed to enable supplies: %d\n", ret);
+		dev_err(component->dev, "Failed to enable supplies: %d\n",
+			ret);
 		return ret;
 	}
 
@@ -453,13 +455,12 @@ static void aw8898_component_remove(struct snd_soc_component *component)
 
 	ret = regulator_bulk_disable(ARRAY_SIZE(aw8898->supplies),
 				     aw8898->supplies);
-
 	if (ret)
 		dev_err(component->dev, "Failed to disable supplies: %d\n",
 			ret);
 };
 
-static struct snd_soc_component_driver soc_component_dev_aw8898 = {
+static const struct snd_soc_component_driver soc_component_dev_aw8898 = {
 	.probe = aw8898_component_probe,
 	.remove = aw8898_component_remove,
 };
@@ -491,6 +492,8 @@ static int aw8898_check_chipid(struct aw8898 *aw8898)
 			"Failed to read register AW8898_ID: %d\n", ret);
 		return ret;
 	}
+
+	dev_dbg(&aw8898->client->dev, "Read chip ID 0x%x\n", reg);
 
 	if (reg != AW8898_CHIP_ID) {
 		dev_err(&aw8898->client->dev, "Unexpected chip ID: 0x%x\n",
@@ -556,7 +559,7 @@ static const struct i2c_device_id aw8898_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, aw8898_id);
 
-static struct of_device_id aw8898_of_match[] = {
+static const struct of_device_id aw8898_of_match[] = {
 	{ .compatible = "awinic,aw8898" },
 	{ /* sentinel */ }
 };
