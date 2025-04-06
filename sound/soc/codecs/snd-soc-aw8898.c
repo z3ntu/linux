@@ -144,7 +144,7 @@ static void aw8898_start(struct aw8898 *aw8898)
 
 	aw8898_set_power(aw8898, true);
 
-	msleep(2);
+	fsleep(2000);
 
 	err = regmap_read_poll_timeout(aw8898->regmap, AW8898_SYSST,
 				       val, val & AW8898_SYSST_PLLS,
@@ -475,9 +475,9 @@ static const struct regmap_config aw8898_regmap = {
 static void aw8898_reset(struct aw8898 *aw8898)
 {
 	gpiod_set_value_cansleep(aw8898->reset, 1);
-	msleep(1);
+	fsleep(1000);
 	gpiod_set_value_cansleep(aw8898->reset, 0);
-	msleep(1);
+	fsleep(1000);
 }
 
 static int aw8898_check_chipid(struct aw8898 *aw8898)
