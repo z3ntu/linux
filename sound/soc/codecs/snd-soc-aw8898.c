@@ -521,7 +521,10 @@ static int aw8898_probe(struct i2c_client *client)
 		return dev_err_probe(&client->dev, PTR_ERR(aw8898->regmap),
 				     "Failed to allocate register map\n");
 
-	mutex_init(&aw8898->cfg_lock);
+	ret = devm_mutex_init(&client->dev, &aw8898->cfg_lock);
+	if (ret)
+		return dev_err_probe(&client->dev, ret,
+				     "Failed to init mutex\n");
 
 	for (int i = 0; i < ARRAY_SIZE(aw8898->supplies); i++)
 		aw8898->supplies[i].supply = aw8898_supply_names[i];
