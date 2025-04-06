@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2025 Luca Weiss <luca@lucaweiss.eu>
  */
-#define DEBUG
 
 #include <linux/device.h>
 #include <linux/firmware.h>
