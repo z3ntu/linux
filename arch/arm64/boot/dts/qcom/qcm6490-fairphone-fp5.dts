@@ -63,6 +63,15 @@
 		qcom,tx-device = <&wcd_tx>;
 
 		#sound-dai-cells = <1>;
+
+		mode-switch;
+		orientation-switch;
+
+		port {
+			wcd9385_codec: endpoint {
+				remote-endpoint = <&ocp96011_codec>;
+			};
+		};
 	};
 
 	chosen {
@@ -144,7 +153,7 @@
 					reg = <2>;
 
 					pmic_glink_sbu: endpoint {
-						remote-endpoint = <&ocp96011_sbu_mux>;
+						remote-endpoint = <&ocp96011_sbu>;
 					};
 				};
 			};
@@ -914,10 +923,25 @@
 		mode-switch;
 		orientation-switch;
 
-		port {
-			ocp96011_sbu_mux: endpoint {
-				remote-endpoint = <&pmic_glink_sbu>;
-				data-lanes = <1 0>;
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				ocp96011_sbu: endpoint {
+					remote-endpoint = <&pmic_glink_sbu>;
+					data-lanes = <1 0>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				ocp96011_codec: endpoint {
+					remote-endpoint = <&wcd9385_codec>;
+				};
 			};
 		};
 	};
@@ -1389,7 +1413,9 @@
 	pinctrl-names = "default",
 			"sleep";
 
-	audio-routing = "AMIC1", "MIC BIAS1",
+	audio-routing = "IN1_HPHL", "HPHL_OUT",
+			"IN2_HPHR", "HPHR_OUT",
+			"AMIC1", "MIC BIAS1",
 			"AMIC2", "MIC BIAS2",
 			"AMIC3", "MIC BIAS1",
 			"AMIC4", "MIC BIAS3",
@@ -1479,6 +1505,22 @@
 
 		cpu {
 			sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
+		};
+
+		platform {
+			sound-dai = <&q6routing>;
+		};
+	};
+
+	wcd-playback-dai-link {
+		link-name = "WCD Playback";
+
+		codec {
+			sound-dai = <&wcd9385 0>, <&swr0 0>, <&lpass_rx_macro 0>;
+		};
+
+		cpu {
+			sound-dai = <&q6afedai RX_CODEC_DMA_RX_0>;
 		};
 
 		platform {
