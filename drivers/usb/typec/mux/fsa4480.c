@@ -85,6 +85,8 @@ static int fsa4480_set(struct fsa4480 *fsa)
 	u8 enable = FSA4480_ENABLE_DEVICE;
 	u8 sel = 0;
 
+	dev_err(&fsa->client->dev, "%s:%d DBG\n", __func__, __LINE__);
+
 	if (fsa->swap_sbu_lanes)
 		reverse = !reverse;
 
@@ -117,8 +119,33 @@ static int fsa4480_set(struct fsa4480 *fsa)
 			return -EOPNOTSUPP;
 		}
 	} else if (fsa->mode == TYPEC_MODE_AUDIO) {
+		dev_err(&fsa->client->dev, "%s:%d\n", __func__, __LINE__);
+		// enable = bit(7)
+
 		/* Audio Accessory Mode, setup to auto Jack Detection */
 		enable |= FSA4480_ENABLE_USB | FSA4480_ENABLE_AGND;
+
+		// enable = bit(7) & bit(4) & bit(3) & bit(0)
+
+		// TODO compared to downstream bit(2) & bit(1) are missing??
+		// this is "Sense to GSBUx switches" and "MIC to SBUx switches"
+		enable |= BIT(2) | BIT(1); // TODO test if this improves anything
+
+		// TODO sel = FSA4480_SEL_SENSE | FSA4480_SEL_MIC | FSA4480_SEL_AGND ??
+		// this is used to toggle on FSA_MIC_GND_SWAP
+		//  sel is 0 in fsa4480_usbc_analog_setup_switches_psupply
+		//  only gets toggled through that callback, not sure this is needed if we have the auto thing on
+
+		// Audio Ground Detection and Configuration:
+		// The function is active when control bit 0x12h bit[0] = 1 and R, L, AGND switches are set to be on status.
+
+		// Luca: 0x12h bit[0] = 1 is set below with FSA4480_FUNCTION_ENABLE = FSA4480_ENABLE_AUTO_JACK_DETECT
+		// Downstream doesn't use this, handles switching manually
+		// R, L, AGND switches are set to be on status:
+		// That should be SETTING ENABLE R=bit(3), L=bit(4) & AGND=bit(0)
+
+		// Luca: There's also regs 0x1C 0x1D for MIC DETECTION THRESHOLD DATA which is MIC detection threshold in Volt
+		// and 0x1A 0x1B AUDIO JACK DETECTION REG* VALUE, resistance between SBU1 to SBU2
 	} else
 		return -EOPNOTSUPP;
 
@@ -131,6 +158,7 @@ static int fsa4480_set(struct fsa4480 *fsa)
 		usleep_range(35, 1000);
 	}
 
+	// TODO try enabling regmap debug for this, then compare to downstream
 	regmap_write(fsa->regmap, FSA4480_SWITCH_SELECT, sel);
 	regmap_write(fsa->regmap, FSA4480_SWITCH_ENABLE, enable);
 
@@ -155,6 +183,7 @@ static int fsa4480_switch_set(struct typec_switch_dev *sw,
 	struct fsa4480 *fsa = typec_switch_get_drvdata(sw);
 	int ret = 0;
 
+	dev_err(&fsa->client->dev, "%s:%d DBG orientation=%u\n", __func__, __LINE__, orientation);
 	mutex_lock(&fsa->lock);
 
 	if (fsa->orientation != orientation) {
