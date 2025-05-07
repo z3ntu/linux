@@ -1375,6 +1375,17 @@ config SM_VIDEOCC_7150
 	  Say Y if you want to support video devices and functionality such as
 	  video encode and decode.
 
+config SM_VIDEOCC_7635
+	tristate "SM7635 Video Clock Controller"
+	depends on ARM64 || COMPILE_TEST
+	select SM_GCC_7635
+	select QCOM_GDSC
+	help
+	  Support for the video clock controller on Qualcomm Technologies, Inc.
+	  SM7635 devices.
+	  Say Y if you want to support video devices and functionality such as
+	  video encode/decode.
+
 config SM_VIDEOCC_8150
 	tristate "SM8150 Video Clock Controller"
 	depends on ARM64 || COMPILE_TEST
