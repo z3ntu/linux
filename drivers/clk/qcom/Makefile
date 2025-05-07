@@ -142,6 +142,7 @@ obj-$(CONFIG_SM_GCC_6125) += gcc-sm6125.o
 obj-$(CONFIG_SM_GCC_6350) += gcc-sm6350.o
 obj-$(CONFIG_SM_GCC_6375) += gcc-sm6375.o
 obj-$(CONFIG_SM_GCC_7150) += gcc-sm7150.o
+obj-$(CONFIG_SM_GCC_7635) += gcc-sm7635.o
 obj-$(CONFIG_SM_GCC_8150) += gcc-sm8150.o
 obj-$(CONFIG_SM_GCC_8250) += gcc-sm8250.o
 obj-$(CONFIG_SM_GCC_8350) += gcc-sm8350.o
