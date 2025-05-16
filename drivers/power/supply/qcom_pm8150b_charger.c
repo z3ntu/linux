@@ -331,7 +331,7 @@ static int smb5_get_prop_usb_online(struct smb5_chip *chip, int *val)
 		return rc;
 	}
 
-	*val = (stat & USBIN_PLUGIN_RT_STS_BIT);
+	*val = !!(stat & USBIN_PLUGIN_RT_STS_BIT);
 	return 0;
 }
 
