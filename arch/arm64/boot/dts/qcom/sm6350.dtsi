@@ -1754,6 +1754,7 @@
 					reg = <2>;
 
 					usb_1_qmpphy_dp_in: endpoint {
+						remote-endpoint = <&mdss_dp_out>;
 					};
 				};
 			};
@@ -2222,6 +2223,7 @@
 						reg = <1>;
 
 						mdss_dp_out: endpoint {
+							remote-endpoint = <&usb_1_qmpphy_dp_in>;
 						};
 					};
 				};
