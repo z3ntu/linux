@@ -56,6 +56,10 @@ static int qcom_smgr_register_sensor(struct qcom_smgr *smgr,
 {
 	struct platform_device *pdev;
 	const char *name = qcom_smgr_sensor_type_platform_names[sensor->type];
+	if (!name) {
+		dev_err(smgr->dev, "Failed to get name for sensor type %d, ignoring.\n", sensor->type);
+		return -EINVAL;
+	}
 
 	pdev = platform_device_register_data(smgr->dev, name, sensor->id,
 					     &sensor, sizeof(sensor));
