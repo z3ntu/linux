@@ -770,6 +770,7 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 
 	mutex_lock(&mbhc->lock);
 
+	dev_err(component->dev, "%s:%d DBG typec_analog_mux=%d\n", __func__, __LINE__, mbhc->cfg->typec_analog_mux);
 	if (mbhc->cfg->typec_analog_mux)
 		mbhc->swap_thr = GND_MIC_USBC_SWAP_THRESHOLD;
 	else

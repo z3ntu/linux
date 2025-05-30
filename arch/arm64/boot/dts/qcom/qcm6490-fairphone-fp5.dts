@@ -1504,7 +1504,7 @@
 		};
 
 		cpu {
-			sound-dai = <&q6afedai TX_CODEC_DMA_TX_3>;
+			sound-dai = <&q6afedai TX_CODEC_DMA_TX_4>;
 		};
 
 		platform {

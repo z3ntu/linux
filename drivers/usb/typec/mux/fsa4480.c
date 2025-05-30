@@ -85,7 +85,7 @@ static int fsa4480_set(struct fsa4480 *fsa)
 	u8 enable = FSA4480_ENABLE_DEVICE;
 	u8 sel = 0;
 
-	dev_err(&fsa->client->dev, "%s:%d DBG\n", __func__, __LINE__);
+	dev_err(&fsa->client->dev, "%s:%d DBG mode=%ld reverse=%d\n", __func__, __LINE__, fsa->mode, reverse);
 
 	if (fsa->swap_sbu_lanes)
 		reverse = !reverse;
@@ -94,9 +94,11 @@ static int fsa4480_set(struct fsa4480 *fsa)
 	if (fsa->mode < TYPEC_STATE_MODAL ||
 	    (!fsa->svid && (fsa->mode == TYPEC_MODE_USB2 ||
 			    fsa->mode == TYPEC_MODE_USB3))) {
+		dev_err(&fsa->client->dev, "%s:%d TYPEC_MODE_USB*\n", __func__, __LINE__);
 		enable |= FSA4480_ENABLE_USB;
 		sel = FSA4480_SEL_USB;
 	} else if (fsa->svid) {
+		dev_err(&fsa->client->dev, "%s:%d svid (DP)\n", __func__, __LINE__);
 		switch (fsa->mode) {
 		/* DP Only */
 		case TYPEC_DP_STATE_C:
@@ -119,13 +121,13 @@ static int fsa4480_set(struct fsa4480 *fsa)
 			return -EOPNOTSUPP;
 		}
 	} else if (fsa->mode == TYPEC_MODE_AUDIO) {
-		dev_err(&fsa->client->dev, "%s:%d\n", __func__, __LINE__);
+		dev_err(&fsa->client->dev, "%s:%d TYPEC_MODE_AUDIO\n", __func__, __LINE__);
 		// enable = bit(7)
 
 		/* Audio Accessory Mode, setup to auto Jack Detection */
-		enable |= FSA4480_ENABLE_USB | FSA4480_ENABLE_AGND;
+		// enable |= FSA4480_ENABLE_USB | FSA4480_ENABLE_AGND;
 
-		// enable = bit(7) & bit(4) & bit(3) & bit(0)
+		enable = BIT(7) | BIT(4) | BIT(3) | BIT(0);
 
 		// TODO compared to downstream bit(2) & bit(1) are missing??
 		// this is "Sense to GSBUx switches" and "MIC to SBUx switches"
@@ -135,6 +137,8 @@ static int fsa4480_set(struct fsa4480 *fsa)
 		// this is used to toggle on FSA_MIC_GND_SWAP
 		//  sel is 0 in fsa4480_usbc_analog_setup_switches_psupply
 		//  only gets toggled through that callback, not sure this is needed if we have the auto thing on
+		if (reverse)
+			sel = FSA4480_SEL_SENSE | FSA4480_SEL_MIC | FSA4480_SEL_AGND;
 
 		// Audio Ground Detection and Configuration:
 		// The function is active when control bit 0x12h bit[0] = 1 and R, L, AGND switches are set to be on status.
@@ -163,9 +167,9 @@ static int fsa4480_set(struct fsa4480 *fsa)
 	regmap_write(fsa->regmap, FSA4480_SWITCH_ENABLE, enable);
 
 	/* Start AUDIO JACK DETECTION to setup MIC, AGND & Sense muxes */
-	if (enable & FSA4480_ENABLE_AGND)
-		regmap_write(fsa->regmap, FSA4480_FUNCTION_ENABLE,
-			     FSA4480_ENABLE_AUTO_JACK_DETECT);
+	//if (enable & FSA4480_ENABLE_AGND)
+	//	regmap_write(fsa->regmap, FSA4480_FUNCTION_ENABLE,
+	//		     FSA4480_ENABLE_AUTO_JACK_DETECT);
 
 	if (enable & FSA4480_ENABLE_SBU) {
 		/* 15us to allow the SBU switch to turn on again */
