@@ -83,7 +83,6 @@ struct qcom_icc_qosbox {
  * @name: the node name used in debugfs
  * @links: an array of nodes where we can go next while traversing
  * @id: a unique node identifier
- * @link_nodes: links associated with this node
  * @node: icc_node associated with this node
  * @num_links: the total number of @links
  * @channels: num of channels at this node
@@ -93,12 +92,12 @@ struct qcom_icc_qosbox {
  * @bcms: list of bcms associated with this logical node
  * @num_bcms: num of @bcms
  * @qosbox: QoS config data associated with node
+ * @link_nodes: links associated with this node
  */
 struct qcom_icc_node {
 	const char *name;
 	u16 links[MAX_LINKS];
 	u16 id;
-	struct qcom_icc_node **link_nodes;
 	struct icc_node *node;
 	u16 num_links;
 	u16 channels;
@@ -108,6 +107,7 @@ struct qcom_icc_node {
 	struct qcom_icc_bcm *bcms[MAX_BCM_PER_NODE];
 	size_t num_bcms;
 	const struct qcom_icc_qosbox *qosbox;
+	struct qcom_icc_node *link_nodes[];
 };
 
 /**
