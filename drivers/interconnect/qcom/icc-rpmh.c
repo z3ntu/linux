@@ -184,7 +184,7 @@ int qcom_icc_bcm_init(struct qcom_icc_bcm *bcm, struct device *dev)
 		bcm->vote_scale = 1000;
 
 	/* Link Qnodes to their respective BCMs */
-	for (i = 0; i < bcm->num_nodes; i++) {
+	for (i = 0; bcm->nodes[i]; i++) {
 		qn = bcm->nodes[i];
 		qn->bcms[qn->num_bcms] = bcm;
 		qn->num_bcms++;

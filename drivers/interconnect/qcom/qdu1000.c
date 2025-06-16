@@ -770,19 +770,16 @@ static struct qcom_icc_node xs_sys_tcu_cfg = {
 static struct qcom_icc_bcm bcm_acv = {
 	.name = "ACV",
 	.enable_mask = BIT(3),
-	.num_nodes = 1,
-	.nodes = { &ebi },
+	.nodes = { &ebi, NULL },
 };
 
 static struct qcom_icc_bcm bcm_ce0 = {
 	.name = "CE0",
-	.num_nodes = 1,
-	.nodes = { &qxm_crypto },
+	.nodes = { &qxm_crypto, NULL },
 };
 
 static struct qcom_icc_bcm bcm_cn0 = {
 	.name = "CN0",
-	.num_nodes = 44,
 	.nodes = { &qhm_qpic, &qhm_qspi,
 		   &qnm_gemnoc_cnoc, &qnm_gemnoc_modem_slave,
 		   &qnm_gemnoc_pcie, &xm_sdc,
@@ -804,68 +801,56 @@ static struct qcom_icc_bcm bcm_cn0 = {
 		   &qhs_vsense_ctrl_cfg, &qns_ddrss_cfg,
 		   &qns_modem, &qxs_imem,
 		   &qxs_pimem, &xs_ethernet_ss,
-		   &xs_qdss_stm, &xs_sys_tcu_cfg
-	},
+		   &xs_qdss_stm, &xs_sys_tcu_cfg, NULL },
 };
 
 static struct qcom_icc_bcm bcm_mc0 = {
 	.name = "MC0",
-	.num_nodes = 1,
-	.nodes = { &ebi },
+	.nodes = { &ebi, NULL },
 };
 
 static struct qcom_icc_bcm bcm_qup0 = {
 	.name = "QUP0",
-	.num_nodes = 2,
-	.nodes = { &qup0_core_slave, &qup1_core_slave },
+	.nodes = { &qup0_core_slave, &qup1_core_slave, NULL },
 };
 
 static struct qcom_icc_bcm bcm_sh0 = {
 	.name = "SH0",
-	.num_nodes = 1,
-	.nodes = { &qns_llcc },
+	.nodes = { &qns_llcc, NULL },
 };
 
 static struct qcom_icc_bcm bcm_sh1 = {
 	.name = "SH1",
-	.num_nodes = 11,
 	.nodes = { &alm_sys_tcu, &chm_apps,
 		   &qnm_ecpri_dma, &qnm_fec_2_gemnoc,
 		   &qnm_pcie, &qnm_snoc_gc,
 		   &qnm_snoc_sf, &qxm_mdsp,
 		   &qns_gem_noc_cnoc, &qns_modem_slave,
-		   &qns_pcie
-	},
+		   &qns_pcie, NULL },
 };
 
 static struct qcom_icc_bcm bcm_sn0 = {
 	.name = "SN0",
-	.num_nodes = 1,
-	.nodes = { &qns_gemnoc_sf },
+	.nodes = { &qns_gemnoc_sf, NULL },
 };
 
 static struct qcom_icc_bcm bcm_sn1 = {
 	.name = "SN1",
-	.num_nodes = 6,
 	.nodes = { &qhm_gic, &qxm_pimem,
 		   &xm_gic, &xm_qdss_etr0,
-		   &xm_qdss_etr1, &qns_gemnoc_gc
-	},
+		   &xm_qdss_etr1, &qns_gemnoc_gc, NULL },
 };
 
 static struct qcom_icc_bcm bcm_sn2 = {
 	.name = "SN2",
-	.num_nodes = 5,
 	.nodes = { &qnm_aggre_noc, &qxm_ecpri_gsi,
 		   &xm_ecpri_dma, &qns_anoc_snoc_gsi,
-		   &qns_ecpri_gemnoc
-	},
+		   &qns_ecpri_gemnoc, NULL },
 };
 
 static struct qcom_icc_bcm bcm_sn7 = {
 	.name = "SN7",
-	.num_nodes = 2,
-	.nodes = { &qns_pcie_gemnoc, &xs_pcie },
+	.nodes = { &qns_pcie_gemnoc, &xs_pcie, NULL },
 };
 
 static struct qcom_icc_bcm * const clk_virt_bcms[] = {

@@ -126,7 +126,6 @@ struct qcom_icc_node {
  * communicating with RPMh
  * @list: used to link to other bcms when compiling lists for commit
  * @ws_list: used to keep track of bcms that may transition between wake/sleep
- * @num_nodes: total number of @num_nodes
  * @nodes: list of qcom_icc_nodes that this BCM encapsulates
  */
 struct qcom_icc_bcm {
@@ -142,7 +141,6 @@ struct qcom_icc_bcm {
 	struct bcm_db aux_data;
 	struct list_head list;
 	struct list_head ws_list;
-	size_t num_nodes;
 	struct qcom_icc_node *nodes[];
 };
 

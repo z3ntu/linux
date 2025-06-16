@@ -68,7 +68,7 @@ static void bcm_aggregate_mask(struct qcom_icc_bcm *bcm)
 		bcm->vote_x[bucket] = 0;
 		bcm->vote_y[bucket] = 0;
 
-		for (i = 0; i < bcm->num_nodes; i++) {
+		for (i = 0; bcm->nodes[i]; i++) {
 			node = bcm->nodes[i];
 
 			/* If any vote in this bucket exists, keep the BCM enabled */
@@ -97,7 +97,7 @@ static void bcm_aggregate(struct qcom_icc_bcm *bcm)
 	u64 temp;
 
 	for (bucket = 0; bucket < QCOM_ICC_NUM_BUCKETS; bucket++) {
-		for (i = 0; i < bcm->num_nodes; i++) {
+		for (i = 0; bcm->nodes[i]; i++) {
 			node = bcm->nodes[i];
 			temp = bcm_div(node->sum_avg[bucket] * bcm->aux_data.width,
 				       node->buswidth * node->channels);
