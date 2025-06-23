@@ -784,7 +784,45 @@
 };
 
 &spi0 {
-	/* Eswin EPH8621 touchscreen @ 0 */
+	status = "okay";
+
+	touschreen@0 {
+		compatible = "eswin,eph861x";
+		reg = <0>;
+
+		pinctrl-0 = <&ts_active>;
+		pinctrl-1 = <&ts_suspend>;
+		pinctrl-names = "ts_active", "ts_suspend";
+
+		avdd-supply = <&vreg_l22b>;
+		iovdd-supply = <&vreg_l9b>;
+
+		interrupt-parent = <&tlmm>;
+		spi-max-frequency = <2000000>;
+		bits-per-word = <8>;
+		spi-cpol;
+		spi-cpha;
+
+		eswin,spi-mode = <3>;
+		eswin,regulator_dvdd = "iovdd";
+		eswin,regulator_avdd = "avdd";
+		eswin,power-delay-ms = <200>;
+		eswin,irq-gpio = <&tlmm 19 GPIO_ACTIVE_HIGH>;
+		eswin,irq-on-state = <0x00>;
+		eswin,reset-gpio = <&tlmm 20 GPIO_ACTIVE_HIGH>;
+		eswin,reset-on-state = <0>;
+		eswin,reset-active-ms = <20>;
+		eswin,reset-delay-ms = <200>;
+		eswin,spi-byte-delay-us = <10>;
+		eswin,spi-block-delay-us = <10>;
+		eswin,suspend-mode = <2>;
+		eswin,fw_name = "EPH86XX_fw.bin";
+		eswin,input_name = "ESWIN EPH86XX Touchscreen";
+		eswin,panel-invert-x = <1>;
+		eswin,panel-invert-y = <0>;
+		eswin,panel-max-x = <1116>;
+		eswin,panel-max-y = <2484>;
+	};
 };
 
 &tlmm {
@@ -807,6 +845,20 @@
 		function = "gpio";
 		drive-strength = <2>;
 		bias-pull-up;
+	};
+
+	ts_active: ts-irq-active-state {
+		pins = "gpio19";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	ts_suspend: ts-irq-suspend-state {
+		pins = "gpio19";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
 	};
 };
 
