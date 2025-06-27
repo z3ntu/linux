@@ -41,6 +41,7 @@ spmi_bus: &spmi_bus0 {};
 			height = <2484>;
 			stride = <(1116 * 4)>;
 			format = "a8r8g8b8";
+			panel = <&panel>;
 			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
 					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
 			clocks = <&gcc GCC_DISP_HF_AXI_CLK>;
@@ -65,6 +66,13 @@ spmi_bus: &spmi_bus0 {};
 			linux,input-type = <EV_SW>;
 			linux,code = <SW_MUTE_DEVICE>;
 		};
+	};
+
+	/* Dummy panel for simple-framebuffer dimension info */
+	panel: panel {
+		compatible = "boe,bj631jhm-t71-d900";
+		width-mm = <65>;
+		height-mm = <146>;
 	};
 
 	pmic-glink {
