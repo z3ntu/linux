@@ -20,6 +20,8 @@ spmi_bus: &spmi_bus0 {};
 #include "pmk8550.dtsi" /* PMK7635 */
 #include "pmr735b.dtsi"
 
+#define ENABLE_SIMPLE_FB
+
 / {
 	model = "The Fairphone (Gen. 6)";
 	compatible = "fairphone,fp6", "qcom,milos";
@@ -29,6 +31,7 @@ spmi_bus: &spmi_bus0 {};
 		serial0 = &uart5;
 	};
 
+#ifdef ENABLE_SIMPLE_FB
 	chosen {
 		#address-cells = <2>;
 		#size-cells = <2>;
@@ -54,6 +57,7 @@ spmi_bus: &spmi_bus0 {};
 			};
 		};
 	};
+#endif
 
 	gpio-keys {
 		compatible = "gpio-keys";
@@ -224,6 +228,7 @@ spmi_bus: &spmi_bus0 {};
 		regulator-boot-on;
 	};
 
+#ifdef ENABLE_SIMPLE_FB
 	reserved-memory {
 		/*
 		 * ABL is powering down display and controller if this node is
@@ -234,6 +239,7 @@ spmi_bus: &spmi_bus0 {};
 			no-map;
 		};
 	};
+#endif
 
 	thermal-zones {
 		pm8008-thermal {
@@ -615,10 +621,12 @@ spmi_bus: &spmi_bus0 {};
 	};
 };
 
+#ifdef ENABLE_SIMPLE_FB
 &dispcc {
 	/* Disable for now so simple-framebuffer continues working */
-	status = "disabled";
+	//status = "disabled";
 };
+#endif
 
 &gcc {
 	protected-clocks = <GCC_PCIE_1_AUX_CLK>, <GCC_PCIE_1_AUX_CLK_SRC>,
@@ -727,6 +735,51 @@ spmi_bus: &spmi_bus0 {};
 
 	status = "okay";
 };
+
+#if 1
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	vdda-supply = <&vreg_l4b>;
+	status = "okay";
+
+	panel@0 {
+		compatible = "boe,bj631jhm-t71-d900";
+		reg = <0>;
+
+		reset-gpios = <&tlmm 12 GPIO_ACTIVE_LOW>;
+
+		vci-supply = <&vreg_l19b>;
+		vddio-supply = <&vreg_l9b>;
+		dvdd-supply = <&vreg_oled_dvdd_1p2>;
+		// avdd-supply = <&pmiv0104_oledb> (VREG_OLEDB): 5V-8V
+		// elvss-supply = <&pmiv0104_elvss> (VREG_ELVSS): -8V-0V
+		// elvdd-supply = <&pmiv0104_elvdd> (VREG_ELVDD - OLEDB): 0-8V
+
+		pinctrl-0 = <&disp_reset_n_active>, <&mdp_vsync>;
+		pinctrl-1 = <&disp_reset_n_suspend>, <&mdp_vsync>;
+		pinctrl-names = "default", "sleep";
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	vdds-supply = <&vreg_l2b>;
+	status = "okay";
+};
+#endif
 
 &pm8550vs_c {
 	status = "okay";
@@ -886,6 +939,20 @@ spmi_bus: &spmi_bus0 {};
 			       <13 1>, /* NC */
 			       <63 2>; /* WLAN UART */
 
+	disp_reset_n_active: disp-reset-n-active-state {
+		pins = "gpio12";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	disp_reset_n_suspend: disp-reset-n-suspend-state {
+		pins = "gpio12";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
 	ts_active: ts-irq-active-state {
 		pins = "gpio19";
 		function = "gpio";
@@ -912,6 +979,13 @@ spmi_bus: &spmi_bus0 {};
 		function = "gpio";
 		drive-strength = <2>;
 		bias-disable;
+	};
+
+	mdp_vsync: mdp-vsync-state {
+		pins = "gpio129";
+		function = "mdp_vsync";
+		drive-strength = <2>;
+		bias-pull-down;
 	};
 };
 
