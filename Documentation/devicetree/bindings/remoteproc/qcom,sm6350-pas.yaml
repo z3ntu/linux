@@ -16,8 +16,6 @@ description:
 properties:
   compatible:
     enum:
-      - qcom,milos-mpss-pas
-      - qcom,milos-wpss-pas
       - qcom,sm6350-adsp-pas
       - qcom,sm6350-cdsp-pas
       - qcom,sm6350-mpss-pas
@@ -93,7 +91,6 @@ allOf:
       properties:
         compatible:
           enum:
-            - qcom,milos-wpss-pas
             - qcom,sm6350-cdsp-pas
     then:
       properties:
@@ -110,7 +107,6 @@ allOf:
       properties:
         compatible:
           enum:
-            - qcom,milos-mpss-pas
             - qcom,sm6350-mpss-pas
     then:
       properties:
