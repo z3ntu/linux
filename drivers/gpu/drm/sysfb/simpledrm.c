@@ -226,6 +226,7 @@ struct simpledrm_device {
 	struct device **pwr_dom_devs;
 	struct device_link **pwr_dom_links;
 #endif
+	/* interconnects */
 #if defined CONFIG_OF && defined CONFIG_INTERCONNECT
 	unsigned int icc_count;
 	struct icc_path **icc_paths;
@@ -594,11 +595,10 @@ static int simpledrm_device_attach_icc(struct simpledrm_device *sdev)
 	for (i = 0; i < sdev->icc_count; i++) {
 		sdev->icc_paths[i] = of_icc_get_by_index(dev, i);
 		if (IS_ERR_OR_NULL(sdev->icc_paths[i])) {
-			ret = PTR_ERR(sdev->icc_paths[i]);
+			ret = dev_err_probe(dev, PTR_ERR(sdev->icc_paths[i]),
+				      "failed to get interconnect path %u\n", i);
 			if (ret == -EPROBE_DEFER)
 				goto err;
-			drm_err(&sdev->sysfb.dev, "failed to get interconnect path %u: %d\n",
-				i, ret);
 			continue;
 		}
 
