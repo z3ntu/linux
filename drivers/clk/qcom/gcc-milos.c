@@ -3174,6 +3174,8 @@ static const struct regmap_config gcc_milos_regmap_config = {
 static struct qcom_cc_driver_data gcc_milos_driver_data = {
 	.clk_cbcrs = gcc_milos_critical_cbcrs,
 	.num_clk_cbcrs = ARRAY_SIZE(gcc_milos_critical_cbcrs),
+	.dfs_rcgs = gcc_milos_dfs_clocks,
+	.num_dfs_rcgs = ARRAY_SIZE(gcc_milos_dfs_clocks),
 };
 
 static const struct qcom_cc_desc gcc_milos_desc = {
@@ -3184,8 +3186,6 @@ static const struct qcom_cc_desc gcc_milos_desc = {
 	.num_resets = ARRAY_SIZE(gcc_milos_resets),
 	.gdscs = gcc_milos_gdscs,
 	.num_gdscs = ARRAY_SIZE(gcc_milos_gdscs),
-	.dfs_rcgs = gcc_milos_dfs_clocks,
-	.num_dfs_rcgs = ARRAY_SIZE(gcc_milos_dfs_clocks),
 	.use_rpm = true,
 	.driver_data = &gcc_milos_driver_data,
 };
