@@ -390,10 +390,10 @@ int qcom_cc_really_probe(struct device *dev,
 			goto put_rpm;
 	}
 
-	if (desc->dfs_rcgs && desc->num_dfs_rcgs) {
+	if (desc->driver_data->dfs_rcgs && desc->driver_data->num_dfs_rcgs) {
 		ret = qcom_cc_register_rcg_dfs(regmap,
-					       desc->dfs_rcgs,
-					       desc->num_dfs_rcgs);
+					       desc->driver_data->dfs_rcgs,
+					       desc->driver_data->num_dfs_rcgs);
 		if (ret)
 			goto put_rpm;
 	}
