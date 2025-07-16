@@ -712,6 +712,14 @@ config VIDEO_S5K6A3
 	  This is a V4L2 sensor driver for Samsung S5K6A3 raw
 	  camera sensor.
 
+config VIDEO_S5KKD1
+	tristate "Samsung S5KKD1 sensor support"
+	select V4L2_CCI_I2C
+	depends on GPIOLIB
+	help
+	  This is a V4L2 sensor driver for Samsung S5KKD1 raw
+	  camera sensor.
+
 config VIDEO_VD55G1
 	tristate "ST VD55G1 sensor support"
 	select V4L2_CCI_I2C
