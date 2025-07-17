@@ -574,7 +574,35 @@ spmi_bus: &spmi_bus0 {};
 };
 
 &cci0_i2c0 {
-	/* Main cam */
+	camera@1a {
+		compatible = "sony,imx896";
+		reg = <0x1a>;
+
+		vana1-supply = <&vreg_l5p>;
+		vana2-supply = <&vreg_ois_avdd0_1p8>;
+		vif-supply = <&vreg_l6p>;
+		vdig-supply = <&vreg_l1p>;
+
+		clocks = <&camcc CAM_CC_MCLK0_CLK>;
+		assigned-clocks = <&camcc CAM_CC_MCLK0_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&cam_mclk0_default>;
+		pinctrl-names = "default";
+
+		orientation = <1>; /* Rear facing */
+		rotation = <270>; // FIXME
+
+		// port {
+		// 	camera_imx896_ep: endpoint {
+		// 		data-lanes = <1 2 3 4>; // FIXME
+		// 		bus-type = <MEDIA_BUS_TYPE_CSI2_CPHY>;
+		// 		link-frequencies = /bits/ 64 <600000000>; // FIXME
+		// 		remote-endpoint = <&csiphy0_ep>;
+		// 	};
+		// };
+	};
 
 	eeprom@50 {
 		compatible = "puya,p24c128f", "atmel,24c128";
@@ -582,11 +610,42 @@ spmi_bus: &spmi_bus0 {};
 		vcc-supply = <&vreg_l6p>;
 		read-only;
 	};
+
+	/* Dongwoon DW9784 VCM/OIS @ 0x72 */
 };
 
 
 &cci0_i2c1 {
-	/* UW cam */
+	/* Awinic AW86017 VCM @ 0x0c ??? */
+
+	camera@36 {
+		compatible = "ovti,ov13b10";
+		reg = <0x36>;
+
+		avdd-supply = <&vreg_l4p>;
+		dovdd-supply = <&vreg_l6p>;
+		dvdd-supply = <&vreg_uw_dvdd>;
+
+		clocks = <&camcc CAM_CC_MCLK1_CLK>;
+		assigned-clocks = <&camcc CAM_CC_MCLK1_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 41 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&cam_mclk1_default>;
+		pinctrl-names = "default";
+
+		orientation = <1>; /* Rear facing */
+		rotation = <270>; // FIXME
+
+		// port {
+		// 	camera_ov13b10_ep: endpoint {
+		// 		data-lanes = <1 2 3 4>;
+		// 		bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+		// 		link-frequencies = /bits/ 64 <560000000>;
+		// 		remote-endpoint = <&csiphy1_ep>;
+		// 	};
+		// };
+	};
 
 	eeprom@52 {
 		compatible = "puya,p24c128f", "atmel,24c128";
@@ -605,7 +664,36 @@ spmi_bus: &spmi_bus0 {};
 };
 
 &cci1_i2c1 {
-	/* Front cam */
+	/* Awinic AW86016 @ 0x0c ??? */
+
+	camera@3d {
+		compatible = "samsung,s5kkd1";
+		reg = <0x3d>;
+
+		vddd-supply = <&vreg_l2p>;
+		vdda-supply = <&vreg_l3p>;
+		vddio-supply = <&vreg_l6p>;
+
+		clocks = <&camcc CAM_CC_MCLK3_CLK>;
+		assigned-clocks = <&camcc CAM_CC_MCLK3_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 43 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&cam_mclk3_default>;
+		pinctrl-names = "default";
+
+		orientation = <0>; /* Front facing */
+		rotation = <270>; // FIXME
+
+		// port {
+		// 	camera_s5kkd1_ep: endpoint {
+		// 		data-lanes = <1 2 3 4>;
+		// 		bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+		// 		link-frequencies = /bits/ 64 <600000000>;
+		// 		remote-endpoint = <&csiphy3_ep>;
+		// 	};
+		// };
+	};
 
 	eeprom@51 {
 		compatible = "puya,p24c128f", "atmel,24c128";
@@ -896,6 +984,27 @@ spmi_bus: &spmi_bus0 {};
 		function = "gpio";
 		drive-strength = <2>;
 		bias-pull-up;
+	};
+
+	cam_mclk0_default: cam-mclk0-default-state {
+		pins = "gpio83";
+		function = "cam_mclk";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cam_mclk1_default: cam-mclk1-default-state {
+		pins = "gpio84";
+		function = "cam_mclk";
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	cam_mclk3_default: cam-mclk3-default-state {
+		pins = "gpio86";
+		function = "cam_mclk";
+		drive-strength = <2>;
+		bias-disable;
 	};
 
 	pm8008_int_default: pm8008-int-default-state {
