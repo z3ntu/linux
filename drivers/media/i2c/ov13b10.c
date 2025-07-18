@@ -568,6 +568,14 @@ static const char * const ov13b10_test_pattern_menu[] = {
 	"Vertical Color Bar Type 4"
 };
 
+static const char * const ov13b10_supply_name[] = {
+	/* Supplies can be enabled in any order */
+	"avdd",  /* Analog (2.8V) supply */
+	"dovdd", /* I/O (1.8V) supply */
+	"dvdd",  /* Core (1.2V) supply */
+};
+#define OV13B10_NUM_SUPPLIES ARRAY_SIZE(ov13b10_supply_name)
+
 /* Configurations for supported link frequencies */
 #define OV13B10_LINK_FREQ_560MHZ	560000000ULL
 #define OV13B10_LINK_FREQ_INDEX_0	0
@@ -708,7 +716,7 @@ struct ov13b10 {
 	struct v4l2_ctrl_handler ctrl_handler;
 
 	struct clk *img_clk;
-	struct regulator *avdd;
+	struct regulator_bulk_data supplies[OV13B10_NUM_SUPPLIES];
 	struct gpio_desc *reset;
 
 	/* V4L2 Controls */
@@ -1195,8 +1203,7 @@ static int ov13b10_power_off(struct device *dev)
 
 	gpiod_set_value_cansleep(ov13b10->reset, 1);
 
-	if (ov13b10->avdd)
-		regulator_disable(ov13b10->avdd);
+	regulator_bulk_disable(OV13B10_NUM_SUPPLIES, ov13b10->supplies);
 
 	clk_disable_unprepare(ov13b10->img_clk);
 
@@ -1215,13 +1222,12 @@ static int ov13b10_power_on(struct device *dev)
 		return ret;
 	}
 
-	if (ov13b10->avdd) {
-		ret = regulator_enable(ov13b10->avdd);
-		if (ret < 0) {
-			dev_err(dev, "failed to enable avdd: %d", ret);
-			clk_disable_unprepare(ov13b10->img_clk);
-			return ret;
-		}
+	ret = regulator_bulk_enable(OV13B10_NUM_SUPPLIES,
+				    ov13b10->supplies);
+	if (ret) {
+		dev_err(dev, "failed to enable regulators: %d\n", ret);
+		clk_disable_unprepare(ov13b10->img_clk);
+		return ret;
 	}
 
 	gpiod_set_value_cansleep(ov13b10->reset, 0);
@@ -1473,6 +1479,7 @@ static void ov13b10_free_controls(struct ov13b10 *ov13b)
 static int ov13b10_get_pm_resources(struct ov13b10 *ov13b)
 {
 	unsigned long freq;
+	unsigned int i;
 	int ret;
 
 	ov13b->reset = devm_gpiod_get_optional(ov13b->dev, "reset", GPIOD_OUT_LOW);
@@ -1491,14 +1498,12 @@ static int ov13b10_get_pm_resources(struct ov13b10 *ov13b)
 				     "external clock %lu is not supported\n",
 				     freq);
 
-	ov13b->avdd = devm_regulator_get_optional(ov13b->dev, "avdd");
-	if (IS_ERR(ov13b->avdd)) {
-		ret = PTR_ERR(ov13b->avdd);
-		ov13b->avdd = NULL;
-		if (ret != -ENODEV)
-			return dev_err_probe(ov13b->dev, ret,
-					     "failed to get avdd regulator\n");
-	}
+	for (i = 0; i < OV13B10_NUM_SUPPLIES; i++)
+		ov13b->supplies[i].supply = ov13b10_supply_name[i];
+
+	ret = devm_regulator_bulk_get(ov13b->dev, OV13B10_NUM_SUPPLIES, ov13b->supplies);
+	if (ret < 0)
+		return dev_err_probe(ov13b->dev, ret, "failed to get regulators\n");
 
 	return 0;
 }
