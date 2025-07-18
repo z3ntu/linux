@@ -1064,6 +1064,8 @@ static int s5kkd1_detect(struct s5kkd1 *s5kkd1)
 	if (ret)
 		return ret;
 
+	printk(KERN_ERR "DBG %s:%d val=0x%llx\n", __func__, __LINE__, val);
+
 	if (val != S5KKD1_CHIP_ID) {
 		dev_err(s5kkd1->dev, "chip id mismatch: %x!=%llx\n",
 			S5KKD1_CHIP_ID, val);
@@ -1122,6 +1124,8 @@ static int s5kkd1_parse_hw_config(struct s5kkd1 *s5kkd1)
 				      s5kkd1->supplies);
 	if (ret)
 		return ret;
+
+	return 0; // FIXME
 
 	ep = fwnode_graph_get_next_endpoint(fwnode, NULL);
 	if (!ep)
