@@ -280,10 +280,14 @@ int qcom_icc_rpmh_probe(struct platform_device *pdev)
 		if (!qn)
 			continue;
 
-		if (!qn->node)
-			qn->node = icc_node_create_dyn();
+		if (desc->alloc_dyn_id) {
+			if (!qn->node)
+				qn->node = icc_node_create_dyn();
+			node = qn->node;
+		} else {
+			node = icc_node_create(qn->id);
+		}
 
-		node = qn->node;
 		if (IS_ERR(node)) {
 			ret = PTR_ERR(node);
 			goto err_remove_nodes;
@@ -293,8 +297,13 @@ int qcom_icc_rpmh_probe(struct platform_device *pdev)
 		node->data = qn;
 		icc_node_add(node, provider);
 
-		for (j = 0; qn->link_nodes[j]; j++)
-			icc_link_nodes(node, &qn->link_nodes[j]->node);
+		if (desc->alloc_dyn_id) {
+			for (j = 0; qn->link_nodes[j]; j++)
+				icc_link_nodes(node, &qn->link_nodes[j]->node);
+		} else {
+			for (j = 0; j < qn->num_links; j++)
+				icc_link_create(node, qn->links[j]);
+		}
 
 		data->nodes[i] = node;
 	}
