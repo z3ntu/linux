@@ -297,11 +297,10 @@ int qcom_icc_rpmh_probe(struct platform_device *pdev)
 		node->data = qn;
 		icc_node_add(node, provider);
 
-		if (desc->alloc_dyn_id) {
-			for (j = 0; qn->link_nodes[j]; j++)
+		for (j = 0; j < qn->num_links; j++) {
+			if (desc->alloc_dyn_id)
 				icc_link_nodes(node, &qn->link_nodes[j]->node);
-		} else {
-			for (j = 0; j < qn->num_links; j++)
+			else
 				icc_link_create(node, qn->links[j]);
 		}
 
