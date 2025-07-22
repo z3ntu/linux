@@ -1240,36 +1240,42 @@ static struct qcom_icc_bcm bcm_acv = {
 	.name = "ACV",
 	.enable_mask = BIT(3),
 	.keepalive = false,
-	.nodes = { &ebi, NULL },
+	.num_nodes = 1,
+	.nodes = { &ebi },
 };
 
 static struct qcom_icc_bcm bcm_mc0 = {
 	.name = "MC0",
 	.keepalive = true,
-	.nodes = { &ebi, NULL },
+	.num_nodes = 1,
+	.nodes = { &ebi },
 };
 
 static struct qcom_icc_bcm bcm_sh0 = {
 	.name = "SH0",
 	.keepalive = true,
-	.nodes = { &qns_llcc, NULL },
+	.num_nodes = 1,
+	.nodes = { &qns_llcc },
 };
 
 static struct qcom_icc_bcm bcm_mm0 = {
 	.name = "MM0",
 	.keepalive = false,
-	.nodes = { &qns_mem_noc_hf, NULL },
+	.num_nodes = 1,
+	.nodes = { &qns_mem_noc_hf },
 };
 
 static struct qcom_icc_bcm bcm_ce0 = {
 	.name = "CE0",
 	.keepalive = false,
-	.nodes = { &qxm_crypto, NULL },
+	.num_nodes = 1,
+	.nodes = { &qxm_crypto },
 };
 
 static struct qcom_icc_bcm bcm_cn0 = {
 	.name = "CN0",
 	.keepalive = true,
+	.num_nodes = 48,
 	.nodes = { &qnm_snoc,
 		   &xm_qdss_dap,
 		   &qhs_a1_noc_cfg,
@@ -1317,12 +1323,14 @@ static struct qcom_icc_bcm bcm_cn0 = {
 		   &qhs_venus_cfg,
 		   &qhs_venus_throttle_cfg,
 		   &qhs_vsense_ctrl_cfg,
-		   &srvc_cnoc, NULL },
+		   &srvc_cnoc
+	},
 };
 
 static struct qcom_icc_bcm bcm_mm1 = {
 	.name = "MM1",
 	.keepalive = false,
+	.num_nodes = 8,
 	.nodes = { &qxm_camnoc_hf0_uncomp,
 		   &qxm_camnoc_hf1_uncomp,
 		   &qxm_camnoc_sf_uncomp,
@@ -1330,60 +1338,70 @@ static struct qcom_icc_bcm bcm_mm1 = {
 		   &qxm_mdp0,
 		   &qxm_rot,
 		   &qxm_venus0,
-		   &qxm_venus_arm9, NULL },
+		   &qxm_venus_arm9
+	},
 };
 
 static struct qcom_icc_bcm bcm_sh2 = {
 	.name = "SH2",
 	.keepalive = false,
-	.nodes = { &acm_sys_tcu, NULL },
+	.num_nodes = 1,
+	.nodes = { &acm_sys_tcu },
 };
 
 static struct qcom_icc_bcm bcm_mm2 = {
 	.name = "MM2",
 	.keepalive = false,
-	.nodes = { &qns_mem_noc_sf, NULL },
+	.num_nodes = 1,
+	.nodes = { &qns_mem_noc_sf },
 };
 
 static struct qcom_icc_bcm bcm_qup0 = {
 	.name = "QUP0",
 	.keepalive = false,
-	.nodes = { &qup_core_master_1, &qup_core_master_2, NULL },
+	.num_nodes = 2,
+	.nodes = { &qup_core_master_1, &qup_core_master_2 },
 };
 
 static struct qcom_icc_bcm bcm_sh3 = {
 	.name = "SH3",
 	.keepalive = false,
-	.nodes = { &qnm_cmpnoc, NULL },
+	.num_nodes = 1,
+	.nodes = { &qnm_cmpnoc },
 };
 
 static struct qcom_icc_bcm bcm_sh4 = {
 	.name = "SH4",
 	.keepalive = false,
-	.nodes = { &acm_apps0, NULL },
+	.num_nodes = 1,
+	.nodes = { &acm_apps0 },
 };
 
 static struct qcom_icc_bcm bcm_sn0 = {
 	.name = "SN0",
 	.keepalive = true,
-	.nodes = { &qns_gemnoc_sf, NULL },
+	.num_nodes = 1,
+	.nodes = { &qns_gemnoc_sf },
 };
 
 static struct qcom_icc_bcm bcm_co0 = {
 	.name = "CO0",
 	.keepalive = false,
-	.nodes = { &qns_cdsp_gemnoc, NULL },
+	.num_nodes = 1,
+	.nodes = { &qns_cdsp_gemnoc },
 };
 
 static struct qcom_icc_bcm bcm_sn1 = {
 	.name = "SN1",
 	.keepalive = false,
-	.nodes = { &qxs_imem, NULL },
+	.num_nodes = 1,
+	.nodes = { &qxs_imem },
 };
 
 static struct qcom_icc_bcm bcm_cn1 = {
 	.name = "CN1",
 	.keepalive = false,
+	.num_nodes = 8,
 	.nodes = { &qhm_qspi,
 		   &xm_sdc2,
 		   &xm_emmc,
@@ -1391,55 +1409,64 @@ static struct qcom_icc_bcm bcm_cn1 = {
 		   &qhs_emmc_cfg,
 		   &qhs_pdm,
 		   &qhs_qspi,
-		   &qhs_sdc2, NULL },
+		   &qhs_sdc2
+	},
 };
 
 static struct qcom_icc_bcm bcm_sn2 = {
 	.name = "SN2",
 	.keepalive = false,
-	.nodes = { &qxm_pimem, &qns_gemnoc_gc, NULL },
+	.num_nodes = 2,
+	.nodes = { &qxm_pimem, &qns_gemnoc_gc },
 };
 
 static struct qcom_icc_bcm bcm_co2 = {
 	.name = "CO2",
 	.keepalive = false,
-	.nodes = { &qnm_npu, NULL },
+	.num_nodes = 1,
+	.nodes = { &qnm_npu },
 };
 
 static struct qcom_icc_bcm bcm_sn3 = {
 	.name = "SN3",
 	.keepalive = false,
-	.nodes = { &qxs_pimem, NULL },
+	.num_nodes = 1,
+	.nodes = { &qxs_pimem },
 };
 
 static struct qcom_icc_bcm bcm_co3 = {
 	.name = "CO3",
 	.keepalive = false,
-	.nodes = { &qxm_npu_dsp, NULL },
+	.num_nodes = 1,
+	.nodes = { &qxm_npu_dsp },
 };
 
 static struct qcom_icc_bcm bcm_sn4 = {
 	.name = "SN4",
 	.keepalive = false,
-	.nodes = { &xs_qdss_stm, NULL },
+	.num_nodes = 1,
+	.nodes = { &xs_qdss_stm },
 };
 
 static struct qcom_icc_bcm bcm_sn7 = {
 	.name = "SN7",
 	.keepalive = false,
-	.nodes = { &qnm_aggre1_noc, NULL },
+	.num_nodes = 1,
+	.nodes = { &qnm_aggre1_noc },
 };
 
 static struct qcom_icc_bcm bcm_sn9 = {
 	.name = "SN9",
 	.keepalive = false,
-	.nodes = { &qnm_aggre2_noc, NULL },
+	.num_nodes = 1,
+	.nodes = { &qnm_aggre2_noc },
 };
 
 static struct qcom_icc_bcm bcm_sn12 = {
 	.name = "SN12",
 	.keepalive = false,
-	.nodes = { &qnm_gemnoc, NULL },
+	.num_nodes = 1,
+	.nodes = { &qnm_gemnoc },
 };
 
 static struct qcom_icc_bcm * const aggre1_noc_bcms[] = {
