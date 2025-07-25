@@ -1990,9 +1990,9 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
 
     //struct device_node *node = commsdevice->dev.of_node;
     dev_dbg(dev, "%s >>>\n", __func__);
-    pr_err("eph_probe----11--100000ms--\n");
+    //pr_err("eph_probe----11--100000ms--\n");
 
-    msleep(10000);
+    //msleep(10000);
 
     ret_val = eph_comms_specific_checks(commsdevice);
     if (ret_val)
