@@ -69,6 +69,15 @@ properties:
       - const: vfe0
       - const: vfe1
 
+  interconnects:
+    maxItems: 3
+
+  interconnect-names:
+    items:
+      - const: cam_vfe0_mem
+      - const: cam_vfe1_mem
+      - const: cam_ahb
+
   iommus:
     maxItems: 1
 
