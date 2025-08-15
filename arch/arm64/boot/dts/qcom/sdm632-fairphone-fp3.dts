@@ -88,12 +88,55 @@
 	};
 };
 
+&camss {
+	vdda-supply = <&pm8953_s3>;
+
+	status = "okay";
+
+	ports {
+		port@0 {
+			csiphy0_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&camera_imx363_ep>;
+			};
+		};
+	};
+};
+
 &cci {
 	status = "okay";
 };
 
 &cci_i2c0 {
 	/* Sony IMX363 (rear) @ 0x10 */
+	camera@10 {
+		compatible = "sony,imx363";
+		reg = <0x10>;
+
+		vana-supply = <&pm8953_l22>;
+		vdig-supply = <&pm8953_l2>;
+		vif-supply = <&vreg_cam_io_1p8>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		assigned-clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&cam_mclk0_default>;
+		pinctrl-names = "default";
+
+		orientation = <1>; /* Rear facing */
+		rotation = <270>; // FIXME
+
+		port {
+			camera_imx363_ep: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <600000000>; // FIXME
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
 
 	eeprom@50 {
 		compatible = "belling,bl24s64", "atmel,24c64";
