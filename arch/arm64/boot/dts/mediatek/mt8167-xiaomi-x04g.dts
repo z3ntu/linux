@@ -18,30 +18,18 @@
 	};
 
 	chosen {
+		// FIXME clean up
 		#address-cells = <2>;
 		#size-cells = <2>;
-		bootargs = "console=tty0 console=ttyS0,921600n1 earlycon=uart8250,mmio32,0x11005000 PMOS_NOSPLASH";
 		ranges;
-
-		stdout-path = &framebuffer0;
-
-		framebuffer0: framebuffer@7f1c0000 {
-			compatible = "simple-framebuffer";
-			reg = <0x0 0x7f1c0000 0x0 (800 * 480 * 3)>;
-			width = <800>;
-			height = <480>;
-			stride = <(800 * 3)>;
-			format = "r8g8b8";
-			display = <&dsi>; /* hmm */
-		};
 	};
 
-	extcon_usb: extcon_iddig {
-		compatible = "linux,extcon-usb-gpio";
-		id-gpios = <&pio 41 GPIO_ACTIVE_HIGH>;
-	};
+	//extcon_usb: extcon_iddig {
+	//	compatible = "linux,extcon-usb-gpio";
+	//	id-gpios = <&pio 41 GPIO_ACTIVE_HIGH>;
+	//};
 
-	memory {
+	memory@40000000 {
 		device_type = "memory";
 		reg = <0 0x40000000 0 0x20000000>;
 	};
@@ -52,14 +40,14 @@
 		ranges;
 
 		atf-reserved-memory {
+			reg = <0 0x54600000 0 0x30000>;
 			no-map;
-			reg = <0x00 0x54600000 0x00 0x30000>;
 		};
 
 		consys-reserve-memory {
-			no-map;
 			size = <0x00 0x200000>;
 			alignment = <0x00 0x200000>;
+			no-map;
 		};
 	};
 };
@@ -89,39 +77,6 @@
 &cpu3 {
 	/delete-property/ cpu-idle-states;
 	proc-supply = <&mt6392_vproc_reg>;
-};
-
-&disp_pwm {
-	status = "okay";
-};
-
-&dsi {
-	status = "okay";
-	#address-cells = <1>;
-	#size-cells = <0>;
-
-	panel: panel@0 {
-		compatible = "zhunyi,z40046";
-		reg = <0>;
-		/* "mi,mico_lcm_common" in stock dtb suggests vio18 & vio28, both always-on lol. it's vgp2 on the lenovo tablet tho.. ~val */
-		power-supply = <&mt6392_vio28_reg>;
-		reset-gpios = <&pio 66 GPIO_ACTIVE_HIGH>;
-		rotation = <270>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&panel_pins>;
-
-		port {
-			panel_in: endpoint {
-				remote-endpoint = <&dsi_out>;
-			};
-		};
-	};
-
-	port {
-		dsi_out: endpoint {
-			remote-endpoint = <&panel_in>;
-		};
-	};
 };
 
 &i2c0 {
@@ -158,10 +113,6 @@
 	mediatek,keys-per-group = <1>;
 };
 
-&mipi_tx {
-	status = "okay";
-};
-
 &mmc0 {
 	status = "okay";
 
@@ -181,32 +132,32 @@
 };
 
 &pio {
-	i2c_pins_0: i2c0 {
-		pins_i2c {
+	i2c_pins_0: i2c0-pins {
+		pins-bus {
 			pinmux = <MT8167_PIN_58_SDA0__FUNC_SDA0_0>,
 				 <MT8167_PIN_59_SCL0__FUNC_SCL0_0>;
 			bias-disable;
 		};
 	};
 
-	i2c_pins_1: i2c1 {
-		pins_i2c {
+	i2c_pins_1: i2c1-pins {
+		pins-bus {
 			pinmux = <MT8167_PIN_52_SDA1__FUNC_SDA1_0>,
 				 <MT8167_PIN_53_SCL1__FUNC_SCL1_0>;
 			bias-disable;
 		};
 	};
 
-	i2c_pins_2: i2c2 {
-		pins_i2c {
+	i2c_pins_2: i2c2-pins {
+		pins-bus {
 			pinmux = <MT8167_PIN_60_SDA2__FUNC_SDA2_0>,
 				 <MT8167_PIN_61_SCL2__FUNC_SCL2_0>;
 			bias-disable;
 		};
 	};
 
-	mmc0_pins_default: mmc0default {
-		pins_cmd_dat {
+	mmc0_pins_default: mmc0-default-pins {
+		pins-cmd-dat {
 			pinmux = <MT8167_PIN_120_MSDC0_DAT0__FUNC_MSDC0_DAT0>,
 				 <MT8167_PIN_119_MSDC0_DAT1__FUNC_MSDC0_DAT1>,
 				 <MT8167_PIN_118_MSDC0_DAT2__FUNC_MSDC0_DAT2>,
@@ -219,19 +170,19 @@
 			bias-pull-up;
 		};
 
-		pins_clk {
+		pins-clk {
 			pinmux = <MT8167_PIN_116_MSDC0_CLK__FUNC_MSDC0_CLK>;
 			bias-pull-down;
 		};
 
-		pins_rst {
+		pins-rst {
 			pinmux = <MT8167_PIN_114_MSDC0_RSTB__FUNC_MSDC0_RSTB>;
 			bias-pull-up;
 		};
 	};
 
-	mmc0_pins_uhs: mmc0 {
-		pins_cmd_dat {
+	mmc0_pins_uhs: mmc0-uhs-pins {
+		pins-cmd-dat {
 			pinmux = <MT8167_PIN_120_MSDC0_DAT0__FUNC_MSDC0_DAT0>,
 				 <MT8167_PIN_119_MSDC0_DAT1__FUNC_MSDC0_DAT1>,
 				 <MT8167_PIN_118_MSDC0_DAT2__FUNC_MSDC0_DAT2>,
@@ -246,22 +197,15 @@
 			bias-pull-up = <MTK_PUPD_SET_R1R0_01>;
 		};
 
-		pins_clk {
+		pins-clk {
 			pinmux = <MT8167_PIN_116_MSDC0_CLK__FUNC_MSDC0_CLK>;
 			drive-strength = <MTK_DRIVE_8mA>;
 			bias-pull-down = <MTK_PUPD_SET_R1R0_10>;
 		};
 
-		pins_rst {
+		pins-rst {
 			pinmux = <MT8167_PIN_114_MSDC0_RSTB__FUNC_MSDC0_RSTB>;
 			bias-pull-up;
-		};
-	};
-
-	panel_pins: dsi0 {
-		pins_rst {
-			pinmux = <MT8167_PIN_66_LCM_RST__FUNC_GPIO66>;
-			/* XXX: idk, necessary? bias etc??? ~val */
 		};
 	};
 };
@@ -283,14 +227,14 @@
 &usb0 {
 	status = "okay";
 	dr_mode = "peripheral";
-	maximum-speed = "high-speed";
+	//maximum-speed = "high-speed";
 
-	vusb33-supply = <&mt6392_vusb_reg>;
+	//vusb33-supply = <&mt6392_vusb_reg>;
 
-	usb_con: connector {
-		compatible = "usb-b-connector";
-		type = "micro";
-	};
+	//usb_con: connector {
+	//	compatible = "usb-b-connector";
+	//	type = "micro";
+	//};
 };
 
 &usb_phy {
