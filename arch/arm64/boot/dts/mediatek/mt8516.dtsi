@@ -232,7 +232,7 @@
 		};
 
 		syscfg_pctl: syscfg-pctl@10005000 {
-			compatible = "syscon";
+			compatible = "mediatek,mt8516-syscfg", "syscon";
 			reg = <0 0x10005000 0 0x1000>;
 		};
 
