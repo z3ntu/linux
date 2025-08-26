@@ -842,7 +842,7 @@ spmi_bus: &spmi_bus0 {};
 &spi0 {
 	status = "okay";
 
-	touschreen@0 {
+	touchscreen@0 {
 		compatible = "eswin,eph861x";
 		reg = <0>;
 
