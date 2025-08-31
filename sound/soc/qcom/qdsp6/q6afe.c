@@ -1907,6 +1907,8 @@ int q6afe_unvote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 	if (ret < 0)
 		dev_err(afe->dev, "AFE failed to unvote (%d)\n", hw_block_id);
 
+	printk(KERN_INFO "%s: hw_block_id=%u, client_handle=%u\n", __func__, hw_block_id, client_handle);
+
 	kfree(pkt);
 	//printk(KERN_ERR "%s: ret=%d\n", __func__, ret);
 	return ret;
@@ -1945,11 +1947,13 @@ int q6afe_vote_lpass_core_hw(struct device *dev, uint32_t hw_block_id,
 
 	ret = afe_apr_send_pkt(afe, pkt, NULL,
 			       AFE_CMD_RSP_REMOTE_LPASS_CORE_HW_VOTE_REQUEST);
-	if (ret)
+	if (ret) {
 		dev_err(afe->dev, "AFE failed to vote (%d)\n", hw_block_id);
-	else {
+		printk(KERN_INFO "%s: hw_block_id=%u, client_name=%s, client_handle=%u\n", __func__, hw_block_id, client_name, 999);
+	} else {
 		//printk(KERN_ERR "%s: client_handle_ptr=%px, hw_block_id=%d\n", __func__, client_handle, hw_block_id);
 		*client_handle = afe->lpass_hw_core_client_hdl[hw_block_id];
+		printk(KERN_INFO "%s: hw_block_id=%u, client_name=%s, client_handle=%u\n", __func__, hw_block_id, client_name, *client_handle);
 	}
 
 
