@@ -696,7 +696,12 @@
 };
 
 &cci0_i2c0 {
-	/* actuator@c (asahi-kasei,ak7377) */
+	camera_imx800_ak7377: actuator@c {
+		compatible = "asahi-kasei,ak7377";
+		reg = <0x0c>;
+		vdd-supply = <&vreg_l7p>;
+		vio-supply = <&vreg_l7p>;
+	};
 
 	camera@1a {
 		compatible = "sony,imx800";
