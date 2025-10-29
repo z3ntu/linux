@@ -123,6 +123,7 @@
 };
 
 &cci_i2c0 {
+#if 1 // Fairphone 3
 	/* Sony IMX363 (rear) @ 0x10 */
 	camera@10 {
 		compatible = "sony,imx363";
@@ -160,9 +161,49 @@
 	};
 
 	/* ON Semi LC898217 VCM @ 0x72 */
+#else // Fairphone 3+
+	/* VCM driver (Dongwoon DW9800W) @ 0xc */
+
+	/* Samsung S5KGM1SP (rear) @ 0x10 */
+	camera@10 {
+		compatible = "samsung,s5kgm1sp";
+		reg = <0x10>;
+
+		vddd-supply = <&pm8953_l2>;
+		vdda-supply = <&pm8953_l22>;
+		vddio-supply = <&vreg_cam_io_1p8>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		assigned-clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&cam_mclk0_default>;
+		pinctrl-names = "default";
+
+		orientation = <1>; /* Rear facing */
+		rotation = <270>; // FIXME
+
+		port {
+			camera_s5kgm1sp_ep: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <600000000>; // FIXME
+				remote-endpoint = <&csiphy0_ep>;
+			};
+		};
+	};
+
+	eeprom@50 {
+		compatible = "puya,p24c64e", "atmel,24c64";
+		reg = <0x50>;
+		vcc-supply = <&vreg_cam_io_1p8>;
+		read-only;
+	};
+#endif
 };
 
 &cci_i2c1 {
+#if 1 // Fairphone 3
 	/* Samsung S5K4H7YX (front) @ 0x10 */
 	camera@10 {
 		compatible = "samsung,s5k4h7yx";
@@ -191,6 +232,43 @@
 			};
 		};
 	};
+#else // Fairphone 3+
+	/* Samsung S5K3P9SP (front) @ 0x10 */
+	camera@10 {
+		compatible = "samsung,s5k3p9sp";
+		reg = <0x10>;
+
+		vddd-supply = <&vreg_cam2_dig_1p2>;
+		vdda-supply = <&pm8953_l22>;
+		vddio-supply = <&vreg_cam_io_1p8>;
+
+		clocks = <&gcc GCC_CAMSS_MCLK1_CLK>;
+		assigned-clocks = <&gcc GCC_CAMSS_MCLK1_CLK>;
+		assigned-clock-rates = <24000000>;
+
+		reset-gpios = <&tlmm 129 GPIO_ACTIVE_LOW>;
+		pinctrl-0 = <&cam_mclk1_default>;
+		pinctrl-names = "default";
+
+		orientation = <0>; /* Front facing */
+		rotation = <90>; // FIXME
+
+		port {
+			camera_s5k3p9sp_ep: endpoint {
+				data-lanes = <1 2 3 4>;
+				link-frequencies = /bits/ 64 <600000000>; // FIXME
+				remote-endpoint = <&csiphy2_ep>;
+			};
+		};
+	};
+
+	eeprom@51 {
+		compatible = "puya,p24c64e", "atmel,24c64";
+		reg = <0x51>;
+		vcc-supply = <&vreg_cam_io_1p8>;
+		read-only;
+	};
+#endif
 };
 
 &gpu {
