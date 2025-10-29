@@ -247,6 +247,7 @@ config VIDEO_IMX355
 
 config VIDEO_IMX363
 	tristate "Sony IMX363 sensor support"
+	depends on OF_GPIO
 	select V4L2_CCI_I2C
 	help
 	  This is a Video4Linux2 sensor driver for the Sony
