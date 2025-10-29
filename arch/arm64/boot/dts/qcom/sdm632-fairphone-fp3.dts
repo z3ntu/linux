@@ -120,12 +120,12 @@
 		compatible = "sony,imx363";
 		reg = <0x10>;
 
-		vana-supply = <&pm8953_l22>;
+		vana1-supply = <&pm8953_l22>;
 		vdig-supply = <&pm8953_l2>;
 		vif-supply = <&vreg_cam_io_1p8>;
 
 		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
-#if 1 // https://lore.kernel.org/all/20250812214620.30425-1-laurent.pinchart@ideasonboard.com/
+#if 0 // https://lore.kernel.org/all/20250812214620.30425-1-laurent.pinchart@ideasonboard.com/
 		clock-names = "xvclk";
 		clock-frequency = <24000000>;
 #else
@@ -138,12 +138,12 @@
 		pinctrl-names = "default";
 
 		orientation = <1>; /* Rear facing */
-		rotation = <270>; // FIXME
+		rotation = <270>;
 
 		port {
 			camera_imx363_ep: endpoint {
 				data-lanes = <1 2 3 4>;
-				link-frequencies = /bits/ 64 <636000000>; // FIXME
+				link-frequencies = /bits/ 64 <600000000>; // FIXME
 				remote-endpoint = <&csiphy0_ep>;
 			};
 		};
