@@ -133,13 +133,8 @@
 		vif-supply = <&vreg_cam_io_1p8>;
 
 		clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
-#if 0 // https://lore.kernel.org/all/20250812214620.30425-1-laurent.pinchart@ideasonboard.com/
-		clock-names = "xvclk";
-		clock-frequency = <24000000>;
-#else
 		assigned-clocks = <&gcc GCC_CAMSS_MCLK0_CLK>;
 		assigned-clock-rates = <24000000>;
-#endif
 
 		reset-gpios = <&tlmm 40 GPIO_ACTIVE_LOW>;
 		pinctrl-0 = <&cam_mclk0_default>;
