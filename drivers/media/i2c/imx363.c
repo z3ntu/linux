@@ -1056,7 +1056,7 @@ static int imx363_power_on(struct device *dev)
 		regulator_bulk_disable(IMX363_NUM_SUPPLIES, imx363->supplies);
 	}
 
-	usleep_range(1000, 1200);
+	usleep_range(9000, 9100);
 
 	return 0;
 }
