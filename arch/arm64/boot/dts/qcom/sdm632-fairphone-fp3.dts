@@ -9,6 +9,9 @@
 #include "pm8953.dtsi"
 #include "pmi632.dtsi"
 
+/* Define for Fairphone 3 cameras, undefine for Fairphone 3+ cameras */
+#define CAM_FP3
+
 / {
 	model = "Fairphone 3";
 	compatible = "fairphone,fp3", "qcom,sdm632";
@@ -101,7 +104,11 @@
 			csiphy0_ep: endpoint {
 				clock-lanes = <7>;
 				data-lanes = <0 1 2 3>;
+#ifdef CAM_FP3
 				remote-endpoint = <&camera_imx363_ep>;
+#else
+				remote-endpoint = <&camera_s5kgm1sp_ep>;
+#endif
 			};
 		};
 
@@ -109,7 +116,11 @@
 			csiphy2_ep: endpoint {
 				clock-lanes = <7>;
 				data-lanes = <0 1 2 3>;
+#ifdef CAM_FP3
 				remote-endpoint = <&camera_s5k4h7yx_ep>;
+#else
+				remote-endpoint = <&camera_s5k3p9sp_ep>;
+#endif
 			};
 		};
 	};
@@ -120,7 +131,7 @@
 };
 
 &cci_i2c0 {
-#if 1 // Fairphone 3
+#ifdef CAM_FP3 // Fairphone 3
 	/* Sony IMX363 (rear) @ 0x10 */
 	camera@10 {
 		compatible = "sony,imx363";
@@ -200,7 +211,7 @@
 };
 
 &cci_i2c1 {
-#if 1 // Fairphone 3
+#ifdef CAM_FP3 // Fairphone 3
 	/* Samsung S5K4H7YX (front) @ 0x10 */
 	camera@10 {
 		compatible = "samsung,s5k4h7yx";
