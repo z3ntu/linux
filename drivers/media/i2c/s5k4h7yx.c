@@ -799,7 +799,7 @@ static int s5k4h7yx_power_on(struct device *dev)
 		goto error_reset;
 	}
 
-	usleep_range(1000, 1200);
+	usleep_range(1400, 1500);
 
 	return 0;
 
