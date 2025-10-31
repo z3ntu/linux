@@ -784,6 +784,10 @@ static int s5k4h7yx_power_on(struct device *dev)
 	struct s5k4h7yx *s5k4h7yx = to_s5k4h7yx(sd);
 	int ret;
 
+	gpiod_set_value_cansleep(s5k4h7yx->reset_gpio, 1);
+
+	usleep_range(10000, 10100);
+
 	ret = regulator_bulk_enable(ARRAY_SIZE(s5k4h7yx_supply_names),
 				    s5k4h7yx->supplies);
 	if (ret < 0) {
@@ -791,7 +795,11 @@ static int s5k4h7yx_power_on(struct device *dev)
 		return ret;
 	}
 
+	usleep_range(10000, 10100);
+
 	gpiod_set_value_cansleep(s5k4h7yx->reset_gpio, 0);
+
+	usleep_range(8000, 8100);
 
 	ret = clk_prepare_enable(s5k4h7yx->inclk);
 	if (ret) {
@@ -799,7 +807,7 @@ static int s5k4h7yx_power_on(struct device *dev)
 		goto error_reset;
 	}
 
-	usleep_range(1400, 1500);
+	usleep_range(15000, 15100);
 
 	return 0;
 
