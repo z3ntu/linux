@@ -251,7 +251,7 @@
 		pinctrl-names = "default";
 
 		orientation = <0>; /* Front facing */
-		rotation = <90>; // FIXME
+		rotation = <90>;
 
 		port {
 			camera_s5k3p9sp_ep: endpoint {
