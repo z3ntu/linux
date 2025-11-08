@@ -604,7 +604,7 @@
 };
 
 &gpu_zap_shader {
-	firmware-name = "qcom/qcm6490/fairphone5/a660_zap.mdt";
+	firmware-name = "qcom/qcm6490/fairphone5/a660_zap.mbn";
 };
 
 &i2c1 {
@@ -749,7 +749,7 @@
 &ipa {
 	qcom,gsi-loader = "self";
 	memory-region = <&ipa_fw_mem>;
-	firmware-name = "qcom/qcm6490/fairphone5/ipa_fws.mdt";
+	firmware-name = "qcom/qcm6490/fairphone5/ipa_fws.mbn";
 	status = "okay";
 };
 
