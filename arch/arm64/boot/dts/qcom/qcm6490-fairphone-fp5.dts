@@ -139,6 +139,7 @@
 		gpio = <&tlmm 157 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		vin-supply = <&vreg_bob>;
+		regulator-always-on; // FIXME
 	};
 
 	vreg_ois_dvdd_1p1: regulator-ois-dvdd-1p1 {
@@ -149,6 +150,7 @@
 		gpio = <&tlmm 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		vin-supply = <&vreg_s8b>;
+		regulator-always-on; // FIXME
 	};
 
 	vreg_oled_dvdd: regulator-oled-dvdd {
@@ -366,6 +368,17 @@
 				};
 			};
 		};
+	};
+
+	fake-reg-mclk0 {
+		compatible = "regulator-fixed-clock";
+		regulator-name = "fake-reg-mclk0";
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk0_default>;
+		clocks = <&camcc CAM_CC_MCLK0_CLK>;
+		assigned-clocks = <&camcc CAM_CC_MCLK0_CLK>;
+		assigned-clock-rates = <24000000>;
+		regulator-always-on;
 	};
 };
 
@@ -669,6 +682,7 @@
 &cci0_i2c0 {
 	/* actuator@c (asahi-kasei,ak7377) */
 
+#if 1
 	camera@1a {
 		compatible = "sony,imx800";
 		reg = <0x1a>;
@@ -679,12 +693,12 @@
 		vdig-supply = <&vreg_ois_dvdd_1p1>;
 
 		clocks = <&camcc CAM_CC_MCLK0_CLK>;
-		assigned-clocks = <&camcc CAM_CC_MCLK0_CLK>;
-		assigned-clock-rates = <24000000>;
+		//assigned-clocks = <&camcc CAM_CC_MCLK0_CLK>;
+		//assigned-clock-rates = <24000000>;
 
 		reset-gpios = <&tlmm 20 GPIO_ACTIVE_LOW>;
-		pinctrl-0 = <&cam_mclk0_default>;
-		pinctrl-names = "default";
+		//pinctrl-0 = <&cam_mclk0_default>;
+		//pinctrl-names = "default";
 
 		orientation = <1>; /* Rear facing */
 		rotation = <0>; // FIXME
@@ -693,11 +707,12 @@
 			camera_imx800_ep: endpoint {
 				data-lanes = <1 2 3>;
 				bus-type = <MEDIA_BUS_TYPE_CSI2_CPHY>;
-				link-frequencies = /bits/ 64 <130000000>;
+				link-frequencies = /bits/ 64 <500399375>;
 				remote-endpoint = <&csiphy0_ep>;
 			};
 		};
 	};
+#endif
 
 	eeprom@50 {
 		compatible = "puya,p24c256c", "atmel,24c256";
@@ -890,6 +905,7 @@
 				regulator-name = "vreg_l5p";
 				regulator-min-microvolt = <2704000>;
 				regulator-max-microvolt = <2900000>;
+				regulator-always-on; // FIXME
 			};
 
 			vreg_l6p: ldo6 {
