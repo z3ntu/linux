@@ -7,6 +7,7 @@
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/export.h>
+#include <linux/interconnect.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/ktime.h>
@@ -261,6 +262,8 @@ static int gdsc_enable(struct generic_pm_domain *domain)
 	struct gdsc *sc = domain_to_gdsc(domain);
 	int ret;
 
+	icc_set_bw(sc->icc_path, 1, 1);
+
 	if (sc->pwrsts == PWRSTS_ON)
 		return gdsc_deassert_reset(sc);
 
@@ -359,6 +362,8 @@ static int gdsc_disable(struct generic_pm_domain *domain)
 
 	if (sc->flags & CLAMP_IO)
 		gdsc_assert_clamp_io(sc);
+
+	icc_set_bw(sc->icc_path, 0, 0);
 
 	return 0;
 }
@@ -573,6 +578,20 @@ int gdsc_register(struct gdsc_desc *desc,
 				     GFP_KERNEL);
 	if (!data->domains)
 		return -ENOMEM;
+
+	for (i = 0; i < num; i++) {
+		if (!scs[i] || !scs[i]->needs_icc)
+			continue;
+
+		scs[i]->icc_path = devm_of_icc_get_by_index(dev, scs[i]->icc_path_index);
+		if (IS_ERR(scs[i]->icc_path)) {
+			ret = PTR_ERR(scs[i]->icc_path);
+			if (ret != -ENODEV)
+				return ret;
+
+			scs[i]->icc_path = NULL;
+		}
+	}
 
 	for (i = 0; i < num; i++) {
 		if (!scs[i] || !scs[i]->supply)
