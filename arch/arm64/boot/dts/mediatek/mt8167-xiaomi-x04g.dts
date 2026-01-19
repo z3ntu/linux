@@ -22,6 +22,18 @@
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
+
+		stdout-path = &framebuffer0;
+
+		framebuffer0: framebuffer@7f1c0000 {
+			compatible = "simple-framebuffer";
+			reg = <0x0 0x7f1c0000 0x0 (800 * 480 * 4)>;
+			width = <480>;
+			height = <800>;
+			stride = <(480 * 4)>;
+			format = "a8r8g8b8";
+			//display = <&dsi>; /* hmm */
+		};
 	};
 
 	//extcon_usb: extcon_iddig {
