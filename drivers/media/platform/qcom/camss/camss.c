@@ -3892,6 +3892,202 @@ static const struct resources_icc icc_res_sa8775p[] = {
 	},
 };
 
+static const struct camss_subdev_resources csiphy_res_milos[] = {
+	/* CSIPHY0 */
+	{
+		.regulators = {
+			{ .supply = "vdd-csiphy01-0p9", .init_load_uA = 98480 },
+			{ .supply = "vdd-csiphy01-1p2", .init_load_uA = 17920 },
+		},
+		.clock = { "cphy_rx_clk_src", "csiphy0", "csiphy0_timer" },
+		.clock_rate = { { 0 },
+				{ 300000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy0" },
+		.interrupt = { "csiphy0" },
+		.csiphy = {
+			.id = 0,
+			.hw_ops = &csiphy_ops_3ph_1_0,
+			.formats = &csiphy_formats_sdm845,
+		},
+	},
+	/* CSIPHY1 */
+	{
+		.regulators = {
+			{ .supply = "vdd-csiphy01-0p9", .init_load_uA = 98480 },
+			{ .supply = "vdd-csiphy01-1p2", .init_load_uA = 17920 },
+		},
+		.clock = { "cphy_rx_clk_src", "csiphy1", "csiphy1_timer" },
+		.clock_rate = { { 0 },
+				{ 300000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy1" },
+		.interrupt = { "csiphy1" },
+		.csiphy = {
+			.id = 1,
+			.hw_ops = &csiphy_ops_3ph_1_0,
+			.formats = &csiphy_formats_sdm845,
+		},
+	},
+	/* CSIPHY2 */
+	{
+		.regulators = {
+			{ .supply = "vdd-csiphy23-0p9", .init_load_uA = 98480 },
+			{ .supply = "vdd-csiphy23-1p2", .init_load_uA = 17920 },
+		},
+		.clock = { "cphy_rx_clk_src", "csiphy2", "csiphy2_timer" },
+		.clock_rate = { { 0 },
+				{ 300000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy2" },
+		.interrupt = { "csiphy2" },
+		.csiphy = {
+			.id = 2,
+			.hw_ops = &csiphy_ops_3ph_1_0,
+			.formats = &csiphy_formats_sdm845,
+		},
+	},
+	/* CSIPHY3 */
+	{
+		.regulators = {
+			{ .supply = "vdd-csiphy23-0p9", .init_load_uA = 98480 },
+			{ .supply = "vdd-csiphy23-1p2", .init_load_uA = 17920 },
+		},
+		.clock = { "cphy_rx_clk_src", "csiphy3", "csiphy3_timer" },
+		.clock_rate = { { 0 },
+				{ 300000000, 400000000 },
+				{ 300000000 } },
+		.reg = { "csiphy3" },
+		.interrupt = { "csiphy3" },
+		.csiphy = {
+			.id = 3,
+			.hw_ops = &csiphy_ops_3ph_1_0,
+			.formats = &csiphy_formats_sdm845,
+		},
+	},
+};
+
+static const struct camss_subdev_resources csid_res_milos[] = {
+	/* CSID0 */
+	{
+		.regulators = {},
+		.clock = { "vfe0_ahb", "csid0", "vfe0_cphy_rx", "vfe0" },
+		.clock_rate = { { 0 },
+				{ 300000000, 400000000 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "csid0" },
+		.interrupt = { "csid0" },
+		.csid = {
+			.hw_ops = &csid_ops_665,
+			.parent_dev_ops = &vfe_parent_dev_ops,
+			.formats = &csid_formats_gen2
+		}
+	},
+	/* CSID1 */
+	{
+		.regulators = {},
+		.clock = { "vfe1_ahb", "csid1", "vfe1_cphy_rx", "vfe1" },
+		.clock_rate = { { 0 },
+				{ 300000000, 400000000 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "csid1" },
+		.interrupt = { "csid1" },
+		.csid = {
+			.hw_ops = &csid_ops_665,
+			.parent_dev_ops = &vfe_parent_dev_ops,
+			.formats = &csid_formats_gen2
+		}
+	},
+	/* CSID2 */
+	{
+		.regulators = {},
+		.clock = { "vfe2_ahb", "csid2", "vfe2_cphy_rx", "vfe2" },
+		.clock_rate = { { 0 },
+				{ 300000000, 400000000 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "csid2" },
+		.interrupt = { "csid2" },
+		.csid = {
+			.hw_ops = &csid_ops_665,
+			.parent_dev_ops = &vfe_parent_dev_ops,
+			.formats = &csid_formats_gen2
+		}
+	},
+};
+
+static const struct camss_subdev_resources vfe_res_milos[] = {
+	/* VFE0 */
+	{
+		.regulators = {},
+		.clock = { "vfe0_ahb", "vfe0", "rt_axi", "cpas_ahb", "soc_ahb", },
+		.clock_rate = { { 0 },
+				{ 350000000, 570000000, 600000000, 725000000 },
+				{ 0 },
+				{ 0 },
+				{ 0 }, },
+		.reg = { "vfe0" },
+		.interrupt = { "vfe0" },
+		.vfe = {
+			.line_num = 4, // FIXME?
+			.hw_ops = &vfe_ops_665,
+			.formats_rdi = &vfe_formats_rdi_845,
+			.formats_pix = &vfe_formats_pix_845
+		}
+	},
+	/* VFE1 */
+	{
+		.regulators = {},
+		.clock = { "vfe1_ahb", "vfe1", "rt_axi", "cpas_ahb", "soc_ahb", },
+		.clock_rate = { { 0 },
+				{ 350000000, 570000000, 600000000, 725000000 },
+				{ 0 },
+				{ 0 },
+				{ 0 }, },
+		.reg = { "vfe1" },
+		.interrupt = { "vfe1" },
+		.vfe = {
+			.line_num = 4, // FIXME?
+			.hw_ops = &vfe_ops_665,
+			.formats_rdi = &vfe_formats_rdi_845,
+			.formats_pix = &vfe_formats_pix_845
+		}
+	},
+	/* VFE2 */
+	{
+		.regulators = {},
+		.clock = { "vfe2_ahb", "vfe2", "rt_axi", "cpas_ahb", "soc_ahb", },
+		.clock_rate = { { 0 },
+				{ 350000000, 570000000, 600000000, 725000000 },
+				{ 0 },
+				{ 0 },
+				{ 0 }, },
+		.reg = { "vfe2" },
+		.interrupt = { "vfe2" },
+		.vfe = {
+			.line_num = 4, // FIXME?
+			.hw_ops = &vfe_ops_665,
+			.formats_rdi = &vfe_formats_rdi_845,
+			.formats_pix = &vfe_formats_pix_845
+		}
+	},
+};
+
+static const struct resources_icc icc_res_milos[] = {
+	{
+		.name = "ahb",
+		.icc_bw_tbl.avg = 150000,
+		.icc_bw_tbl.peak = 300000,
+	},
+	{
+		.name = "hf_mnoc",
+		.icc_bw_tbl.avg = 2097152, // FIXME?
+		.icc_bw_tbl.peak = 2097152, // FIXME?
+	},
+};
+
 static const struct camss_subdev_resources csiphy_res_x1e80100[] = {
 	/* CSIPHY0 */
 	{
@@ -5301,6 +5497,19 @@ static const struct camss_resources sm8650_resources = {
 	.vfe_num = ARRAY_SIZE(vfe_res_sm8650),
 };
 
+static const struct camss_resources milos_resources = {
+	.version = CAMSS_MILOS,
+	.pd_name = "top",
+	.csiphy_res = csiphy_res_milos,
+	.csid_res = csid_res_milos,
+	.vfe_res = vfe_res_milos,
+	.icc_res = icc_res_milos,
+	.icc_path_num = ARRAY_SIZE(icc_res_milos),
+	.csiphy_num = ARRAY_SIZE(csiphy_res_milos),
+	.csid_num = ARRAY_SIZE(csid_res_milos),
+	.vfe_num = ARRAY_SIZE(vfe_res_milos),
+};
+
 static const struct camss_resources x1e80100_resources = {
 	.version = CAMSS_X1E80100,
 	.pd_name = "top",
@@ -5318,6 +5527,7 @@ static const struct camss_resources x1e80100_resources = {
 static const struct of_device_id camss_dt_match[] = {
 	{ .compatible = "qcom,msm8916-camss", .data = &msm8916_resources },
 	{ .compatible = "qcom,msm8939-camss", .data = &msm8939_resources },
+	{ .compatible = "qcom,milos-camss", .data = &milos_resources },
 	{ .compatible = "qcom,msm8953-camss", .data = &msm8953_resources },
 	{ .compatible = "qcom,msm8996-camss", .data = &msm8996_resources },
 	{ .compatible = "qcom,qcm2290-camss", .data = &qcm2290_resources },
