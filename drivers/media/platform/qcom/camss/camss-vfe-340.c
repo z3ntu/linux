@@ -14,59 +14,146 @@
 #include "camss.h"
 #include "camss-vfe.h"
 
+// downstream:
+//	cam_tfe0: qcom,tfe0@5c6e000 {
+//	then 0x1014 for 0x14 here
+//
+// upstream:
+// "vfe0" = <0x0 0x5c6f000 0x0 0x4000>,
+
+/////////////////////////////
+// milos:
+// tfe0 = <0xac62000 0xD000>; // this matches tfe_0 in FLAT
+// then the registers become 0xac63800 for hw_version
+//
+// and upstream "vfe0" <0x0 0x0ac63800 0x0 0xb800>; probably? need to confirm with FLAT // this would be weird, start addr is tfe_0.top part but that's a small subpart
+//
+//nvim -d drivers/cam_isp/isp_hw_mgr/isp_hw/tfe_hw/cam_tfe665.h drivers/cam_isp/isp_hw_mgr/isp_hw/tfe_hw/cam_tfe530.h
+//
+// CAMERA_SS BASE 0x0AC00000  SIZE=0x00200000
+// tfe_0 MODULE OFFSET=CAMERA_SS+0x00062000 MAX=CAMERA_SS+0x0006EFFF
+// top MODULE OFFSET=CAMERA_SS+0x00063800 MAX=CAMERA_SS+0x000639FF
+/////////////////////////////
+
+// 	.global_reset_cmd                       = 0x00001014,
 #define TFE_GLOBAL_RESET_CMD				(0x014)
 #define		TFE_GLOBAL_RESET_CMD_CORE	BIT(0)
 
+//.reg_update_cmd                         = 0x0000102C,
 #define TFE_REG_UPDATE_CMD				(0x02c)
 
+// 	.top_irq_cmd                       = 0x00001030,
 #define TFE_IRQ_CMD					(0x030)
 #define		TFE_IRQ_CMD_CLEAR		BIT(0)
+// 	.top_irq_mask = {
+//		0x00001034,
+//		0x00001038,
+//		0x0000103C,
 #define TFE_IRQ_MASK_0					(0x034)
+//	.reset_irq_mask = {
+//		0x00000001,
 #define		TFE_IRQ_MASK_0_RST_DONE		BIT(0)
+//	.bus_reg_irq_mask = {
+//		0x00000002,
 #define		TFE_IRQ_MASK_0_BUS_WR		BIT(1)
 #define TFE_IRQ_MASK_1					(0x038)
 #define TFE_IRQ_MASK_2					(0x03c)
+
+//	.top_irq_clear = {
+//		0x00001040,
+//		0x00001044,
+//		0x00001048,
 #define TFE_IRQ_CLEAR_0					(0x040)
 
+//	.top_irq_status = {
+//		0x0000104C,
+//		0x00001050,
+//		0x00001054,
+//	},
 #define TFE_IRQ_STATUS_0				(0x04c)
 
 #define BUS_REG(a)					(0xa00 + (a))
 
+//	.bus_irq_mask = {
+//		0x00001A18,
+//		0x00001A1C,
+//	},
 #define TFE_BUS_IRQ_MASK_0				BUS_REG(0x18)
+//	.comp_rup_done_mask = 0xF,
 #define		TFE_BUS_IRQ_MASK_RUP_DONE_MASK	GENMASK(3, 0)
 #define		TFE_BUS_IRQ_MASK_RUP_DONE(sc)	FIELD_PREP(TFE_BUS_IRQ_MASK_RUP_DONE_MASK, BIT(sc))
+//	.comp_buf_done_mask = 0xFF00,
 #define		TFE_BUS_IRQ_MASK_BUF_DONE_MASK	GENMASK(15, 8)
 #define		TFE_BUS_IRQ_MASK_BUF_DONE(sg)	FIELD_PREP(TFE_BUS_IRQ_MASK_BUF_DONE_MASK, BIT(sg))
+//		.cons_violation_shift = 28,
 #define		TFE_BUS_IRQ_MASK_0_CONS_VIOL	BIT(28)
+//		.violation_shift  = 30,
 #define		TFE_BUS_IRQ_MASK_0_VIOL		BIT(30)
+//		.image_size_violation = 31,
 #define		TFE_BUS_IRQ_MASK_0_IMG_VIOL	BIT(31)
 
 #define TFE_BUS_IRQ_MASK_1				BUS_REG(0x1c)
+//	.bus_irq_clear = {
+//		0x00001A20,
+//		0x00001A24,
+//	},
 #define TFE_BUS_IRQ_CLEAR_0				BUS_REG(0x20)
+//	.bus_irq_status = {
+//		0x00001A28,
+//		0x00001A2C,
+//	},
 #define TFE_BUS_IRQ_STATUS_0				BUS_REG(0x28)
+//	.bus_irq_cmd = 0x00001A30,
 #define TFE_BUS_IRQ_CMD					BUS_REG(0x30)
 #define		TFE_BUS_IRQ_CMD_CLEAR		BIT(0)
 
+//	.bus_overflow_clear_cmd = 0x1A60,
 #define TFE_BUS_STATUS_CLEAR				BUS_REG(0x60)
+//	.bus_violation_reg = 0x00001A64,
 #define TFE_BUS_VIOLATION_STATUS			BUS_REG(0x64)
+//	.bus_overflow_reg = 0x00001A68,
 #define TFE_BUS_OVERFLOW_STATUS				BUS_REG(0x68)
+//	.bus_image_size_vilation_reg = 0x1A70,
 #define TFE_BUS_IMAGE_SZ_VIOLATION_STATUS		BUS_REG(0x70)
 
+//			.cfg                   = 0x00001C00,
+//			(etc)
 #define TFE_BUS_CLIENT_CFG(c)				BUS_REG(0x200 + (c) * 0x100)
+//		rsrc_data->en_cfg = (0x1 << rsrc_data->common_data->mode_cfg_shift) | 0x1;
 #define		TFE_BUS_CLIENT_CFG_EN		BIT(0)
+//	.mode_cfg_shift = 16,
 #define		TFE_BUS_CLIENT_CFG_MODE_FRAME	BIT(16)
+//			.image_addr            = 0x00001C04,
+//			.image_addr            = 0x00001D04,
+//			.image_addr            = 0x00001E04,
+//			.image_addr            = 0x00001F04,
+//			.image_addr            = 0x00002004,
+//			.image_addr            = 0x00002104,
+//			.image_addr            = 0x00002204,
+//			.image_addr            = 0x00002304,
+//			.image_addr            = 0x00002404,
+//			.image_addr            = 0x00002504,
 #define TFE_BUS_IMAGE_ADDR(c)				BUS_REG(0x204 + (c) * 0x100)
+//			.frame_incr            = 0x00001C08,
 #define TFE_BUS_FRAME_INCR(c)				BUS_REG(0x208 + (c) * 0x100)
+//			.image_cfg_0           = 0x00001C0C,
 #define TFE_BUS_IMAGE_CFG_0(c)				BUS_REG(0x20c + (c) * 0x100)
 #define		TFE_BUS_IMAGE_CFG_0_DEFAULT	0xffff
+//			.image_cfg_1           = 0x00001C10,
 #define TFE_BUS_IMAGE_CFG_1(c)				BUS_REG(0x210 + (c) * 0x100)
+//			.image_cfg_2           = 0x00001C14,
 #define TFE_BUS_IMAGE_CFG_2(c)				BUS_REG(0x214 + (c) * 0x100)
 #define		TFE_BUS_IMAGE_CFG_2_DEFAULT	0xffff
+//			.packer_cfg            = 0x00001C18,
 #define TFE_BUS_PACKER_CFG(c)				BUS_REG(0x218 + (c) * 0x100)
 #define		TFE_BUS_PACKER_CFG_FMT_PLAIN64	0xa
+//			.irq_subsample_period  = 0x00001C30,
 #define TFE_BUS_IRQ_SUBSAMPLE_CFG_0(c)			BUS_REG(0x230 + (c) * 0x100)
+//			.irq_subsample_pattern = 0x00001C34,
 #define TFE_BUS_IRQ_SUBSAMPLE_CFG_1(c)			BUS_REG(0x234 + (c) * 0x100)
+//			.framedrop_period      = 0x00001C38,
 #define TFE_BUS_FRAMEDROP_CFG_0(c)			BUS_REG(0x238 + (c) * 0x100)
+//			.framedrop_pattern     = 0x00001C3C,
 #define TFE_BUS_FRAMEDROP_CFG_1(c)			BUS_REG(0x23c + (c) * 0x100)
 
 /*
@@ -85,27 +172,34 @@
  * RDI1			8
  * RDI2			9
  */
+// FP6 continues with 10=PDAF, 11=DS4, 12=DS16, 13=AI-Y, 14=AI-C, 15=STATS_RS, 16=PDAF0_STAT_LCR, 17=PDAF1_PD_PREPROCESSED, 18=PDAF2_PD_PARSED
 #define RDI_WM(n)		(7 + (n))
-#define TFE_WM_NUM		10
+#define TFE_WM_NUM		10 // 19
 
+// This is RUP GROUP
 enum tfe_iface {
 	TFE_IFACE_PIX,
 	TFE_IFACE_RDI0,
 	TFE_IFACE_RDI1,
 	TFE_IFACE_RDI2,
-	TFE_IFACE_NUM
+	TFE_IFACE_NUM // CAM_TFE_BUS_RUP_GRP_MAX ?
 };
 
+// This is COMP GROUP
 enum tfe_subgroups {
-	TFE_SUBGROUP_BAYER,
-	TFE_SUBGROUP_IDEAL_RAW,
-	TFE_SUBGROUP_HDR,
-	TFE_SUBGROUP_BG,
-	TFE_SUBGROUP_BAF,
-	TFE_SUBGROUP_RDI0,
-	TFE_SUBGROUP_RDI1,
-	TFE_SUBGROUP_RDI2,
+	TFE_SUBGROUP_BAYER, // 0
+	TFE_SUBGROUP_IDEAL_RAW, // 1
+	TFE_SUBGROUP_HDR, // 2 -- should be called STATS? (STATS BE TINTLESS & STATS BHIST)
+	TFE_SUBGROUP_BG, // 3 (STATS AWB BG & STATS AEC BG)
+	//	(/* BUS Client 6 Stats BAF */)
+	//		.comp_group            = CAM_TFE_BUS_COMP_GRP_4,
+	//		.client_name           = "STATS BAF",
+	TFE_SUBGROUP_BAF, // 4 (STATS_BAF)
+	TFE_SUBGROUP_RDI0, // 5
+	TFE_SUBGROUP_RDI1, // 6
+	TFE_SUBGROUP_RDI2, // 7 (RDI2/PDAF)
 	TFE_SUBGROUP_NUM
+	// .num_comp_grp             = 8, ?
 };
 
 static enum tfe_iface tfe_line_iface_map[VFE_LINE_NUM_MAX] = {
@@ -115,14 +209,31 @@ static enum tfe_iface tfe_line_iface_map[VFE_LINE_NUM_MAX] = {
 	[VFE_LINE_PIX] = TFE_IFACE_PIX,
 };
 
+// mapping from .tfe_out_hw_info
 static enum vfe_line_id tfe_subgroup_line_map[TFE_SUBGROUP_NUM] = {
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_0,
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_0,
 	[TFE_SUBGROUP_BAYER] = VFE_LINE_PIX,
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_1,
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_0,
 	[TFE_SUBGROUP_IDEAL_RAW] = VFE_LINE_PIX,
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_2,
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_0,
 	[TFE_SUBGROUP_HDR] = VFE_LINE_PIX,
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_3,
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_0,
 	[TFE_SUBGROUP_BG] = VFE_LINE_PIX,
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_4, -- TFE_SUBGROUP_BAF
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_0, -- TFE_IFACE_PIX
 	[TFE_SUBGROUP_BAF] = VFE_LINE_PIX,
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_5,
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_1,
 	[TFE_SUBGROUP_RDI0] = VFE_LINE_RDI0,
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_6,
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_2,
 	[TFE_SUBGROUP_RDI1] = VFE_LINE_RDI1,
+	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_7,
+	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_3,
 	[TFE_SUBGROUP_RDI2] = VFE_LINE_RDI2,
 };
 
