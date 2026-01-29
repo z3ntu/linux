@@ -247,6 +247,8 @@ struct smb_chip {
 	enum smb_generation gen;
 	unsigned int current_step_size_ua;
 	unsigned int current_limit_max_ua;
+	unsigned int buck_scale;
+	unsigned int boost_scale;
 
 	struct delayed_work status_change_work;
 	int cable_irq;
@@ -265,6 +267,8 @@ struct smb_match_data {
 	const struct smb_init_register *init_seq;
 	unsigned int current_step_size_ua;
 	unsigned int current_limit_max_ua;
+	unsigned int buck_scale;
+	unsigned int boost_scale;
 };
 
 static enum power_supply_property smb_properties[] = {
@@ -471,12 +475,9 @@ static inline int smb_get_current_now(struct smb_chip *chip,
 	 * For PMI632, scaling factor = reciprocal of
 	 * 0.4V/A in Buck mode, 0.8V/A in Boost mode.
 	 */
-	// TODO: Make member in match data
-	int buck_scale = 20;
-	int boost_scale = 40;
 
 	if (sink_connected) {
-		*val = DIV_ROUND_CLOSEST(*val * 100, boost_scale);
+		*val = DIV_ROUND_CLOSEST(*val * 100, chip->boost_scale);
 		return rc;
 	}
 
@@ -485,7 +486,7 @@ static inline int smb_get_current_now(struct smb_chip *chip,
 		return rc;
 	}
 
-	*val = DIV_ROUND_CLOSEST(*val * 100, buck_scale);
+	*val = DIV_ROUND_CLOSEST(*val * 100, chip->buck_scale);
 
 	return rc;
 }
@@ -965,6 +966,8 @@ struct smb_match_data pmi8998_match_data = {
 	.gen = SMB2,
 	.current_step_size_ua = 25000,
 	.current_limit_max_ua = 4800000,
+	.buck_scale = 20,
+	.boost_scale = 40,
 };
 
 struct smb_match_data pm660_match_data = {
@@ -974,6 +977,8 @@ struct smb_match_data pm660_match_data = {
 	.gen = SMB2,
 	.current_step_size_ua = 25000,
 	.current_limit_max_ua = 4800000,
+	.buck_scale = 20,
+	.boost_scale = 40,
 };
 
 struct smb_match_data pm8150b_match_data = {
@@ -983,6 +988,8 @@ struct smb_match_data pm8150b_match_data = {
 	.gen = SMB5,
 	.current_step_size_ua = 50000,
 	.current_limit_max_ua = 5000000,
+	.buck_scale = 20,
+	.boost_scale = 40,
 };
 
 struct smb_match_data pm7250b_match_data = {
@@ -992,6 +999,19 @@ struct smb_match_data pm7250b_match_data = {
 	.gen = SMB5,
 	.current_step_size_ua = 50000,
 	.current_limit_max_ua = 5000000,
+	.buck_scale = 20,
+	.boost_scale = 40,
+};
+
+struct smb_match_data pmi632_match_data = {
+	.init_seq = smb5_init_seq,
+	.init_seq_len = ARRAY_SIZE(smb5_init_seq),
+	.name = "pmi632",
+	.gen = SMB5,
+	.current_step_size_ua = 50000,
+	.current_limit_max_ua = 3000000,
+	.buck_scale = 40,
+	.boost_scale = 80,
 };
 
 
@@ -1078,6 +1098,8 @@ static int smb_probe(struct platform_device *pdev)
 	chip->gen = match_data->gen;
 	chip->current_step_size_ua = match_data->current_step_size_ua;
 	chip->current_limit_max_ua = match_data->current_limit_max_ua;
+	chip->buck_scale = match_data->buck_scale;
+	chip->boost_scale = match_data->boost_scale;
 
 	dev_info(chip->dev, "Generation %s\n", chip->gen == SMB2 ? "SMB2" : "SMB5");
 
@@ -1179,6 +1201,7 @@ static const struct of_device_id smb_match_id_table[] = {
 	{ .compatible = "qcom,pm660-charger", .data = &pm660_match_data },
 	{ .compatible = "qcom,pm7250b-charger", .data = &pm7250b_match_data },
 	{ .compatible = "qcom,pm8150b-charger", .data = &pm8150b_match_data },
+	{ .compatible = "qcom,pmi632-charger", .data = &pmi632_match_data },
 	{ /* sentinal */ }
 };
 MODULE_DEVICE_TABLE(of, smb_match_id_table);

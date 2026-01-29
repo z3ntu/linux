@@ -22,6 +22,27 @@
 		serial0 = &uart_0;
 	};
 
+	/*
+	 * F3AC (FUJI) and F3AC1 (KAYO) have slightly different specs (capacity, etc)
+	 * F3AC: ID resistor 10K, NTC 100kΩ B=4100
+	 * F3AC1: ID resistor 49.9K, NTC 100kΩ B=4050
+	 */
+	battery: battery {
+		compatible = "simple-battery";
+
+		device-chemistry = "lithium-ion-polymer";
+
+		charge-full-design-microamp-hours = <3000000>;
+		/*
+		 * Keep the maximum charging current conservative for now,
+		 * until we have thermal handling in the charging driver.
+		 * Downstream seems to have a upper limit of 2A/2.7A.
+		 */
+		constant-charge-current-max-microamp = <1500000>;
+		voltage-max-design-microvolt = <4390000>;
+		voltage-min-design-microvolt = <3400000>;
+	};
+
 	chosen {
 		stdout-path = "serial0:115200n8";
 	};
@@ -163,6 +184,12 @@
 
 &pm8953_resin {
 	linux,code = <KEY_VOLUMEDOWN>;
+	status = "okay";
+};
+
+&pmi632_charger {
+	monitored-battery = <&battery>;
+
 	status = "okay";
 };
 
