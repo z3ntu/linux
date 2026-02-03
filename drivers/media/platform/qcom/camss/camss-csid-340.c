@@ -15,44 +15,80 @@
 #include "camss-csid.h"
 #include "camss-csid-gen2.h"
 
+//	.csid_rst_strobes_addr                        = 0x10,
+//	.csid_csi2_rx_rst_strobes_addr                = 0x110, ??
 #define CSID_RST_STROBES					(0x010)
+//	.csid_reg_rst_stb                             = 1,
 #define		CSID_RST_SW_REGS			BIT(0)
+//	.csid_rst_stb                                 = 0x1e, ???
 #define		CSID_RST_IRQ				BIT(1)
-#define CSID_RST_IFE_CLK				BIT(2)
+#define		CSID_RST_IFE_CLK			BIT(2)
 #define		CSID_RST_PHY_CLK			BIT(3)
 #define		CSID_RST_CSID_CLK			BIT(4)
 
+//	.csid_top_irq_status_addr                     = 0x70,
 #define CSID_IRQ_STATUS						(0x070)
+//	.csid_top_irq_mask_addr                       = 0x74,
 #define CSID_IRQ_MASK						(0x074)
+// there's quite some of these in the code so I guess that's that:
+//	cam_io_w_mb(0, soc_info->reg_map[0].mem_base +
+//		csid_reg->cmn_reg->csid_top_irq_mask_addr);
 #define		CSID_IRQ_MASK_RST_DONE			BIT(0)
+//	.csid_top_irq_clear_addr                      = 0x78,
 #define CSID_IRQ_CLEAR						(0x078)
+//	.csid_irq_cmd_addr                            = 0x80,
 #define CSID_IRQ_CMD						(0x080)
+// cam_io_w_mb(1, soc_info->reg_map[0].mem_base +
+//	csid_reg->cmn_reg->csid_irq_cmd_addr);
 #define		CSID_IRQ_CMD_CLEAR			BIT(0)
 
+//	.csid_csi2_rx_cfg0_addr                       = 0x100,
 #define CSID_CSI2_RX_CFG0					(0x100)
+//	val = (csid_hw->csi2_rx_cfg.lane_num - 1)  |
 #define		CSI2_RX_CFG0_NUM_ACTIVE_LANES_MASK	GENMASK(1, 0)
+//		(csid_hw->csi2_rx_cfg.lane_cfg << 4) |
 #define		CSI2_RX_CFG0_DLX_INPUT_SEL_MASK		GENMASK(17, 4)
+//	val |= (csid_hw->csi2_rx_cfg.phy_sel &
+//		csid_reg->csi2_reg->csi2_rx_phy_num_mask) << 20;
 #define		CSI2_RX_CFG0_PHY_NUM_SEL_MASK		GENMASK(21, 20)
 #define		CSI2_RX_CFG0_PHY_NUM_SEL_BASE_IDX	1
+//		(csid_hw->csi2_rx_cfg.lane_type << 24);
 #define		CSI2_RX_CFG0_PHY_TYPE_SEL		BIT(24)
 
+//	.csid_csi2_rx_cfg1_addr                       = 0x104,
 #define CSID_CSI2_RX_CFG1					(0x104)
+//	/* enable packet ecc correction */
+//	val |= 1;
 #define		CSI2_RX_CFG1_PACKET_ECC_CORRECTION_EN	BIT(0)
+//	.csi2_misr_enable_shift_val                   = 6,
 #define		CSI2_RX_CFG1_MISR_EN			BIT(6)
 #define		CSI2_RX_CFG1_CGC_MODE			BIT(7)
 
+//	.csid_rdi_cfg0_addr                       = 0x300, // rdi_0
+//	.csid_rdi_cfg0_addr                       = 0x400, // rdi_1
+//	.csid_rdi_cfg0_addr                       = 0x500, // rdi_2
 #define CSID_RDI_CFG0(rdi)					(0x300 + 0x100 * (rdi))
 #define		CSID_RDI_CFG0_BYTE_CNTR_EN		BIT(0)
 #define		CSID_RDI_CFG0_TIMESTAMP_EN		BIT(1)
+//	.fmt_shift_val                                = 12,
 #define		CSID_RDI_CFG0_DECODE_FORMAT_MASK	GENMASK(15, 12)
 #define		CSID_RDI_CFG0_DECODE_FORMAT_NOP		CSID_RDI_CFG0_DECODE_FORMAT_MASK
+//	.dt_shift_val                                 = 16,
 #define		CSID_RDI_CFG0_DT_MASK			GENMASK(21, 16)
+//	.vc_shift_val                                 = 22,
 #define		CSID_RDI_CFG0_VC_MASK			GENMASK(23, 22)
+//	.dt_id_shift_val                              = 27,
 #define		CSID_RDI_CFG0_DTID_MASK			GENMASK(28, 27)
+//	.path_en_shift_val                            = 31,
 #define		CSID_RDI_CFG0_ENABLE			BIT(31)
 
+//	.csid_rdi_ctrl_addr                       = 0x308,
+//	.csid_rdi_ctrl_addr                       = 0x408,
+//	.csid_rdi_ctrl_addr                       = 0x508,
 #define CSID_RDI_CTRL(rdi)					(0x308 + 0x100 * (rdi))
+// CAM_TFE_CSID_HALT_AT_FRAME_BOUNDARY (should be 0)
 #define CSID_RDI_CTRL_HALT_AT_FRAME_BOUNDARY		0
+// CAM_TFE_CSID_RESUME_AT_FRAME_BOUNDARY (should be 1)
 #define CSID_RDI_CTRL_RESUME_AT_FRAME_BOUNDARY		1
 
 static void __csid_configure_rx(struct csid_device *csid, struct csid_phy_config *phy)
