@@ -199,6 +199,28 @@
 			status = "disabled";
 		};
 
+		pmi632_qgauge: battery@4800 {
+			compatible = "qcom,pmi632-qg", "qcom,pm6150-qg";
+			reg = <0x4800>;
+
+			io-channels = <0>, /* to be provided by board */
+				      <&pmi632_adc ADC5_BAT_ID_100K_PU>;
+			io-channel-names = "batt-therm",
+					   "batt-id";
+
+			nvmem = <&pmi632_qg_sdam>;
+
+			status = "disabled";
+		};
+
+		pmi632_qg_sdam: nvram@b100 {
+			compatible = "qcom,spmi-sdam";
+			reg = <0xb100>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0 0xb100 0x100>;
+		};
+
 		pmi632_pbs_client3: pbs@7400 {
 			compatible = "qcom,pmi632-pbs", "qcom,pbs";
 			reg = <0x7400>;
