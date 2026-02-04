@@ -303,6 +303,15 @@
 	};
 };
 
+&pmi632_qgauge {
+	monitored-battery = <&battery>;
+
+	io-channels = <&bat_therm_sensor>,
+		      <&pmi632_adc ADC5_BAT_ID_100K_PU>;
+
+	status = "okay";
+};
+
 &pmi632_typec {
 	status = "okay";
 
