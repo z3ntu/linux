@@ -3051,7 +3051,7 @@ static int s5k3p9sp_update_controls(struct s5k3p9sp *s5k3p9sp,
 static int s5k3p9sp_update_exp_gain(struct s5k3p9sp *s5k3p9sp, u32 exposure, u32 gain)
 {
 	u32 lpfr;
-	int ret;
+	int ret = 0;
 
 	lpfr = s5k3p9sp->vblank + s5k3p9sp->cur_mode->height;
 
