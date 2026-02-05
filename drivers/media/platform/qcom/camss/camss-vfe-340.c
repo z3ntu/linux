@@ -35,44 +35,47 @@
 // top MODULE OFFSET=CAMERA_SS+0x00063800 MAX=CAMERA_SS+0x000639FF
 /////////////////////////////
 
+//#define BUS_REG_BASE 0x1800
+#define BUS_REG_BASE 0x0
+
 // 	.global_reset_cmd                       = 0x00001014,
-#define TFE_GLOBAL_RESET_CMD				(0x014)
+#define TFE_GLOBAL_RESET_CMD				(BUS_REG_BASE + 0x014)
 #define		TFE_GLOBAL_RESET_CMD_CORE	BIT(0)
 
 //.reg_update_cmd                         = 0x0000102C,
-#define TFE_REG_UPDATE_CMD				(0x02c)
+#define TFE_REG_UPDATE_CMD				(BUS_REG_BASE + 0x02c)
 
 // 	.top_irq_cmd                       = 0x00001030,
-#define TFE_IRQ_CMD					(0x030)
+#define TFE_IRQ_CMD					(BUS_REG_BASE + 0x030)
 #define		TFE_IRQ_CMD_CLEAR		BIT(0)
 // 	.top_irq_mask = {
 //		0x00001034,
 //		0x00001038,
 //		0x0000103C,
-#define TFE_IRQ_MASK_0					(0x034)
+#define TFE_IRQ_MASK_0					(BUS_REG_BASE + 0x034)
 //	.reset_irq_mask = {
 //		0x00000001,
 #define		TFE_IRQ_MASK_0_RST_DONE		BIT(0)
 //	.bus_reg_irq_mask = {
 //		0x00000002,
 #define		TFE_IRQ_MASK_0_BUS_WR		BIT(1)
-#define TFE_IRQ_MASK_1					(0x038)
-#define TFE_IRQ_MASK_2					(0x03c)
+#define TFE_IRQ_MASK_1					(BUS_REG_BASE + 0x038)
+#define TFE_IRQ_MASK_2					(BUS_REG_BASE + 0x03c)
 
 //	.top_irq_clear = {
 //		0x00001040,
 //		0x00001044,
 //		0x00001048,
-#define TFE_IRQ_CLEAR_0					(0x040)
+#define TFE_IRQ_CLEAR_0					(BUS_REG_BASE + 0x040)
 
 //	.top_irq_status = {
 //		0x0000104C,
 //		0x00001050,
 //		0x00001054,
 //	},
-#define TFE_IRQ_STATUS_0				(0x04c)
+#define TFE_IRQ_STATUS_0				(BUS_REG_BASE + 0x04c)
 
-#define BUS_REG(a)					(0xa00 + (a))
+#define BUS_REG(a)					(BUS_REG_BASE + 0x1800 + (a))
 
 //	.bus_irq_mask = {
 //		0x00001A18,
@@ -83,7 +86,7 @@
 #define		TFE_BUS_IRQ_MASK_RUP_DONE_MASK	GENMASK(3, 0)
 #define		TFE_BUS_IRQ_MASK_RUP_DONE(sc)	FIELD_PREP(TFE_BUS_IRQ_MASK_RUP_DONE_MASK, BIT(sc))
 //	.comp_buf_done_mask = 0xFF00,
-#define		TFE_BUS_IRQ_MASK_BUF_DONE_MASK	GENMASK(15, 8)
+#define		TFE_BUS_IRQ_MASK_BUF_DONE_MASK	GENMASK(19, 8)
 #define		TFE_BUS_IRQ_MASK_BUF_DONE(sg)	FIELD_PREP(TFE_BUS_IRQ_MASK_BUF_DONE_MASK, BIT(sg))
 //		.cons_violation_shift = 28,
 #define		TFE_BUS_IRQ_MASK_0_CONS_VIOL	BIT(28)
@@ -171,10 +174,18 @@
  * RDI0			7
  * RDI1			8
  * RDI2			9
+ * PDAF			10
+ * DS4			11
+ * DS16			12
+ * AI_Y			13
+ * AI_C			14
+ * STATS_RS		15
+ * PDAF0_STAT_LCR	16
+ * PDAF1_PD_PREPROCESSED	17
+ * PDAF2_PD_PARSED	18
  */
-// FP6 continues with 10=PDAF, 11=DS4, 12=DS16, 13=AI-Y, 14=AI-C, 15=STATS_RS, 16=PDAF0_STAT_LCR, 17=PDAF1_PD_PREPROCESSED, 18=PDAF2_PD_PARSED
 #define RDI_WM(n)		(7 + (n))
-#define TFE_WM_NUM		10 // 19
+#define TFE_WM_NUM		19
 
 // This is RUP GROUP
 enum tfe_iface {
@@ -197,9 +208,13 @@ enum tfe_subgroups {
 	TFE_SUBGROUP_BAF, // 4 (STATS_BAF)
 	TFE_SUBGROUP_RDI0, // 5
 	TFE_SUBGROUP_RDI1, // 6
-	TFE_SUBGROUP_RDI2, // 7 (RDI2/PDAF)
+	TFE_SUBGROUP_RDI2, // 7
+	TFE_SUBGROUP_PDAF, // 8
+	TFE_SUBGROUP_AI, // 9
+	TFE_SUBGROUP_STATS_RS, // 10
+	// TFE_SUBGROUP_STAT_LCR, // 11 TODO: Add once VFE line 4 is available (CAM_TFE_BUS_RUP_GRP_4)
 	TFE_SUBGROUP_NUM
-	// .num_comp_grp             = 8, ?
+	// .num_comp_grp             = 12,
 };
 
 static enum tfe_iface tfe_line_iface_map[VFE_LINE_NUM_MAX] = {
@@ -232,9 +247,15 @@ static enum vfe_line_id tfe_subgroup_line_map[TFE_SUBGROUP_NUM] = {
 	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_6,
 	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_2,
 	[TFE_SUBGROUP_RDI1] = VFE_LINE_RDI1,
-	//		.composite_group  = CAM_TFE_BUS_COMP_GRP_7,
-	//		.rup_group_id     = CAM_TFE_BUS_RUP_GRP_3,
-	[TFE_SUBGROUP_RDI2] = VFE_LINE_RDI2,
+	// 8+0
+	[TFE_SUBGROUP_PDAF] = VFE_LINE_PIX,
+	// 9+0
+	[TFE_SUBGROUP_AI] = VFE_LINE_PIX,
+	// 10+0
+	[TFE_SUBGROUP_STATS_RS] = VFE_LINE_PIX,
+	// 11+4
+	//[TFE_SUBGROUP_STAT_LCR] = FIXME what's 4 CAM_TFE_BUS_RUP_GRP_4?
+	// https://lore.kernel.org/linux-arm-msm/0b212187-168b-4757-b5a5-afe3ff0922e7@oss.qualcomm.com/
 };
 
 static inline enum tfe_iface  __line_to_iface(enum vfe_line_id line_id)
