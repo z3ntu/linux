@@ -3652,7 +3652,7 @@ static int wcd938x_probe(struct platform_device *pdev)
 
 	ret = wcd938x_add_typec(wcd938x, dev);
 	if (ret)
-		goto err_disable_regulators;
+		return ret;
 
 	ret = wcd938x_add_slave_components(wcd938x, dev, &match);
 	if (ret)
