@@ -206,6 +206,35 @@
 		regulator-boot-on;
 	};
 
+	sound {
+		compatible = "qcom,milos-sndcard", "qcom,sm8450-sndcard";
+		model = "Fairphone (Gen. 6)";
+		// audio-routing = ...
+
+		pinctrl-0 = <&lpi_i2s2_active>;
+		pinctrl-1 = <&lpi_i2s2_sleep>;
+		pinctrl-names = "default",
+				"sleep";
+
+		/*
+		i2s-dai-link {
+			link-name = "Senary MI2S Playback";
+
+			codec {
+				sound-dai = <&aw88261_l>, <&aw88261_r>;
+			};
+
+			cpu {
+				sound-dai = <&q6apmbedai SENARY_MI2S_RX>;
+			};
+
+			platform {
+				sound-dai = <&q6apm>;
+			};
+		};
+		*/
+	};
+
 	thermal-zones {
 		pm8008-thermal {
 			polling-delay-passive = <100>;
@@ -669,10 +698,37 @@
 };
 
 &i2c3 {
-	/* AW88261FCR amplifier (top) @ 0x34 */
-	/* AW88261FCR amplifier (bottom) @ 0x35 */
-
 	status = "okay";
+
+	/* Top speaker / ear speaker */
+	aw88261_l: audio-codec@34 {
+		compatible = "awinic,aw88261";
+		reg = <0x34>;
+
+		dvdd-supply = <&vreg_l10b>;
+		sound-name-prefix = "Amplifier L";
+		firmware-name = "qcom/milos/fairphone/fp6/aw88261_acf.bin";
+
+		awinic,audio-channel = <0>;
+		awinic,sync-flag;
+
+		#sound-dai-cells = <0>;
+	};
+
+	/* Bottom speaker */
+	aw88261_r: audio-codec@35 {
+		compatible = "awinic,aw88261";
+		reg = <0x35>;
+
+		dvdd-supply = <&vreg_l10b>;
+		sound-name-prefix = "Amplifier R";
+		firmware-name = "qcom/milos/fairphone/fp6/aw88261_acf.bin";
+
+		awinic,audio-channel = <1>;
+		awinic,sync-flag;
+
+		#sound-dai-cells = <0>;
+	};
 };
 
 &i2c7 {
