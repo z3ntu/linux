@@ -24,6 +24,7 @@ properties:
       - items:
           - enum:
               - qcom,kaanapali-sndcard
+              - qcom,milos-sndcard
               - qcom,sm8550-sndcard
               - qcom,sm8650-sndcard
               - qcom,sm8750-sndcard
