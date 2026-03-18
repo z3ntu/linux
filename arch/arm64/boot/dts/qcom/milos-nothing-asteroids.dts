@@ -574,6 +574,14 @@
 			   <GCC_PCIE_1_SLV_AXI_CLK>, <GCC_PCIE_1_SLV_Q2A_AXI_CLK>;
 };
 
+&gpu {
+	status = "okay";
+};
+
+&gpu_zap_shader {
+	firmware-name = "qcom/milos/nothing/asteroids/gen80300_zap.mbn";
+};
+
 &i2c7 {
 	clock-frequency = <400000>;
 
