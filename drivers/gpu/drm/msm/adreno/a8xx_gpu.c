@@ -252,11 +252,12 @@ static void a8xx_set_cp_protect(struct msm_gpu *gpu)
 	}
 
 	/*
-	 * Last span feature is only supported on PIPE specific register.
-	 * So update those here
+	 * Last span setting is only being applied to the last pipe specific
+	 * register. Hence duplicate the last span from protect reg into the
+	 * BR and BV protect reg pipe 15.
 	 */
-	a8xx_write_pipe(gpu, PIPE_BR, REG_A8XX_CP_PROTECT_PIPE(protect->count_max), final_cfg);
-	a8xx_write_pipe(gpu, PIPE_BV, REG_A8XX_CP_PROTECT_PIPE(protect->count_max), final_cfg);
+	a8xx_write_pipe(gpu, PIPE_BR, REG_A8XX_CP_PROTECT_PIPE(15), final_cfg);
+	a8xx_write_pipe(gpu, PIPE_BV, REG_A8XX_CP_PROTECT_PIPE(15), final_cfg);
 
 	a8xx_aperture_clear(gpu);
 }
