@@ -4,6 +4,7 @@
 
 #define PMIV0104_SID 7
 
+#include <dt-bindings/arm/qcom,ids.h>
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
@@ -19,6 +20,8 @@
 	model = "Nothing Phone (3a)";
 	compatible = "nothing,asteroids", "qcom,milos";
 	chassis-type = "handset";
+	qcom,board-id = <QCOM_BOARD_ID_QRD 0>;
+	qcom,msm-id = <QCOM_ID_SM7635 0x10000>;
 
 	aliases {
 		serial0 = &uart5;
