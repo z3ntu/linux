@@ -105,6 +105,7 @@ struct msm_gpu *adreno_load_gpu(struct drm_device *dev)
 	 */
 	pm_runtime_enable(&pdev->dev);
 
+	mutex_lock(&gpu->lock);
 	ret = pm_runtime_get_sync(&pdev->dev);
 	if (ret < 0) {
 		pm_runtime_put_noidle(&pdev->dev);
@@ -112,15 +113,15 @@ struct msm_gpu *adreno_load_gpu(struct drm_device *dev)
 		goto err_disable_rpm;
 	}
 
-	mutex_lock(&gpu->lock);
 	ret = msm_gpu_hw_init(gpu);
-	mutex_unlock(&gpu->lock);
 	if (ret) {
+		msm_gpu_crashstate_capture(gpu, NULL, NULL, NULL, NULL);
 		DRM_DEV_ERROR(dev->dev, "gpu hw init failed: %d\n", ret);
 		goto err_put_rpm;
 	}
 
 	pm_runtime_put_autosuspend(&pdev->dev);
+	mutex_unlock(&gpu->lock);
 
 #ifdef CONFIG_DEBUG_FS
 	if (gpu->funcs->debugfs_init) {
@@ -135,6 +136,8 @@ err_put_rpm:
 	pm_runtime_put_sync_suspend(&pdev->dev);
 err_disable_rpm:
 	pm_runtime_disable(&pdev->dev);
+
+	mutex_unlock(&gpu->lock);
 
 	return NULL;
 }

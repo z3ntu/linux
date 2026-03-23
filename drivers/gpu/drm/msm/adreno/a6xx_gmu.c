@@ -1240,6 +1240,7 @@ out:
 	/* On failure, shut down the GMU to leave it in a good state */
 	if (ret) {
 		disable_irq(gmu->gmu_irq);
+		msm_gpu_crashstate_capture(gpu, NULL, NULL, NULL, NULL);
 		a6xx_rpmh_stop(gmu);
 		pm_runtime_put(gmu->gxpd);
 		pm_runtime_put(gmu->dev);

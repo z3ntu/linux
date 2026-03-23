@@ -391,9 +391,11 @@ int adreno_get_param(struct msm_gpu *gpu, struct msm_context *ctx,
 		return 0;
 	case MSM_PARAM_TIMESTAMP:
 		if (adreno_gpu->funcs->get_timestamp) {
+			mutex_lock(&gpu->lock);
 			pm_runtime_get_sync(&gpu->pdev->dev);
 			*value = (uint64_t) adreno_gpu->funcs->get_timestamp(gpu);
 			pm_runtime_put_autosuspend(&gpu->pdev->dev);
+			mutex_unlock(&gpu->lock);
 
 			return 0;
 		}
