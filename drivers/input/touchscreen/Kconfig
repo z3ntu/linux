@@ -1424,4 +1424,14 @@ config TOUCHSCREEN_HIMAX_HX83112B
 	  To compile this driver as a module, choose M here: the
 	  module will be called himax_hx83112b.
 
+config TOUCHSCREEN_FOCALTECH_FT3683G
+	tristate "Focaltech FT3683G touchscreen driver"
+	help
+	  Say Y here to enable support for FocalTech FT3683G touchscreens.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called focaltech_ft3683g.
+
 endif
