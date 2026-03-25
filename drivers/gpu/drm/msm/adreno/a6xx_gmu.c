@@ -1145,6 +1145,9 @@ static void a6xx_gmu_force_off(struct a6xx_gmu *gmu)
 	/* Reset GPU core blocks */
 	a6xx_gpu_sw_reset(gpu, true);
 
+	if (!IS_ERR_OR_NULL(gmu->gxpd))
+		pm_runtime_put_sync(gmu->gxpd);
+
 	a6xx_rpmh_stop(gmu);
 }
 
@@ -1399,6 +1402,9 @@ static void a6xx_gmu_shutdown(struct a6xx_gmu *gmu)
 	/* Stop the interrupts and mask the hardware */
 	a6xx_gmu_irq_disable(gmu);
 
+	if (!IS_ERR_OR_NULL(gmu->gxpd))
+		pm_runtime_put_noidle(gmu->gxpd);
+
 	/* Tell RPMh to power off the GPU */
 	a6xx_rpmh_stop(gmu);
 
@@ -1428,14 +1434,6 @@ int a6xx_gmu_stop(struct a6xx_gpu *a6xx_gpu)
 
 	/* Remove the bus vote */
 	dev_pm_opp_set_opp(&gpu->pdev->dev, NULL);
-
-	/*
-	 * Make sure the GX domain is off before turning off the GMU (CX)
-	 * domain. Usually the GMU does this but only if the shutdown sequence
-	 * was successful
-	 */
-	if (!IS_ERR_OR_NULL(gmu->gxpd))
-		pm_runtime_put_sync(gmu->gxpd);
 
 	clk_bulk_disable_unprepare(gmu->nr_clocks, gmu->clocks);
 
