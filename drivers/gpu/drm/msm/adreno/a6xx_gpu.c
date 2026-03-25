@@ -2205,13 +2205,18 @@ void a6xx_bus_clear_pending_transactions(struct adreno_gpu *adreno_gpu, bool gx_
 
 void a6xx_gpu_sw_reset(struct msm_gpu *gpu, bool assert)
 {
+	u32 reg = REG_A6XX_RBBM_SW_RESET_CMD;
+
 	/* 11nm chips (e.g. ones with A610) have hw issues with the reset line! */
-	if (adreno_is_a610(to_adreno_gpu(gpu)) || adreno_is_a8xx(to_adreno_gpu(gpu)))
+	if (adreno_is_a610(to_adreno_gpu(gpu)))
 		return;
 
-	gpu_write(gpu, REG_A6XX_RBBM_SW_RESET_CMD, assert);
+	if (adreno_is_a8xx(to_adreno_gpu(gpu)))
+		reg = REG_A8XX_RBBM_SW_RESET_CMD;
+
+	gpu_write(gpu, reg, assert);
 	/* Perform a bogus read and add a brief delay to ensure ordering. */
-	gpu_read(gpu, REG_A6XX_RBBM_SW_RESET_CMD);
+	gpu_read(gpu, reg);
 	udelay(1);
 
 	/* The reset line needs to be asserted for at least 100 us */
