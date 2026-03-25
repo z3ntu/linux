@@ -250,7 +250,7 @@
 		compatible = "brcm,bcm43430a1-fmac", "brcm,bcm4329-fmac";
 		reg = <1>;
 
-		interrupts-extended = <&tlmm 46 IRQ_TYPE_EDGE_FALLING>;
+		interrupts-extended = <&tlmm 46 IRQ_TYPE_EDGE_RISING>; // IORESOURCE_IRQ_HIGHEDGE in arch/arm/mach-msm/board_wifi_bcm.c
 		interrupt-names = "host-wake";
 
 		pinctrl-names = "default";
