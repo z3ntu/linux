@@ -32,25 +32,25 @@
 		#size-cells = <2>;
 		ranges;
 
-		framebuffer0: framebuffer@e3940000 {
-			compatible = "simple-framebuffer";
-			reg = <0x0 0xe3940000 0x0 (2484 * 1116 * 4)>;
-			width = <1116>;
-			height = <2484>;
-			stride = <(1116 * 4)>;
-			format = "a8r8g8b8";
-			panel = <&panel>;
-			interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
-					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
-			clocks = <&gcc GCC_DISP_HF_AXI_CLK>;
+		//framebuffer0: framebuffer@e3940000 {
+		//	compatible = "simple-framebuffer";
+		//	reg = <0x0 0xe3940000 0x0 (2484 * 1116 * 4)>;
+		//	width = <1116>;
+		//	height = <2484>;
+		//	stride = <(1116 * 4)>;
+		//	format = "a8r8g8b8";
+		//	panel = <&panel>;
+		//	interconnects = <&mmss_noc MASTER_MDP QCOM_ICC_TAG_ALWAYS
+		//			 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
+		//	clocks = <&gcc GCC_DISP_HF_AXI_CLK>;
 
-			/* Dummy panel for simple-framebuffer dimension info */
-			panel: dummy-panel {
-				compatible = "boe,bj631jhm-t71-d900";
-				width-mm = <65>;
-				height-mm = <146>;
-			};
-		};
+		//	/* Dummy panel for simple-framebuffer dimension info */
+		//	panel: dummy-panel {
+		//		compatible = "boe,bj631jhm-t71-d900";
+		//		width-mm = <65>;
+		//		height-mm = <146>;
+		//	};
+		//};
 	};
 
 	gpio-keys {
@@ -237,10 +237,10 @@
 		 * ABL is powering down display and controller if this node is
 		 * not named exactly "splash_region".
 		 */
-		splash_region@e3940000 {
-			reg = <0x0 0xe3940000 0x0 0x2b00000>;
-			no-map;
-		};
+		//splash_region@e3940000 {
+		//	reg = <0x0 0xe3940000 0x0 0x2b00000>;
+		//	no-map;
+		//};
 	};
 
 	sound {
