@@ -1064,9 +1064,40 @@
 	status = "okay";
 };
 
+&spi0 {
+	status = "okay";
+
+	touchscreen@0 {
+		compatible = "focaltech,ft3683g";
+		reg = <0>;
+
+		pinctrl-0 = <&ts_default>;
+		pinctrl-names = "default";
+
+		reset-gpios = <&tlmm 20 GPIO_ACTIVE_LOW>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <19 IRQ_TYPE_EDGE_FALLING>;
+		spi-max-frequency = <12000000>;
+
+		vci-supply = <&vreg_l22b>;
+		vddio-supply = <&vreg_l11b>;
+
+		touchscreen-size-x = <1080>;
+		touchscreen-size-y = <2392>;
+	};
+};
+
 &tlmm {
 	gpio-reserved-ranges = <13 1>, /* Display */
 			       <63 2>; /* WLAN UART */
+
+	ts_default: ts-default-state {
+		pins = "gpio19", "gpio20";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-up;
+	};
 
 	qup_uart11_sleep_cts: qup-uart11-sleep-cts-state {
 		pins = "gpio48";
