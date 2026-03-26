@@ -361,8 +361,7 @@ static int nt37705_boe_amoled_probe(struct mipi_dsi_device *dsi)
 	dsi->lanes = 4;
 	dsi->format = MIPI_DSI_FMT_RGB101010;
 	dsi->mode_flags = MIPI_DSI_MODE_NO_EOT_PACKET |
-			  MIPI_DSI_CLOCK_NON_CONTINUOUS |
-			  MIPI_DSI_MODE_DSC_ALL_SLICES_IN_PKT;
+			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
 
 	ctx->panel.prepare_prev_first = true;
 
