@@ -10,6 +10,8 @@
 #include <linux/module.h>
 #include <linux/regulator/consumer.h>
 
+#include <video/mipi_display.h>
+
 #include <drm/display/drm_dsc.h>
 #include <drm/display/drm_dsc_helper.h>
 #include <drm/drm_mipi_dsi.h>
@@ -146,13 +148,14 @@ static int nt37705_boe_amoled_on(struct nt37705_boe_amoled *ctx)
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xfd, 0x21);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0xaa, 0x55, 0xa5, 0x00);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x35);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x53, 0x20);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x2a, 0x00, 0x00, 0x04, 0x5b);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x2b, 0x00, 0x00, 0x09, 0xb3);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x26, 0x00);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x51, 0x0d, 0xbb);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+				     0x20);
+	mipi_dsi_dcs_set_column_address_multi(&dsi_ctx, 0x0000, 0x045b);
+	mipi_dsi_dcs_set_page_address_multi(&dsi_ctx, 0x0000, 0x09b3);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_SET_GAMMA_CURVE, 0x00);
+	mipi_dsi_dcs_set_display_brightness_multi(&dsi_ctx, 0xbb0d);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x6f, 0x04);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x51, 0x0f, 0xfe);
+	mipi_dsi_dcs_set_display_brightness_multi(&dsi_ctx, 0xfe0f);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x81, 0x01, 0x19);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x03, 0x01);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x90, 0x03, 0x03);
