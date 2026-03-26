@@ -10,8 +10,6 @@
 #include <linux/module.h>
 #include <linux/regulator/consumer.h>
 
-#include <video/mipi_display.h>
-
 #include <drm/display/drm_dsc.h>
 #include <drm/display/drm_dsc_helper.h>
 #include <drm/drm_mipi_dsi.h>
@@ -52,8 +50,6 @@ static void nt37705_boe_amoled_reset(struct nt37705_boe_amoled *ctx)
 static int nt37705_boe_amoled_on(struct nt37705_boe_amoled *ctx)
 {
 	struct mipi_dsi_multi_context dsi_ctx = { .dsi = ctx->dsi };
-
-	ctx->dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xf0,
 				     0x55, 0xaa, 0x52, 0x08, 0x00);
@@ -150,19 +146,18 @@ static int nt37705_boe_amoled_on(struct nt37705_boe_amoled *ctx)
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xfd, 0x21);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xff, 0xaa, 0x55, 0xa5, 0x00);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x35);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_WRITE_CONTROL_DISPLAY,
-				     0x20);
-	mipi_dsi_dcs_set_column_address_multi(&dsi_ctx, 0x0000, 0x045b);
-	mipi_dsi_dcs_set_page_address_multi(&dsi_ctx, 0x0000, 0x09b3);
-	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, MIPI_DCS_SET_GAMMA_CURVE, 0x00);
-	mipi_dsi_dcs_set_display_brightness_multi(&dsi_ctx, 0xbb0d);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x53, 0x20);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x2a, 0x00, 0x00, 0x04, 0x5b);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x2b, 0x00, 0x00, 0x09, 0xb3);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x26, 0x00);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x51, 0x0d, 0xbb);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x6f, 0x04);
-	mipi_dsi_dcs_set_display_brightness_multi(&dsi_ctx, 0xfe0f);
+	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x51, 0x0f, 0xfe);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x81, 0x01, 0x19);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x03, 0x01);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x90, 0x03, 0x03);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x91,
-				     0xab, 0x28, 0x00, 0x0c, 0xd2, 0x00, 0x02,
+				     0x89, 0x28, 0x00, 0x0c, 0xd2, 0x00, 0x02,
 				     0x2f, 0x01, 0x18, 0x00, 0x07, 0x09, 0x75,
 				     0x08, 0x34, 0x10, 0xf0);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x2f, 0x02);
@@ -181,12 +176,10 @@ static int nt37705_boe_amoled_off(struct nt37705_boe_amoled *ctx)
 {
 	struct mipi_dsi_multi_context dsi_ctx = { .dsi = ctx->dsi };
 
-	ctx->dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
-
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x28, 0x00);
-	mipi_dsi_msleep(&dsi_ctx, 20);
+	mipi_dsi_usleep_range(&dsi_ctx, 1000, 2000);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x10, 0x00);
-	mipi_dsi_msleep(&dsi_ctx, 120);
+	mipi_dsi_msleep(&dsi_ctx, 100);
 
 	return dsi_ctx.accum_err;
 }
@@ -359,9 +352,9 @@ static int nt37705_boe_amoled_probe(struct mipi_dsi_device *dsi)
 	mipi_dsi_set_drvdata(dsi, ctx);
 
 	dsi->lanes = 4;
-	dsi->format = MIPI_DSI_FMT_RGB101010;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_NO_EOT_PACKET |
-			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
+			  MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_LPM;
 
 	ctx->panel.prepare_prev_first = true;
 
@@ -387,7 +380,7 @@ static int nt37705_boe_amoled_probe(struct mipi_dsi_device *dsi)
 	 */
 	WARN_ON(1116 % ctx->dsc.slice_width);
 	ctx->dsc.slice_count = 1116 / ctx->dsc.slice_width;
-	ctx->dsc.bits_per_component = 10;
+	ctx->dsc.bits_per_component = 8;
 	ctx->dsc.bits_per_pixel = 8 << 4; /* 4 fractional bits */
 	ctx->dsc.block_pred_enable = true;
 
