@@ -171,6 +171,8 @@ static int nt37705_boe_amoled_on(struct nt37705_boe_amoled *ctx)
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x29, 0x00);
 	mipi_dsi_msleep(&dsi_ctx, 22);
 
+	mipi_dsi_dcs_set_tear_on_multi(&dsi_ctx, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
+
 	return dsi_ctx.accum_err;
 }
 
@@ -195,21 +197,21 @@ static int nt37705_boe_amoled_prepare(struct drm_panel *panel)
 	struct drm_dsc_picture_parameter_set pps;
 	int ret;
 
-	ret = regulator_bulk_enable(ARRAY_SIZE(nt37705_boe_amoled_supplies), ctx->supplies);
-	if (ret < 0) {
-		dev_err(dev, "Failed to enable regulators: %d\n", ret);
-		return ret;
-	}
+	//ret = regulator_bulk_enable(ARRAY_SIZE(nt37705_boe_amoled_supplies), ctx->supplies);
+	//if (ret < 0) {
+	//	dev_err(dev, "Failed to enable regulators: %d\n", ret);
+	//	return ret;
+	//}
 
-	nt37705_boe_amoled_reset(ctx);
+	//nt37705_boe_amoled_reset(ctx);
 
-	ret = nt37705_boe_amoled_on(ctx);
-	if (ret < 0) {
-		dev_err(dev, "Failed to initialize panel: %d\n", ret);
-		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-		regulator_bulk_disable(ARRAY_SIZE(nt37705_boe_amoled_supplies), ctx->supplies);
-		return ret;
-	}
+	//ret = nt37705_boe_amoled_on(ctx);
+	//if (ret < 0) {
+	//	dev_err(dev, "Failed to initialize panel: %d\n", ret);
+	//	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+	//	regulator_bulk_disable(ARRAY_SIZE(nt37705_boe_amoled_supplies), ctx->supplies);
+	//	return ret;
+	//}
 
 	drm_dsc_pps_payload_pack(&pps, &ctx->dsc);
 
@@ -236,12 +238,12 @@ static int nt37705_boe_amoled_unprepare(struct drm_panel *panel)
 	struct device *dev = &ctx->dsi->dev;
 	int ret;
 
-	ret = nt37705_boe_amoled_off(ctx);
-	if (ret < 0)
-		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
+	//ret = nt37705_boe_amoled_off(ctx);
+	//if (ret < 0)
+	//	dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
 
-	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
-	regulator_bulk_disable(ARRAY_SIZE(nt37705_boe_amoled_supplies), ctx->supplies);
+	//gpiod_set_value_cansleep(ctx->reset_gpio, 1);
+	//regulator_bulk_disable(ARRAY_SIZE(nt37705_boe_amoled_supplies), ctx->supplies);
 
 	return 0;
 }
@@ -340,23 +342,23 @@ static int nt37705_boe_amoled_probe(struct mipi_dsi_device *dsi)
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
 
-	ret = devm_regulator_bulk_get_const(dev,
-					    ARRAY_SIZE(nt37705_boe_amoled_supplies),
-					    nt37705_boe_amoled_supplies,
-					    &ctx->supplies);
-	if (ret < 0)
-		return ret;
+	//ret = devm_regulator_bulk_get_const(dev,
+	//				    ARRAY_SIZE(nt37705_boe_amoled_supplies),
+	//				    nt37705_boe_amoled_supplies,
+	//				    &ctx->supplies);
+	//if (ret < 0)
+	//	return ret;
 
-	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(ctx->reset_gpio))
-		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
-				     "Failed to get reset-gpios\n");
+	//ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
+	//if (IS_ERR(ctx->reset_gpio))
+	//	return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
+	//			     "Failed to get reset-gpios\n");
 
 	ctx->dsi = dsi;
 	mipi_dsi_set_drvdata(dsi, ctx);
 
 	dsi->lanes = 4;
-	dsi->format = MIPI_DSI_FMT_RGB888;
+	dsi->format = MIPI_DSI_FMT_RGB101010;
 	dsi->mode_flags = MIPI_DSI_MODE_NO_EOT_PACKET |
 			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
 
