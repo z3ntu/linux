@@ -213,19 +213,19 @@ static int nt37705_boe_amoled_prepare(struct drm_panel *panel)
 	//	return ret;
 	//}
 
-	drm_dsc_pps_payload_pack(&pps, &ctx->dsc);
+	//drm_dsc_pps_payload_pack(&pps, &ctx->dsc);
 
-	ret = mipi_dsi_picture_parameter_set(ctx->dsi, &pps);
-	if (ret < 0) {
-		dev_err(panel->dev, "failed to transmit PPS: %d\n", ret);
-		return ret;
-	}
+	//ret = mipi_dsi_picture_parameter_set(ctx->dsi, &pps);
+	//if (ret < 0) {
+	//	dev_err(panel->dev, "failed to transmit PPS: %d\n", ret);
+	//	return ret;
+	//}
 
-	ret = mipi_dsi_compression_mode(ctx->dsi, true);
-	if (ret < 0) {
-		dev_err(dev, "failed to enable compression mode: %d\n", ret);
-		return ret;
-	}
+	//ret = mipi_dsi_compression_mode(ctx->dsi, true);
+	//if (ret < 0) {
+	//	dev_err(dev, "failed to enable compression mode: %d\n", ret);
+	//	return ret;
+	//}
 
 	msleep(28); /* TODO: Is this panel-dependent? */
 
@@ -281,13 +281,13 @@ static int nt37705_boe_amoled_bl_update_status(struct backlight_device *bl)
 	u16 brightness = backlight_get_brightness(bl);
 	int ret;
 
-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+	//dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
-	ret = mipi_dsi_dcs_set_display_brightness_large(dsi, brightness);
-	if (ret < 0)
-		return ret;
+	//ret = mipi_dsi_dcs_set_display_brightness_large(dsi, brightness);
+	//if (ret < 0)
+	//	return ret;
 
-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+	//dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
 	return 0;
 }
@@ -297,16 +297,16 @@ static int nt37705_boe_amoled_bl_update_status(struct backlight_device *bl)
 static int nt37705_boe_amoled_bl_get_brightness(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	u16 brightness;
+	u16 brightness = 4095;
 	int ret;
 
-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+	//dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
-	ret = mipi_dsi_dcs_get_display_brightness_large(dsi, &brightness);
-	if (ret < 0)
-		return ret;
+	//ret = mipi_dsi_dcs_get_display_brightness_large(dsi, &brightness);
+	//if (ret < 0)
+	//	return ret;
 
-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+	//dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
 	return brightness;
 }
