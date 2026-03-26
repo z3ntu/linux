@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/input/touchscreen/focaltech,ft3683g.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: FocalTech FT3683G touchscreen controller
+
+maintainers:
+  - Alexander Koskovich <akoskovich@pm.me>
+
+allOf:
+  - $ref: touchscreen.yaml#
+
+properties:
+  compatible:
+    const: focaltech,ft3683g
+
+  reg:
+    maxItems: 1
+
+  interrupts:
+    maxItems: 1
+
+  reset-gpios:
+    maxItems: 1
+
+  vci-supply:
+    description: Analog power supply
+
+  vddio-supply:
+    description: Digital I/O power supply
+
+  spi-max-frequency: true
+
+required:
+  - compatible
+  - reg
+  - interrupts
+  - reset-gpios
+  - vci-supply
+  - vddio-supply
+
+unevaluatedProperties: false
+
+examples:
+  - |
+    #include <dt-bindings/gpio/gpio.h>
+    #include <dt-bindings/interrupt-controller/irq.h>
+
+    spi {
+      #address-cells = <1>;
+      #size-cells = <0>;
+
+      touchscreen@0 {
+        compatible = "focaltech,ft3683g";
+        reg = <0>;
+
+        vci-supply = <&vreg_l22b>;
+        vddio-supply = <&vreg_l11b>;
+
+        reset-gpios = <&tlmm 20 GPIO_ACTIVE_LOW>;
+
+        interrupt-parent = <&tlmm>;
+        interrupts = <19 IRQ_TYPE_EDGE_FALLING>;
+        spi-max-frequency = <12000000>;
+
+        touchscreen-size-x = <1080>;
+        touchscreen-size-y = <2392>;
+      };
+    };
+
+...
