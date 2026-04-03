@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2023-2024 Linaro Ltd.
- * Copyright (c) 2025, Luca Weiss <luca.weiss@fairphone.com>
+ * Copyright (c) 2026, Luca Weiss <luca.weiss@fairphone.com>
  */
 
 #include <linux/array_size.h>
@@ -13,7 +13,7 @@
 #include "../ipa_version.h"
 
 /** enum ipa_resource_type - IPA resource types for an SoC having IPA v5.2 */
-enum ipa_resource_type { // OK
+enum ipa_resource_type {
 	/* Source resource types; first must have value 0 */
 	IPA_RESOURCE_TYPE_SRC_PKT_CONTEXTS		= 0,
 	IPA_RESOURCE_TYPE_SRC_DESCRIPTOR_LISTS,
@@ -28,13 +28,7 @@ enum ipa_resource_type { // OK
 };
 
 /* Resource groups used for an SoC having IPA v5.2 */
-enum ipa_rsrc_group_id { // OK?
-// #define IPA_v5_2_GROUP_UL		(0)
-// #define IPA_v5_2_GROUP_DL		(1)
-// #define IPA_v5_2_GROUP_URLLC		(2)
-// #define IPA_v5_2_GROUP_DRB_IP		(3)
-// #define IPA_v5_2_SRC_GROUP_MAX		(3)
-// #define IPA_v5_2_DST_GROUP_MAX		(4)
+enum ipa_rsrc_group_id {
 	/* Source resource group identifiers */
 	IPA_RSRC_GROUP_SRC_UL				= 0,
 	IPA_RSRC_GROUP_SRC_DL,
@@ -59,29 +53,29 @@ static const struct ipa_qsb_data ipa_qsb_data[] = {
 };
 
 /* Endpoint configuration data for an SoC having IPA v5.2 */
-static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = { // FIXME
-	[IPA_ENDPOINT_AP_COMMAND_TX] = { // IPA_CLIENT_APPS_CMD_PROD
-		.ee_id		= GSI_EE_AP, // IPA_EE_AP
-		.channel_id	= 6, // { 14, **12**, 20, 24, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0},
-		.endpoint_id	= 9, // { **14**, 12, 20, 24, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0},
-		.toward_ipa	= true, // ???
+static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = {
+	[IPA_ENDPOINT_AP_COMMAND_TX] = {
+		.ee_id		= GSI_EE_AP,
+		.channel_id	= 6,
+		.endpoint_id	= 9,
+		.toward_ipa	= true,
 		.channel = {
-			.tre_count	= 256, // ???
-			.event_count	= 256, // ???
-			.tlv_count	= 20, // { 14, 12, **20**, 24, IPA_EE_AP, GSI_ESCAPE_BUF_ONLY, 0},
+			.tre_count	= 256,
+			.event_count	= 256,
+			.tlv_count	= 20,
 		},
 		.endpoint = {
 			.config = {
-				.resource_group	= IPA_RSRC_GROUP_SRC_UL, // IPA_v5_0_GROUP_UL
-				.dma_mode	= true, // ???
-				.dma_endpoint	= IPA_ENDPOINT_AP_LAN_RX, // ???
+				.resource_group	= IPA_RSRC_GROUP_SRC_UL,
+				.dma_mode	= true,
+				.dma_endpoint	= IPA_ENDPOINT_AP_LAN_RX,
 				.tx = {
-					.seq_type = IPA_SEQ_DMA, // IPA_DPS_HPS_SEQ_TYPE_DMA_ONLY
+					.seq_type = IPA_SEQ_DMA,
 				},
 			},
 		},
 	},
-	[IPA_ENDPOINT_AP_LAN_RX] = { // IPA_CLIENT_APPS_LAN_CONS
+	[IPA_ENDPOINT_AP_LAN_RX] = {
 		.ee_id		= GSI_EE_AP,
 		.channel_id	= 7,
 		.endpoint_id	= 11,
@@ -104,7 +98,7 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = { // FIXME
 			},
 		},
 	},
-	[IPA_ENDPOINT_AP_MODEM_TX] = { // IPA_CLIENT_APPS_WAN_PROD ?
+	[IPA_ENDPOINT_AP_MODEM_TX] = {
 		.ee_id		= GSI_EE_AP,
 		.channel_id	= 5,
 		.endpoint_id	= 2,
@@ -129,7 +123,7 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = { // FIXME
 			},
 		},
 	},
-	[IPA_ENDPOINT_AP_MODEM_RX] = { // IPA_CLIENT_APPS_WAN_CONS
+	[IPA_ENDPOINT_AP_MODEM_RX] = {
 		.ee_id		= GSI_EE_AP,
 		.channel_id	= 9,
 		.endpoint_id	= 18,
@@ -153,7 +147,7 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = { // FIXME
 			},
 		},
 	},
-	[IPA_ENDPOINT_MODEM_AP_TX] = { // IPA_CLIENT_Q6_WAN_PROD
+	[IPA_ENDPOINT_MODEM_AP_TX] = {
 		.ee_id		= GSI_EE_MODEM,
 		.channel_id	= 0,
 		.endpoint_id	= 7,
@@ -162,13 +156,13 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = { // FIXME
 			.filter_support	= true,
 		},
 	},
-	[IPA_ENDPOINT_MODEM_AP_RX] = { // IPA_CLIENT_Q6_WAN_CONS
+	[IPA_ENDPOINT_MODEM_AP_RX] = {
 		.ee_id		= GSI_EE_MODEM,
 		.channel_id	= 7,
 		.endpoint_id	= 16,
 		.toward_ipa	= false,
 	},
-	[IPA_ENDPOINT_MODEM_DL_NLO_TX] = { // IPA_CLIENT_Q6_DL_NLO_DATA_PROD
+	[IPA_ENDPOINT_MODEM_DL_NLO_TX] = {
 		.ee_id		= GSI_EE_MODEM,
 		.channel_id	= 2,
 		.endpoint_id	= 10,
@@ -180,7 +174,7 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = { // FIXME
 };
 
 /* Source resource configuration data for an SoC having IPA v5.2 */
-static const struct ipa_resource ipa_resource_src[] = { // OK
+static const struct ipa_resource ipa_resource_src[] = {
 	[IPA_RESOURCE_TYPE_SRC_PKT_CONTEXTS] = {
 		.limits[IPA_RSRC_GROUP_SRC_UL] = {
 			.min = 1,	.max = 7,
@@ -239,7 +233,7 @@ static const struct ipa_resource ipa_resource_src[] = { // OK
 };
 
 /* Destination resource configuration data for an SoC having IPA v5.2 */
-static const struct ipa_resource ipa_resource_dst[] = { // OK
+static const struct ipa_resource ipa_resource_dst[] = {
 	[IPA_RESOURCE_TYPE_DST_DATA_SECTORS] = {
 		.limits[IPA_RSRC_GROUP_DST_UL] = {
 			.min = 3,	.max = 3,
@@ -419,8 +413,6 @@ static const struct ipa_mem ipa_mem_local_data[] = {
 static const struct ipa_mem_data ipa_mem_data = {
 	.local_count	= ARRAY_SIZE(ipa_mem_local_data),
 	.local		= ipa_mem_local_data,
-	.imem_addr	= 0x14683000,
-	.imem_size	= 0x00002000,
 	.smem_size	= 0x0000b000,
 };
 
