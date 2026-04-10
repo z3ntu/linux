@@ -208,15 +208,18 @@
 
 	sound {
 		compatible = "qcom,milos-sndcard", "qcom,sm8450-sndcard";
-		model = "Fairphone (Gen. 6)";
-		// audio-routing = ...
+		model = "MILOS-Fairphone-Gen6";
+
+		clocks = <&q6prmcc LPASS_CLK_ID_SEN_MI2S_IBIT LPASS_CLK_ATTRIBUTE_COUPLE_NO>,
+			 <&q6prmcc LPASS_CLK_ID_MCLK_1 LPASS_CLK_ATTRIBUTE_COUPLE_NO>; // FIXME?
+		clock-names = "senary-mi2s",
+			      "senary-mclk";
 
 		pinctrl-0 = <&lpi_i2s2_active>;
 		pinctrl-1 = <&lpi_i2s2_sleep>;
 		pinctrl-names = "default",
 				"sleep";
 
-		/*
 		i2s-dai-link {
 			link-name = "Senary MI2S Playback";
 
@@ -232,7 +235,6 @@
 				sound-dai = <&q6apm>;
 			};
 		};
-		*/
 	};
 
 	thermal-zones {

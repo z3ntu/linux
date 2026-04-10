@@ -20,7 +20,7 @@
 #define I2S_MAX_CLKS	6
 
 #define I2S_MCLKFS	256
-#define I2S_SLOTSIZE	16
+#define I2S_SLOTSIZE	32
 #define I2S_MCLK_RATE(rate, channels) \
 		((rate) * (channels) * I2S_MCLKFS)
 #define I2S_BIT_RATE(rate, channels) \
@@ -73,6 +73,7 @@ static int sc8280xp_snd_init(struct snd_soc_pcm_runtime *rtd)
 	case QUINARY_MI2S_RX...QUINARY_MI2S_TX:
 	case SENARY_MI2S_RX...SENARY_MI2S_TX:
 		index = sc8280xp_snd_i2s_index(cpu_dai);
+		printk(KERN_ERR "%s:%d DBG set_rate index=%d\n", __func__, __LINE__, index);
 		ret = clk_set_rate(data->i2s_mclk[index],
 				   I2S_MCLK_RATE(I2S_DEFAULT_RATE,
 						 I2S_DEFAULT_CHANNELS));
@@ -138,6 +139,7 @@ static int sc8280xp_snd_startup(struct snd_pcm_substream *substream)
 		ret = clk_prepare_enable(pdata->i2s_clk[index]);
 		if (ret)
 			dev_err(pdata->card->dev, "Unable to enable master clock\n");
+		printk(KERN_ERR "%s:%d DBG enable index=%d\n", __func__, __LINE__, index);
 		snd_soc_dai_set_fmt(codec_dai, codec_dai_fmt);
 		break;
 	default:
@@ -162,6 +164,7 @@ static void sc8280xp_snd_shutdown(struct snd_pcm_substream *substream)
 		index = sc8280xp_snd_i2s_index(cpu_dai);
 		clk_disable_unprepare(pdata->i2s_clk[index]);
 		clk_disable_unprepare(pdata->i2s_mclk[index]);
+		printk(KERN_ERR "%s:%d DBG disable index=%d\n", __func__, __LINE__, index);
 		break;
 	default:
 		break;
@@ -181,7 +184,7 @@ static int sc8280xp_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	struct snd_mask *fmt = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
 
 	rate->min = rate->max = 48000;
-	snd_mask_set_format(fmt, SNDRV_PCM_FORMAT_S16_LE);
+	//snd_mask_set_format(fmt, SNDRV_PCM_FORMAT_S16_LE);
 	channels->min = 2;
 	channels->max = 2;
 	switch (cpu_dai->id) {
@@ -272,6 +275,7 @@ static int sc8280xp_get_i2s_clocks(struct platform_device *pdev,
 			return dev_err_probe(dev, PTR_ERR(data->i2s_mclk[i]),
 					     "unable to get %s clock\n",
 					     name);
+		printk(KERN_ERR "%s:%d DBG get index=%d clk=%pC mclk=%pC\n", __func__, __LINE__, i, data->i2s_clk[i], data->i2s_mclk[i]);
 	}
 
 	return 0;
