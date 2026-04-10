@@ -17,7 +17,7 @@
 #include "common.h"
 #include "sdw.h"
 
-#define I2S_MAX_CLKS	5
+#define I2S_MAX_CLKS	6
 
 #define I2S_MCLKFS	256
 #define I2S_SLOTSIZE	16
@@ -52,6 +52,8 @@ static int sc8280xp_snd_i2s_index(struct snd_soc_dai *dai)
 		return 3;
 	case QUINARY_MI2S_RX...QUINARY_MI2S_TX:
 		return 4;
+	case SENARY_MI2S_RX...SENARY_MI2S_TX:
+		return 5;
 	default:
 		return -1;
 	}
@@ -69,6 +71,7 @@ static int sc8280xp_snd_init(struct snd_soc_pcm_runtime *rtd)
 	switch (cpu_dai->id) {
 	case PRIMARY_MI2S_RX...QUATERNARY_MI2S_TX:
 	case QUINARY_MI2S_RX...QUINARY_MI2S_TX:
+	case SENARY_MI2S_RX...SENARY_MI2S_TX:
 		index = sc8280xp_snd_i2s_index(cpu_dai);
 		ret = clk_set_rate(data->i2s_mclk[index],
 				   I2S_MCLK_RATE(I2S_DEFAULT_RATE,
@@ -127,6 +130,7 @@ static int sc8280xp_snd_startup(struct snd_pcm_substream *substream)
 	switch (cpu_dai->id) {
 	case PRIMARY_MI2S_RX...QUATERNARY_MI2S_TX:
 	case QUINARY_MI2S_RX...QUINARY_MI2S_TX:
+	case SENARY_MI2S_RX...SENARY_MI2S_TX:
 		index = sc8280xp_snd_i2s_index(cpu_dai);
 		ret = clk_prepare_enable(pdata->i2s_mclk[index]);
 		if (ret)
@@ -154,6 +158,7 @@ static void sc8280xp_snd_shutdown(struct snd_pcm_substream *substream)
 	switch (cpu_dai->id) {
 	case PRIMARY_MI2S_RX...TERTIARY_MI2S_RX:
 	case QUINARY_MI2S_RX...QUINARY_MI2S_TX:
+	case SENARY_MI2S_RX...SENARY_MI2S_TX:
 		index = sc8280xp_snd_i2s_index(cpu_dai);
 		clk_disable_unprepare(pdata->i2s_clk[index]);
 		clk_disable_unprepare(pdata->i2s_mclk[index]);
@@ -239,6 +244,7 @@ static const char * const i2s_bus_names[I2S_MAX_CLKS] = {
 	"tertiary",
 	"quaternary",
 	"quinary",
+	"senary",
 };
 
 static int sc8280xp_get_i2s_clocks(struct platform_device *pdev,
