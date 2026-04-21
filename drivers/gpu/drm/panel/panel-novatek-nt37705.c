@@ -162,7 +162,7 @@ static int nt37705_on(struct nt37705_panel *ctx)
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x03, 0x01);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x90, 0x03, 0x03);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x91,
-				     0xab, 0x28, 0x00, 0x0c, 0xd2, 0x00, 0x02,
+				     0x89, 0x28, 0x00, 0x0c, 0xd2, 0x00, 0x02,
 				     0x2f, 0x01, 0x18, 0x00, 0x07, 0x09, 0x75,
 				     0x08, 0x34, 0x10, 0xf0);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x2f, 0x02);
@@ -340,7 +340,7 @@ static int nt37705_probe(struct mipi_dsi_device *dsi)
 	mipi_dsi_set_drvdata(dsi, ctx);
 
 	dsi->lanes = 4;
-	dsi->format = MIPI_DSI_FMT_RGB101010;
+	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_NO_EOT_PACKET |
 			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
 
@@ -368,7 +368,7 @@ static int nt37705_probe(struct mipi_dsi_device *dsi)
 	 */
 	WARN_ON(1116 % ctx->dsc.slice_width);
 	ctx->dsc.slice_count = 1116 / ctx->dsc.slice_width;
-	ctx->dsc.bits_per_component = 10;
+	ctx->dsc.bits_per_component = 8;
 	ctx->dsc.bits_per_pixel = 8 << 4; /* 4 fractional bits */
 	ctx->dsc.block_pred_enable = true;
 
