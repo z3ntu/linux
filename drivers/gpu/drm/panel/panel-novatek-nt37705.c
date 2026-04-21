@@ -53,6 +53,8 @@ static int nt37705_on(struct nt37705_panel *ctx)
 {
 	struct mipi_dsi_multi_context dsi_ctx = { .dsi = ctx->dsi };
 
+	ctx->dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0xf0,
 				     0x55, 0xaa, 0x52, 0x08, 0x00);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x6f, 0x1b);
@@ -179,10 +181,12 @@ static int nt37705_off(struct nt37705_panel *ctx)
 {
 	struct mipi_dsi_multi_context dsi_ctx = { .dsi = ctx->dsi };
 
+	ctx->dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x28, 0x00);
-	mipi_dsi_usleep_range(&dsi_ctx, 1000, 2000);
+	mipi_dsi_msleep(&dsi_ctx, 20);
 	mipi_dsi_dcs_write_seq_multi(&dsi_ctx, 0x10, 0x00);
-	mipi_dsi_msleep(&dsi_ctx, 100);
+	mipi_dsi_msleep(&dsi_ctx, 120);
 
 	return dsi_ctx.accum_err;
 }
@@ -338,7 +342,7 @@ static int nt37705_probe(struct mipi_dsi_device *dsi)
 	dsi->lanes = 4;
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_NO_EOT_PACKET |
-			  MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_LPM;
+			  MIPI_DSI_CLOCK_NON_CONTINUOUS;
 
 	ctx->panel.prepare_prev_first = true;
 
