@@ -632,6 +632,41 @@
 	};
 };
 
+&camss {
+	vdd-csiphy01-0p9-supply = <&vreg_l2b>;
+	vdd-csiphy01-1p2-supply = <&vreg_l4b>;
+	vdd-csiphy23-0p9-supply = <&vreg_l2b>;
+	vdd-csiphy23-1p2-supply = <&vreg_l4b>;
+
+	status = "okay";
+
+	// ports {
+	// 	port@0 {
+	// 		csiphy0_ep: endpoint {
+	// 			//data-lanes = <0 1 2 3>; //???
+	// 			bus-type = <MEDIA_BUS_TYPE_CSI2_CPHY>;
+	// 			remote-endpoint = <&camera_rear_ep>;
+	// 		};
+	// 	};
+
+	// 	port@1 {
+	// 		csiphy1_ep: endpoint {
+	// 			data-lanes = <0 1 2 3>;
+	// 			bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+	// 			remote-endpoint = <&camera_uw_ep>;
+	// 		};
+	// 	};
+
+	// 	port@3 {
+	// 		csiphy3_ep: endpoint {
+	// 			data-lanes = <0 1 2 3>;
+	// 			bus-type = <MEDIA_BUS_TYPE_CSI2_DPHY>;
+	// 			remote-endpoint = <&camera_front_ep>;
+	// 		};
+	// 	};
+	// };
+};
+
 &cci0 {
 	status = "okay";
 };
