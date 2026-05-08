@@ -2376,6 +2376,197 @@
 			#power-domain-cells = <1>;
 		};
 
+		camss: camss@ac13000 {
+			compatible = "qcom,milos-camss";
+
+			reg = <0x0 0x0ac13000 0x0 0x1000>,
+			      <0x0 0x0ac62000 0x0 0x1000>,
+			      <0x0 0x0ac71000 0x0 0x1000>,
+			      <0x0 0x0ac80000 0x0 0x1000>,
+			      <0x0 0x0ace4000 0x0 0x2000>,
+			      <0x0 0x0ace6000 0x0 0x2000>,
+			      <0x0 0x0ace8000 0x0 0x2000>,
+			      <0x0 0x0acea000 0x0 0x2000>,
+			      <0x0 0x0acf6000 0x0 0x400>,
+			      <0x0 0x0acf7000 0x0 0x400>,
+			      <0x0 0x0ac63800 0x0 0xb800>, // "top"+extra; whole tfe: <0x0 0x0ac62000 0x0 0xd000>,
+			      <0x0 0x0ac72800 0x0 0xb800>, // "top"+extra; whole tfe: <0x0 0x0ac71000 0x0 0xd000>,
+			      <0x0 0x0ac81800 0x0 0xb800>; // "top"+extra; whole tfe: <0x0 0x0ac80000 0x0 0xd000>;
+			reg-names = "top",
+				    "csid0",
+				    "csid1",
+				    "csid2",
+				    "csiphy0",
+				    "csiphy1",
+				    "csiphy2",
+				    "csiphy3",
+				    "csitpg0",
+				    "csitpg1",
+				    "vfe0",
+				    "vfe1",
+				    "vfe2";
+
+			clocks = <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
+				 <&camcc CAM_CC_TFE_0_CSID_CLK>,
+				 <&camcc CAM_CC_TFE_1_CSID_CLK>,
+				 <&camcc CAM_CC_TFE_2_CSID_CLK>,
+				 <&camcc CAM_CC_CSIPHY0_CLK>,
+				 <&camcc CAM_CC_CSI0PHYTIMER_CLK>,
+				 <&camcc CAM_CC_CSIPHY1_CLK>,
+				 <&camcc CAM_CC_CSI1PHYTIMER_CLK>,
+				 <&camcc CAM_CC_CSIPHY2_CLK>,
+				 <&camcc CAM_CC_CSI2PHYTIMER_CLK>,
+				 <&camcc CAM_CC_CSIPHY3_CLK>,
+				 <&camcc CAM_CC_CSI3PHYTIMER_CLK>,
+				 <&camcc CAM_CC_TFE_0_CLK>,
+				 <&camcc CAM_CC_TFE_0_AHB_CLK>,
+				 <&camcc CAM_CC_TFE_0_CPHY_RX_CLK>,
+				 <&camcc CAM_CC_TFE_1_CLK>,
+				 <&camcc CAM_CC_TFE_1_AHB_CLK>,
+				 <&camcc CAM_CC_TFE_1_CPHY_RX_CLK>,
+				 <&camcc CAM_CC_TFE_2_CLK>,
+				 <&camcc CAM_CC_TFE_2_AHB_CLK>,
+				 <&camcc CAM_CC_TFE_2_CPHY_RX_CLK>,
+
+				 <&camcc CAM_CC_BPS_AHB_CLK>,
+				 <&camcc CAM_CC_BPS_AREG_CLK>,
+				 <&camcc CAM_CC_BPS_CLK>,
+
+				 <&camcc CAM_CC_CAMNOC_AXI_HF_CLK>,
+				 <&camcc CAM_CC_CAMNOC_AXI_SF_CLK>,
+				 <&camcc CAM_CC_CAMNOC_NRT_AXI_CLK>,
+				 <&camcc CAM_CC_CAMNOC_RT_AXI_CLK>,
+
+
+				 <&camcc CAM_CC_CORE_AHB_CLK>,
+				 <&camcc CAM_CC_CPAS_AHB_CLK>,
+				 <&camcc CAM_CC_CRE_AHB_CLK>,
+				 <&camcc CAM_CC_CRE_CLK>,
+
+				 <&camcc CAM_CC_ICP_CLK>,
+
+				 <&camcc CAM_CC_OPE_0_AHB_CLK>,
+				 <&camcc CAM_CC_OPE_0_AREG_CLK>,
+				 <&camcc CAM_CC_OPE_0_CLK>,
+
+				 <&camcc CAM_CC_SOC_AHB_CLK>,
+				 <&camcc CAM_CC_SYS_TMR_CLK>;
+
+			clock-names = "cphy_rx_clk_src",
+				      "csid0",
+				      "csid1",
+				      "csid2",
+				      "csiphy0",
+				      "csiphy0_timer",
+				      "csiphy1",
+				      "csiphy1_timer",
+				      "csiphy2",
+				      "csiphy2_timer",
+				      "csiphy3",
+				      "csiphy3_timer",
+				      "vfe0",
+				      "vfe0_ahb",
+				      "vfe0_cphy_rx",
+				      "vfe1",
+				      "vfe1_ahb",
+				      "vfe1_cphy_rx",
+				      "vfe2",
+				      "vfe2_ahb",
+				      "vfe2_cphy_rx",
+
+				      "bps_ahb",
+				      "bps_areg",
+				      "bps",
+
+				      "camnoc_axi_hf",
+				      "camnoc_axi_sf",
+				      "nrt_axi",
+				      "rt_axi",
+
+				      "core_ahb",
+				      "cpas_ahb",
+				      "cre_ahb",
+				      "cre",
+
+				      "icp",
+
+				      "ope_ahb",
+				      "ope_areg",
+				      "ope",
+
+				      "soc_ahb",
+				      "sys_tmr";
+
+			interrupts = <GIC_SPI 464 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 466 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 203 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 477 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 478 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 479 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 448 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 413 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 416 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 602 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 604 IRQ_TYPE_EDGE_RISING 0>,
+				     <GIC_SPI 688 IRQ_TYPE_EDGE_RISING 0>;
+			interrupt-names = "csid0",
+					  "csid1",
+					  "csid2",
+					  "csiphy0",
+					  "csiphy1",
+					  "csiphy2",
+					  "csiphy3",
+					  "csitpg0",
+					  "csitpg1",
+					  "vfe0",
+					  "vfe1",
+					  "vfe2";
+
+			interconnects = <&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY
+					 &cnoc_cfg SLAVE_CAMERA_CFG QCOM_ICC_TAG_ACTIVE_ONLY>,
+					<&mmss_noc MASTER_CAMNOC_HF QCOM_ICC_TAG_ALWAYS
+					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
+			interconnect-names = "ahb",
+					     "hf_mnoc";
+
+			iommus = <&apps_smmu 0x880 0x20>,
+				 <&apps_smmu 0x8a0 0x20>,
+				 <&apps_smmu 0x1800 0x0>,
+				 <&apps_smmu 0x1820 0x0>,
+				 <&apps_smmu 0x1840 0xa0>,
+				 <&apps_smmu 0x1860 0xa0>,
+				 <&apps_smmu 0x18c0 0xa0>,
+				 <&apps_smmu 0x18e0 0xa0>,
+				 <&apps_smmu 0x1900 0x0>,
+				 <&apps_smmu 0x1920 0x0>,
+				 <&apps_smmu 0x1940 0x0>;
+
+			power-domains = <&camcc CAM_CC_CAMSS_TOP_GDSC>;
+
+			status = "disabled";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port@0 {
+					reg = <0>;
+				};
+
+				port@1 {
+					reg = <1>;
+				};
+
+				port@2 {
+					reg = <2>;
+				};
+
+				port@3 {
+					reg = <3>;
+				};
+			};
+		};
+
 		cci0: cci@ac15000 {
 			compatible = "qcom,milos-cci", "qcom,msm8996-cci";
 			reg = <0x0 0x0ac15000 0x0 0x1000>;
